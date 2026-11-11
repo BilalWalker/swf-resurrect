@@ -1,9 +1,10 @@
 # Tech Stack
 
-Status: greenfield. Only `docs/brief.md` exists so far. Update this file as tooling is added, and verify commands against `package.json` before relying on them.
+Status: unpack, convert, translate and emit are built; verify, UI and hosting are not. Update this file as tooling is added, and verify commands against `package.json` before relying on them.
 
-## Stack (planned)
-- Language: TypeScript (strict) for the pipeline, runtime, and emitted projects.
+## Stack
+- Language: TypeScript (strict) for the pipeline, runtime, and emitted projects. The repo's `typescript` is 7.0.2 (`tsc`).
+- In-process type-check: `typescript-js` is an alias for `typescript@6.0.3`. TS 7 has no in-process `createProgram`; 6.0.3 is the last JS release that does. Only `src/translate/tsSyntaxCheck.ts` and `src/translate/typeCheckGate.ts` import it.
 - Emitted projects: Vite + TypeScript + PixiJS.
 - Unpack: FFDec (JPEXS) CLI, run as a separate process. Do not write a SWF parser.
 - Verify: Ruffle renders the original; headless Chromium renders the output. Compare with SSIM or pixelmatch with anti-aliasing tolerance.
@@ -11,24 +12,28 @@ Status: greenfield. Only `docs/brief.md` exists so far. Update this file as tool
 - Tests: property-based (e.g. fast-check) plus unit tests.
 
 ## Pipeline
-`unpack (FFDec) -> convert (SVG/PNG/audio/timeline JSON) -> translate (AS3 -> TS) -> emit (Vite+Pixi project) -> verify (Ruffle vs output)`
+`unpack (FFDec) -> convert (SVG/PNG/audio/timeline JSON) -> translate (AS3 -> TS) -> emit (Vite+Pixi project)`, then the in-process type-check gate on the emitted files. `verify (Ruffle vs output)` is planned.
+
+Outputs next to the project: `unsupported-features.json` and `translation-report.json`. Type errors are reported, not fatal.
 
 ## Conventions
 - Transpiler is deterministic: same input gives same output. Syntax rewrite in code first (`package`/`import` to ES modules, `int`/`uint`/`Number` to `number`, `Vector.<T>` to `T[]`, `for each` to `for...of`, `is`/`as`), LLM second.
-- Run `tsc` on translated code; feed errors back to the LLM for a bounded number of retries; flag leftovers in the report.
+- The type-check gate runs on translated code (no `npm install`, no child process). Planned: feed errors back to the LLM for a bounded number of retries; flag leftovers in the report.
+- Shim additions are listed with the fixture line that needs each in `template/shim/ADDED_APIS.md`.
 - Shapes via FFDec SVG export; bitmaps PNG; sounds MP3/OGG; timeline as per-frame display list JSON (depth, symbol id, matrix, colour transform, instance name, labels). Tweens are already baked into placements.
 - Compare only deterministic content (timeline frames, scripted-input states). Free-running random play is reported as "not compared".
 - Exact pixel equality is not a goal.
 
 ## Common commands
-No build system exists yet. Expected once scaffolded (confirm in `package.json`):
+Repo root (`package.json`):
 ```
 npm install
-npm run dev        # Vite dev server (run manually, do not block on it)
-npm run build
-npm run typecheck  # tsc --noEmit
-npm test -- --run  # single run, no watch mode
+npm run typecheck           # tsc --noEmit
+npm run typecheck:template  # tsc --noEmit -p tsconfig.template.json
+npm test -- --run           # single run, no watch mode
+npm run pipeline -- <in.swf> <outdir> [--force]   # tsx src/pipeline/cli.ts
 ```
+Inside an emitted project (`out/<sample>`): `npm install`, `npm run dev` (run manually, do not block on it), `npm run build`, `npm run typecheck`.
 
 ## FFDec (checked by hand, 2026-11-11)
 - Version 26.4.0, zip release from github.com/jindrapetrik/jpexs-decompiler, unpacked to `tools/ffdec/` (gitignored, never committed). Needs Java 17+.

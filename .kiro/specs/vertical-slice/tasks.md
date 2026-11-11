@@ -193,7 +193,7 @@ Rules that apply to every task:
 - [x] 11. Click handler and oracle test
   - [x] 11.1 Hand-translate `LeftButton` and `RightButton` from the decompiled scripts
     - Read `test/fixtures/clickgoto/LeftButton.as` and `RightButton.as` (the FFDec output, not `samples/clickgoto/original-source`). Create `handwritten/clickgoto/LeftButton.ts` and `handwritten/clickgoto/RightButton.ts` that extend `MovieClip`, register the click listener, call `stop()`, drop `EventWatcher`, `trace` and `[Embed]`, and use arrow-function fields for `clicked`. No `_loc<N>_` identifiers. Import the shim as `'../shim'` (the path used in the emitted `src/`).
-    - Make these files resolvable in the repo: add a `tsconfig.handwritten.json` with `rootDirs` of `handwritten/clickgoto` and `template/src`, and a Vitest `resolve.alias` for imports of `../shim` from `handwritten/`. Add a `typecheck:handwritten` script.
+    - Make these files resolvable in the repo: add a `tsconfig.handwritten.json` with `rootDirs` of `handwritten/clickgoto` and `template/src`, and a Vitest `resolve.alias` for imports of `../shim` from `handwritten/`. (The `typecheck:handwritten` script and `tsconfig.handwritten.json` were later removed by translate task 16.1.)
     - _Requirements: 8.1, 8.3_
 
   - [x] 11.2 Add the provenance parser and the repository provenance test
@@ -330,7 +330,7 @@ Rules that apply to every task:
     - _Requirements: 4.8, 5.5, 5.6, 5.7, 9.1, 10.5, 10.6, 10.8_
 
 - [x] 18. Final checkpoint - Ensure all tests pass
-  - Run `npm test -- --run` (all required tests, including the click oracle, provenance and e2e tests, plus any optional tests present), `npm run typecheck`, `npm run typecheck:template` and `npm run typecheck:handwritten`. Ensure all tests pass, ask the user if questions arise.
+  - Run `npm test -- --run` (all required tests, including the click oracle, provenance and e2e tests, plus any optional tests present), `npm run typecheck` and `npm run typecheck:template`. Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
 

@@ -215,8 +215,8 @@ Rules that apply to every task:
     - Matches the "Fixture project" row of the design's Testing Strategy.
     - _Requirements: 4.6, 5.6, 5.8_
 
-- [ ] 17. End-to-end conversion of both samples
-  - [-] 17.1 Convert both samples and verify the gate and the build
+- [x] 17. End-to-end conversion of both samples
+  - [x] 17.1 Convert both samples and verify the gate and the build
     - Run `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --force` and `npm run pipeline -- samples/tweendemo/test.swf out/tweendemo --force`. Confirm for each: exit 0; `src/` holds `EventWatcher.ts`, `LeftButton.ts`, `MainTimeline.ts`, `RightButton.ts`; `src/classes.ts` registers exactly `LeftButton`, `MainTimeline`, `RightButton`; 0 files copied from `handwritten/`; `[typecheck] ok (0 errors)`; `translation-report.json` lists the four classes each `clean` or `loose` and none `unsupported`, with empty `typeErrors` and `otherErrors`.
     - In each `out/<sample>` run `npm install`, `npm run typecheck` and `npm run build`; `npm run build` must exit 0. Fix the Transpiler, Emitter or Shim within scope if anything fails; if the cause is outside this spec, stop and ask.
     - Run the pipeline twice per sample and compare the output trees, including `translation-report.json`, byte for byte.
@@ -226,14 +226,14 @@ Rules that apply to every task:
     - In `test/e2e/pipeline.e2e.test.ts` assert for every sample: the four class files exist, `src/classes.ts` registers exactly three names, `translation-report.json` has four classes with none `unsupported` and empty `typeErrors` and `otherErrors`, `npm run build` exits 0, and two runs are byte-identical. Keep the existing missing-dependency failure behaviour.
     - _Requirements: 4.4, 5.5, 5.6, 5.8, 5.9_
 
-- [~] 18. Checkpoint - Both samples run in the browser
+- [x] 18. Checkpoint - Both samples run in the browser
   - Ensure all tests pass, ask the user if questions arise. Run `npm test -- --run` and `npm run typecheck`, then the two pipeline commands of Task 17.1.
   - Ask the user to start each project manually in their own terminal: in `out/clickgoto` and `out/tweendemo` run `npm run dev` (or `npm run build` then `npx vite preview`). The agent must not start or wait on a dev or preview server.
   - Ask the user to confirm `clickgoto` against every row of the Expected_State table in `samples/clickgoto/PROVENANCE.md`, and `tweendemo` against its `PROVENANCE.md` (both buttons on frame 1 and stopped at start, clicks behave as in clickgoto, the tween plays, the root stops after about 30 frames).
   - Stop and wait for the user's visual confirmation before continuing.
 
 - [ ] 19. Update steering status
-  - [~] 19.1 Update `tech.md` and `structure.md` if needed
+  - [-] 19.1 Update `tech.md` and `structure.md` if needed
     - Compare `.kiro/steering/tech.md` and `.kiro/steering/structure.md` with the repository: pipeline now `unpack -> convert -> translate -> emit`, `src/translate/` stage layout, `template/shim/ADDED_APIS.md`, `typescript-js` alias and why, `handwritten/` as an optional override directory, removed `typecheck:handwritten`, confirmed `npm run` scripts from `package.json`. Edit only what is stale; make no change if nothing is. Keep wording tight and do not touch the FFDec facts.
     - _Requirements: 4.2, 5.5_
 
