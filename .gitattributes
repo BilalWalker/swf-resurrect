@@ -1,0 +1,10 @@
+# Keep LF in the working tree on every platform. The pipeline promises
+# byte-identical output and tests compare fixture bytes, so Git must not
+# rewrite line endings to CRLF on Windows checkouts.
+* text=auto eol=lf
+
+# Binary inputs: never touch.
+*.swf binary
+*.png binary
+*.jpg binary
+*.mp3 binary
