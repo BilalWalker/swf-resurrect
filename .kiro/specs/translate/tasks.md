@@ -237,7 +237,7 @@ Rules that apply to every task:
     - Compare `.kiro/steering/tech.md` and `.kiro/steering/structure.md` with the repository: pipeline now `unpack -> convert -> translate -> emit`, `src/translate/` stage layout, `template/shim/ADDED_APIS.md`, `typescript-js` alias and why, `handwritten/` as an optional override directory, removed `typecheck:handwritten`, confirmed `npm run` scripts from `package.json`. Edit only what is stale; make no change if nothing is. Keep wording tight and do not touch the FFDec facts.
     - _Requirements: 4.2, 5.5_
 
-- [-] 20. Final checkpoint - Ensure all tests pass
+- [x] 20. Final checkpoint - Ensure all tests pass
   - Run `npm test -- --run` (including the three required property tests), `npm run typecheck` and `npm run typecheck:template`. Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
