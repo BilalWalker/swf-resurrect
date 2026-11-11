@@ -1,11 +1,9 @@
 import { Application } from 'pixi.js';
-import type { ShapeBounds } from '../runtime/backend';
+import { loadScene } from '../runtime/loader';
 import { Player } from '../runtime/player';
 import { PixiBackend } from '../runtime/pixi/pixiBackend';
-import { parseScene, type SceneJson } from '../runtime/scene';
+import type { SceneJson } from '../runtime/scene';
 import { classRegistry } from './classes';
-
-const SCENE_URL = 'assets/scene.json';
 
 /** True when any placement in the scene has a non-zero colour offset. */
 function hasColorOffsets(scene: SceneJson): boolean {
@@ -30,30 +28,10 @@ async function fetchText(url: string): Promise<string> {
 async function boot(): Promise<void> {
   const backend = new PixiBackend();
 
-  // Scene_JSON: on any failure show the error and render no frames (Req 6.6).
-  let scene: SceneJson;
-  try {
-    scene = parseScene(await fetchText(SCENE_URL));
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    backend.showError(`Scene_JSON failed to load (${SCENE_URL}): ${detail}`);
-    return;
-  }
-
-  // Shapes: any failure names the asset and playback never starts (Req 6.7).
-  const shapeBounds = new Map<number, ShapeBounds>();
-  for (const [key, sym] of Object.entries(scene.symbols)) {
-    if (sym.type !== 'shape') continue;
-    const id = Number(key);
-    try {
-      const svg = await fetchText(`assets/${sym.file}`);
-      shapeBounds.set(id, await backend.loadShape(id, svg, sym.origin));
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      backend.showError(`SVG asset ${sym.file} failed to load: ${detail}`);
-      return;
-    }
-  }
+  // Req 6.6 and 6.7: on failure an error is shown and no frame is rendered.
+  const loaded = await loadScene(fetchText, backend);
+  if (loaded === null) return;
+  const { scene, shapeBounds } = loaded;
 
   if (hasColorOffsets(scene)) backend.warnColorOffsetsUnsupported();
 

@@ -27,3 +27,15 @@ export class OutputDirNotEmptyError extends EmitError {
     super(`Output directory is not empty: ${outputDir}. Use --force to replace its contents.`);
   }
 }
+
+export class EmitWriteError extends EmitError {
+  readonly code = 'EMIT_WRITE_FAILED';
+  constructor(
+    readonly path: string,
+    readonly cause: unknown,
+  ) {
+    super(
+      `Failed to write ${path}: ${cause instanceof Error ? cause.message : String(cause)}. Files written by this run were removed.`,
+    );
+  }
+}

@@ -73,6 +73,12 @@ export class FakeBackend implements RenderBackend {
     this.errors.push(message);
   }
 
+  offsetWarnings = 0;
+
+  warnColorOffsetsUnsupported(): void {
+    this.offsetWarnings++;
+  }
+
   /** Nodes not destroyed. */
   get liveNodes(): FakeNode[] {
     return this.nodes.filter((n) => !n.destroyed);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { hitTest, type HitNode } from '../../template/runtime/hitTest';
 import { ScriptQueue } from '../../template/runtime/scriptQueue';
+import { decomposeMatrix } from '../../template/runtime/stageTree';
 
 function node(over: Partial<HitNode> & { name?: string } = {}): HitNode & { name?: string } {
   return { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0, visible: true, ...over };
@@ -45,6 +46,20 @@ describe('ScriptQueue', () => {
     q.enqueue({ frameScripts: new Map() }, 3);
     expect(() => q.drain()).not.toThrow();
     expect(q.size).toBe(0);
+  });
+});
+
+describe('decomposeMatrix', () => {
+  it('flags a skewed matrix and keeps scale and rotation from the first column', () => {
+    const { t, skewed } = decomposeMatrix([1, 0, 1, 1, 3, 4]);
+    expect(skewed).toBe(true);
+    expect(t.scaleX).toBe(1);
+    expect(t.x).toBe(3);
+  });
+
+  it('does not flag a pure rotation and scale', () => {
+    expect(decomposeMatrix([0, 2, -3, 0, 0, 0]).skewed).toBe(false);
+    expect(decomposeMatrix([1, 0, 0, 1, 0, 0]).skewed).toBe(false);
   });
 });
 

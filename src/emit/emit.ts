@@ -1,10 +1,10 @@
 // IO part of the Emitter, including --force safety checks and deletion.
-import { mkdir, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
-import { basename, dirname, join, resolve } from 'node:path';
+import { access, mkdir, readdir, readFile, realpath, rm, rmdir, writeFile } from 'node:fs/promises';
+import { basename, dirname, join, resolve, sep } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
 import { serialiseScene } from '../convert/sceneJson';
 import type { SvgFile } from '../convert/convertModel';
-import { OutputDirNotEmptyError, UnsafeForceTargetError } from './errors';
+import { EmitWriteError, OutputDirNotEmptyError, UnsafeForceTargetError } from './errors';
 import { checkForceTarget } from './forceSafety';
 import { planEmit } from './planEmit';
 import type { EmittedFile, HandwrittenClass, TemplateFile } from './planEmit';
@@ -17,6 +17,8 @@ export interface EmitOptions {
   homeDir: string;
   templateDir: string;
   handwrittenDir: string | null;
+  /** Injectable file writer (defaults to fs.writeFile, utf8). Used to test write failures. */
+  writeFile?: (path: string, content: string) => Promise<void>;
 }
 
 export interface EmitResult {
@@ -81,6 +83,39 @@ async function loadHandwritten(dir: string | null): Promise<HandwrittenClass[]> 
   return out;
 }
 
+/** The highest ancestor of dir (or dir itself) that does not exist yet, or null if dir exists. */
+async function topMissingDir(dir: string): Promise<string | null> {
+  let top: string | null = null;
+  for (let d = dir; ; d = dirname(d)) {
+    try {
+      await access(d);
+      return top;
+    } catch {
+      top = d;
+      if (dirname(d) === d) return top;
+    }
+  }
+}
+
+/**
+ * Best-effort removal of what this run created: its files, then the directories it created
+ * (deepest first, with rmdir so a directory that gained foreign content is left alone).
+ */
+async function cleanupRun(files: string[], createdTops: string[]): Promise<void> {
+  const dirs = new Set<string>();
+  for (const file of files) {
+    await rm(file, { force: true }).catch(() => undefined);
+    for (let d = dirname(file); ; d = dirname(d)) {
+      const inside = createdTops.some((top) => d === top || d.startsWith(top + sep));
+      if (!inside) break;
+      dirs.add(d);
+    }
+  }
+  for (const d of [...dirs].sort((a, b) => b.length - a.length)) {
+    await rmdir(d).catch(() => undefined);
+  }
+}
+
 export async function emit(artifact: ConvertedArtifact, options: EmitOptions): Promise<EmitResult> {
   const outputDir = await resolveOutputDir(options.outputDir);
 
@@ -119,10 +154,23 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     }
   }
 
-  for (const file of plan) {
-    const target = join(outputDir, ...file.path.split('/'));
-    await mkdir(dirname(target), { recursive: true });
-    await writeFile(target, file.content, 'utf8');
+  const write = options.writeFile ?? ((p: string, c: string) => writeFile(p, c, 'utf8'));
+  const writtenFiles: string[] = [];
+  const createdTops: string[] = []; // topmost directory each mkdir created in this run
+  let failing = outputDir;
+  try {
+    for (const file of plan) {
+      const target = join(outputDir, ...file.path.split('/'));
+      failing = target;
+      const top = await topMissingDir(dirname(target));
+      if (top !== null) createdTops.push(top);
+      await mkdir(dirname(target), { recursive: true });
+      writtenFiles.push(target); // before the write: a failed write may leave a partial file
+      await write(target, file.content);
+    }
+  } catch (err) {
+    await cleanupRun(writtenFiles, createdTops);
+    throw new EmitWriteError(failing, err);
   }
   return { outputDir, files: plan.map((f) => f.path) };
 }

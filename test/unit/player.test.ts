@@ -207,6 +207,46 @@ describe('Player instance creation', () => {
   });
 });
 
+describe('Player colour offsets and scripted children', () => {
+  it('reports non-zero colour offsets to the backend and stays silent for zero offsets', () => {
+    const withOffset: DisplayListEntry = { ...entry(1, 1), colorTransform: [1, 1, 1, 1, 0, 10, 0, 0] };
+    const a = setup(sceneOf(sprite([[withOffset]])));
+    expect(a.backend.offsetWarnings).toBeGreaterThan(0);
+    const b = setup(sceneOf(sprite([[{ ...entry(1, 1), colorTransform: [0.5, 1, 1, 1, 0, 0, 0, 0] }]])));
+    expect(b.backend.offsetWarnings).toBe(0);
+  });
+
+  it('draws a child added by script above timeline children, including ones created later', () => {
+    const root = sprite([[entry(1, 1)], [entry(1, 1), entry(2, 1)]]);
+    const { backend, clock, player } = setup(sceneOf(root));
+    const extra = new MovieClip();
+    player.root.addChild(extra);
+    tick(clock, player, 0); // sync
+    const kids = (player.rootNode as FakeNode).children;
+    expect(kids).toHaveLength(2);
+    expect(kids[1]!.kind).toBe('container');
+    expect(kids[1]!.symbolId).toBeNull();
+    tick(clock, player, 100); // timeline adds depth 2 below the scripted child
+    const after = (player.rootNode as FakeNode).children;
+    expect(after).toHaveLength(3);
+    expect(after[2]!.symbolId).toBeNull();
+    expect(after[0]!.symbolId).toBe(1);
+    expect(after[1]!.symbolId).toBe(1);
+    expect(backend.errors).toEqual([]);
+  });
+
+  it('removes the node of a child removed by script', () => {
+    const { player } = setup(sceneOf(sprite([[entry(1, 1)]])));
+    const extra = new MovieClip();
+    player.root.addChild(extra);
+    player.update();
+    expect((player.rootNode as FakeNode).children).toHaveLength(2);
+    player.root.removeChild(extra);
+    player.update();
+    expect((player.rootNode as FakeNode).children).toHaveLength(1);
+  });
+});
+
 describe('Player.dispatchClick', () => {
   function clickScene() {
     let clicks: Array<{ target: unknown; current: unknown }> = [];
@@ -245,6 +285,24 @@ describe('Player.dispatchClick', () => {
     player.dispatchClick(5, 5);
     player.dispatchClick(141, 60); // just right of the 40 px wide shape
     expect(clicks()).toHaveLength(0);
+  });
+
+  it('sets currentTarget to the object whose listener runs, at every ancestor', () => {
+    const { player } = clickScene();
+    const btn = (player.root as unknown as { btn: MovieClip }).btn;
+    const seen: Array<{ owner: unknown; target: unknown; current: unknown }> = [];
+    player.root.addEventListener(MouseEvent.CLICK, (e) =>
+      seen.push({ owner: player.root, target: e.target, current: e.currentTarget }),
+    );
+    btn.addEventListener(MouseEvent.CLICK, (e) => seen.push({ owner: btn, target: e.target, current: e.currentTarget }));
+    player.dispatchClick(110, 60);
+    expect(seen).toHaveLength(2);
+    for (const s of seen) expect(s.current).toBe(s.owner);
+    expect(seen[0]!.owner).toBe(btn);
+    expect(seen[1]!.owner).toBe(player.root);
+    // The hit shape is the target everywhere, never the ancestor.
+    expect(seen[0]!.target).not.toBe(btn);
+    expect(seen[1]!.target).toBe(seen[0]!.target);
   });
 
   it('warns once, not per entry, for a skewed matrix', () => {

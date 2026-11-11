@@ -72,7 +72,7 @@ export class Player {
       throw new Error(`Player: root symbol ${this.scene.rootSymbolId} is not a sprite`);
     }
     this.root = this.createClip(this.scene.rootSymbolId, rootSymbol);
-    this.nodes.syncTree(this.backend, this.root);
+    this.syncAll();
   }
 
   /** Backend node of the root clip; the adapter adds it to the stage. */
@@ -97,7 +97,7 @@ export class Player {
       this.accumulator %= this.frameIntervalMs;
     }
     if (this.accumulator < 0) this.accumulator = 0;
-    this.nodes.syncTree(this.backend, this.root);
+    this.syncAll();
   }
 
   /** Hit tests the stage point, then delivers a click to the target and each ancestor. */
@@ -111,7 +111,7 @@ export class Player {
     for (let cur: DisplayObject | null = target; cur !== null; cur = cur._parent) {
       cur.dispatchEvent(e);
     }
-    this.nodes.syncTree(this.backend, this.root);
+    this.syncAll();
   }
 
   // ---- instance creation ----
@@ -146,16 +146,60 @@ export class Player {
 
   // ---- hooks ----
 
-  private attach(parent: DisplayObjectContainer, child: DisplayObject, index: number): void {
-    const p = this.nodes.nodeOf(parent);
-    const c = this.nodes.nodeOf(child);
-    if (p !== undefined && c !== undefined) this.backend.addChildAt(p, c, index);
+  private attach(parent: DisplayObjectContainer, _child: DisplayObject, _index: number): void {
+    // Rebuilds the node order from the shim child list, so scripted children stay above lower timeline ones.
+    this.reconcile(parent);
   }
+
+  /**
+   * Makes the backend children of `parent` match `parent._children`: creates nodes for
+   * children added by script, removes nodes of children removed by script, fixes order.
+   */
+  private reconcile(parent: DisplayObjectContainer): void {
+    const pNode = this.nodes.nodeOf(parent);
+    if (pNode === undefined) return;
+    const want = parent._children;
+    const have = this.attachedOrder.get(parent) ?? [];
+    if (have.length === want.length && have.every((c, i) => c === want[i])) return;
+    for (const c of have) {
+      if (want.includes(c)) continue;
+      const n = this.nodes.nodeOf(c);
+      if (n !== undefined) this.backend.removeChild(pNode, n);
+    }
+    want.forEach((c, i) => {
+      let n = this.nodes.nodeOf(c);
+      if (n === undefined) {
+        n = this.backend.createContainer();
+        this.nodes.register(c, n);
+        this.backend.setTransform(n, { x: c.x, y: c.y, scaleX: c.scaleX, scaleY: c.scaleY, rotationDeg: c.rotation });
+        this.backend.setAlpha(n, c.alpha);
+        this.backend.setVisible(n, c.visible);
+      }
+      this.backend.addChildAt(pNode, n, i);
+    });
+    this.attachedOrder.set(parent, want.slice());
+  }
+
+  /** Reconciles node lists for the whole tree, then pushes script-changed properties. */
+  private syncAll(): void {
+    const walk = (o: DisplayObject): void => {
+      const kids = (o as Partial<DisplayObjectContainer>)._children;
+      if (kids === undefined) return;
+      this.reconcile(o as DisplayObjectContainer);
+      for (const k of [...kids]) walk(k);
+    };
+    walk(this.root);
+    this.nodes.syncTree(this.backend, this.root);
+  }
+
+  private readonly attachedOrder = new WeakMap<DisplayObject, DisplayObject[]>();
 
   /** Destroys the child's node; the backend releases the subtree below it with it. */
   private detach(parent: DisplayObjectContainer, child: DisplayObject): void {
     const p = this.nodes.nodeOf(parent);
     const c = this.nodes.nodeOf(child);
+    const order = this.attachedOrder.get(parent);
+    if (order !== undefined) this.attachedOrder.set(parent, order.filter((o) => o !== child));
     if (c === undefined) return;
     if (p !== undefined) this.backend.removeChild(p, c);
     this.backend.destroyNode(c);
@@ -173,6 +217,7 @@ export class Player {
   private applyColor(child: DisplayObject, ct: DisplayListEntry['colorTransform']): void {
     const node = this.nodes.nodeOf(child);
     if (node === undefined) return;
+    if (ct[4] !== 0 || ct[5] !== 0 || ct[6] !== 0 || ct[7] !== 0) this.backend.warnColorOffsetsUnsupported?.();
     // Identity on a fresh node needs no call; a change back to identity is an explicit call from a later entry.
     if (isIdentityColor(ct) && !this.coloured.has(child)) return;
     this.coloured.add(child);

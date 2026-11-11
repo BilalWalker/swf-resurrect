@@ -156,6 +156,24 @@ describe('MovieClip frame scripts', () => {
     expect(String(warn.mock.calls[1]![0])).toContain('-1');
   });
 
+  it('warns about an odd argument count and registers only the complete pairs', () => {
+    const mc = make(rig(symbol([[], []])));
+    const fn = () => {};
+    mc.addFrameScript(0, fn, 1);
+    expect(mc.frameScripts.get(1)).toBe(fn);
+    expect(mc.frameScripts.size).toBe(1);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]![0])).toContain('odd');
+  });
+
+  it('warns about a non-function and registers nothing for that pair', () => {
+    const mc = make(rig(symbol([[], []])));
+    mc.addFrameScript(0, 'nope' as unknown as () => void);
+    expect(mc.frameScripts.size).toBe(0);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]![0])).toContain('function');
+  });
+
   it('goto runs the target script at once, after rendering, outside a script', () => {
     const r = rig(symbol([[], [entry(1, 9)]]));
     const mc = make(r);

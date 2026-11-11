@@ -23,6 +23,8 @@ export interface RenderBackend {
   setAlpha(node: NodeHandle, alpha: number): void;
   setVisible(node: NodeHandle, visible: boolean): void;
   setColorMultiplier(node: NodeHandle, r: number, g: number, b: number, a: number): void;
+  /** Called when a colour transform has non-zero offsets, which the backend cannot draw. May be called repeatedly. */
+  warnColorOffsetsUnsupported?(): void;
   destroyNode(node: NodeHandle): void;
   /** On-page error text. */
   showError(message: string): void;

@@ -619,6 +619,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794388616356
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388720295
       }
     ],
     "14. Checkpoint - Sample runs in the browser": [
@@ -626,6 +631,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386565893
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388732408
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389579024
       }
     ],
     "15.1 Add emitter write-failure cleanup": [
@@ -633,6 +648,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386566032
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389874760
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389982757
       }
     ],
     "15.2 Complete the Unpacker error paths": [
@@ -640,6 +665,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386566183
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389591371
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389714443
       }
     ],
     "15.3 Complete the Converter error paths": [
@@ -647,6 +682,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386566289
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389591473
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389714577
       }
     ],
     "15.4 Complete unsupported-feature reporting and refusal handling in the pipeline": [
@@ -654,6 +699,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386566427
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389983237
       }
     ],
     "15.5 Complete the runtime error overlay": [
@@ -661,6 +711,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386566521
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389591582
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389714713
       }
     ],
     "15.6 Close remaining shim and runtime coverage gaps": [
@@ -668,6 +728,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386566655
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389719053
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794389867871
       }
     ],
     "17.1 Write the e2e smoke test": [
@@ -717,6 +787,13 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794388612143
+      }
+    ],
+    "13. Pipeline glue": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388720399
       }
     ]
   }

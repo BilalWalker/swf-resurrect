@@ -6,11 +6,9 @@ import type { ConvertedArtifact } from '../../src/convert/writeConverted';
 import { runPipeline } from '../../src/pipeline/pipeline';
 import type { PipelineArgs, PipelineStages } from '../../src/pipeline/pipeline';
 import { PipelineError } from '../../src/pipeline/errors';
+import { EmitWriteError, OutputDirNotEmptyError, UnsafeForceTargetError } from '../../src/emit/errors';
+import { InvalidSwfError } from '../../src/unpack/errors';
 
-class FakeEmitRefusal extends PipelineError {
-  readonly stage = 'emit' as const;
-  readonly code = 'OUTPUT_DIR_NOT_EMPTY';
-}
 class FakeConvertFailure extends PipelineError {
   readonly stage = 'convert' as const;
   readonly code = 'X';
@@ -162,13 +160,77 @@ describe('runPipeline', () => {
     await writeFile(join(outDir, 'keep.txt'), 'x');
     const stages = makeStages({
       async emit() {
-        throw new FakeEmitRefusal('not empty');
+        throw new OutputDirNotEmptyError(outDir);
       },
     });
     expect(await runPipeline(args(), stages, io)).toBe(1);
     expect(await readdir(outDir)).toEqual(['keep.txt']);
-    expect(err).toContain('error [emit]: not empty');
+    expect(err).toContain('error [emit]:');
     expect(err).toContain('"untranslated-class"');
+  });
+
+  it('refuses a non-empty directory with the real error: list on stderr, nothing written', async () => {
+    await mkdir(outDir);
+    await writeFile(join(outDir, 'keep.txt'), 'x');
+    const stages = makeStages({
+      async emit() {
+        throw new OutputDirNotEmptyError(outDir);
+      },
+    });
+    expect(await runPipeline(args(), stages, io)).toBe(1);
+    expect(await readdir(outDir)).toEqual(['keep.txt']);
+    expect(err).toContain('error [emit]:');
+    expect(err).toContain('"text"');
+  });
+
+  it('refuses an unsafe --force target with the real error: list on stderr, nothing written', async () => {
+    const stages = makeStages({
+      async emit() {
+        throw new UnsafeForceTargetError(outDir, 'home-directory');
+      },
+    });
+    expect(await runPipeline(args({ force: true }), stages, io)).toBe(1);
+    expect(await exists(outDir)).toBe(false);
+    expect(err).toContain('home-directory');
+    expect(err).toContain('"untranslated-class"');
+  });
+
+  it('writes the list after an EmitWriteError', async () => {
+    const stages = makeStages({
+      async emit() {
+        throw new EmitWriteError(join(outDir, 'x'), new Error('EIO'));
+      },
+    });
+    expect(await runPipeline(args(), stages, io)).toBe(1);
+    expect(err).toContain('error [emit]:');
+    const text = await readFile(join(outDir, 'unsupported-features.json'), 'utf8');
+    expect(text).toContain('"text"');
+  });
+
+  it('writes no list after an unpack failure', async () => {
+    const stages = makeStages({
+      async unpack() {
+        calls.push('unpack');
+        throw new InvalidSwfError(swf);
+      },
+    });
+    expect(await runPipeline(args(), stages, io)).toBe(1);
+    expect(calls).toEqual(['unpack']);
+    expect(await exists(outDir)).toBe(false);
+  });
+
+  it('passes --force through to the emit stage', async () => {
+    const seen: boolean[] = [];
+    const stages = makeStages({
+      async emit(_a, o) {
+        seen.push(o.force);
+        await mkdir(o.outputDir, { recursive: true });
+        return { outputDir: o.outputDir, files: [] };
+      },
+    });
+    await runPipeline(args({ force: true }), stages, io);
+    await runPipeline(args({ force: false }), stages, io);
+    expect(seen).toEqual([true, false]);
   });
 
   it('exits 2 without running a stage when the SWF is missing', async () => {

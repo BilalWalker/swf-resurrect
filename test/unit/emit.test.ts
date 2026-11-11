@@ -6,7 +6,7 @@ import type { SceneJson } from '../../template/runtime/scene';
 import type { ConvertedArtifact } from '../../src/convert/writeConverted';
 import { serialiseScene } from '../../src/convert/sceneJson';
 import { emit } from '../../src/emit/emit';
-import { OutputDirNotEmptyError } from '../../src/emit/errors';
+import { EmitWriteError, OutputDirNotEmptyError } from '../../src/emit/errors';
 import { planEmit } from '../../src/emit/planEmit';
 import type { EmitInput } from '../../src/emit/planEmit';
 
@@ -150,6 +150,43 @@ describe('emit', () => {
     await expect(emit(await artifact(), await options(out))).rejects.toBeInstanceOf(OutputDirNotEmptyError);
     expect(await readdir(out)).toEqual(['keep.txt']);
     expect(await readFile(join(out, 'keep.txt'), 'utf8')).toBe('mine');
+  });
+
+  it('removes this run\'s files and directories when a write fails, and reports no success', async () => {
+    const out = join(root, 'made', 'by', 'run');
+    let calls = 0;
+    const opts = {
+      ...(await options(out)),
+      writeFile: async (p: string, c: string) => {
+        calls += 1;
+        if (calls === 3) throw new Error('disk full');
+        await writeFile(p, c, 'utf8');
+      },
+    };
+    const err = await emit(await artifact(), opts).then(
+      () => null,
+      (e: unknown) => e,
+    );
+    expect(err).toBeInstanceOf(EmitWriteError);
+    expect((err as EmitWriteError).code).toBe('EMIT_WRITE_FAILED');
+    expect((err as EmitWriteError).message).toContain('disk full');
+    expect((err as EmitWriteError).message).toContain((err as EmitWriteError).path);
+    expect(calls).toBe(3);
+    expect(await readdir(root)).not.toContain('made');
+  });
+
+  it('keeps a pre-existing output directory and its parents when cleaning up', async () => {
+    const out = join(root, 'out');
+    await mkdir(out, { recursive: true });
+    const opts = {
+      ...(await options(out)),
+      writeFile: async (p: string, c: string) => {
+        if (p.endsWith('package.json')) throw new Error('boom');
+        await writeFile(p, c, 'utf8');
+      },
+    };
+    await expect(emit(await artifact(), opts)).rejects.toBeInstanceOf(EmitWriteError);
+    expect(await readdir(out)).toEqual([]);
   });
 
   it('accepts an existing empty directory', async () => {
