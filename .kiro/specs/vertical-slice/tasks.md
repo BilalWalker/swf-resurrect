@@ -18,8 +18,8 @@ Rules that apply to every task:
 
 ## Tasks
 
-- [ ] 1. Scaffold the repository
-  - [ ] 1.1 Create the project skeleton and tooling
+- [x] 1. Scaffold the repository
+  - [x] 1.1 Create the project skeleton and tooling
     - Create `package.json` (name `swf-resurrect`, `"type": "module"`), `tsconfig.json` (strict, covers `src/` and `test/`), `tsconfig.template.json` (strict, covers `template/`, DOM lib, used by a `typecheck:template` script), `vitest.config.ts`.
     - Choose exact versions with `npm view <pkg> version` for `typescript`, `vitest`, `fast-check`, `fast-xml-parser`, `tsx`, `@types/node`, and the PixiJS and Vite versions needed to typecheck `template/` (pixi.js and vite are also recorded for Task 7.1). Write them without range operators.
     - Scripts: `test` (`vitest`, so `npm test -- --run` is a single run), `typecheck` (`tsc --noEmit`), `typecheck:template`, `pipeline` (`tsx src/pipeline/cli.ts`).

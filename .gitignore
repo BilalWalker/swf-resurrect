@@ -4,6 +4,9 @@ tools/
 # Dependencies and build output
 node_modules/
 dist/
+*.tsbuildinfo
+tools/ffdec/
+tools/ffdec_*.zip
 
 # Pipeline working and output directories
 .work/
