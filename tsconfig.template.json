@@ -11,5 +11,5 @@
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["template/**/*.ts", "handwritten/**/*.ts"]
+  "include": ["template/**/*.ts"]
 }

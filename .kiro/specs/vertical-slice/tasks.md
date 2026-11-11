@@ -145,7 +145,7 @@ Rules that apply to every task:
     - Create `template/index.html`, `template/vite.config.ts` (relative base), `template/tsconfig.json` (strict), and `template/src/classes.ts` (default empty `classRegistry`, replaced by the generated file during planning). Do not create `package.json` there (it is generated).
     - _Requirements: 5.1, 5.2_
 
-  - [~] 7.3 Implement `planEmit` and a basic `emit`
+  - [-] 7.3 Implement `planEmit` and a basic `emit`
     - Create `src/emit/planEmit.ts` (pure): copies template files, generates `package.json` and `src/classes.ts` (import and registry entry for each handwritten class linked in the Symbol_Table), copies `assets/scene.json` and `assets/<id>.svg`, sorted by path, `\n` line endings.
     - Create `src/emit/emit.ts`: resolve the output directory, refuse a non-empty directory when `force` is false (`OutputDirNotEmptyError`, directory untouched), plan in memory, write files in sorted order. The `--force` deletion logic is added in Task 7.4.
     - _Requirements: 5.1, 5.2, 5.7, 5.8_
@@ -201,7 +201,7 @@ Rules that apply to every task:
     - Create `test/unit/provenance.test.ts` that walks every `.swf` under `samples/`, fails naming the file and field when the note is missing or invalid, fails when no Click_Sample exists or its Expected_State is invalid. Also assert no `_loc<N>_` in `handwritten/` and no LLM client in `package.json` dependencies.
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 9.7, 10.9, 10.10_
 
-  - [~] 11.3 Write the click oracle test
+  - [-] 11.3 Write the click oracle test
     - Create `test/unit/clickOracle.test.ts`. Build the Click_Sample scene from the fixtures through `readUnpacked` and `convertModel` (or a committed fixture model), create a `Player` with the fake backend, `ManualClock`, and a registry of the real handwritten `LeftButton` and `RightButton`. Drive the Expected_State rows parsed from `PROVENANCE.md`: start state, click inside `l_button`, reset, click inside `r_button`, one tick after the second click shows the looping behaviour, a click outside every object changes nothing, and each button's placement equals (143.5, 270) and (415, 272.5).
     - Use `parseExpectedState` as the oracle. Do not hard-code the table.
     - _Requirements: 1.4, 7.10, 8.2, 8.3, 8.4, 8.5, 10.4_
