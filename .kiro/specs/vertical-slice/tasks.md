@@ -325,7 +325,7 @@ Rules that apply to every task:
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.7_
 
 - [ ] 17. End-to-end smoke test
-  - [~] 17.1 Write the e2e smoke test
+  - [-] 17.1 Write the e2e smoke test
     - Create `test/e2e/pipeline.e2e.test.ts`. In `beforeAll`, check that Java, `tools/ffdec/ffdec-cli.jar` and at least one Sample_SWF exist, and throw an error naming the missing dependency otherwise (never skip, never pass). Run the pipeline on every `samples/**/*.swf` into a temp directory, then `npm install --no-audit --no-fund`, `npm run typecheck` and `npm run build` in each emitted project, requiring exit code 0 and a build output containing `index.html` and a JavaScript file. Run the pipeline twice and compare the two output trees byte for byte. Use a 10 minute timeout and a shared install cache so identical pinned dependencies install once.
     - _Requirements: 4.8, 5.5, 5.6, 5.7, 9.1, 10.5, 10.6, 10.8_
 
