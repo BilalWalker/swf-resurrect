@@ -6,7 +6,8 @@ import { serialiseScene } from '../convert/sceneJson';
 import type { SvgFile } from '../convert/convertModel';
 import { EmitWriteError, OutputDirNotEmptyError, UnsafeForceTargetError } from './errors';
 import { checkForceTarget } from './forceSafety';
-import { planEmit } from './planEmit';
+import type { TranslatedClass } from '../translate/planTranslate';
+import { planEmitDetailed } from './planEmit';
 import type { EmittedFile, HandwrittenClass, TemplateFile } from './planEmit';
 
 export interface EmitOptions {
@@ -16,6 +17,9 @@ export interface EmitOptions {
   cwd: string;
   homeDir: string;
   templateDir: string;
+  /** Emitted translated classes; the pipeline passes them from the translate stage (default none). */
+  translated?: readonly TranslatedClass[];
+  /** Override_Directory: its .ts files replace translated classes of the same name. */
   handwrittenDir: string | null;
   /** Injectable file writer (defaults to fs.writeFile, utf8). Used to test write failures. */
   writeFile?: (path: string, content: string) => Promise<void>;
@@ -24,6 +28,7 @@ export interface EmitOptions {
 export interface EmitResult {
   outputDir: string; // resolved absolute path
   files: string[]; // posix paths relative to outputDir, sorted
+  warnings?: string[]; // e.g. overrides that were ignored
 }
 
 function byCodeUnit(a: string, b: string): number {
@@ -137,15 +142,17 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
   for (const path of artifact.svgPaths) {
     svgFiles.push({ fileName: basename(path), content: await readFile(path, 'utf8') });
   }
-  const plan: EmittedFile[] = planEmit(
+  const planned = planEmitDetailed(
     {
       scene: artifact.scene,
       sceneJson: serialiseScene(artifact.scene),
       templates: await loadTemplates(options.templateDir),
+      translated: options.translated ?? [],
       handwritten: await loadHandwritten(options.handwrittenDir),
     },
     svgFiles,
   );
+  const plan: EmittedFile[] = planned.files;
 
   if (options.force && existing !== null) {
     // fs.rm does not follow links: a link is removed, its target survives.
@@ -172,5 +179,5 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     await cleanupRun(writtenFiles, createdTops);
     throw new EmitWriteError(failing, err);
   }
-  return { outputDir, files: plan.map((f) => f.path) };
+  return { outputDir, files: plan.map((f) => f.path), warnings: planned.warnings };
 }

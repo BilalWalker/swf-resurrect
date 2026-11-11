@@ -155,12 +155,12 @@ Rules that apply to every task:
     - A clean in-memory project gives 0 errors; an injected error in `src/LeftButton.ts` is attributed to that file and one in `runtime/player.ts` to another file; `pixi.js` resolves; messages contain no absolute path; `node_modules/pixi.js/package.json` version equals `PIXI_VERSION`.
     - _Requirements: 4.6, 4.7_
 
-- [ ] 12. Translation_Report and canonicalJson reuse (design T12, sections 6 and 10 D10)
+- [x] 12. Translation_Report and canonicalJson reuse (design T12, sections 6 and 10 D10)
   - [x] 12.1 Extract and reuse `canonicalJson`
     - Move the canonical JSON writer from `src/pipeline/unsupported.ts` into a shared `src/pipeline/canonicalJson.ts` (sorted keys, two-space indent, `\n`, one trailing newline) and make `unsupported.ts` use it with unchanged output. Existing tests must pass unchanged.
     - _Requirements: 4.4_
 
-  - [-] 12.2 Implement `report.ts` and add `untranslated-code`
+  - [x] 12.2 Implement `report.ts` and add `untranslated-code`
     - Add `'untranslated-code'` to `UnsupportedKind` in `src/convert/model.ts` (and any exhaustive switch over it).
     - Create `src/translate/report.ts` (pure): `classStatus`, `buildReport`, `serialiseReport` (via `canonicalJson`), `untranslatedCodeEntries` (one entry per `unsupported-construct` Diagnostic of every emitted, non-overridden class, class in `tag`, line in `message`). Type errors in `src/<Class>.ts` go on that class and raise its status to `unsupported`; other files go to `otherErrors`; `typeCheck` is `'ran'` or `'skipped'`; overridden classes list no Diagnostics; `as3Line` is a convenience and `null` for generated lines.
     - _Requirements: 4.4, 4.5, 4.6, 4.7_
@@ -170,7 +170,7 @@ Rules that apply to every task:
     - _Requirements: 4.4, 4.5, 4.7_
 
 - [ ] 13. Emitter, classes.ts and overrides (design T13, section 4)
-  - [~] 13.1 Change `planEmit` and `emit` to take translated classes
+  - [-] 13.1 Change `planEmit` and `emit` to take translated classes
     - Extend `EmitOptions` and `EmitInput` with `translated` and keep `handwritten` meaning the Override_Directory. `planEmit` writes `src/<Class>.ts` for every emitted translated class and for every override whose class is linked or in the closure (override text wins). An override for any other name is ignored and listed in `warnings`. Implement `buildClassesTs(scene, classNames)` registering exactly the Scene_JSON-linked names that are available, sorted by code unit (`LeftButton`, `MainTimeline`, `RightButton` for the samples; `EventWatcher` emitted but not registered). An empty Override_Directory copies 0 files. `package.json` generation unchanged.
     - _Requirements: 4.2, 4.3, 5.5_
 

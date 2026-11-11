@@ -284,6 +284,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794401353954
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794401512875
       }
     ],
     "13.1 Change `planEmit` and `emit` to take translated classes": [
@@ -291,6 +296,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277503
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794401513099
       }
     ],
     "14.1 Add translate and typeCheck stages to `runPipeline`": [
@@ -410,6 +420,13 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794401195555
+      }
+    ],
+    "12. Translation_Report and canonicalJson reuse (design T12, sections 6 and 10 D10)": [
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794401512982
       }
     ]
   }

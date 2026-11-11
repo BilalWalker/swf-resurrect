@@ -46,6 +46,7 @@ const input: EmitInput = {
     { path: 'index.html', content: '<html></html>\n' },
     { path: 'runtime/pixi/pixiBackend.ts', content: 'x\n' },
   ],
+  translated: [],
   handwritten: [
     { className: 'RightButton', fileName: 'RightButton.ts', source: 'unlinked\n' },
     { className: 'LeftButton', fileName: 'LeftButton.ts', source: 'left\r\n' },
