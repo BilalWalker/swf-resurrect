@@ -1,0 +1,183 @@
+{
+  "pbtResults": {
+    "2. Write bug condition exploration test": {
+      "status": "passed",
+      "failingExample": "Counterexample: [0,0,0,0.000001] (scaleX=0, scaleY=0, rotateSkew0=0, rotateSkew1=0.000001); parsed c = 1.52587890625e-11. Unit: scaleX=0.59999084 parsed a=0.0000091551.",
+      "lastRunTimestamp": 1794391460913
+    }
+  },
+  "executionHistory": {
+    "1. Capture tweendemo fixtures from a real FFDec run": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265383
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391271666
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391392191
+      }
+    ],
+    "2. Write bug condition exploration test": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265463
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391396064
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391560309
+      }
+    ],
+    "3. Write preservation property tests (BEFORE implementing fix)": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265527
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391396549
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391560576
+      }
+    ],
+    "4.1 Implement the fix": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265615
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391566060
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391608566
+      }
+    ],
+    "4.2 Verify bug condition exploration test now passes": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265657
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391615536
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391710253
+      }
+    ],
+    "4.3 Verify preservation tests still pass": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265699
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391615646
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391710375
+      }
+    ],
+    "5. Verify and update `FFDEC_XML` markers": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265763
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391615754
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391710519
+      }
+    ],
+    "6. Pixi backend check (report only)": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265828
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391616016
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391710596
+      }
+    ],
+    "7. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265892
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391714055
+      },
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391813960
+      }
+    ],
+    "8. Typecheck, test and commit locally": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391265961
+      },
+      {
+        "executionId": "6a499ea1-c102-4533-a692-dfc0289825b4",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794392140819
+      }
+    ],
+    "4. Fix `parseMatrix` plain decimal handling": [
+      {
+        "executionId": "80453e63-c7b3-44d4-9263-9449732ff883",
+        "chatSessionId": "sess_da7e113e-ca9b-42c3-8e78-61dc13e7fa78",
+        "timestamp": 1794391710435
+      }
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import { FFDEC_XML, parseStructure } from '../../src/convert/ffdecXml';
+
+const xml = readFileSync('test/fixtures/tweendemo/structure.xml', 'utf8');
+const lines = xml.split(/\r?\n/);
+
+/** True when the 1-based fixture line contains the text. */
+const lineHas = (n: number, text: string): boolean => (lines[n - 1] ?? '').includes(text);
+
+describe('FFDEC_XML names marked verified occur in the tweendemo fixture', () => {
+  it('matrix scale and skew attributes (lines 1122, 1127, 1333)', () => {
+    const m = FFDEC_XML.matrix;
+    expect(lineHas(1122, `${m.scaleX}="`)).toBe(true);
+    expect(lineHas(1122, `${m.scaleY}="`)).toBe(true);
+    expect(lineHas(1127, `${m.rotateSkew0}="`)).toBe(true);
+    expect(lineHas(1127, `${m.rotateSkew1}="`)).toBe(true);
+    expect(lineHas(1333, `${m.scaleX}="-1.3999939"`)).toBe(true);
+  });
+
+  it('colorTransform element and multiplier terms (lines 1123, 1334)', () => {
+    const c = FFDEC_XML.colorTransform;
+    expect(lineHas(1123, `<${c.element} `)).toBe(true);
+    for (const k of [c.redMultTerm, c.greenMultTerm, c.blueMultTerm, c.alphaMultTerm]) {
+      expect(lineHas(1123, `${k}="256"`)).toBe(true);
+    }
+    expect(lineHas(1334, `${c.alphaMultTerm}="77"`)).toBe(true);
+  });
+
+  it('add-term names do not occur (stay UNVERIFIED)', () => {
+    const c = FFDEC_XML.colorTransform;
+    for (const k of [c.redAddTerm, c.greenAddTerm, c.blueAddTerm, c.alphaAddTerm]) {
+      expect(xml.includes(`${k}=`)).toBe(false);
+    }
+  });
+
+  it('FrameLabelTag with name attribute (lines 1120, 1236, 1337)', () => {
+    const t = FFDEC_XML.timeline;
+    expect(lineHas(1120, `type="${t.frameLabel}"`)).toBe(true);
+    expect(lineHas(1120, `${t.frameLabelNameAttr}="start"`)).toBe(true);
+    expect(lineHas(1236, `${t.frameLabelNameAttr}="middle"`)).toBe(true);
+    expect(lineHas(1337, `${t.frameLabelNameAttr}="gone"`)).toBe(true);
+  });
+
+  it('RemoveObject2Tag with depth attribute (line 1338)', () => {
+    expect(lineHas(1338, `type="${FFDEC_XML.remove.removeObject2}"`)).toBe(true);
+    expect(lineHas(1338, `${FFDEC_XML.remove.depth}="10"`)).toBe(true);
+  });
+
+  it('names left UNVERIFIED do not occur in the fixture', () => {
+    expect(xml.includes(`"${FFDEC_XML.remove.removeObject}"`)).toBe(false);
+    expect(xml.includes(`"${FFDEC_XML.place.placeObject}"`)).toBe(false);
+    expect(xml.includes(`"${FFDEC_XML.place.placeObject3}"`)).toBe(false);
+    expect(xml.includes(`${FFDEC_XML.place.clipDepth}="`)).toBe(false);
+    expect(xml.includes(FFDEC_XML.place.surfaceFilterList)).toBe(false);
+  });
+});
+
+describe('colour transform multipliers through parseStructure', () => {
+  it('divides multiplier terms by 256 (256 -> 1, 77 -> about 0.30)', () => {
+    const dump = [
+      '<swf _xmlExportMajor="4" _xmlExportMinor="2" frameCount="1" frameRate="24.0">',
+      '<tags>',
+      '<item type="PlaceObject2Tag" characterId="1" depth="10" placeFlagHasCharacter="true" placeFlagHasColorTransform="true" placeFlagMove="false">',
+      '<colorTransform type="CXFORMWITHALPHA" alphaMultTerm="77" blueMultTerm="256" greenMultTerm="256" hasAddTerms="false" hasMultTerms="true" nbits="10" redMultTerm="256"/>',
+      '</item>',
+      '<item type="ShowFrameTag"/>',
+      '</tags>',
+      '</swf>',
+    ].join('\n');
+    const op = parseStructure(dump).root.ops.find((o) => o.kind === 'place');
+    if (!op || op.kind !== 'place' || !op.colorTransform) throw new Error('no colour transform parsed');
+    expect(op.colorTransform.mul[0]).toBe(1);
+    expect(op.colorTransform.mul[1]).toBe(1);
+    expect(op.colorTransform.mul[2]).toBe(1);
+    expect(op.colorTransform.mul[3]).toBeCloseTo(0.3008, 3);
+    expect(op.colorTransform.add).toEqual([0, 0, 0, 0]);
+  });
+});

@@ -1,0 +1,312 @@
+{
+  "formatVersion": 1,
+  "rootSymbolId": 0,
+  "stage": {
+    "backgroundColor": "#ffffff",
+    "frameRate": 24,
+    "height": 400,
+    "width": 550
+  },
+  "symbols": {
+    "0": {
+      "className": "MainTimeline",
+      "frameCount": 3,
+      "frames": [
+        [
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 1,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              143.5,
+              270
+            ],
+            "name": "l_button",
+            "symbolId": 6
+          },
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 3,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              415,
+              272.5
+            ],
+            "name": "r_button",
+            "symbolId": 3
+          }
+        ],
+        [
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 1,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              143.5,
+              270
+            ],
+            "name": "l_button",
+            "symbolId": 6
+          },
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 3,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              415,
+              272.5
+            ],
+            "name": "r_button",
+            "symbolId": 3
+          }
+        ],
+        [
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 1,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              143.5,
+              270
+            ],
+            "name": "l_button",
+            "symbolId": 6
+          },
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 3,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              415,
+              272.5
+            ],
+            "name": "r_button",
+            "symbolId": 3
+          }
+        ]
+      ],
+      "labels": [],
+      "type": "sprite"
+    },
+    "1": {
+      "file": "1.svg",
+      "origin": {
+        "x": 42.5,
+        "y": 40.5
+      },
+      "type": "shape"
+    },
+    "2": {
+      "file": "2.svg",
+      "origin": {
+        "x": 42.5,
+        "y": 40.5
+      },
+      "type": "shape"
+    },
+    "3": {
+      "className": "RightButton",
+      "frameCount": 2,
+      "frames": [
+        [
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 1,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "name": "",
+            "symbolId": 1
+          }
+        ],
+        [
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 1,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "name": "",
+            "symbolId": 2
+          }
+        ]
+      ],
+      "labels": [],
+      "type": "sprite"
+    },
+    "4": {
+      "file": "4.svg",
+      "origin": {
+        "x": 39,
+        "y": 38
+      },
+      "type": "shape"
+    },
+    "5": {
+      "file": "5.svg",
+      "origin": {
+        "x": 39,
+        "y": 38
+      },
+      "type": "shape"
+    },
+    "6": {
+      "className": "LeftButton",
+      "frameCount": 2,
+      "frames": [
+        [
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 1,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "name": "",
+            "symbolId": 4
+          }
+        ],
+        [
+          {
+            "colorTransform": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "depth": 1,
+            "matrix": [
+              1,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "name": "",
+            "symbolId": 5
+          }
+        ]
+      ],
+      "labels": [],
+      "type": "sprite"
+    }
+  }
+}

@@ -128,9 +128,9 @@ export const FFDEC_XML = {
   timeline: {
     /** Verified on FFDec 26.4.0 (line 84): ends a frame, both in sprites and at root. */
     showFrame: 'ShowFrameTag',
-    /** UNVERIFIED (not in sample; FFDec class name). Label name attribute `name` is also UNVERIFIED. */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture structure.xml lines 1120, 1236, 1337): tag name; labels start, middle, gone. */
     frameLabel: 'FrameLabelTag',
-    /** UNVERIFIED (not in sample). */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture lines 1120, 1236, 1337): label name attribute. */
     frameLabelNameAttr: 'name',
     /**
      * Verified on FFDec 26.4.0 (lines 13-22): this tag exists, with <frameNums/> and <frameNames/> children
@@ -175,11 +175,11 @@ export const FFDEC_XML = {
   },
 
   remove: {
-    /** UNVERIFIED (not in sample; FFDec class name). Fields assumed `depth`. */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture line 1338, depth="10"; the only attribute besides forceWriteAsLong). */
     removeObject2: 'RemoveObject2Tag',
-    /** UNVERIFIED (not in sample; FFDec class name). Fields assumed `characterId` and `depth`. */
+    /** UNVERIFIED (not in either fixture; FFDec class name). Fields assumed `characterId` and `depth`. */
     removeObject: 'RemoveObjectTag',
-    /** UNVERIFIED (not in sample). */
+    /** Verified on FFDec 26.4.0 for RemoveObject2Tag (tweendemo fixture line 1338). UNVERIFIED for RemoveObjectTag. */
     depth: 'depth',
   },
 
@@ -194,28 +194,31 @@ export const FFDEC_XML = {
     hasScale: 'hasScale',
     /** Verified on FFDec 26.4.0 (line 82): flag; when "false" the rotate/skew attributes are omitted (0,0). */
     hasRotate: 'hasRotate',
-    /** UNVERIFIED (hasScale is false everywhere in the sample; FFDec field name). Fixed-point 16.16 assumed, divide by 65536. */
+    /**
+     * Verified on FFDec 26.4.0 (tweendemo fixture lines 1122 to 1333, e.g. 1122 scaleX="0.59999084", 1333 scaleX="-1.3999939"):
+     * a PLAIN DECIMAL, used as is (no division). Omitted when hasScale is false (clickgoto fixture line 82).
+     */
     scaleX: 'scaleX',
-    /** UNVERIFIED (as scaleX). */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture line 1122, 1333): plain decimal, as scaleX. */
     scaleY: 'scaleY',
-    /** UNVERIFIED (hasRotate is false everywhere in the sample; FFDec field name). Fixed-point 16.16 assumed. */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture lines 1122, 1127 rotateSkew0="0.04624939"): plain decimal, used as is. Omitted when hasRotate is false. */
     rotateSkew0: 'rotateSkew0',
-    /** UNVERIFIED (as rotateSkew0). */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture line 1127 rotateSkew1="-0.04624939"): plain decimal, as rotateSkew0. */
     rotateSkew1: 'rotateSkew1',
   },
 
   colorTransform: {
-    /** UNVERIFIED (placeFlagHasColorTransform is false everywhere in the sample): child element name on a placement. */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture line 1123, type="CXFORMWITHALPHA"): child element of the placement. */
     element: 'colorTransform',
-    /** UNVERIFIED: FFDec CXFORMWITHALPHA field names; multipliers expected as integers in 1/256 units, terms as integers. */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture line 1123, "256"): integer in 1/256 units, divided by 256. */
     redMultTerm: 'redMultTerm',
-    /** UNVERIFIED */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture line 1123): as redMultTerm. */
     greenMultTerm: 'greenMultTerm',
-    /** UNVERIFIED */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture line 1123): as redMultTerm. */
     blueMultTerm: 'blueMultTerm',
-    /** UNVERIFIED */
+    /** Verified on FFDec 26.4.0 (tweendemo fixture lines 1123 "256", 1128 "252", 1334 "77"): as redMultTerm. */
     alphaMultTerm: 'alphaMultTerm',
-    /** UNVERIFIED */
+    /** UNVERIFIED: add-term names never occur in the fixtures (hasAddTerms="false" everywhere). */
     redAddTerm: 'redAddTerm',
     /** UNVERIFIED */
     greenAddTerm: 'greenAddTerm',
@@ -361,7 +364,6 @@ const attrNum = (a: Record<string, string>, key: string): number | undefined => 
 const attrStr = (a: Record<string, string>, key: string): string | undefined => a[`${PREFIX}${key}`];
 const attrBool = (a: Record<string, string>, key: string): boolean => attrStr(a, key) === 'true';
 
-const FIXED_16_16 = 65536;
 const CXFORM_UNIT = 256;
 
 function parseMatrix(attrs: Record<string, string>): MatrixModel {
@@ -369,10 +371,10 @@ function parseMatrix(attrs: Record<string, string>): MatrixModel {
   const hasScale = attrBool(attrs, m.hasScale);
   const hasRotate = attrBool(attrs, m.hasRotate);
   return {
-    a: hasScale ? (attrNum(attrs, m.scaleX) ?? FIXED_16_16) / FIXED_16_16 : 1,
-    b: hasRotate ? (attrNum(attrs, m.rotateSkew0) ?? 0) / FIXED_16_16 : 0,
-    c: hasRotate ? (attrNum(attrs, m.rotateSkew1) ?? 0) / FIXED_16_16 : 0,
-    d: hasScale ? (attrNum(attrs, m.scaleY) ?? FIXED_16_16) / FIXED_16_16 : 1,
+    a: hasScale ? (attrNum(attrs, m.scaleX) ?? 1) : 1,
+    b: hasRotate ? (attrNum(attrs, m.rotateSkew0) ?? 0) : 0,
+    c: hasRotate ? (attrNum(attrs, m.rotateSkew1) ?? 0) : 0,
+    d: hasScale ? (attrNum(attrs, m.scaleY) ?? 1) : 1,
     txTwips: attrNum(attrs, m.translateX) ?? 0,
     tyTwips: attrNum(attrs, m.translateY) ?? 0,
   };
