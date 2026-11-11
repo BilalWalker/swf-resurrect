@@ -19,6 +19,49 @@
         "chatSessionId": "sess_7db3138a-2281-47a2-aee3-21c120cf9ec7",
         "timestamp": 1794383575274
       }
+    ],
+    "2.1 Run the two verified FFDec invocations and capture small fixtures": [
+      {
+        "executionId": "8d5861d9-ad1f-48e0-9d19-c522479e3e1e",
+        "chatSessionId": "sess_4bea6011-097e-4934-afdb-96c4a54c0ee8",
+        "timestamp": 1794383646710
+      },
+      {
+        "executionId": "8d5861d9-ad1f-48e0-9d19-c522479e3e1e",
+        "chatSessionId": "sess_4bea6011-097e-4934-afdb-96c4a54c0ee8",
+        "timestamp": 1794383859340
+      }
+    ],
+    "2.2 Confirm every \"to verify\" item against the real dump and record the names in code": [
+      {
+        "executionId": "8d5861d9-ad1f-48e0-9d19-c522479e3e1e",
+        "chatSessionId": "sess_4bea6011-097e-4934-afdb-96c4a54c0ee8",
+        "timestamp": 1794383863125
+      },
+      {
+        "executionId": "8d5861d9-ad1f-48e0-9d19-c522479e3e1e",
+        "chatSessionId": "sess_4bea6011-097e-4934-afdb-96c4a54c0ee8",
+        "timestamp": 1794384233093
+      }
+    ],
+    "2.3 Check the SVG origin sign convention and the empty-sprite and zero-shape questions": [
+      {
+        "executionId": "8d5861d9-ad1f-48e0-9d19-c522479e3e1e",
+        "chatSessionId": "sess_4bea6011-097e-4934-afdb-96c4a54c0ee8",
+        "timestamp": 1794384236444
+      },
+      {
+        "executionId": "8d5861d9-ad1f-48e0-9d19-c522479e3e1e",
+        "chatSessionId": "sess_4bea6011-097e-4934-afdb-96c4a54c0ee8",
+        "timestamp": 1794384679266
+      }
+    ],
+    "2. Gate: capture real FFDec fixtures and confirm the \"to verify\" items": [
+      {
+        "executionId": "8d5861d9-ad1f-48e0-9d19-c522479e3e1e",
+        "chatSessionId": "sess_4bea6011-097e-4934-afdb-96c4a54c0ee8",
+        "timestamp": 1794384679362
+      }
     ]
   }
 }

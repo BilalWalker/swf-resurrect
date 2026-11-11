@@ -29,21 +29,21 @@ Rules that apply to every task:
     - Run `npm install`, `npm run typecheck` and `npm test -- --run` (with a trivial smoke test) and confirm they run.
     - _Requirements: 10.6, 10.7_
 
-- [ ] 2. Gate: capture real FFDec fixtures and confirm the "to verify" items
-  - [ ] 2.1 Run the two verified FFDec invocations and capture small fixtures
+- [x] 2. Gate: capture real FFDec fixtures and confirm the "to verify" items
+  - [x] 2.1 Run the two verified FFDec invocations and capture small fixtures
     - Confirm Java 17+ with `java -version` and that `tools/ffdec/ffdec-cli.jar` exists.
     - Run into a scratch directory under `.work/ffdec-capture/` (gitignored): `java -jar tools/ffdec/ffdec-cli.jar -swf2xml samples/clickgoto/test.swf .work/ffdec-capture/structure.xml` and `java -jar tools/ffdec/ffdec-cli.jar -export shape,script,symbolClass .work/ffdec-capture samples/clickgoto/test.swf`. Strip ANSI codes from any captured console output.
     - Check file sizes with `Get-ChildItem`. Copy into `test/fixtures/clickgoto/` only small files: the `structure.xml` (whole file if under 100 KB, otherwise the head with the root element plus the tags the sample needs), `symbols.csv`, every `shapes/<id>.svg`, and `scripts/LeftButton.as`, `scripts/RightButton.as`, `scripts/MainTimeline.as`. Record the sizes in the findings note.
     - Do not commit anything from `tools/` and do not copy `original-source/`.
     - _Requirements: 2.1, 2.2_
 
-  - [ ] 2.2 Confirm every "to verify" item against the real dump and record the names in code
+  - [x] 2.2 Confirm every "to verify" item against the real dump and record the names in code
     - Open the captured `structure.xml` and answer each row of the design's "To verify against the real XML dump" table, plus: AS3 FileAttributes flag name, shape definition tag names, morph shape tag names, unsupported-kind tag names (text, sound, button, video), filter list and clip depth fields, label tag, declared sprite frame count attribute, root attributes for Frame_Rate, root frame count and stage rectangle, `SetBackgroundColorTag` fields, matrix and colour-transform field names and fixed-point scaling, `PlaceObject`/`PlaceObject3Tag`/`RemoveObject2Tag` fields.
     - Create `src/convert/ffdecXml.ts` containing only an exported `as const` object of the verified element and attribute names (`FFDEC_XML`), `SUPPORTED_XML_MAJOR`, and a comment per name saying it was verified on FFDec 26.4.0. Mark any name that could not be confirmed on the sample as `UNVERIFIED` in a comment.
     - Write `test/fixtures/clickgoto/FINDINGS.md` listing each item, the confirmed answer, and the fixture line it comes from.
     - _Requirements: 2.2, 2.6, 2.9, 2.10, 4.3, 4.4_
 
-  - [ ] 2.3 Check the SVG origin sign convention and the empty-sprite and zero-shape questions
+  - [x] 2.3 Check the SVG origin sign convention and the empty-sprite and zero-shape questions
     - For each captured shape SVG, record the `<g transform="matrix(1,0,0,1,tx,ty)">` values. Using the Click_Sample placements from `samples/clickgoto/PROVENANCE.md` (`l_button` at 143.5, 270; `r_button` at 415, 272.5) and the shape bounds, confirm that drawing the SVG at `(-tx, -ty)` inside the shape node puts the shape's own origin at the placement point. Record the result and, if the sign is the other way, say so clearly.
     - Determine how FFDec dumps a `DefineSpriteTag` with zero `ShowFrameTag` items (use a hand-edited copy of the XML in `.work/` if the sample has none) and whether `-export shape` creates an empty `shapes/` folder for a SWF without shapes. If this cannot be tested on the sample, write "not verifiable on this sample" and keep the design's fallback.
     - Check whether `-export shape` also writes morph shapes, and whether FFDec output is byte-identical across two runs (run the SVG export twice and compare hashes with `Get-FileHash`).
