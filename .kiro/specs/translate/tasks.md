@@ -146,8 +146,8 @@ Rules that apply to every task:
     - Closure (base added, chain of two, unlinked non-base class skipped), duplicate class error, missing scripts directory error, `EventWatcher` emitted for the clickgoto fixtures.
     - _Requirements: 4.1, 4.3_
 
-- [ ] 11. Type_Check_Gate (design T11, section 5)
-  - [-] 11.1 Implement `typeCheckGate.ts`
+- [x] 11. Type_Check_Gate (design T11, section 5)
+  - [x] 11.1 Implement `typeCheckGate.ts`
     - Create `src/translate/typeCheckGate.ts`: `typeCheckProject({ files, repoRoot })` with `ts.createProgram` from `typescript-js` and a custom `CompilerHost` that serves a virtual root `<repoRoot>/__gate__/` from the `files` map and delegates other paths to `ts.sys`, so `pixi.js` resolves from `<repoRoot>/node_modules`. Options come from the emitted `tsconfig.json` with `noEmit: true`; roots are `.ts` files under the tsconfig `include` directories. Errors sorted by (file, line, column, code, message); messages have `V/` and `repoRoot` replaced by `<out>` and `<repo>`. Add `TypeCheckGateError` (stage `pipeline`) for internal failures. No `npm install`, no child process.
     - _Requirements: 4.6_
 
@@ -156,11 +156,11 @@ Rules that apply to every task:
     - _Requirements: 4.6, 4.7_
 
 - [ ] 12. Translation_Report and canonicalJson reuse (design T12, sections 6 and 10 D10)
-  - [~] 12.1 Extract and reuse `canonicalJson`
+  - [x] 12.1 Extract and reuse `canonicalJson`
     - Move the canonical JSON writer from `src/pipeline/unsupported.ts` into a shared `src/pipeline/canonicalJson.ts` (sorted keys, two-space indent, `\n`, one trailing newline) and make `unsupported.ts` use it with unchanged output. Existing tests must pass unchanged.
     - _Requirements: 4.4_
 
-  - [~] 12.2 Implement `report.ts` and add `untranslated-code`
+  - [-] 12.2 Implement `report.ts` and add `untranslated-code`
     - Add `'untranslated-code'` to `UnsupportedKind` in `src/convert/model.ts` (and any exhaustive switch over it).
     - Create `src/translate/report.ts` (pure): `classStatus`, `buildReport`, `serialiseReport` (via `canonicalJson`), `untranslatedCodeEntries` (one entry per `unsupported-construct` Diagnostic of every emitted, non-overridden class, class in `tag`, line in `message`). Type errors in `src/<Class>.ts` go on that class and raise its status to `unsupported`; other files go to `otherErrors`; `typeCheck` is `'ran'` or `'skipped'`; overridden classes list no Diagnostics; `as3Line` is a convenience and `null` for generated lines.
     - _Requirements: 4.4, 4.5, 4.6, 4.7_

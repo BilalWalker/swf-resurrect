@@ -1,6 +1,6 @@
 // Unsupported_Feature_List entries, their total order and the file format.
 // Pure: no fs, clock, randomness or locale-dependent calls.
-import { canonicalJson } from '../convert/sceneJson';
+import { canonicalJson } from './canonicalJson';
 import type { UnsupportedKind } from '../convert/model';
 
 export interface UnsupportedFeatureEntry {

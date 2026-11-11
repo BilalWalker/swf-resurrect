@@ -77,6 +77,7 @@ export type UnsupportedKind =
   | 'morph-shape'
   | 'unbound-instance'
   | 'untranslated-class'
+  | 'untranslated-code'
   | 'other-tag';
 export interface UnsupportedObservation {
   kind: UnsupportedKind;
