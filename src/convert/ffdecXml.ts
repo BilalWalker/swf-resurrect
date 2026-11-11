@@ -1,3 +1,6 @@
+﻿import { XMLParser } from 'fast-xml-parser';
+import { MissingHeaderValueError, XmlVersionError } from '../unpack/errors';
+
 // FFDec XML element and attribute names. Verified against the dump of
 // samples/clickgoto/test.swf (test/fixtures/clickgoto/structure.xml), FFDec 26.4.0,
 // _xmlExportMajor=4, _xmlExportMinor=2. Line numbers refer to that fixture.
@@ -222,3 +225,98 @@ export const FFDEC_XML = {
     names: 'names',
   },
 } as const;
+
+// ---------------------------------------------------------------------------
+// Dump header (Requirements 2.2, 2.6, 2.9, 2.10). Pure: no node:fs / child_process.
+// ---------------------------------------------------------------------------
+
+/** Stage and root-timeline facts read from the root element of the swf2xml dump. */
+export interface SwfHeader {
+  widthPx: number;
+  heightPx: number;
+  frameRate: number;
+  frameCount: number;
+}
+
+export interface XmlVersion {
+  major: number;
+  minor: number;
+}
+
+const TWIPS_PER_PIXEL = 20;
+
+function finiteNumber(raw: unknown): number | undefined {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : undefined;
+  if (typeof raw !== 'string' || raw.trim() === '') return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * Reads the XML export version and the header values from the root element of a swf2xml dump.
+ * Only the head of the document (up to the root tag list) is parsed.
+ * @throws XmlVersionError when `_xmlExportMajor` is missing or unreadable.
+ * @throws MissingHeaderValueError naming each of frameRate, frameCount, stageRect that is missing or not finite.
+ */
+export function readDumpHeader(xmlText: string): { xmlVersion: XmlVersion; header: SwfHeader } {
+  const r = FFDEC_XML.root;
+  const tagsAt = xmlText.indexOf(`<${r.tags}`);
+  const head = tagsAt >= 0 ? `${xmlText.slice(0, tagsAt)}</${r.element}>` : xmlText;
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', parseAttributeValue: false });
+  let root: Record<string, unknown> | undefined;
+  try {
+    const parsed = parser.parse(head) as Record<string, unknown>;
+    root = parsed[r.element] as Record<string, unknown> | undefined;
+  } catch {
+    root = undefined;
+  }
+  const attr = (name: string): unknown => (root && typeof root === 'object' ? root[`@_${name}`] : undefined);
+
+  const major = finiteNumber(attr(r.exportMajor));
+  if (major === undefined) throw new XmlVersionError('missing', String(SUPPORTED_XML_MAJOR));
+  const minor = finiteNumber(attr(r.exportMinor)) ?? 0;
+
+  const missing: string[] = [];
+  const frameRate = finiteNumber(attr(r.frameRate));
+  if (frameRate === undefined) missing.push('frameRate');
+  const frameCount = finiteNumber(attr(r.frameCount));
+  if (frameCount === undefined) missing.push('frameCount');
+
+  const rect = root && typeof root === 'object' ? (root[r.displayRect] as Record<string, unknown> | undefined) : undefined;
+  const get = (name: string): number | undefined =>
+    rect && typeof rect === 'object' ? finiteNumber(rect[`@_${name}`]) : undefined;
+  const xMin = get(r.rectXmin);
+  const xMax = get(r.rectXmax);
+  const yMin = get(r.rectYmin);
+  const yMax = get(r.rectYmax);
+  if (xMin === undefined || xMax === undefined || yMin === undefined || yMax === undefined) {
+    missing.push('stageRect');
+  }
+
+  if (missing.length > 0) throw new MissingHeaderValueError(missing);
+
+  return {
+    xmlVersion: { major, minor },
+    header: {
+      widthPx: ((xMax as number) - (xMin as number)) / TWIPS_PER_PIXEL,
+      heightPx: ((yMax as number) - (yMin as number)) / TWIPS_PER_PIXEL,
+      frameRate: frameRate as number,
+      frameCount: frameCount as number,
+    },
+  };
+}
+
+/** Throws `XmlVersionError(found, supported)` when the major version is not `SUPPORTED_XML_MAJOR`. */
+export function checkXmlVersion(version: XmlVersion): void {
+  if (version.major !== SUPPORTED_XML_MAJOR) {
+    throw new XmlVersionError(`${version.major}.${version.minor}`, String(SUPPORTED_XML_MAJOR));
+  }
+}
+
+/** True when the head of the dump holds a FileAttributesTag item with the ActionScript 3 flag set to true. */
+export function isAs3Dump(xmlHead: string): boolean {
+  const f = FFDEC_XML.fileAttributes;
+  const item = new RegExp(`<${FFDEC_XML.item.element}\\b[^>]*\\b${FFDEC_XML.item.kindAttr}="${f.tag}"[^>]*>`).exec(xmlHead);
+  if (!item) return false;
+  return new RegExp(`\\b${f.as3Flag}="true"`).test(item[0]);
+}

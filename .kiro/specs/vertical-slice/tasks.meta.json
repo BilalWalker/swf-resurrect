@@ -74,6 +74,49 @@
         "chatSessionId": "sess_3ea49a8f-a265-471d-b764-599574d58ed7",
         "timestamp": 1794385054645
       }
+    ],
+    "4.1 Add shared error base, ANSI stripping and SWF signature check": [
+      {
+        "executionId": "9afdba95-e90a-45d1-b382-9c7db4991855",
+        "chatSessionId": "sess_e59576d8-56a1-4e11-a377-72cfb9eadaf5",
+        "timestamp": 1794385186401
+      },
+      {
+        "executionId": "9afdba95-e90a-45d1-b382-9c7db4991855",
+        "chatSessionId": "sess_e59576d8-56a1-4e11-a377-72cfb9eadaf5",
+        "timestamp": 1794385430541
+      }
+    ],
+    "4.2 Implement `readDumpHeader` in `src/convert/ffdecXml.ts`": [
+      {
+        "executionId": "9afdba95-e90a-45d1-b382-9c7db4991855",
+        "chatSessionId": "sess_e59576d8-56a1-4e11-a377-72cfb9eadaf5",
+        "timestamp": 1794385442892
+      },
+      {
+        "executionId": "9afdba95-e90a-45d1-b382-9c7db4991855",
+        "chatSessionId": "sess_e59576d8-56a1-4e11-a377-72cfb9eadaf5",
+        "timestamp": 1794385546916
+      }
+    ],
+    "4.3 Implement `unpack` with exactly two FFDec invocations": [
+      {
+        "executionId": "9afdba95-e90a-45d1-b382-9c7db4991855",
+        "chatSessionId": "sess_e59576d8-56a1-4e11-a377-72cfb9eadaf5",
+        "timestamp": 1794385550479
+      },
+      {
+        "executionId": "9afdba95-e90a-45d1-b382-9c7db4991855",
+        "chatSessionId": "sess_e59576d8-56a1-4e11-a377-72cfb9eadaf5",
+        "timestamp": 1794385626227
+      }
+    ],
+    "4. Unpacker": [
+      {
+        "executionId": "9afdba95-e90a-45d1-b382-9c7db4991855",
+        "chatSessionId": "sess_e59576d8-56a1-4e11-a377-72cfb9eadaf5",
+        "timestamp": 1794385626337
+      }
     ]
   }
 }

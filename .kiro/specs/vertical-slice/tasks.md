@@ -53,20 +53,20 @@ Rules that apply to every task:
 - [x] 3. Checkpoint - Fixture gate
   - Ensure all tests pass, ask the user if questions arise. Show the user `test/fixtures/clickgoto/FINDINGS.md` and wait for confirmation before the parsers in Tasks 4 and 5 are written. If any finding conflicts with the design, stop and tell the user instead of adapting silently.
 
-- [ ] 4. Unpacker
-  - [ ] 4.1 Add shared error base, ANSI stripping and SWF signature check
+- [x] 4. Unpacker
+  - [x] 4.1 Add shared error base, ANSI stripping and SWF signature check
     - Create `src/pipeline/errors.ts` with `PipelineError` (abstract `stage` and `code`).
     - Create `src/unpack/errors.ts` with `InvalidSwfError`, `FfdecNotFoundError`, `JavaNotFoundError`, `FfdecExitError`, `FfdecTimeoutError`, `NotAs3Error`, `MissingExportError`, `XmlVersionError`, `MissingHeaderValueError`, each with the message contents from the design's Unpack error table.
     - Create `src/unpack/ansi.ts` (`stripAnsi`) and `src/unpack/swfSniff.ts` (`isSwfSignature(bytes)`, `assertValidSwfFile(path)` which checks existence, readability and the first three bytes `FWS`/`CWS`/`ZWS`).
     - _Requirements: 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10_
 
-  - [ ] 4.2 Implement `readDumpHeader` in `src/convert/ffdecXml.ts`
+  - [x] 4.2 Implement `readDumpHeader` in `src/convert/ffdecXml.ts`
     - Add pure `readDumpHeader(xmlText)` returning `{ xmlVersion, header: SwfHeader }` using the names confirmed in Task 2.2. Stage width and height are the rectangle extent in twips divided by 20. Throw `MissingHeaderValueError` naming each missing or non-finite value (`frameRate`, `frameCount`, `stageRect`).
     - Export `checkXmlVersion` that throws `XmlVersionError(found, supported)` when the major is not `SUPPORTED_XML_MAJOR`, and `isAs3Dump(xmlHead)`.
     - Add a small example test `test/unit/readDumpHeader.test.ts` on the captured fixture (expect 550 x 400, 24 fps, 3 frames).
     - _Requirements: 2.2, 2.6, 2.9, 2.10_
 
-  - [ ] 4.3 Implement `unpack` with exactly two FFDec invocations
+  - [x] 4.3 Implement `unpack` with exactly two FFDec invocations
     - Create `src/unpack/spawnFfdec.ts` (`spawn(java, ['-jar', jar, ...args], { shell: false })`, ANSI-stripped output, kill on timeout) and `src/unpack/unpack.ts` exporting `UnpackInput`, `UnpackResult`, `unpack`.
     - Order: validate the SWF, check that the jar exists, run `-swf2xml`, read the dump (AS3 check, version check, `readDumpHeader`), then run `-export shape,script,symbolClass`, then check the four exports exist. Return absolute paths plus header values as in the design.
     - Make the spawner injectable so later error-path tests need no Java.
