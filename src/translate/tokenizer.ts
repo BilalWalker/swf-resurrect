@@ -80,7 +80,10 @@ export function tokenize(source: string): Token[] {
     const text = src.slice(start, end);
     let endLine = startLine;
     for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) === 10) endLine++;
-    const tok: Token = { kind, text, start, end, line: startLine, endLine };
+    // `endLine` is the line of the last character: a token that swallows a final
+    // newline (unterminated comment or string up to EOF) ends on the line that newline ends.
+    const lastIsNewline = text.length > 0 && text.charCodeAt(text.length - 1) === 10;
+    const tok: Token = { kind, text, start, end, line: startLine, endLine: lastIsNewline ? endLine - 1 : endLine };
     tokens.push(tok);
     if (kind !== 'comment') prev = tok;
     line = endLine;

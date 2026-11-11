@@ -108,22 +108,22 @@ Rules that apply to every task:
     - Add `translate(source, options)` to `translate.ts`: run `translateCore`, then `options.syntaxCheck(text)`. On any error replace the result with the fallback of decision D5 (whole file as `// AS3:` comments, one `unsupported-construct` Diagnostic on line 1 saying the output does not parse and quoting the first parser message, one `unsupported` span). Blank input returns empty text and skips the check.
     - _Requirements: 1.1, 1.2, 1.5, 1.6_
 
-- [ ] 9. Transpiler property tests and golden tests (design T8, T9)
+- [x] 9. Transpiler property tests and golden tests (design T8, T9)
   - [x] 9.1 Write the AS3 generators
     - Create `test/property/gen/genAs3.ts`: `genProgram` (package, imports, metadata, class with fields, accessors and methods; statements drawn from supported and unsupported forms, blank lines, line and block comments, mixed `\n`/`\r\n`; a unique marker per statement; records marker, first line and unsupported flag) and `genSoup` (token soup with unbalanced braces, unterminated strings and comments, U+2028/2029). Use the shared config from `test/property/config.ts`.
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 3.5_
 
-  - [~] 9.2 Write property test for determinism
+  - [x] 9.2 Write property test for determinism
     - Create `test/property/translateDeterminism.test.ts`, tagged `// Feature: translate, Property 1: Translation is deterministic`. Also compare the CRLF and LF forms of the same text.
     - **Property 1: Translation is deterministic**
     - **Validates: Requirements 1.1, 1.2**
 
-  - [~] 9.3 Write property test for line accounting
+  - [x] 9.3 Write property test for line accounting
     - Create `test/property/translateLineAccounting.test.ts`, tagged `// Feature: translate, Property 2: Every source line is accounted for`. Check (a) each marker appears exactly once in the output, (b) one `unsupported-construct` Diagnostic per unsupported statement at its first line and none other, (c) every non-blank line lies inside a returned `LineSpan` within `1..N`, (d) each non-blank line of an `unsupported` span appears as a `// AS3: ` comment in order.
     - **Property 2: Every source line is accounted for**
     - **Validates: Requirements 1.3, 1.4, 3.5**
 
-  - [~] 9.4 Write property test for parse-or-report
+  - [x] 9.4 Write property test for parse-or-report
     - Create `test/property/translateParse.test.ts`, tagged `// Feature: translate, Property 3: Output parses or the failure is reported`. Parse independently with `ts.transpileModule` from `typescript-js` in the test (not through `tsSyntaxCheck`). For grammar inputs also assert `translateCore` output already parses; blank input gives empty text.
     - **Property 3: Output parses or the failure is reported**
     - **Validates: Requirements 1.5, 1.6, 3.5**
@@ -169,8 +169,8 @@ Rules that apply to every task:
     - `classStatus` truth table, type errors raise status, two builds byte-identical, `otherErrors` collects non-class files, `untranslatedCodeEntries` per Diagnostic, overridden entry, `untranslated-class` for a linked class with no source.
     - _Requirements: 4.4, 4.5, 4.7_
 
-- [ ] 13. Emitter, classes.ts and overrides (design T13, section 4)
-  - [-] 13.1 Change `planEmit` and `emit` to take translated classes
+- [x] 13. Emitter, classes.ts and overrides (design T13, section 4)
+  - [x] 13.1 Change `planEmit` and `emit` to take translated classes
     - Extend `EmitOptions` and `EmitInput` with `translated` and keep `handwritten` meaning the Override_Directory. `planEmit` writes `src/<Class>.ts` for every emitted translated class and for every override whose class is linked or in the closure (override text wins). An override for any other name is ignored and listed in `warnings`. Implement `buildClassesTs(scene, classNames)` registering exactly the Scene_JSON-linked names that are available, sorted by code unit (`LeftButton`, `MainTimeline`, `RightButton` for the samples; `EventWatcher` emitted but not registered). An empty Override_Directory copies 0 files. `package.json` generation unchanged.
     - _Requirements: 4.2, 4.3, 5.5_
 

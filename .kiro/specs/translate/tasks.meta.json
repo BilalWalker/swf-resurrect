@@ -1,5 +1,14 @@
 {
-  "pbtResults": {},
+  "pbtResults": {
+    "9.2 Write property test for determinism": {
+      "status": "passed",
+      "lastRunTimestamp": 1794401836729
+    },
+    "9.4 Write property test for parse-or-report": {
+      "status": "passed",
+      "lastRunTimestamp": 1794402579725
+    }
+  },
   "executionHistory": {
     "1.1 Record that decision D1 is approved by the user": [
       {
@@ -212,6 +221,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277021
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794401794090
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794401909825
       }
     ],
     "9.3 Write property test for line accounting": [
@@ -219,6 +238,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277089
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794401910039
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794402537568
       }
     ],
     "9.4 Write property test for parse-or-report": [
@@ -226,6 +255,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277159
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794402537832
       }
     ],
     "10.1 Implement `planTranslate` and `translateStage`": [
@@ -301,6 +335,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794401513099
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794401793605
       }
     ],
     "14.1 Add translate and typeCheck stages to `runPipeline`": [
@@ -427,6 +466,13 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794401512982
+      }
+    ],
+    "13. Emitter, classes.ts and overrides (design T13, section 4)": [
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794401793783
       }
     ]
   }
