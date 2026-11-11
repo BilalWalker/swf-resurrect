@@ -750,6 +750,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794390066506
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794390291356
       }
     ],
     "18. Final checkpoint - Ensure all tests pass": [
@@ -757,6 +762,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386566843
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794390295726
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794390390265
       }
     ],
     "9. Flash API shim": [
@@ -799,6 +814,13 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794388720399
+      }
+    ],
+    "17. End-to-end smoke test": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794390291523
       }
     ]
   }
