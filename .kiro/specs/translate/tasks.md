@@ -75,7 +75,7 @@ Rules that apply to every task:
     - _Requirements: 1.1, 1.4_
 
 - [ ] 6. Statement scanner and line accounting (design T5, sections 1.2 and 1.3)
-  - [~] 6.1 Implement `scanner.ts` and `emitTs.ts`
+  - [-] 6.1 Implement `scanner.ts` and `emitTs.ts`
     - Create `src/translate/scanner.ts`: brace-aware scan at file, class-body and statement level as in the design table. Track `()`, `[]`, `{}` depth so `;` and `}` inside nested groups never end a node. Unsupported nodes for `try` (with `catch`/`finally`), `switch`, `with`, `delete`, `namespace`, `use`, `include`, `default xml`, nested `function`, labels, E4X markers. A compound statement with an unsupported header is one node. Compound bodies are always emitted in braces. An unclosed `{` makes its construct unsupported to end of file. Every node records `startLine` and `endLine`.
     - Create `src/translate/emitTs.ts`: assemble output text with LF endings and one trailing newline, `LineSpan[]` (`translated`, `structural`, `dropped`, `comment`, `unsupported`) and `Diagnostic[]`. An unsupported span emits one `// AS3: <line>` comment per source line (trailing whitespace trimmed; `\r`, U+2028, U+2029 escaped) and exactly one `unsupported-construct` Diagnostic at the span's first line. Diagnostics are sorted by (line, kind, message) in UTF-16 code unit order. Blank or whitespace-only input returns empty text and no Diagnostics.
     - _Requirements: 1.3, 1.4, 1.6, 3.5_
