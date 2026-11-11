@@ -147,7 +147,7 @@ Rules that apply to every task:
     - _Requirements: 4.1, 4.3_
 
 - [ ] 11. Type_Check_Gate (design T11, section 5)
-  - [~] 11.1 Implement `typeCheckGate.ts`
+  - [-] 11.1 Implement `typeCheckGate.ts`
     - Create `src/translate/typeCheckGate.ts`: `typeCheckProject({ files, repoRoot })` with `ts.createProgram` from `typescript-js` and a custom `CompilerHost` that serves a virtual root `<repoRoot>/__gate__/` from the `files` map and delegates other paths to `ts.sys`, so `pixi.js` resolves from `<repoRoot>/node_modules`. Options come from the emitted `tsconfig.json` with `noEmit: true`; roots are `.ts` files under the tsconfig `include` directories. Errors sorted by (file, line, column, code, message); messages have `V/` and `repoRoot` replaced by `<out>` and `<repo>`. Add `TypeCheckGateError` (stage `pipeline`) for internal failures. No `npm install`, no child process.
     - _Requirements: 4.6_
 
