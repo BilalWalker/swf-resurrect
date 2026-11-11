@@ -117,6 +117,61 @@
         "chatSessionId": "sess_e59576d8-56a1-4e11-a377-72cfb9eadaf5",
         "timestamp": 1794385626337
       }
+    ],
+    "5.1 Define the TagsModel types": [
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794385860344
+      },
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794385912778
+      }
+    ],
+    "5.2 Implement the small readers: `symbolsCsv.ts`, `svgOrigin.ts`, `classProps.ts`": [
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794385913460
+      },
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794385972416
+      }
+    ],
+    "5.3 Implement the structure-dump adapter in `src/convert/ffdecXml.ts`": [
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794385972950
+      },
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794386214605
+      }
+    ],
+    "5.4 Implement `readUnpacked`": [
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794386214023
+      },
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794386352361
+      }
+    ],
+    "5. Converter IO reader": [
+      {
+        "executionId": "c1f310d8-e9d3-42ab-ba2d-1f6d8072f4a6",
+        "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
+        "timestamp": 1794386352540
+      }
     ]
   }
 }

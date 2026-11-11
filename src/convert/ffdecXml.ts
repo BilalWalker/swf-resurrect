@@ -1,5 +1,14 @@
-﻿import { XMLParser } from 'fast-xml-parser';
+import { XMLParser } from 'fast-xml-parser';
 import { MissingHeaderValueError, XmlVersionError } from '../unpack/errors';
+import type {
+  ColorTransformModel,
+  MatrixModel,
+  SpriteModel,
+  TimelineModel,
+  TimelineOp,
+  UnsupportedKind,
+  UnsupportedObservation,
+} from './model';
 
 // FFDec XML element and attribute names. Verified against the dump of
 // samples/clickgoto/test.swf (test/fixtures/clickgoto/structure.xml), FFDec 26.4.0,
@@ -319,4 +328,232 @@ export function isAs3Dump(xmlHead: string): boolean {
   const item = new RegExp(`<${FFDEC_XML.item.element}\\b[^>]*\\b${FFDEC_XML.item.kindAttr}="${f.tag}"[^>]*>`).exec(xmlHead);
   if (!item) return false;
   return new RegExp(`\\b${f.as3Flag}="true"`).test(item[0]);
+}
+
+// ---------------------------------------------------------------------------
+// Structure parsing (Requirements 3.7, 4.3, 4.4, 4.9). Pure.
+// ---------------------------------------------------------------------------
+
+type PNode = Record<string, unknown>;
+
+const ATTR = ':@';
+const PREFIX = '@_';
+
+function attrsOf(node: PNode): Record<string, string> {
+  const a = node[ATTR];
+  return a && typeof a === 'object' ? (a as Record<string, string>) : {};
+}
+function childrenOf(node: PNode, tag: string): PNode[] {
+  const c = node[tag];
+  return Array.isArray(c) ? (c as PNode[]) : [];
+}
+/** Element name of a preserveOrder node (the single key other than the attribute bag). */
+function nameOf(node: PNode): string | undefined {
+  return Object.keys(node).find((k) => k !== ATTR && k !== '#text');
+}
+function findChild(node: PNode, tag: string, childName: string): { attrs: Record<string, string>; node: PNode } | undefined {
+  for (const ch of childrenOf(node, tag)) {
+    if (nameOf(ch) === childName) return { attrs: attrsOf(ch), node: ch };
+  }
+  return undefined;
+}
+const attrNum = (a: Record<string, string>, key: string): number | undefined => finiteNumber(a[`${PREFIX}${key}`]);
+const attrStr = (a: Record<string, string>, key: string): string | undefined => a[`${PREFIX}${key}`];
+const attrBool = (a: Record<string, string>, key: string): boolean => attrStr(a, key) === 'true';
+
+const FIXED_16_16 = 65536;
+const CXFORM_UNIT = 256;
+
+function parseMatrix(attrs: Record<string, string>): MatrixModel {
+  const m = FFDEC_XML.matrix;
+  const hasScale = attrBool(attrs, m.hasScale);
+  const hasRotate = attrBool(attrs, m.hasRotate);
+  return {
+    a: hasScale ? (attrNum(attrs, m.scaleX) ?? FIXED_16_16) / FIXED_16_16 : 1,
+    b: hasRotate ? (attrNum(attrs, m.rotateSkew0) ?? 0) / FIXED_16_16 : 0,
+    c: hasRotate ? (attrNum(attrs, m.rotateSkew1) ?? 0) / FIXED_16_16 : 0,
+    d: hasScale ? (attrNum(attrs, m.scaleY) ?? FIXED_16_16) / FIXED_16_16 : 1,
+    txTwips: attrNum(attrs, m.translateX) ?? 0,
+    tyTwips: attrNum(attrs, m.translateY) ?? 0,
+  };
+}
+
+function parseColorTransform(attrs: Record<string, string>): ColorTransformModel {
+  const c = FFDEC_XML.colorTransform;
+  const mul = (k: string): number => (attrNum(attrs, k) ?? CXFORM_UNIT) / CXFORM_UNIT;
+  const add = (k: string): number => attrNum(attrs, k) ?? 0;
+  return {
+    mul: [mul(c.redMultTerm), mul(c.greenMultTerm), mul(c.blueMultTerm), mul(c.alphaMultTerm)],
+    add: [add(c.redAddTerm), add(c.greenAddTerm), add(c.blueAddTerm), add(c.alphaAddTerm)],
+  };
+}
+
+interface ParseCtx {
+  unsupported: UnsupportedObservation[];
+}
+
+const KNOWN_PLACE_TAGS: ReadonlySet<string> = new Set([
+  FFDEC_XML.place.placeObject,
+  FFDEC_XML.place.placeObject2,
+  FFDEC_XML.place.placeObject3,
+]);
+
+function parsePlace(item: PNode, kind: string, ctx: ParseCtx): TimelineOp | undefined {
+  const p = FFDEC_XML.place;
+  const attrs = attrsOf(item);
+  const depth = attrNum(attrs, p.depth);
+  if (!KNOWN_PLACE_TAGS.has(kind) || depth === undefined) {
+    ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+    return undefined;
+  }
+  const op: Extract<TimelineOp, { kind: 'place' }> = {
+    kind: 'place',
+    depth,
+    move: attrBool(attrs, p.flagMove),
+  };
+  const characterId = attrNum(attrs, p.characterId);
+  if (characterId !== undefined) op.characterId = characterId;
+  const matrix = findChild(item, FFDEC_XML.item.element, FFDEC_XML.matrix.element);
+  if (matrix) op.matrix = parseMatrix(matrix.attrs);
+  const ct = findChild(item, FFDEC_XML.item.element, FFDEC_XML.colorTransform.element);
+  if (ct) op.colorTransform = parseColorTransform(ct.attrs);
+  const name = attrStr(attrs, p.name);
+  if (name !== undefined) op.name = name;
+  if (attrBool(attrs, p.flagHasClipDepth)) {
+    const cd = attrNum(attrs, p.clipDepth);
+    if (cd !== undefined) op.clipDepth = cd;
+  }
+  if (attrBool(attrs, p.flagHasFilterList)) op.hasFilters = true;
+  return op;
+}
+
+const REMOVE_TAGS: ReadonlySet<string> = new Set([FFDEC_XML.remove.removeObject, FFDEC_XML.remove.removeObject2]);
+const SHAPE_TAGS: ReadonlySet<string> = new Set([
+  FFDEC_XML.shape.defineShape,
+  FFDEC_XML.shape.defineShape2,
+  FFDEC_XML.shape.defineShape3,
+  FFDEC_XML.shape.defineShape4,
+]);
+const MORPH_TAGS: ReadonlySet<string> = new Set([FFDEC_XML.morph.defineMorphShape, FFDEC_XML.morph.defineMorphShape2]);
+const IGNORED_DEFINE_TAGS: ReadonlySet<string> = new Set([FFDEC_XML.timeline.sceneAndLabelData]);
+
+function readTimelineOp(item: PNode, kind: string, ctx: ParseCtx): TimelineOp | undefined {
+  const attrs = attrsOf(item);
+  if (kind === FFDEC_XML.timeline.showFrame) return { kind: 'showFrame' };
+  if (kind === FFDEC_XML.timeline.frameLabel) {
+    const name = attrStr(attrs, FFDEC_XML.timeline.frameLabelNameAttr);
+    return name === undefined ? undefined : { kind: 'label', name };
+  }
+  if (REMOVE_TAGS.has(kind)) {
+    const depth = attrNum(attrs, FFDEC_XML.remove.depth);
+    if (depth === undefined) {
+      ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+      return undefined;
+    }
+    const op: Extract<TimelineOp, { kind: 'remove' }> = { kind: 'remove', depth };
+    const cid = attrNum(attrs, FFDEC_XML.place.characterId);
+    if (cid !== undefined) op.characterId = cid;
+    return op;
+  }
+  if (kind.startsWith('PlaceObject')) return parsePlace(item, kind, ctx);
+  return undefined;
+}
+
+/**
+ * Parses the structure dump: background, root timeline, sprites, shape ids and unsupported observations.
+ * Matrix translations stay in twips. Root `declaredFrameCount` comes from the root header; a sprite's from its
+ * frame count attribute.
+ */
+export function parseStructure(xmlText: string): {
+  background: { r: number; g: number; b: number } | null;
+  root: TimelineModel;
+  sprites: SpriteModel[];
+  declaredShapeIds: number[];
+  morphShapeIds: number[];
+  unsupported: UnsupportedObservation[];
+} {
+  const parser = new XMLParser({
+    preserveOrder: true,
+    ignoreAttributes: false,
+    attributeNamePrefix: PREFIX,
+    parseAttributeValue: false,
+    parseTagValue: false,
+  });
+  const doc = parser.parse(xmlText) as PNode[];
+  const swf = doc.find((n) => nameOf(n) === FFDEC_XML.root.element);
+  const ctx: ParseCtx = { unsupported: [] };
+  const out = {
+    background: null as { r: number; g: number; b: number } | null,
+    root: { declaredFrameCount: null as number | null, ops: [] as TimelineOp[] },
+    sprites: [] as SpriteModel[],
+    declaredShapeIds: [] as number[],
+    morphShapeIds: [] as number[],
+    unsupported: ctx.unsupported,
+  };
+  if (!swf) return out;
+  out.root.declaredFrameCount = attrNum(attrsOf(swf), FFDEC_XML.root.frameCount) ?? null;
+
+  const tagsNode = childrenOf(swf, FFDEC_XML.root.element).find((n) => nameOf(n) === FFDEC_XML.root.tags);
+  const items = tagsNode ? childrenOf(tagsNode, FFDEC_XML.root.tags) : [];
+  for (const item of items) {
+    if (nameOf(item) !== FFDEC_XML.item.element) continue;
+    const attrs = attrsOf(item);
+    const kind = attrStr(attrs, FFDEC_XML.item.kindAttr);
+    if (kind === undefined) continue;
+
+    if (kind === FFDEC_XML.background.tag) {
+      const c = findChild(item, FFDEC_XML.item.element, FFDEC_XML.background.colorChild);
+      if (c) {
+        out.background = {
+          r: attrNum(c.attrs, FFDEC_XML.background.red) ?? 0,
+          g: attrNum(c.attrs, FFDEC_XML.background.green) ?? 0,
+          b: attrNum(c.attrs, FFDEC_XML.background.blue) ?? 0,
+        };
+      }
+    } else if (kind === FFDEC_XML.sprite.tag) {
+      const id = attrNum(attrs, FFDEC_XML.sprite.idAttr);
+      if (id === undefined) {
+        ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+        continue;
+      }
+      const sub = findChild(item, FFDEC_XML.item.element, FFDEC_XML.sprite.subTags);
+      const subItems = sub ? childrenOf(sub.node, FFDEC_XML.sprite.subTags) : [];
+      out.sprites.push({
+        id,
+        declaredFrameCount: attrNum(attrs, FFDEC_XML.sprite.frameCountAttr) ?? null,
+        ops: collectOps(subItems, ctx),
+      });
+    } else if (SHAPE_TAGS.has(kind)) {
+      const id = attrNum(attrs, FFDEC_XML.shape.idAttr);
+      if (id !== undefined) out.declaredShapeIds.push(id);
+      else ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+    } else if (MORPH_TAGS.has(kind)) {
+      const id = attrNum(attrs, FFDEC_XML.morph.idAttr);
+      if (id !== undefined) out.morphShapeIds.push(id);
+      ctx.unsupported.push(id !== undefined ? { kind: 'morph-shape', tagName: kind, characterId: id } : { kind: 'morph-shape', tagName: kind });
+    } else if (kind in FFDEC_XML.unsupportedKinds) {
+      const k = FFDEC_XML.unsupportedKinds[kind as keyof typeof FFDEC_XML.unsupportedKinds] as UnsupportedKind;
+      ctx.unsupported.push({ kind: k, tagName: kind });
+    } else if (IGNORED_DEFINE_TAGS.has(kind)) {
+      // known, nothing to read
+    } else if (kind.startsWith('Define')) {
+      ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+    } else {
+      const op = readTimelineOp(item, kind, ctx);
+      if (op) out.root.ops.push(op);
+    }
+  }
+  return out;
+}
+
+function collectOps(items: PNode[], ctx: ParseCtx): TimelineOp[] {
+  const ops: TimelineOp[] = [];
+  for (const item of items) {
+    if (nameOf(item) !== FFDEC_XML.item.element) continue;
+    const kind = attrStr(attrsOf(item), FFDEC_XML.item.kindAttr);
+    if (kind === undefined) continue;
+    const op = readTimelineOp(item, kind, ctx);
+    if (op) ops.push(op);
+  }
+  return ops;
 }

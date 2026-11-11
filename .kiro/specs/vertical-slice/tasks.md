@@ -73,25 +73,25 @@ Rules that apply to every task:
     - Add one small example test that runs `unpack` on `samples/clickgoto/test.swf` with the real jar into a temp directory and checks the returned header values (this doubles as the FFDec availability check for the fixture work).
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10_
 
-- [ ] 5. Converter IO reader
-  - [ ] 5.1 Define the TagsModel types
+- [x] 5. Converter IO reader
+  - [x] 5.1 Define the TagsModel types
     - Create `src/convert/model.ts` with `TagsModel`, `TimelineModel`, `SpriteModel`, `TimelineOp`, `MatrixModel`, `ColorTransformModel`, `ShapeAssetModel`, `SymbolClassEntry`, `ClassSourceModel`, `UnsupportedObservation`, `UnsupportedKind` exactly as in the design's Data Models section. Types only, no imports of `fs`.
     - _Requirements: 4.1, 4.3_
 
-  - [ ] 5.2 Implement the small readers: `symbolsCsv.ts`, `svgOrigin.ts`, `classProps.ts`
+  - [x] 5.2 Implement the small readers: `symbolsCsv.ts`, `svgOrigin.ts`, `classProps.ts`
     - `parseSymbolsCsv(text)` and `formatSymbolsCsv(entries)` (`<id>;"<Class>"`, id 0 is the root).
     - `extractSvgOrigin(svgText)` returns `{x, y}` from the outer `<g transform="matrix(1,0,0,1,tx,ty)">` or `null`, using the convention recorded in `FINDINGS.md`.
     - `extractClassProperties(asSource)` returns declared `var` names, skipping `[Embed(...)]` metadata lines.
     - Add one small example test per function on the captured fixtures (`symbols.csv`, a shape SVG, `LeftButton.as`).
     - _Requirements: 4.5, 4.12, 8.7_
 
-  - [ ] 5.3 Implement the structure-dump adapter in `src/convert/ffdecXml.ts`
+  - [x] 5.3 Implement the structure-dump adapter in `src/convert/ffdecXml.ts`
     - Add `parseStructure(xmlText): { background, root, sprites, declaredShapeIds, morphShapeIds, unsupported }` using `fast-xml-parser` with `preserveOrder: true` and the names in `FFDEC_XML`. Produce `TimelineOp[]` for place (with `move`, `characterId`, `matrix`, `colorTransform`, `name`, `clipDepth`, `hasFilters`), remove, label and showFrame. Leave matrix translations in twips (`txTwips`, `tyTwips`).
     - Unrecognised definition tags become `other-tag` observations. Unknown placement tag variants without known fields become `other-tag` observations instead of being guessed.
     - Add a small example test on the captured fixture: sprites 3 and 6 have two frames each, root has 3 frames, placements at depth 1 (character 6, `l_button`) and depth 3 (character 3, `r_button`).
     - _Requirements: 3.7, 4.3, 4.4, 4.9_
 
-  - [ ] 5.4 Implement `readUnpacked`
+  - [x] 5.4 Implement `readUnpacked`
     - Create `src/convert/readUnpacked.ts`: `readUnpacked(unpacked: UnpackResult): Promise<TagsModel>`. Read the dump, `symbols.csv`, every `shapes/*.svg` (check well-formedness with the XML parser, extract origin) in sorted order, and the class sources for every linked class. Throw `MissingExportError` when `shapes/` is absent but the dump declares shapes; treat an absent `shapes/` as empty otherwise (per `FINDINGS.md`).
     - Add one small example test building a `TagsModel` from the fixture directory and checking shape ids 1, 2, 4, 5 and class names `MainTimeline`, `LeftButton`, `RightButton`.
     - _Requirements: 3.4, 4.1, 4.12, 8.7_
