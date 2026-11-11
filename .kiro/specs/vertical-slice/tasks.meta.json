@@ -172,6 +172,306 @@
         "chatSessionId": "sess_e278da1d-7ccd-4440-bccd-a2d442d80e1a",
         "timestamp": 1794386352540
       }
+    ],
+    "6.1 Define Scene_JSON types, `validateScene` and `parseScene`": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563175
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386578964
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386780789
+      }
+    ],
+    "6.2 Implement canonical serialisation": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563303
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387024482
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387103250
+      }
+    ],
+    "6.3 Write property test for Scene_JSON round trip": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563417
+      }
+    ],
+    "6.4 Implement `resolveTimeline`": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563513
+      }
+    ],
+    "6.5 Write property test for frame display lists against an independent replay": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563598
+      }
+    ],
+    "6.6 Implement `convertModel`": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563693
+      }
+    ],
+    "6.7 Write property test for conversion determinism and order independence": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563788
+      }
+    ],
+    "6.8 Implement the converter writer and `convertStage`": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563913
+      }
+    ],
+    "7.1 Pin versions and generate `package.json`": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386563997
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386790901
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386914978
+      }
+    ],
+    "7.2 Add the static template files": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564089
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386924565
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386982225
+      }
+    ],
+    "7.3 Implement `planEmit` and a basic `emit`": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564188
+      }
+    ],
+    "7.4 Implement force safety and `--force` deletion": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564299
+      }
+    ],
+    "8.1 Add the clock and render backend interfaces": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564399
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386985355
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387020030
+      }
+    ],
+    "8.2 Add the script queue and hit testing": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564515
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387108953
+      }
+    ],
+    "9.1 Implement events, DisplayObject, DisplayObjectContainer and Sprite": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564611
+      }
+    ],
+    "9.2 Implement MovieClip and the internal API": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564714
+      }
+    ],
+    "9.3 Write property test for the MovieClip state machine": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564823
+      }
+    ],
+    "10.1 Implement the Player, display-list reconciliation and instance creation": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386564924
+      }
+    ],
+    "10.2 Write unit and property test for stepping": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565031
+      }
+    ],
+    "11.1 Hand-translate `LeftButton` and `RightButton` from the decompiled scripts": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565136
+      }
+    ],
+    "11.2 Add the provenance parser and the repository provenance test": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565235
+      }
+    ],
+    "11.3 Write the click oracle test": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565383
+      }
+    ],
+    "12.1 Implement the PixiJS render backend": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565468
+      }
+    ],
+    "12.2 Implement the browser boot in `template/src/main.ts`": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565592
+      }
+    ],
+    "13.1 Implement `runPipeline`": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565682
+      }
+    ],
+    "13.2 Implement the CLI": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565780
+      }
+    ],
+    "14. Checkpoint - Sample runs in the browser": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386565893
+      }
+    ],
+    "15.1 Add emitter write-failure cleanup": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386566032
+      }
+    ],
+    "15.2 Complete the Unpacker error paths": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386566183
+      }
+    ],
+    "15.3 Complete the Converter error paths": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386566289
+      }
+    ],
+    "15.4 Complete unsupported-feature reporting and refusal handling in the pipeline": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386566427
+      }
+    ],
+    "15.5 Complete the runtime error overlay": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386566521
+      }
+    ],
+    "15.6 Close remaining shim and runtime coverage gaps": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386566655
+      }
+    ],
+    "17.1 Write the e2e smoke test": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386566747
+      }
+    ],
+    "18. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794386566843
+      }
     ]
   }
 }

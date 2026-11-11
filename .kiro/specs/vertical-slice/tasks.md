@@ -97,137 +97,137 @@ Rules that apply to every task:
     - _Requirements: 3.4, 4.1, 4.12, 8.7_
 
 - [ ] 6. Pure converter, scene types and writer
-  - [ ] 6.1 Define Scene_JSON types, `validateScene` and `parseScene`
+  - [x] 6.1 Define Scene_JSON types, `validateScene` and `parseScene`
     - Create `template/runtime/scene.ts` with `SceneJson`, `ShapeSymbol`, `SpriteSymbol`, `DisplayListEntry`, `validateScene` and `parseScene` (throws `SceneParseError`) with the checks listed in the design. No Node imports.
     - _Requirements: 4.2, 4.3, 4.4, 4.5, 4.12_
 
-  - [ ] 6.2 Implement canonical serialisation
+  - [x] 6.2 Implement canonical serialisation
     - Create `src/convert/sceneJson.ts` with `serialiseScene` (sorted keys at every level by code unit, two-space indent, `\n`, one trailing newline, `-0` normalised, finite numbers only) importing the types and `parseScene` from `template/runtime/scene.ts`.
     - _Requirements: 4.6, 4.8_
 
-  - [ ] 6.3 Write property test for Scene_JSON round trip
+  - [~] 6.3 Write property test for Scene_JSON round trip
     - Create `test/property/sceneRoundTrip.test.ts` and the generator `test/property/gen/genScene.ts` (shape and sprite symbols, labels, class names, nested sprite references, finite numbers).
     - **Property 1: Scene_JSON round trip**
     - **Validates: Requirements 4.6, 10.1**
 
-  - [ ] 6.4 Implement `resolveTimeline`
+  - [~] 6.4 Implement `resolveTimeline`
     - Create `src/convert/resolveTimeline.ts` implementing the design's placement resolution (place, move, replace, remove, label, showFrame), full absolute state per frame, ascending depth, twips divided by 20 with `-0` normalised, labels with 1-based frames, dropped placements for unsupported characters, masks and filters (returned as dropped-placement records with sprite, frame, depth, kind), warnings for the non-fatal cases, and `MalformedFrameDataError` for the fatal cases.
     - Create `src/convert/errors.ts` with `ConvertError`, `UnknownSymbolError`, `ShapeExportError`, `MalformedSvgError`, `MalformedFrameDataError`, `SymbolCycleError`.
     - _Requirements: 3.8, 4.3, 4.4, 4.9, 4.10, 4.11_
 
-  - [ ] 6.5 Write property test for frame display lists against an independent replay
+  - [~] 6.5 Write property test for frame display lists against an independent replay
     - Create `test/property/resolveTimeline.test.ts` with generators `test/property/gen/genTimelineOps.ts` and a separately written array-based reference replay in the test.
     - **Property 4: Frame display lists equal an independent replay of the placement operations**
     - **Validates: Requirements 4.3, 4.10, 4.11**
 
-  - [ ] 6.6 Implement `convertModel`
+  - [~] 6.6 Implement `convertModel`
     - Create `src/pipeline/unsupported.ts` with `UnsupportedFeatureEntry`, the total-order sort and the canonical file serialiser (`{ "entries": [...], "formatVersion": 1 }`).
     - Create `src/convert/convertModel.ts`: validate the model shape, index by id, build `svgFiles` (line endings normalised to `\n`, sorted by id), skip morph shapes with entries, call `resolveTimeline` for the root (id 0) and each sprite, attach `className`, run the reference check (`UnknownSymbolError`), the cycle check, add unsupported entries (observations, morph, dropped placements, `unbound-instance`), assemble `SceneJson`, run `validateScene`. Return `ConvertResult` with `stats` and sorted `warnings`.
     - Add one small example test: the Click_Sample model built by `readUnpacked` (or a hand-copied fixture model) converts to a scene with symbols 0..6 and matrices (143.5, 270) and (415, 272.5).
     - _Requirements: 3.1, 3.2, 3.3, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.7, 4.12, 8.7_
 
-  - [ ] 6.7 Write property test for conversion determinism and order independence
+  - [~] 6.7 Write property test for conversion determinism and order independence
     - Create `test/property/convertDeterminism.test.ts` with `test/property/gen/genTagsModel.ts`. Run `convertModel` twice and on permuted list orders, comparing serialised scene text, SVG contents and file names. Add a guard test that greps the pure files for `node:fs`, `node:child_process`, `Date`, `Math.random`, `localeCompare`.
     - **Property 2: Conversion is deterministic and independent of list order**
     - **Validates: Requirements 4.8, 10.2**
 
-  - [ ] 6.8 Implement the converter writer and `convertStage`
+  - [~] 6.8 Implement the converter writer and `convertStage`
     - Create `src/convert/writeConverted.ts` with `ConvertedArtifact` and `convertStage(unpacked)`: `readUnpacked`, `convertModel` (before any write), then write SVGs ascending by id into `<workDir>/converted/assets/`, and `scene.json` last through a temp file and `rename`.
     - _Requirements: 3.1, 3.2, 3.6, 4.1, 4.7, 4.9_
 
 - [ ] 7. Minimal Emitter
-  - [ ] 7.1 Pin versions and generate `package.json`
+  - [x] 7.1 Pin versions and generate `package.json`
     - Create `src/emit/versions.ts` with exact versions of `pixi.js`, `vite`, `typescript` chosen with `npm view <pkg> version`, and verify the PixiJS 8 API names the adapter needs (`Application.init`, `Graphics.svg`) against the installed package. Add a unit test that each version matches `^\d+\.\d+\.\d+$`.
     - Create `src/emit/packageJson.ts` building the emitted `package.json` with sorted keys, name `swf-resurrect-output`, scripts `dev`, `build`, `typecheck`, and exact dependency versions.
     - _Requirements: 5.3, 5.4_
 
-  - [ ] 7.2 Add the static template files
+  - [x] 7.2 Add the static template files
     - Create `template/index.html`, `template/vite.config.ts` (relative base), `template/tsconfig.json` (strict), and `template/src/classes.ts` (default empty `classRegistry`, replaced by the generated file during planning). Do not create `package.json` there (it is generated).
     - _Requirements: 5.1, 5.2_
 
-  - [ ] 7.3 Implement `planEmit` and a basic `emit`
+  - [~] 7.3 Implement `planEmit` and a basic `emit`
     - Create `src/emit/planEmit.ts` (pure): copies template files, generates `package.json` and `src/classes.ts` (import and registry entry for each handwritten class linked in the Symbol_Table), copies `assets/scene.json` and `assets/<id>.svg`, sorted by path, `\n` line endings.
     - Create `src/emit/emit.ts`: resolve the output directory, refuse a non-empty directory when `force` is false (`OutputDirNotEmptyError`, directory untouched), plan in memory, write files in sorted order. The `--force` deletion logic is added in Task 7.4.
     - _Requirements: 5.1, 5.2, 5.7, 5.8_
 
-  - [ ] 7.4 Implement force safety and `--force` deletion
+  - [~] 7.4 Implement force safety and `--force` deletion
     - Create `src/emit/forceSafety.ts` with pure `checkForceTarget(resolved, ctx)` (filesystem root, home equality, cwd or ancestor of cwd, ancestor-or-equal of the SWF's directory, Windows case folding, reason strings from the design). In `emit.ts`, resolve symbolic links on the deepest existing ancestor, refuse unsafe targets with `UnsafeForceTargetError` before deleting anything, and with `--force` remove only direct entries with `fs.rm(entry, { recursive: true, force: true })` so links are removed and not followed.
     - Add example tests on temp directories: `--force` absent leaves a populated directory byte-identical; `--force` empties but keeps the directory; a symlink inside the directory is removed and its target survives (skip creating the link with a clear failure message if the platform denies it); unsafe paths are refused.
     - _Requirements: 5.8, 5.9, 5.10, 10.11_
 
-- [ ] 8. Runtime primitives
-  - [ ] 8.1 Add the clock and render backend interfaces
+- [x] 8. Runtime primitives
+  - [x] 8.1 Add the clock and render backend interfaces
     - Create `template/runtime/clock.ts` (`Clock`, `ManualClock`) and `template/runtime/backend.ts` (`RenderBackend`, `NodeHandle`, `ShapeBounds`) as in the design.
     - _Requirements: 6.1, 6.2_
 
-  - [ ] 8.2 Add the script queue and hit testing
+  - [x] 8.2 Add the script queue and hit testing
     - Create `template/runtime/scriptQueue.ts` (enqueue, drain, non-re-entrant, lookup at dequeue time).
     - Create `template/runtime/hitTest.ts`: pure `hitTest(root, x, y)` over a minimal structural interface (transform fields, visible, children, optional shape bounds), topmost first, inverse transform into local space.
     - _Requirements: 7.12, 7.13, 7.14, 8.2, 8.5_
 
 - [ ] 9. Flash API shim
-  - [ ] 9.1 Implement events, DisplayObject, DisplayObjectContainer and Sprite
+  - [~] 9.1 Implement events, DisplayObject, DisplayObjectContainer and Sprite
     - Create `template/shim/events.ts` (`Event`, `MouseEvent`, `EventDispatcher` with snapshot dispatch, registration order, duplicate listener registered once), `template/shim/DisplayObject.ts` (alpha clamped to 0..1, `parent`, `name` default `''`, width and height), `template/shim/Sprite.ts` (`numChildren`, `addChild` appends, `removeChild`, `getChildByName`).
     - _Requirements: 7.1, 7.2, 7.4, 7.8_
 
-  - [ ] 9.2 Implement MovieClip and the internal API
+  - [~] 9.2 Implement MovieClip and the internal API
     - Create `template/shim/MovieClip.ts` and `template/shim/internal.ts`: `play`, `stop`, `gotoAndPlay`, `gotoAndStop` (valid frame or label, otherwise unchanged state and one `console.warn` with the value), `currentFrame`, `totalFrames`, `currentLabels`, `addFrameScript(...pairs)` with 0-based indices (out-of-range index registers nothing and warns), per-instance state only, `withConstructionContext`, child attach and detach, instance-name property exposure (`Reflect.set`, removal only if still pointing at the child), a clip outside a context has one empty frame. Goto methods render the target frame at once and enqueue the target script through the script queue.
     - Create `template/shim/index.ts` re-exporting the public surface only (not the internal module).
     - _Requirements: 7.3, 7.5, 7.6, 7.7, 7.11, 7.12, 7.13, 7.14, 7.15, 7.16, 7.17_
 
-  - [ ] 9.3 Write property test for the MovieClip state machine
+  - [~] 9.3 Write property test for the MovieClip state machine
     - Create `test/property/movieClipMachine.test.ts` with generators `test/property/gen/genClipOps.ts`. Compare `(currentFrame, playing)` with a reference state machine after each of `play`, `stop`, `gotoAndPlay(x)`, `gotoAndStop(x)` and tick, where `x` is valid, a label, out of range or an unknown label. Check invalid `x` leaves state unchanged with one warning containing `x`, and that parent and sibling clips are unaffected.
     - **Property 15: MovieClip frame and play-state transitions follow a reference machine**
     - **Validates: Requirements 6.12, 7.3, 7.5, 7.6, 7.7, 7.16**
 
 - [ ] 10. Player
-  - [ ] 10.1 Implement the Player, display-list reconciliation and instance creation
+  - [~] 10.1 Implement the Player, display-list reconciliation and instance creation
     - Create `template/runtime/stageTree.ts` and `template/runtime/player.ts` with `PlayerOptions`, `Player`, fixed-step accumulator (epsilon `1e-9`, `maxCatchUpFrames` default 5), the frame step from the design (advance only if playing and `totalFrames > 1`, render on change, `ENTER_FRAME` to every clip every tick, enqueue and drain the frame script only when a frame was entered, step children that existed before the tick), reconcile by depth with identity reuse for same `(depth, symbolId)`, matrix decomposition, colour transform application through the backend, skipping entries whose shape bounds are missing, class instantiation through the registry and construction context, binding of named children before the frame-1 script, `dispatchClick` using `hitTest` with bubbling to ancestors.
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.9, 6.10, 6.11, 6.12, 7.9, 7.10, 7.12, 8.2, 8.4, 8.5, 8.6_
 
-  - [ ] 10.2 Write unit and property test for stepping
+  - [~] 10.2 Write unit and property test for stepping
     - Create `test/property/stepping.test.ts` using `ManualClock` and a fake backend (`test/support/fakeBackend.ts`). First an example test: N frames (2 to 10) at a given Frame_Rate advance exactly one frame per interval and return to frame 1 on the next tick. Then the property over frame rates, clock increments, nesting and play/stop configurations.
     - **Property 13: Stepping advances exactly one frame per interval and loops**
     - **Validates: Requirements 6.2, 6.3, 6.10, 6.11, 10.4**
 
 - [ ] 11. Click handler and oracle test
-  - [ ] 11.1 Hand-translate `LeftButton` and `RightButton` from the decompiled scripts
+  - [~] 11.1 Hand-translate `LeftButton` and `RightButton` from the decompiled scripts
     - Read `test/fixtures/clickgoto/LeftButton.as` and `RightButton.as` (the FFDec output, not `samples/clickgoto/original-source`). Create `handwritten/clickgoto/LeftButton.ts` and `handwritten/clickgoto/RightButton.ts` that extend `MovieClip`, register the click listener, call `stop()`, drop `EventWatcher`, `trace` and `[Embed]`, and use arrow-function fields for `clicked`. No `_loc<N>_` identifiers. Import the shim as `'../shim'` (the path used in the emitted `src/`).
     - Make these files resolvable in the repo: add a `tsconfig.handwritten.json` with `rootDirs` of `handwritten/clickgoto` and `template/src`, and a Vitest `resolve.alias` for imports of `../shim` from `handwritten/`. Add a `typecheck:handwritten` script.
     - _Requirements: 8.1, 8.3_
 
-  - [ ] 11.2 Add the provenance parser and the repository provenance test
+  - [~] 11.2 Add the provenance parser and the repository provenance test
     - Create `test/support/provenance.ts` with `validateProvenance(text, { clickSample })` and `parseExpectedState(text)` for the Expected_State table in `PROVENANCE.md` (frames within 1..total, playing or stopped), including the licence allow-list and `OR` rule.
     - Create `test/unit/provenance.test.ts` that walks every `.swf` under `samples/`, fails naming the file and field when the note is missing or invalid, fails when no Click_Sample exists or its Expected_State is invalid. Also assert no `_loc<N>_` in `handwritten/` and no LLM client in `package.json` dependencies.
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 9.7, 10.9, 10.10_
 
-  - [ ] 11.3 Write the click oracle test
+  - [~] 11.3 Write the click oracle test
     - Create `test/unit/clickOracle.test.ts`. Build the Click_Sample scene from the fixtures through `readUnpacked` and `convertModel` (or a committed fixture model), create a `Player` with the fake backend, `ManualClock`, and a registry of the real handwritten `LeftButton` and `RightButton`. Drive the Expected_State rows parsed from `PROVENANCE.md`: start state, click inside `l_button`, reset, click inside `r_button`, one tick after the second click shows the looping behaviour, a click outside every object changes nothing, and each button's placement equals (143.5, 270) and (415, 272.5).
     - Use `parseExpectedState` as the oracle. Do not hard-code the table.
     - _Requirements: 1.4, 7.10, 8.2, 8.3, 8.4, 8.5, 10.4_
 
 - [ ] 12. Pixi adapter
-  - [ ] 12.1 Implement the PixiJS render backend
+  - [~] 12.1 Implement the PixiJS render backend
     - Create `template/runtime/pixi/pixiBackend.ts` (the only file importing `pixi.js`) implementing `RenderBackend`: `loadShape` builds a `Graphics` from the SVG text and returns bounds shifted into shape-origin coordinates, `createShape` places a clone at `(-origin.x, -origin.y)` using the sign recorded in `FINDINGS.md`, transforms, alpha, visibility, colour multiplier (tint and alpha), `showError` writing an on-page element. Warn once for colour-transform offsets.
     - Run `npm run typecheck:template`.
     - _Requirements: 6.1, 6.4, 6.7_
 
-  - [ ] 12.2 Implement the browser boot in `template/src/main.ts`
+  - [~] 12.2 Implement the browser boot in `template/src/main.ts`
     - Fetch `assets/scene.json`, `parseScene`, load all shapes through the backend, create the `Application` with the scene stage size and background, create the `Player` with the class registry from `./classes`, run the `requestAnimationFrame` loop with `performance.now()` as the clock, convert `pointerdown` to stage coordinates and call `player.dispatchClick`. On scene failure show the error and render no frames.
     - Run `npm run typecheck:template`.
     - _Requirements: 6.1, 6.2, 6.6, 6.7, 8.2_
 
 - [ ] 13. Pipeline glue
-  - [ ] 13.1 Implement `runPipeline`
+  - [~] 13.1 Implement `runPipeline`
     - Create `src/pipeline/pipeline.ts` with `PipelineStages`, `runPipeline(args, stages, io)` returning exit codes 0, 1, 2. Pre-check the SWF path and output directory writability (exit 2, no stage run), run unpack, convert, emit in order, print progress lines and `Done: <absolute output dir>`, print `error [<stage>]: <message>` on failure and skip later stages, add `untranslated-class` entries for linked classes without a handwritten translation, write `unsupported-features.json` into the output directory after a successful emit. Create a work directory with `mkdtemp` and delete it unless `--keep-work`.
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7_
 
-  - [ ] 13.2 Implement the CLI
+  - [~] 13.2 Implement the CLI
     - Create `src/pipeline/cli.ts` with `parseArgs` options `--force`, `--work-dir`, `--keep-work`, `--ffdec`, `--handwritten`. Resolve the handwritten directory by `handwritten/<parent directory name of the SWF>/` when the option is absent. Wire real stages, load template and handwritten files, pass `--force` to the Emitter (its deletion and safety checks come from Task 7.4), set `process.exitCode`.
     - Run `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --force` and confirm it exits 0 and writes the project.
     - _Requirements: 1.6, 9.1, 9.2, 9.8_
 
-- [ ] 14. Checkpoint - Sample runs in the browser
+- [~] 14. Checkpoint - Sample runs in the browser
   - Ensure all tests pass, ask the user if questions arise. Run `npm test -- --run` and `npm run typecheck`, then `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --force`.
   - In `out/clickgoto`, run `npm install`, then `npm run typecheck` and `npm run build`.
   - Ask the user to start the project manually in their own terminal, with `npm run dev` or with `npm run build` followed by `npx vite preview`. The agent must not start or wait on a dev server or preview server.
@@ -235,31 +235,31 @@ Rules that apply to every task:
   - Wait for the user's visual confirmation. Nothing after this task is needed for this checkpoint.
 
 - [ ] 15. Hardening
-  - [ ] 15.1 Add emitter write-failure cleanup
+  - [~] 15.1 Add emitter write-failure cleanup
     - In `emit.ts`, on a write error remove the files already written by this run on a best-effort basis and throw `EmitWriteError(path, cause)`. Make the file writer injectable and add an example test with an injected failure that checks no success is reported and the written files are cleaned up.
     - _Requirements: 5.11_
 
-  - [ ] 15.2 Complete the Unpacker error paths
+  - [~] 15.2 Complete the Unpacker error paths
     - Ensure all errors from the design's Unpack error table are produced with the contents listed there: missing jar leaves the spawner uncalled and the work directory unchanged (2.3), non-zero exit carries code and ANSI-stripped stderr (2.4), timeout kills the process (2.5), AS2-only SWF stops before the export (2.6), invalid signature or unreadable path starts no process (2.7), missing exports listed by name (2.8), unsupported XML major (2.9), missing header values (2.10), missing `java` (`JavaNotFoundError`).
     - Add example tests with the injected fake spawner and fake timers; AS2 and version cases use small hand-edited copies of the fixture XML head.
     - _Requirements: 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10_
 
-  - [ ] 15.3 Complete the Converter error paths
+  - [~] 15.3 Complete the Converter error paths
     - Ensure malformed SVG names the file and writes nothing (3.4), missing or zero-byte SVG names the character id (3.5), unknown symbol id names id, sprite, frame and depth and leaves no `scene.json` (4.7), malformed frame data names sprite and frame and writes no scene (4.9), cycles and duplicate symbol-class ids are errors. Confirm the morph, text, sound, button, filter, mask and video reporting and the dropped-placement entries (3.3, 3.7, 3.8) and the `unbound-instance` entry (8.7).
     - Add small example tests for each error class and message with hand-built `TagsModel` values and temp staging directories.
     - _Requirements: 3.3, 3.4, 3.5, 3.7, 3.8, 4.7, 4.9, 8.7_
 
-  - [ ] 15.4 Complete unsupported-feature reporting and refusal handling in the pipeline
+  - [~] 15.4 Complete unsupported-feature reporting and refusal handling in the pipeline
     - Write `unsupported-features.json` after a failure that occurs once Convert has completed (not for the Emitter refusals). When the Emitter refuses a non-empty directory or an unsafe `--force` target, print the list to standard error and write nothing in the output directory. Confirm exit code 2 for invalid SWF or output paths with no stage run, and that a failed stage skips later stages.
     - Add example tests with stub stages for each of these paths.
     - _Requirements: 9.4, 9.5, 9.6, 9.8, 9.9_
 
-  - [ ] 15.5 Complete the runtime error overlay
+  - [~] 15.5 Complete the runtime error overlay
     - In `template/src/main.ts` and the Pixi backend: invalid or unreachable `scene.json` shows an error naming Scene_JSON and renders no frame (6.6); a failed SVG load shows an error naming the asset and playback does not start (6.7); a placement of an asset that is not loaded is skipped, the others render, and the error names the asset (6.8); an unbindable named instance leaves the property unset and loading continues (8.6).
     - Add example tests with the fake backend covering the three load failures.
     - _Requirements: 6.6, 6.7, 6.8, 8.6_
 
-  - [ ] 15.6 Close remaining shim and runtime coverage gaps
+  - [~] 15.6 Close remaining shim and runtime coverage gaps
     - Review requirements 6 to 8 against the code and fix gaps: `numChildren`, `getChildByName` null, alpha clamping, `addFrameScript` odd-argument and non-function warnings, `removeEventListener` from inside a dispatch, click bubbling with `currentTarget`, scripted children drawn above timeline children, skewed matrix and offset warnings. Add an example test for each gap fixed.
     - _Requirements: 6.4, 6.5, 6.9, 7.1, 7.2, 7.4, 7.8, 7.15, 7.17_
 
@@ -325,11 +325,11 @@ Rules that apply to every task:
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.7_
 
 - [ ] 17. End-to-end smoke test
-  - [ ] 17.1 Write the e2e smoke test
+  - [~] 17.1 Write the e2e smoke test
     - Create `test/e2e/pipeline.e2e.test.ts`. In `beforeAll`, check that Java, `tools/ffdec/ffdec-cli.jar` and at least one Sample_SWF exist, and throw an error naming the missing dependency otherwise (never skip, never pass). Run the pipeline on every `samples/**/*.swf` into a temp directory, then `npm install --no-audit --no-fund`, `npm run typecheck` and `npm run build` in each emitted project, requiring exit code 0 and a build output containing `index.html` and a JavaScript file. Run the pipeline twice and compare the two output trees byte for byte. Use a 10 minute timeout and a shared install cache so identical pinned dependencies install once.
     - _Requirements: 4.8, 5.5, 5.6, 5.7, 9.1, 10.5, 10.6, 10.8_
 
-- [ ] 18. Final checkpoint - Ensure all tests pass
+- [~] 18. Final checkpoint - Ensure all tests pass
   - Run `npm test -- --run` (all required tests, including the click oracle, provenance and e2e tests, plus any optional tests present), `npm run typecheck`, `npm run typecheck:template` and `npm run typecheck:handwritten`. Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
