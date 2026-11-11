@@ -297,8 +297,9 @@ Properties of the output:
 - Every frame lists every instance present in that frame and no other (Req 4.10): the snapshot is the full state.
 - Entries are sorted by ascending depth (Req 4.3); depth is unique within a frame.
 - "Same depth, same symbol id" identity is a runtime concern; the converter's job is to give absolute state per frame so the runtime can compare consecutive frames.
-- `frames.length` must equal the sprite's `declaredFrameCount` when the model has one, else `MalformedFrameDataError(sprite)`. A sprite with zero `showFrame` ops becomes one empty frame plus a warning (**to verify** with a real file how FFDec dumps empty sprites).
-- Frame count of the root is `header.frameCount`; it must also equal the number of `showFrame` ops. A value outside 1..65535 is `MalformedFrameDataError`.
+- The frame count of a sprite and of the root is the number of `showFrame` ops, never the declared `frameCount` attribute (FINDINGS.md, Task 2.3: FFDec keeps the stored attribute even when the tag list disagrees). When `declaredFrameCount` is present and differs from the counted value, the counted value is used and a warning naming the sprite, the declared value and the counted value is recorded. It is not an error.
+- A sprite with zero `showFrame` ops becomes one empty frame plus a warning; ops after the last `showFrame` belong to no frame and are dropped with a warning. This was only verified on a hand-edited dump, so the rule is a tolerant fallback, not a confirmed FFDec behaviour.
+- A counted frame count above 65535 is `MalformedFrameDataError`.
 - Duplicate label name within a sprite: the first occurrence wins, a warning is recorded. Labels sorted by `(frame, name)` by code unit.
 
 #### Twips to pixels
@@ -307,7 +308,7 @@ Properties of the output:
 
 #### Bounds origin offset
 
-Where: **IO reader**, function `extractSvgOrigin(svgText): { x: number; y: number } | null` in `svgOrigin.ts` (pure string function, tested alone). It finds the outermost `<g transform="matrix(1,0,0,1,tx,ty)">` wrapper verified in tech.md and returns `(tx, ty)`. If the wrapper is absent or has a different transform it returns `null` and the model carries `origin: null`; the pure part then uses `(0, 0)` and records a warning.
+Where: **IO reader**, function `extractSvgOrigin(svgText): { x: number; y: number } | null` in `svgOrigin.ts` (pure string function, tested alone). It finds the outermost `<g transform="matrix(a, b, c, d, tx, ty)">` wrapper and returns `(tx, ty)` when `a, b, c, d` are numerically `1, 0, 0, 1`. Real FFDec 26.4.0 output reads `matrix(1.0, 0.0, 0.0, 1.0, 42.5, 40.5)`, so the parser accepts decimal forms such as `1.0` and optional whitespace after commas, and compares numbers, not text (FINDINGS.md, Task 2.2 item 5). The runtime draws the SVG at `(-tx, -ty)` (FINDINGS.md, Task 2.3, confirmed). If the wrapper is absent or has a different transform it returns `null` and the model carries `origin: null`; the pure part then uses `(0, 0)` and records a warning.
 
 Meaning of the value. tech.md: the wrapper shifts the shape so its bounds start at (0, 0), and "the shape's own origin is at (tx, ty) inside the SVG; the runtime must offset by that". So `origin` is the position of the shape's local (0, 0) inside the SVG picture. The Shape_Symbol stores it as `origin: { x: tx, y: ty }`. To make the placement matrix apply to the shape's own origin, the runtime positions the drawn SVG at `(-origin.x, -origin.y)` inside the shape node. Requirement 6.4 says "offset each Shape_Symbol drawing by its bounds origin offset"; this design pins the sign convention (subtract) and the first task checks it on the Click_Sample by comparing against the placements `PROVENANCE.md` lists (for example `l_button` at 143.5, 270).
 
@@ -844,7 +845,7 @@ Testing by properties applies here because the slice has a large pure core: the 
 
 ### Property 8: Malformed frame data is reported with its location
 
-*For any* timeline in which a move or remove targets an empty depth, a place carries no character, or the declared frame count differs from the number of `showFrame` operations, `convertModel` throws an error whose message contains the sprite id (or `root`) and, where one exists, the frame number.
+*For any* timeline in which a move or remove targets an empty depth, or a place carries no character, `convertModel` throws an error whose message contains the sprite id (or `root`) and, where one exists, the frame number.
 
 **Validates: Requirements 4.9**
 
