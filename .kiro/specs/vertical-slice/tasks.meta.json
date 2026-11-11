@@ -1,5 +1,18 @@
 {
-  "pbtResults": {},
+  "pbtResults": {
+    "6.3 Write property test for Scene_JSON round trip": {
+      "status": "passed",
+      "lastRunTimestamp": 1794387417761
+    },
+    "9.3 Write property test for the MovieClip state machine": {
+      "status": "passed",
+      "lastRunTimestamp": 1794387577367
+    },
+    "6.5 Write property test for frame display lists against an independent replay": {
+      "status": "passed",
+      "lastRunTimestamp": 1794387579058
+    }
+  },
   "executionHistory": {
     "1.1 Create the project skeleton and tooling": [
       {
@@ -212,6 +225,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386563417
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387366704
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387507073
       }
     ],
     "6.4 Implement `resolveTimeline`": [
@@ -219,6 +242,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386563513
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387366856
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387507849
       }
     ],
     "6.5 Write property test for frame display lists against an independent replay": [
@@ -226,6 +259,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386563598
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387514575
       }
     ],
     "6.6 Implement `convertModel`": [
@@ -233,6 +271,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386563693
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387514738
       }
     ],
     "6.7 Write property test for conversion determinism and order independence": [
@@ -331,6 +374,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386564611
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387264123
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387360487
       }
     ],
     "9.2 Implement MovieClip and the internal API": [
@@ -338,6 +391,16 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386564714
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387367009
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387508254
       }
     ],
     "9.3 Write property test for the MovieClip state machine": [
@@ -345,6 +408,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386564823
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387514916
       }
     ],
     "10.1 Implement the Player, display-list reconciliation and instance creation": [
@@ -352,6 +420,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386564924
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387515116
       }
     ],
     "10.2 Write unit and property test for stepping": [

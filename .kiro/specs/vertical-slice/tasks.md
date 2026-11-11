@@ -105,22 +105,22 @@ Rules that apply to every task:
     - Create `src/convert/sceneJson.ts` with `serialiseScene` (sorted keys at every level by code unit, two-space indent, `\n`, one trailing newline, `-0` normalised, finite numbers only) importing the types and `parseScene` from `template/runtime/scene.ts`.
     - _Requirements: 4.6, 4.8_
 
-  - [~] 6.3 Write property test for Scene_JSON round trip
+  - [x] 6.3 Write property test for Scene_JSON round trip
     - Create `test/property/sceneRoundTrip.test.ts` and the generator `test/property/gen/genScene.ts` (shape and sprite symbols, labels, class names, nested sprite references, finite numbers).
     - **Property 1: Scene_JSON round trip**
     - **Validates: Requirements 4.6, 10.1**
 
-  - [~] 6.4 Implement `resolveTimeline`
+  - [x] 6.4 Implement `resolveTimeline`
     - Create `src/convert/resolveTimeline.ts` implementing the design's placement resolution (place, move, replace, remove, label, showFrame), full absolute state per frame, ascending depth, twips divided by 20 with `-0` normalised, labels with 1-based frames, dropped placements for unsupported characters, masks and filters (returned as dropped-placement records with sprite, frame, depth, kind), warnings for the non-fatal cases, and `MalformedFrameDataError` for the fatal cases.
     - Create `src/convert/errors.ts` with `ConvertError`, `UnknownSymbolError`, `ShapeExportError`, `MalformedSvgError`, `MalformedFrameDataError`, `SymbolCycleError`.
     - _Requirements: 3.8, 4.3, 4.4, 4.9, 4.10, 4.11_
 
-  - [~] 6.5 Write property test for frame display lists against an independent replay
+  - [-] 6.5 Write property test for frame display lists against an independent replay
     - Create `test/property/resolveTimeline.test.ts` with generators `test/property/gen/genTimelineOps.ts` and a separately written array-based reference replay in the test.
     - **Property 4: Frame display lists equal an independent replay of the placement operations**
     - **Validates: Requirements 4.3, 4.10, 4.11**
 
-  - [~] 6.6 Implement `convertModel`
+  - [-] 6.6 Implement `convertModel`
     - Create `src/pipeline/unsupported.ts` with `UnsupportedFeatureEntry`, the total-order sort and the canonical file serialiser (`{ "entries": [...], "formatVersion": 1 }`).
     - Create `src/convert/convertModel.ts`: validate the model shape, index by id, build `svgFiles` (line endings normalised to `\n`, sorted by id), skip morph shapes with entries, call `resolveTimeline` for the root (id 0) and each sprite, attach `className`, run the reference check (`UnknownSymbolError`), the cycle check, add unsupported entries (observations, morph, dropped placements, `unbound-instance`), assemble `SceneJson`, run `validateScene`. Return `ConvertResult` with `stats` and sorted `warnings`.
     - Add one small example test: the Click_Sample model built by `readUnpacked` (or a hand-copied fixture model) converts to a scene with symbols 0..6 and matrices (143.5, 270) and (415, 272.5).
@@ -166,22 +166,22 @@ Rules that apply to every task:
     - _Requirements: 7.12, 7.13, 7.14, 8.2, 8.5_
 
 - [ ] 9. Flash API shim
-  - [~] 9.1 Implement events, DisplayObject, DisplayObjectContainer and Sprite
+  - [x] 9.1 Implement events, DisplayObject, DisplayObjectContainer and Sprite
     - Create `template/shim/events.ts` (`Event`, `MouseEvent`, `EventDispatcher` with snapshot dispatch, registration order, duplicate listener registered once), `template/shim/DisplayObject.ts` (alpha clamped to 0..1, `parent`, `name` default `''`, width and height), `template/shim/Sprite.ts` (`numChildren`, `addChild` appends, `removeChild`, `getChildByName`).
     - _Requirements: 7.1, 7.2, 7.4, 7.8_
 
-  - [~] 9.2 Implement MovieClip and the internal API
+  - [x] 9.2 Implement MovieClip and the internal API
     - Create `template/shim/MovieClip.ts` and `template/shim/internal.ts`: `play`, `stop`, `gotoAndPlay`, `gotoAndStop` (valid frame or label, otherwise unchanged state and one `console.warn` with the value), `currentFrame`, `totalFrames`, `currentLabels`, `addFrameScript(...pairs)` with 0-based indices (out-of-range index registers nothing and warns), per-instance state only, `withConstructionContext`, child attach and detach, instance-name property exposure (`Reflect.set`, removal only if still pointing at the child), a clip outside a context has one empty frame. Goto methods render the target frame at once and enqueue the target script through the script queue.
     - Create `template/shim/index.ts` re-exporting the public surface only (not the internal module).
     - _Requirements: 7.3, 7.5, 7.6, 7.7, 7.11, 7.12, 7.13, 7.14, 7.15, 7.16, 7.17_
 
-  - [~] 9.3 Write property test for the MovieClip state machine
+  - [-] 9.3 Write property test for the MovieClip state machine
     - Create `test/property/movieClipMachine.test.ts` with generators `test/property/gen/genClipOps.ts`. Compare `(currentFrame, playing)` with a reference state machine after each of `play`, `stop`, `gotoAndPlay(x)`, `gotoAndStop(x)` and tick, where `x` is valid, a label, out of range or an unknown label. Check invalid `x` leaves state unchanged with one warning containing `x`, and that parent and sibling clips are unaffected.
     - **Property 15: MovieClip frame and play-state transitions follow a reference machine**
     - **Validates: Requirements 6.12, 7.3, 7.5, 7.6, 7.7, 7.16**
 
 - [ ] 10. Player
-  - [~] 10.1 Implement the Player, display-list reconciliation and instance creation
+  - [-] 10.1 Implement the Player, display-list reconciliation and instance creation
     - Create `template/runtime/stageTree.ts` and `template/runtime/player.ts` with `PlayerOptions`, `Player`, fixed-step accumulator (epsilon `1e-9`, `maxCatchUpFrames` default 5), the frame step from the design (advance only if playing and `totalFrames > 1`, render on change, `ENTER_FRAME` to every clip every tick, enqueue and drain the frame script only when a frame was entered, step children that existed before the tick), reconcile by depth with identity reuse for same `(depth, symbolId)`, matrix decomposition, colour transform application through the backend, skipping entries whose shape bounds are missing, class instantiation through the registry and construction context, binding of named children before the frame-1 script, `dispatchClick` using `hitTest` with bubbling to ancestors.
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.9, 6.10, 6.11, 6.12, 7.9, 7.10, 7.12, 8.2, 8.4, 8.5, 8.6_
 
