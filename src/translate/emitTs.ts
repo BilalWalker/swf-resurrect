@@ -38,6 +38,10 @@ export interface RewriteContext {
   line: number;
   /** Set for `type`; absent for expressions. */
   role?: TypeRole;
+  /** Names of the enclosing function's parameters and local variables (empty outside functions). */
+  locals?: ReadonlySet<string>;
+  /** True when the enclosing function's own body has a `return <expr>` (set for return types). */
+  hasValueReturn?: boolean;
 }
 
 export interface RewriteResult {
@@ -55,6 +59,12 @@ export interface Rewriter {
    * Return '' to emit no annotation.
    */
   type(slice: TokenSlice | null, ctx: RewriteContext): RewriteResult;
+  /**
+   * AS3 default value text for an instance field declared without initialiser, or
+   * `null` when the field is emitted with `declare` instead (design 1.5). Absent:
+   * fields are emitted as written.
+   */
+  fieldDefault?(type: TokenSlice | null): string | null;
 }
 
 /** Copies source text unchanged. Used until rewrite.ts exists, and in tests. */
@@ -143,6 +153,10 @@ class Emitter {
   private readonly tokens: readonly Token[];
   private readonly rw: Rewriter;
   private readonly hooks: EmitHooks;
+  /** Facts about the function being emitted, passed to the Rewriter. */
+  private fn: { locals: ReadonlySet<string>; hasValueReturn: boolean } | null = null;
+  /** Getters of the class being emitted, by name (for the accessor type check). */
+  private getters: ReadonlyMap<string, AccessorNode> = new Map();
 
   constructor(input: EmitInput) {
     this.source = input.source;
@@ -198,11 +212,52 @@ class Emitter {
 
   private expr(r: TokRange): string {
     const line = this.tokens[r.from].line;
-    return this.take(this.rw.expression(this.slice(r), { line }));
+    return this.take(this.rw.expression(this.slice(r), { line, locals: this.fn?.locals }));
   }
 
   private type(r: TokRange | null, line: number, role: TypeRole): string {
-    return this.take(this.rw.type(r === null ? null : this.slice(r), { line, role }));
+    const ctx: RewriteContext = {
+      line, role, locals: this.fn?.locals, hasValueReturn: this.fn?.hasValueReturn,
+    };
+    return this.take(this.rw.type(r === null ? null : this.slice(r), ctx));
+  }
+
+  /** Type text without keeping its Diagnostics (used to compare accessor types). */
+  private typeQuiet(r: TokRange | null, line: number, role: TypeRole): string {
+    const res = this.rw.type(r === null ? null : this.slice(r), { line, role });
+    if (res.unsupported !== undefined) throw new UnsupportedSignal(res.unsupported);
+    return res.text;
+  }
+
+  /** True when `nodes` (and nested statement bodies) contain `return <expr>`. */
+  private hasValueReturn(nodes: readonly Node[]): boolean {
+    for (const n of nodes) {
+      if (n.kind === 'statement') {
+        if (n.stmt === 'return' && n.expr !== null) return true;
+        if (n.body !== null && this.hasValueReturn(n.body.nodes)) return true;
+        if (n.elseBody !== null && this.hasValueReturn(n.elseBody.nodes)) return true;
+      } else if (n.kind === 'unsupported') {
+        // Conservative: a return with a value inside commented-out code still counts.
+        for (let i = n.range.from; i < n.range.to; i++) {
+          const t = this.tokens[i];
+          if (t.kind !== 'id' || t.text !== 'return') continue;
+          let j = i + 1;
+          while (j < n.range.to && this.tokens[j].kind === 'comment') j++;
+          const nx = this.tokens[j];
+          if (j < n.range.to && !(nx.kind === 'punct' && (nx.text === ';' || nx.text === '}'))) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private collectLocals(nodes: readonly Node[], into: Set<string>): void {
+    for (const n of nodes) {
+      if (n.kind !== 'statement') continue;
+      if (n.decl !== null) for (const dc of n.decl.declarators) into.add(dc.name);
+      if (n.body !== null) this.collectLocals(n.body.nodes, into);
+      if (n.elseBody !== null) this.collectLocals(n.elseBody.nodes, into);
+    }
   }
 
   // -- node walk -----------------------------------------------------------
@@ -290,6 +345,9 @@ class Emitter {
     this.push(d, head + ' {');
     this.span(n.startLine, n.body.openLine, 'structural');
     const members = n.body.nodes;
+    const getters = new Map<string, AccessorNode>();
+    for (const m of members) if (m.kind === 'accessor' && m.accessor === 'get') getters.set(m.name, m);
+    this.getters = getters;
     const ctor = members.find((m): m is MethodNode => m.kind === 'method' && m.isConstructor) ?? null;
     const plan = this.hooks.constructorBody?.(n, ctor) ?? null;
     let synthAt = -1;
@@ -345,21 +403,31 @@ class Emitter {
 
   private fieldNode(n: FieldNode, d: number): void {
     const mods = this.modifiers(n.modifiers, n.decl.isConst);
+    const isStatic = n.modifiers.indexOf('static') >= 0;
     for (const dc of n.decl.declarators) {
-      this.push(d, `${mods}${this.declaratorText(dc, 'field')};`);
+      let dflt: string | null = null;
+      let declare = false;
+      if (dc.init === null && !n.decl.isConst && this.rw.fieldDefault !== undefined) {
+        dflt = this.rw.fieldDefault(dc.type === null ? null : this.slice(dc.type));
+        declare = dflt === null && !isStatic;
+      }
+      let text = this.declaratorText(dc, 'field', dflt);
+      if (declare) text = 'declare ' + text;
+      this.push(d, `${mods}${text};`);
     }
     this.span(n.startLine, n.endLine, 'translated');
   }
 
-  private declaratorText(dc: Declarator, role: TypeRole): string {
+  private declaratorText(dc: Declarator, role: TypeRole, dflt: string | null = null): string {
     const t = this.type(dc.type, dc.line, role);
     let s = dc.name + (t === '' ? '' : ': ' + t);
     if (dc.init !== null) s += ' = ' + this.expr(dc.init);
+    else if (dflt !== null) s += ' = ' + dflt;
     return s;
   }
 
-  private paramText(p: Param): string {
-    const t = this.type(p.type, p.line, p.rest ? 'rest' : 'param');
+  private paramText(p: Param, typeOverride: string | null = null): string {
+    const t = typeOverride ?? this.type(p.type, p.line, p.rest ? 'rest' : 'param');
     let s = (p.rest ? '...' : '') + p.name + (t === '' ? '' : ': ' + t);
     if (p.init !== null) s += ' = ' + this.expr(p.init);
     return s;
@@ -369,19 +437,49 @@ class Emitter {
     n: MethodNode | AccessorNode, d: number, cls: ClassNode | null, plan: BodyItem[] | null,
   ): void {
     const isCtor = n.kind === 'method' && n.isConstructor;
-    const params = n.params.map((p) => this.paramText(p)).join(', ');
-    const isSetter = n.kind === 'accessor' && n.accessor === 'set';
-    const ret = isCtor || isSetter
-      ? ''
-      : this.type(n.returnType, n.startLine, n.kind === 'accessor' ? 'accessor' : 'return');
-    const name = isCtor ? 'constructor' : (n.kind === 'accessor' ? n.accessor + ' ' : '') + n.name;
-    this.blankBefore();
-    this.push(d, `${this.modifiers(n.modifiers, false)}${name}(${params})${ret === '' ? '' : ': ' + ret} {`);
-    this.span(n.startLine, n.body.openLine, 'translated');
-    if (plan !== null) this.bodyItems(plan, d + 1);
-    else this.nodeList(n.body.nodes, d + 1, cls);
-    this.push(d, '}');
-    this.span(n.body.closeLine, n.body.closeLine, 'structural');
+    const locals = new Set<string>();
+    for (const p of n.params) locals.add(p.name);
+    this.collectLocals(n.body.nodes, locals);
+    const saved = this.fn;
+    this.fn = { locals, hasValueReturn: this.hasValueReturn(n.body.nodes) };
+    try {
+      const isSetter = n.kind === 'accessor' && n.accessor === 'set';
+      let override: string | null = null;
+      if (isSetter && n.params.length === 1) override = this.setterTypeOverride(n);
+      const params = n.params.map((p) => this.paramText(p, override)).join(', ');
+      const ret = isCtor || isSetter
+        ? ''
+        : this.type(n.returnType, n.startLine, n.kind === 'accessor' ? 'accessor' : 'return');
+      const name = isCtor ? 'constructor' : (n.kind === 'accessor' ? n.accessor + ' ' : '') + n.name;
+      this.blankBefore();
+      this.push(d, `${this.modifiers(n.modifiers, false)}${name}(${params})${ret === '' ? '' : ': ' + ret} {`);
+      this.span(n.startLine, n.body.openLine, 'translated');
+      if (plan !== null) this.bodyItems(plan, d + 1);
+      else this.nodeList(n.body.nodes, d + 1, cls);
+      this.push(d, '}');
+      this.span(n.body.closeLine, n.body.closeLine, 'structural');
+    } finally {
+      this.fn = saved;
+    }
+  }
+
+  /**
+   * For a setter whose getter has a different type: the getter's type, plus one
+   * loose-type Diagnostic on the setter line (Req 3.6). Otherwise null.
+   */
+  private setterTypeOverride(setter: AccessorNode): string | null {
+    const getter = this.getters.get(setter.name);
+    if (getter === undefined) return null;
+    const gt = this.typeQuiet(getter.returnType, getter.startLine, 'accessor');
+    const p = setter.params[0];
+    const st = this.typeQuiet(p.type, p.line, 'param');
+    if (gt === st) return null;
+    this.diags.push({
+      kind: 'loose-type',
+      line: setter.startLine,
+      message: `setter "${setter.name}" takes ${st} but its getter returns ${gt}; using ${gt}`,
+    });
+    return gt;
   }
 
   // -- statements ----------------------------------------------------------

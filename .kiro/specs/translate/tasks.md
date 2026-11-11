@@ -54,8 +54,8 @@ Rules that apply to every task:
     - In `test/unit/shimAdditions.test.ts`: all `Event` constants pairwise distinct; `getChildAt` in and out of range; `trace` default and replaced sink; a listener for `ADDED` and the other undispatched events is accepted and called 0 times; every `ADDED_APIS.md` row names an export and the cited fixture line contains the API token.
     - _Requirements: 5.1, 5.3, 5.4_
 
-- [ ] 4. EXIT_FRAME pass (design T3, decision D8)
-  - [-] 4.1 Add `_exitFrame` and call it after `root._step()`
+- [x] 4. EXIT_FRAME pass (design T3, decision D8)
+  - [x] 4.1 Add `_exitFrame` and call it after `root._step()`
     - In `template/shim/MovieClip.ts` and `template/shim/internal.ts` add `exitFrame(mc)`: snapshot every MovieClip under the root in pre-order, dispatch `EXIT_FRAME` once to each that is still attached, playing or stopped. A clip created by an `EXIT_FRAME` listener is not notified that tick.
     - In `template/runtime/player.ts` call `exitFrame(root)` once per whole frame step, after `root._step()` returns. Clicks and `gotoAnd*` do not dispatch it.
     - Run `npm run typecheck:template` and the existing stepping and MovieClip tests.
@@ -84,13 +84,13 @@ Rules that apply to every task:
     - Brace and paren depth, `;` in nested groups, `try/catch/finally` as one span, unbraced bodies get braces, unclosed brace, two statements on one line, multi-line block comment kept whole.
     - _Requirements: 1.3, 1.4, 3.5_
 
-- [ ] 7. Rewrites and Shim name lists (design T6, sections 1.4, 1.5 and 2)
-  - [~] 7.1 Implement `rewrite.ts`
+- [x] 7. Rewrites and Shim name lists (design T6, sections 1.4, 1.5 and 2)
+  - [x] 7.1 Implement `rewrite.ts`
     - Create `src/translate/rewrite.ts`: token-level edits copying source text between tokens. `int(x)` to `(x | 0)` and `uint(x)` to `(x >>> 0)` with the precedence wrapping rule; `is`/`instanceof` to `instanceof` (primitive right-hand types make the statement unsupported); `as`; bare `name(` to `this.name(` for `shimMembers` and own non-static methods (includes bare `addFrameScript`); `<chain>.parent.<member>` to `(<chain>.parent as any).<member>` with one `loose-type` per access; `Vector.<T>` to `T[]`; the type mapping (`int`/`uint`/`Number` to `number`, `String`, `Boolean`, `*` and `Object` to `any` with no Diagnostic for `Object`, `Array` to `any[]`, `void`); `for each` to `for (const x of y)`; loose-type Diagnostics for missing or `*` annotations and rest parameters; return type `*` to `void` when no `return <expr>` in the method's own body.
     - Output of declarations as in the design table (package unwrapped, imports collapsed to one `../shim` import sorted by code unit plus `./Sibling` imports, metadata dropped, `internal` as no modifier, fields with AS3 defaults or `declare`, `const` to `readonly`, getters and setters, accessor-type mismatch with one `loose-type`).
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 3.4, 3.6_
 
-  - [~] 7.2 Implement `shimNames.ts`
+  - [x] 7.2 Implement `shimNames.ts`
     - Create `src/translate/shimNames.ts` exporting `SHIM_AS3_NAMES` (`Event`, `EventDispatcher`, `MouseEvent`, `DisplayObject`, `DisplayObjectContainer`, `Sprite`, `MovieClip`, `Shape`, `trace`) and `SHIM_MOVIECLIP_MEMBERS` as in the design. Pure file, no imports from the Shim.
     - _Requirements: 2.2, 2.7_
 
