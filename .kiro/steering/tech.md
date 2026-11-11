@@ -30,6 +30,18 @@ npm run typecheck  # tsc --noEmit
 npm test -- --run  # single run, no watch mode
 ```
 
+## FFDec (checked by hand, 2026-11-11)
+- Version 26.4.0, zip release from github.com/jindrapetrik/jpexs-decompiler, unpacked to `tools/ffdec/` (gitignored, never committed). Needs Java 17+.
+- Run as `java -jar tools/ffdec/ffdec-cli.jar <args>`. Output contains ANSI colour codes; strip them before parsing.
+- `-export shape,script,symbolClass <outdir> <swf>` writes `shapes/<id>.svg`, `scripts/<Class>.as`, `symbolClass/symbols.csv` (`<id>;"<Class>"`, id 0 is the root timeline).
+- `-swf2xml <swf> <out.xml>` dumps every tag. This is the only timeline source; there is no timeline export. Root element carries `_xmlExportMajor`/`_xmlExportMinor` (4.2 today) and FFDec warns the structure is not final, so check the version.
+- In the XML, placements are `PlaceObject2Tag` items with `depth`, `characterId`, `name`, `placeFlagMove`, and a `matrix` child in twips (divide by 20 for pixels). Sprites are `DefineSpriteTag` with `subTags`. Frames end at `ShowFrameTag`.
+- Shape SVGs wrap the paths in a `<g transform="matrix(1,0,0,1,tx,ty)">` that shifts the shape so its bounds start at 0,0. The shape's own origin is at (tx, ty) inside the SVG; the runtime must offset by that.
+- Decompiled classes for timeline symbols call `addFrameScript(0,this.frame1,1,this.frame2)` (0-based index) in the constructor and carry an `[Embed(...)]` metadata line to drop.
+- `-header <swf>` prints stage size, frame rate and frame count. `-dumpSWF <swf>` lists tags.
+- Licence: FFDec is GPLv3. We call it as a separate process and do not link or bundle its code into ours. Whether it can ship inside the hosted container image is still to be decided.
+
 ## Open items to confirm
-- FFDec licence terms for bundling in a hosted container.
+- FFDec in the hosted container: GPLv3 obligations when distributing an image that includes it.
 - How to drive Ruffle frame export headlessly.
+- FFDec can also export frames as HTML5 Canvas (`frame:canvas`). Know this when describing what is new in our project.
