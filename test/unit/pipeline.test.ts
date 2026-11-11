@@ -54,10 +54,18 @@ function makeStages(over: Partial<PipelineStages> = {}): PipelineStages {
       calls.push('convert');
       return makeArtifact();
     },
+    async translate() {
+      calls.push('translate');
+      return { classes: [] };
+    },
     async emit(_a, o) {
       calls.push('emit');
       await mkdir(o.outputDir, { recursive: true });
       return { outputDir: o.outputDir, files: [] };
+    },
+    async typeCheck() {
+      calls.push('typeCheck');
+      return { errors: [] };
     },
     ...over,
   };
@@ -103,9 +111,9 @@ async function exists(p: string): Promise<boolean> {
 describe('runPipeline', () => {
   it('runs stages in order, prints progress and Done, exits 0', async () => {
     expect(await runPipeline(args(), makeStages(), io)).toBe(0);
-    expect(calls).toEqual(['unpack', 'convert', 'emit']);
+    expect(calls).toEqual(['unpack', 'convert', 'translate', 'emit', 'typeCheck']);
     expect(out).toBe(
-      `[unpack] ok\n[convert] ok (4 svg written, 1 morph skipped)\n[emit] ok\nDone: ${outDir}\n`,
+      `[unpack] ok\n[convert] ok (4 svg written, 1 morph skipped)\n[translate] ok (0 classes: 0 clean, 0 loose, 0 unsupported)\n[emit] ok\n[typecheck] ok (0 errors)\nDone: ${outDir}\n`,
     );
   });
 

@@ -178,12 +178,12 @@ Rules that apply to every task:
     - `buildClassesTs` for the clickgoto scene lists exactly the three names; override wins over translated; override for an unrelated name ignored with a warning; two `planEmit` runs identical; 0 files copied for an empty Override_Directory.
     - _Requirements: 4.2, 4.3, 5.5_
 
-- [ ] 14. Pipeline wiring and report writing (design T14, section 7)
-  - [~] 14.1 Add translate and typeCheck stages to `runPipeline`
+- [x] 14. Pipeline wiring and report writing (design T14, section 7)
+  - [x] 14.1 Add translate and typeCheck stages to `runPipeline`
     - In `src/pipeline/errors.ts` add stage `'translate'`. In `src/pipeline/pipeline.ts` add `translate` and `typeCheck` to `PipelineStages` and run unpack, convert, translate, emit, typeCheck in order. Print `[translate] ok (<n> classes: <c> clean, <l> loose, <u> unsupported)`, `[typecheck] ok (0 errors)` or on stderr `[typecheck] <n> errors: <file> (<count>), ...`. Type errors do not change the exit code. Build the report and write `translation-report.json` next to `unsupported-features.json` under the same rule (after success, and after a failure once Convert completed; on the output-directory refusals it goes to stderr). If emit failed the report has `typeCheck: 'skipped'`. The unsupported list is Converter entries plus `untranslatedCodeEntries` plus `untranslated-class` entries for linked classes with no translated class and no override; `untranslatedClasses` takes the set of available names.
     - _Requirements: 4.4, 4.5, 4.6, 4.7_
 
-  - [~] 14.2 Wire the real stages in `cli.ts`
+  - [x] 14.2 Wire the real stages in `cli.ts`
     - Wire `translate: translateStage` and `typeCheck` (read the written files into a map and call `typeCheckProject` with `repoRoot` as the repository root). `--handwritten` and the default `handwritten/<sample>/` lookup unchanged. Pass override class names as `handwrittenClasses`.
     - _Requirements: 4.1, 4.2, 4.6_
 
@@ -191,32 +191,32 @@ Rules that apply to every task:
     - In `test/unit/pipeline.test.ts` add stub `translate` and `typeCheck` stages; cover stage order, skipped later stages on failure, report written with the output, `typeCheck: 'skipped'` after an emit failure, report to stderr on the refusal paths, and unchanged exit code on type errors.
     - _Requirements: 4.4, 4.7_
 
-- [ ] 15. Fixture-class helper, oracle switch and tweendemo test (design T15, sections 9 and 10)
-  - [~] 15.1 Implement the fixture-class test helper
+- [x] 15. Fixture-class helper, oracle switch and tweendemo test (design T15, sections 9 and 10)
+  - [x] 15.1 Implement the fixture-class test helper
     - Create `test/support/fixtureClasses.ts` with `loadFixtureClasses(sample)`: read `test/fixtures/<sample>/scripts/*.as`, call `planTranslate` with the real `tsSyntaxCheck`, write each class to a unique `mkdtemp` directory under `.work/fixture-classes/`, import each with `pathToFileURL`, return `{ classes, results, dispose }`. `dispose` removes the directory. Silence `trace` with `setTraceSink(() => {})` and restore it afterwards. Verify design risk R2 (Vitest importing an absolute `.ts` under `.work/`); if it fails use the virtual-module plugin fallback in `vitest.config.ts` with the same helper API.
     - _Requirements: 5.7, 5.8_
 
-  - [~] 15.2 Switch the click oracle to Fixture_Classes
+  - [x] 15.2 Switch the click oracle to Fixture_Classes
     - In `test/unit/clickOracle.test.ts` replace the `handwritten/...` imports with `loadFixtureClasses('clickgoto')`; the `classRegistry` is `{ LeftButton, MainTimeline, RightButton }`. Keep every Expected_State row, position and assertion exactly as it is (no row added, removed or changed). The test imports nothing under `handwritten/`.
     - _Requirements: 5.7_
 
-  - [~] 15.3 Write the tweendemo test with the 31-tick MainTimeline check
+  - [x] 15.3 Write the tweendemo test with the 31-tick MainTimeline check
     - Create `test/unit/tweendemoClasses.test.ts`: convert `test/fixtures/tweendemo` as `tweendemoConvert.test.ts` does, load Fixture_Classes, build a `Player` with the fake backend and `ManualClock`. After the first Tick `l_button` and `r_button` are on `currentFrame` 1 and stopped. Then the root `MainTimeline` is still playing after 29 Ticks, stopped after 30, and still stopped after 31. Import nothing under `handwritten/`.
     - _Requirements: 5.2, 5.8_
 
-- [ ] 16. Remove the handwritten classes
-  - [~] 16.1 Delete `LeftButton.ts` and `RightButton.ts` and the handwritten typecheck
+- [x] 16. Remove the handwritten classes
+  - [x] 16.1 Delete `LeftButton.ts` and `RightButton.ts` and the handwritten typecheck
     - Delete `handwritten/clickgoto/LeftButton.ts` and `handwritten/clickgoto/RightButton.ts` (keep `.gitkeep`). Remove the `typecheck:handwritten` script from `package.json` and delete `tsconfig.handwritten.json`. Remove any remaining reference (docs in `src/`, aliases only used for handwritten files). Confirm `grep` finds no import of `handwritten/` in `test/`.
     - Run `npm run typecheck` and `npm test -- --run`; both must pass.
     - _Requirements: 5.5, 5.7_
 
-  - [~] 16.2 Write the no-Java fixture project type-check test
+  - [x] 16.2 Write the no-Java fixture project type-check test
     - Create `test/unit/fixtureProjectTypecheck.test.ts`. For each of `clickgoto` and `tweendemo`: read the fixture scripts under `test/fixtures/<sample>/scripts/` and translate them with `planTranslate` and the real `tsSyntaxCheck`; convert the fixture to its Scene_JSON as `tweendemoConvert.test.ts` does; run `planEmit` with the real `template/` files and that Scene_JSON; run `typeCheckProject` (with `repoRoot` as the repository root) on the resulting file map. Expect 0 errors for both samples. No Java, no FFDec, no child process, no network.
     - Matches the "Fixture project" row of the design's Testing Strategy.
     - _Requirements: 4.6, 5.6, 5.8_
 
 - [ ] 17. End-to-end conversion of both samples
-  - [~] 17.1 Convert both samples and verify the gate and the build
+  - [-] 17.1 Convert both samples and verify the gate and the build
     - Run `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --force` and `npm run pipeline -- samples/tweendemo/test.swf out/tweendemo --force`. Confirm for each: exit 0; `src/` holds `EventWatcher.ts`, `LeftButton.ts`, `MainTimeline.ts`, `RightButton.ts`; `src/classes.ts` registers exactly `LeftButton`, `MainTimeline`, `RightButton`; 0 files copied from `handwritten/`; `[typecheck] ok (0 errors)`; `translation-report.json` lists the four classes each `clean` or `loose` and none `unsupported`, with empty `typeErrors` and `otherErrors`.
     - In each `out/<sample>` run `npm install`, `npm run typecheck` and `npm run build`; `npm run build` must exit 0. Fix the Transpiler, Emitter or Shim within scope if anything fails; if the cause is outside this spec, stop and ask.
     - Run the pipeline twice per sample and compare the output trees, including `translation-report.json`, byte for byte.

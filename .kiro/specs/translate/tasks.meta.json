@@ -347,6 +347,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277572
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794402881222
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403228124
       }
     ],
     "14.2 Wire the real stages in `cli.ts`": [
@@ -354,6 +364,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277684
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403347678
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403475457
       }
     ],
     "15.1 Implement the fixture-class test helper": [
@@ -361,6 +381,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277754
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794402701913
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794402875349
       }
     ],
     "15.2 Switch the click oracle to Fixture_Classes": [
@@ -368,6 +398,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277822
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403234856
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403342436
       }
     ],
     "15.3 Write the tweendemo test with the 31-tick MainTimeline check": [
@@ -375,6 +415,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277888
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403476073
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403619825
       }
     ],
     "16.1 Delete `LeftButton.ts` and `RightButton.ts` and the handwritten typecheck": [
@@ -382,6 +432,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397277962
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403620433
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403877026
       }
     ],
     "16.2 Write the no-Java fixture project type-check test": [
@@ -389,6 +449,16 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397278039
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403877182
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794404020973
       }
     ],
     "17.1 Convert both samples and verify the gate and the build": [
@@ -396,6 +466,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397278108
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794404045633
       }
     ],
     "18. Checkpoint - Both samples run in the browser": [
@@ -473,6 +548,27 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794401793783
+      }
+    ],
+    "14. Pipeline wiring and report writing (design T14, section 7)": [
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403475771
+      }
+    ],
+    "15. Fixture-class helper, oracle switch and tweendemo test (design T15, sections 9 and 10)": [
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794403620023
+      }
+    ],
+    "16. Remove the handwritten classes": [
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794404021062
       }
     ]
   }

@@ -1,11 +1,13 @@
 // Command line entry: swf-resurrect <input.swf> <output-dir> [options].
-import { readdir, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs as nodeParseArgs } from 'node:util';
 import { convertStage } from '../convert/writeConverted';
 import { emit } from '../emit/emit';
+import { translateStage } from '../translate/translateStage';
+import { typeCheckProject } from '../translate/typeCheckGate';
 import { unpack } from '../unpack/unpack';
 import { runPipeline } from './pipeline';
 import type { PipelineArgs, PipelineStages } from './pipeline';
@@ -89,7 +91,13 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const realStages: PipelineStages = {
   unpack,
   convert: convertStage,
+  translate: translateStage,
   emit,
+  async typeCheck(outputDir, files) {
+    const map = new Map<string, string>();
+    for (const f of files) map.set(f, await readFile(join(outputDir, ...f.split('/')), 'utf8'));
+    return typeCheckProject({ files: map, repoRoot: REPO_ROOT });
+  },
 };
 
 export async function main(argv: readonly string[]): Promise<number> {
