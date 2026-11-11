@@ -147,8 +147,13 @@ Rules that apply to every task:
 
   - [ ] 7.3 Implement `planEmit` and a basic `emit`
     - Create `src/emit/planEmit.ts` (pure): copies template files, generates `package.json` and `src/classes.ts` (import and registry entry for each handwritten class linked in the Symbol_Table), copies `assets/scene.json` and `assets/<id>.svg`, sorted by path, `\n` line endings.
-    - Create `src/emit/emit.ts`: resolve the output directory, refuse a non-empty directory when `force` is false (`OutputDirNotEmptyError`, directory untouched), plan in memory, write files in sorted order. The `--force` deletion logic is added in Task 15.1.
+    - Create `src/emit/emit.ts`: resolve the output directory, refuse a non-empty directory when `force` is false (`OutputDirNotEmptyError`, directory untouched), plan in memory, write files in sorted order. The `--force` deletion logic is added in Task 7.4.
     - _Requirements: 5.1, 5.2, 5.7, 5.8_
+
+  - [ ] 7.4 Implement force safety and `--force` deletion
+    - Create `src/emit/forceSafety.ts` with pure `checkForceTarget(resolved, ctx)` (filesystem root, home equality, cwd or ancestor of cwd, ancestor-or-equal of the SWF's directory, Windows case folding, reason strings from the design). In `emit.ts`, resolve symbolic links on the deepest existing ancestor, refuse unsafe targets with `UnsafeForceTargetError` before deleting anything, and with `--force` remove only direct entries with `fs.rm(entry, { recursive: true, force: true })` so links are removed and not followed.
+    - Add example tests on temp directories: `--force` absent leaves a populated directory byte-identical; `--force` empties but keeps the directory; a symlink inside the directory is removed and its target survives (skip creating the link with a clear failure message if the platform denies it); unsafe paths are refused.
+    - _Requirements: 5.8, 5.9, 5.10, 10.11_
 
 - [ ] 8. Runtime primitives
   - [ ] 8.1 Add the clock and render backend interfaces
@@ -218,7 +223,7 @@ Rules that apply to every task:
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7_
 
   - [ ] 13.2 Implement the CLI
-    - Create `src/pipeline/cli.ts` with `parseArgs` options `--force`, `--work-dir`, `--keep-work`, `--ffdec`, `--handwritten`. Resolve the handwritten directory by `handwritten/<parent directory name of the SWF>/` when the option is absent. Wire real stages, load template and handwritten files, pass `--force` to the Emitter, set `process.exitCode`.
+    - Create `src/pipeline/cli.ts` with `parseArgs` options `--force`, `--work-dir`, `--keep-work`, `--ffdec`, `--handwritten`. Resolve the handwritten directory by `handwritten/<parent directory name of the SWF>/` when the option is absent. Wire real stages, load template and handwritten files, pass `--force` to the Emitter (its deletion and safety checks come from Task 7.4), set `process.exitCode`.
     - Run `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --force` and confirm it exits 0 and writes the project.
     - _Requirements: 1.6, 9.1, 9.2, 9.8_
 
@@ -230,36 +235,31 @@ Rules that apply to every task:
   - Wait for the user's visual confirmation. Nothing after this task is needed for this checkpoint.
 
 - [ ] 15. Hardening
-  - [ ] 15.1 Implement force safety and `--force` deletion
-    - Create `src/emit/forceSafety.ts` with pure `checkForceTarget(resolved, ctx)` (filesystem root, home equality, cwd or ancestor of cwd, ancestor-or-equal of the SWF's directory, Windows case folding, reason strings from the design). In `emit.ts`, resolve symbolic links on the deepest existing ancestor, refuse unsafe targets with `UnsafeForceTargetError` before deleting anything, and with `--force` remove only direct entries with `fs.rm(entry, { recursive: true, force: true })` so links are removed and not followed.
-    - Add example tests on temp directories: `--force` absent leaves a populated directory byte-identical; `--force` empties but keeps the directory; a symlink inside the directory is removed and its target survives (skip creating the link with a clear failure message if the platform denies it); unsafe paths are refused.
-    - _Requirements: 5.8, 5.9, 5.10, 10.11_
-
-  - [ ] 15.2 Add emitter write-failure cleanup
+  - [ ] 15.1 Add emitter write-failure cleanup
     - In `emit.ts`, on a write error remove the files already written by this run on a best-effort basis and throw `EmitWriteError(path, cause)`. Make the file writer injectable and add an example test with an injected failure that checks no success is reported and the written files are cleaned up.
     - _Requirements: 5.11_
 
-  - [ ] 15.3 Complete the Unpacker error paths
+  - [ ] 15.2 Complete the Unpacker error paths
     - Ensure all errors from the design's Unpack error table are produced with the contents listed there: missing jar leaves the spawner uncalled and the work directory unchanged (2.3), non-zero exit carries code and ANSI-stripped stderr (2.4), timeout kills the process (2.5), AS2-only SWF stops before the export (2.6), invalid signature or unreadable path starts no process (2.7), missing exports listed by name (2.8), unsupported XML major (2.9), missing header values (2.10), missing `java` (`JavaNotFoundError`).
     - Add example tests with the injected fake spawner and fake timers; AS2 and version cases use small hand-edited copies of the fixture XML head.
     - _Requirements: 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10_
 
-  - [ ] 15.4 Complete the Converter error paths
+  - [ ] 15.3 Complete the Converter error paths
     - Ensure malformed SVG names the file and writes nothing (3.4), missing or zero-byte SVG names the character id (3.5), unknown symbol id names id, sprite, frame and depth and leaves no `scene.json` (4.7), malformed frame data names sprite and frame and writes no scene (4.9), cycles and duplicate symbol-class ids are errors. Confirm the morph, text, sound, button, filter, mask and video reporting and the dropped-placement entries (3.3, 3.7, 3.8) and the `unbound-instance` entry (8.7).
     - Add small example tests for each error class and message with hand-built `TagsModel` values and temp staging directories.
     - _Requirements: 3.3, 3.4, 3.5, 3.7, 3.8, 4.7, 4.9, 8.7_
 
-  - [ ] 15.5 Complete unsupported-feature reporting and refusal handling in the pipeline
+  - [ ] 15.4 Complete unsupported-feature reporting and refusal handling in the pipeline
     - Write `unsupported-features.json` after a failure that occurs once Convert has completed (not for the Emitter refusals). When the Emitter refuses a non-empty directory or an unsafe `--force` target, print the list to standard error and write nothing in the output directory. Confirm exit code 2 for invalid SWF or output paths with no stage run, and that a failed stage skips later stages.
     - Add example tests with stub stages for each of these paths.
     - _Requirements: 9.4, 9.5, 9.6, 9.8, 9.9_
 
-  - [ ] 15.6 Complete the runtime error overlay
+  - [ ] 15.5 Complete the runtime error overlay
     - In `template/src/main.ts` and the Pixi backend: invalid or unreachable `scene.json` shows an error naming Scene_JSON and renders no frame (6.6); a failed SVG load shows an error naming the asset and playback does not start (6.7); a placement of an asset that is not loaded is skipped, the others render, and the error names the asset (6.8); an unbindable named instance leaves the property unset and loading continues (8.6).
     - Add example tests with the fake backend covering the three load failures.
     - _Requirements: 6.6, 6.7, 6.8, 8.6_
 
-  - [ ] 15.7 Close remaining shim and runtime coverage gaps
+  - [ ] 15.6 Close remaining shim and runtime coverage gaps
     - Review requirements 6 to 8 against the code and fix gaps: `numChildren`, `getChildByName` null, alpha clamping, `addFrameScript` odd-argument and non-function warnings, `removeEventListener` from inside a dispatch, click bubbling with `currentTarget`, scripted children drawn above timeline children, skewed matrix and offset warnings. Add an example test for each gap fixed.
     - _Requirements: 6.4, 6.5, 6.9, 7.1, 7.2, 7.4, 7.8, 7.15, 7.17_
 
@@ -355,10 +355,10 @@ Rules that apply to every task:
     { "id": 7, "tasks": ["5.4", "6.5", "6.6", "9.3", "10.1"] },
     { "id": 8, "tasks": ["6.7", "6.8", "10.2", "11.1", "11.2", "12.1"] },
     { "id": 9, "tasks": ["7.3", "11.3"] },
-    { "id": 10, "tasks": ["12.2", "13.1"] },
+    { "id": 10, "tasks": ["7.4", "12.2", "13.1"] },
     { "id": 11, "tasks": ["13.2"] },
-    { "id": 12, "tasks": ["15.1", "15.3", "15.4", "15.6", "15.7"] },
-    { "id": 13, "tasks": ["15.2", "15.5"] },
+    { "id": 12, "tasks": ["15.2", "15.3", "15.5", "15.6"] },
+    { "id": 13, "tasks": ["15.1", "15.4"] },
     { "id": 14, "tasks": ["16.1", "16.2", "16.3", "16.4", "16.5", "16.6", "16.7", "16.8", "16.9", "16.10", "16.11", "16.12", "16.13", "16.14", "16.15", "17.1"] }
   ]
 }
