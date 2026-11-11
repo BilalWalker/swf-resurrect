@@ -50,7 +50,7 @@ Rules that apply to every task:
     - Append all answers to `test/fixtures/clickgoto/FINDINGS.md`. Add a short code comment in `src/convert/ffdecXml.ts` pointing to the findings note for the origin sign.
     - _Requirements: 3.1, 4.5, 4.8, 4.11, 6.4_
 
-- [ ] 3. Checkpoint - Fixture gate
+- [x] 3. Checkpoint - Fixture gate
   - Ensure all tests pass, ask the user if questions arise. Show the user `test/fixtures/clickgoto/FINDINGS.md` and wait for confirmation before the parsers in Tasks 4 and 5 are written. If any finding conflicts with the design, stop and tell the user instead of adapting silently.
 
 - [ ] 4. Unpacker

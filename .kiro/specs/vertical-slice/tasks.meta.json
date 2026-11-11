@@ -62,6 +62,18 @@
         "chatSessionId": "sess_4bea6011-097e-4934-afdb-96c4a54c0ee8",
         "timestamp": 1794384679362
       }
+    ],
+    "3. Checkpoint - Fixture gate": [
+      {
+        "executionId": "40def7da-c738-44d2-aeb0-62865aad7795",
+        "chatSessionId": "sess_3ea49a8f-a265-471d-b764-599574d58ed7",
+        "timestamp": 1794384897845
+      },
+      {
+        "executionId": "40def7da-c738-44d2-aeb0-62865aad7795",
+        "chatSessionId": "sess_3ea49a8f-a265-471d-b764-599574d58ed7",
+        "timestamp": 1794385054645
+      }
     ]
   }
 }
