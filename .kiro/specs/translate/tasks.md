@@ -98,13 +98,13 @@ Rules that apply to every task:
     - In `test/unit/shimNames.test.ts`: import `template/shim/index.ts` and assert every name in `SHIM_AS3_NAMES` is an export and every member of `SHIM_MOVIECLIP_MEMBERS` exists on `MovieClip.prototype`.
     - _Requirements: 2.2, 2.7, 5.1_
 
-- [ ] 8. Translate entry points, constructors and binding (design T7, sections 1.6 and 1.7)
-  - [~] 8.1 Implement `translateCore` with constructor fixes and method binding
+- [x] 8. Translate entry points, constructors and binding (design T7, sections 1.6 and 1.7)
+  - [x] 8.1 Implement `translateCore` with constructor fixes and method binding
     - Create `src/translate/translate.ts` with `translateCore(source, options)` wiring tokenizer, scanner, rewrite and emitTs. Constructors: `super(args)` first (arguments unchanged), then `this.m = this.m.bind(this);` for each value-referenced non-static, non-accessor method in declaration order, then the other statements in original relative order; insert `super();` when an `extends` class has none; synthesise a constructor when binds or `super()` are needed and none exists.
     - Verify design risk R3 on the fixtures: `public declare x: T;` and the `bind` line are accepted by `tsc` 6.0.3 (syntax check) and by Vite/Vitest transforms. If `declare` fails in any tool, use `x!: T` and tell the user.
     - _Requirements: 3.1, 3.2, 3.3_
 
-  - [~] 8.2 Implement `translate` with the injected syntax check
+  - [x] 8.2 Implement `translate` with the injected syntax check
     - Add `translate(source, options)` to `translate.ts`: run `translateCore`, then `options.syntaxCheck(text)`. On any error replace the result with the fallback of decision D5 (whole file as `// AS3:` comments, one `unsupported-construct` Diagnostic on line 1 saying the output does not parse and quoting the first parser message, one `unsupported` span). Blank input returns empty text and skips the check.
     - _Requirements: 1.1, 1.2, 1.5, 1.6_
 

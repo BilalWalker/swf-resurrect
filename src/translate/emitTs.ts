@@ -133,7 +133,7 @@ function cmp(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-function escapeComment(text: string): string {
+export function escapeComment(text: string): string {
   let out = '';
   for (let i = 0; i < text.length; i++) {
     const c = text.charCodeAt(i);
