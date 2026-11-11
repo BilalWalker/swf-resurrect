@@ -135,7 +135,7 @@ Rules that apply to every task:
     - Create `src/convert/writeConverted.ts` with `ConvertedArtifact` and `convertStage(unpacked)`: `readUnpacked`, `convertModel` (before any write), then write SVGs ascending by id into `<workDir>/converted/assets/`, and `scene.json` last through a temp file and `rename`.
     - _Requirements: 3.1, 3.2, 3.6, 4.1, 4.7, 4.9_
 
-- [ ] 7. Minimal Emitter
+- [x] 7. Minimal Emitter
   - [x] 7.1 Pin versions and generate `package.json`
     - Create `src/emit/versions.ts` with exact versions of `pixi.js`, `vite`, `typescript` chosen with `npm view <pkg> version`, and verify the PixiJS 8 API names the adapter needs (`Application.init`, `Graphics.svg`) against the installed package. Add a unit test that each version matches `^\d+\.\d+\.\d+$`.
     - Create `src/emit/packageJson.ts` building the emitted `package.json` with sorted keys, name `swf-resurrect-output`, scripts `dev`, `build`, `typecheck`, and exact dependency versions.
@@ -150,7 +150,7 @@ Rules that apply to every task:
     - Create `src/emit/emit.ts`: resolve the output directory, refuse a non-empty directory when `force` is false (`OutputDirNotEmptyError`, directory untouched), plan in memory, write files in sorted order. The `--force` deletion logic is added in Task 7.4.
     - _Requirements: 5.1, 5.2, 5.7, 5.8_
 
-  - [-] 7.4 Implement force safety and `--force` deletion
+  - [x] 7.4 Implement force safety and `--force` deletion
     - Create `src/emit/forceSafety.ts` with pure `checkForceTarget(resolved, ctx)` (filesystem root, home equality, cwd or ancestor of cwd, ancestor-or-equal of the SWF's directory, Windows case folding, reason strings from the design). In `emit.ts`, resolve symbolic links on the deepest existing ancestor, refuse unsafe targets with `UnsafeForceTargetError` before deleting anything, and with `--force` remove only direct entries with `fs.rm(entry, { recursive: true, force: true })` so links are removed and not followed.
     - Add example tests on temp directories: `--force` absent leaves a populated directory byte-identical; `--force` empties but keeps the directory; a symlink inside the directory is removed and its target survives (skip creating the link with a clear failure message if the platform denies it); unsafe paths are refused.
     - _Requirements: 5.8, 5.9, 5.10, 10.11_
@@ -206,23 +206,23 @@ Rules that apply to every task:
     - Use `parseExpectedState` as the oracle. Do not hard-code the table.
     - _Requirements: 1.4, 7.10, 8.2, 8.3, 8.4, 8.5, 10.4_
 
-- [ ] 12. Pixi adapter
+- [x] 12. Pixi adapter
   - [x] 12.1 Implement the PixiJS render backend
     - Create `template/runtime/pixi/pixiBackend.ts` (the only file importing `pixi.js`) implementing `RenderBackend`: `loadShape` builds a `Graphics` from the SVG text and returns bounds shifted into shape-origin coordinates, `createShape` places a clone at `(-origin.x, -origin.y)` using the sign recorded in `FINDINGS.md`, transforms, alpha, visibility, colour multiplier (tint and alpha), `showError` writing an on-page element. Warn once for colour-transform offsets.
     - Run `npm run typecheck:template`.
     - _Requirements: 6.1, 6.4, 6.7_
 
-  - [-] 12.2 Implement the browser boot in `template/src/main.ts`
+  - [x] 12.2 Implement the browser boot in `template/src/main.ts`
     - Fetch `assets/scene.json`, `parseScene`, load all shapes through the backend, create the `Application` with the scene stage size and background, create the `Player` with the class registry from `./classes`, run the `requestAnimationFrame` loop with `performance.now()` as the clock, convert `pointerdown` to stage coordinates and call `player.dispatchClick`. On scene failure show the error and render no frames.
     - Run `npm run typecheck:template`.
     - _Requirements: 6.1, 6.2, 6.6, 6.7, 8.2_
 
 - [ ] 13. Pipeline glue
-  - [-] 13.1 Implement `runPipeline`
+  - [x] 13.1 Implement `runPipeline`
     - Create `src/pipeline/pipeline.ts` with `PipelineStages`, `runPipeline(args, stages, io)` returning exit codes 0, 1, 2. Pre-check the SWF path and output directory writability (exit 2, no stage run), run unpack, convert, emit in order, print progress lines and `Done: <absolute output dir>`, print `error [<stage>]: <message>` on failure and skip later stages, add `untranslated-class` entries for linked classes without a handwritten translation, write `unsupported-features.json` into the output directory after a successful emit. Create a work directory with `mkdtemp` and delete it unless `--keep-work`.
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7_
 
-  - [~] 13.2 Implement the CLI
+  - [-] 13.2 Implement the CLI
     - Create `src/pipeline/cli.ts` with `parseArgs` options `--force`, `--work-dir`, `--keep-work`, `--ffdec`, `--handwritten`. Resolve the handwritten directory by `handwritten/<parent directory name of the SWF>/` when the option is absent. Wire real stages, load template and handwritten files, pass `--force` to the Emitter (its deletion and safety checks come from Task 7.4), set `process.exitCode`.
     - Run `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --force` and confirm it exits 0 and writes the project.
     - _Requirements: 1.6, 9.1, 9.2, 9.8_

@@ -386,6 +386,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794388429249
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388611847
       }
     ],
     "8.1 Add the clock and render backend interfaces": [
@@ -580,6 +585,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794388429576
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388612064
       }
     ],
     "13.1 Implement `runPipeline`": [
@@ -592,6 +602,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794388429719
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388612257
       }
     ],
     "13.2 Implement the CLI": [
@@ -599,6 +614,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386565780
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388616356
       }
     ],
     "14. Checkpoint - Sample runs in the browser": [
@@ -683,6 +703,20 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794388417075
+      }
+    ],
+    "7. Minimal Emitter": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388611961
+      }
+    ],
+    "12. Pixi adapter": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794388612143
       }
     ]
   }
