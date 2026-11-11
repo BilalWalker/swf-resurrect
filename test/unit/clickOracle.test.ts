@@ -1,16 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { convertModel, type ConvertResult } from '../../src/convert/convertModel';
 import { readDumpHeader } from '../../src/convert/ffdecXml';
 import { readUnpacked } from '../../src/convert/readUnpacked';
-import { LeftButton } from '../../handwritten/clickgoto/LeftButton';
-import { RightButton } from '../../handwritten/clickgoto/RightButton';
 import type { ShapeBounds } from '../../template/runtime/backend';
 import { ManualClock } from '../../template/runtime/clock';
 import { Player } from '../../template/runtime/player';
 import type { MovieClip } from '../../template/shim/MovieClip';
 import { FakeBackend, type FakeNode } from '../support/fakeBackend';
+import { loadFixtureClasses, type FixtureClasses } from '../support/fixtureClasses';
 import { parseExpectedState, type ButtonState, type ExpectedRow } from '../support/provenance';
 
 const fixture = resolve(__dirname, '../fixtures/clickgoto');
@@ -23,8 +22,10 @@ const OUTSIDE = { x: 5, y: 5 };
 
 let converted: ConvertResult;
 let rows: ExpectedRow[];
+let fx: FixtureClasses;
 
 beforeAll(async () => {
+  fx = await loadFixtureClasses('clickgoto');
   const { xmlVersion, header } = readDumpHeader(readFileSync(resolve(fixture, 'structure.xml'), 'utf8'));
   const model = await readUnpacked({
     workDir: fixture,
@@ -37,6 +38,10 @@ beforeAll(async () => {
   });
   converted = convertModel(model);
   rows = parseExpectedState(readFileSync(provenance, 'utf8'));
+});
+
+afterAll(async () => {
+  await fx.dispose();
 });
 
 /** Bounds from each SVG's width/height, positioned by the shape origin like the real backend. */
@@ -69,7 +74,7 @@ function newRig(): Rig {
     scene: converted.scene,
     backend,
     clock,
-    classRegistry: { LeftButton, RightButton },
+    classRegistry: fx.classes,
     shapeBounds: boundsFromSvgs(converted),
   });
   const root = player.root as MovieClip & { l_button: MovieClip; r_button: MovieClip };
@@ -94,8 +99,8 @@ function rowFor(pattern: RegExp): ExpectedRow {
 describe('Click_Sample oracle (Expected_State from PROVENANCE.md)', () => {
   it('starts in the Start row state with both buttons bound', () => {
     const rig = newRig();
-    expect(rig.l).toBeInstanceOf(LeftButton);
-    expect(rig.r).toBeInstanceOf(RightButton);
+    expect(rig.l).toBeInstanceOf(fx.classes.LeftButton);
+    expect(rig.r).toBeInstanceOf(fx.classes.RightButton);
     expectRow(rig, rowFor(/^start/i));
   });
 
