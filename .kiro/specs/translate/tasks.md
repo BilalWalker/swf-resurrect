@@ -109,7 +109,7 @@ Rules that apply to every task:
     - _Requirements: 1.1, 1.2, 1.5, 1.6_
 
 - [ ] 9. Transpiler property tests and golden tests (design T8, T9)
-  - [~] 9.1 Write the AS3 generators
+  - [x] 9.1 Write the AS3 generators
     - Create `test/property/gen/genAs3.ts`: `genProgram` (package, imports, metadata, class with fields, accessors and methods; statements drawn from supported and unsupported forms, blank lines, line and block comments, mixed `\n`/`\r\n`; a unique marker per statement; records marker, first line and unsupported flag) and `genSoup` (token soup with unbalanced braces, unterminated strings and comments, U+2028/2029). Use the shared config from `test/property/config.ts`.
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 3.5_
 
@@ -136,13 +136,13 @@ Rules that apply to every task:
     - In `test/unit/translatePurity.test.ts`: grep `tokenizer`, `scanner`, `rewrite`, `emitTs`, `translate`, `shimNames`, `planTranslate`, `report` for `node:*`, `typescript-js`, `Date`, `Math.random`, `localeCompare`.
     - _Requirements: 1.1_
 
-- [ ] 10. Planning and emit closure (design T10, section 3)
-  - [~] 10.1 Implement `planTranslate` and `translateStage`
+- [x] 10. Planning and emit closure (design T10, section 3)
+  - [x] 10.1 Implement `planTranslate` and `translateStage`
     - Create `src/translate/planTranslate.ts` (pure): `ScriptSource`, `TranslatedClass`, `TranslateArtifact`, `planTranslate(sources, scene, syntaxCheck)`. Sibling set is all file stems; translate sources sorted by class name; emit closure starts from Scene_JSON linked class names that have a translated class and adds `extendsName` repeatedly; return emitted classes sorted by name.
     - Create `src/translate/translateStage.ts` (IO): read every `.as` under `unpacked.scriptsDir` (sorted by path), call `planTranslate`. Throw `ScriptsDirError` for a missing directory and `DuplicateClassError` for duplicate class names (both extend `PipelineError`, stage `translate`). Never read `samples/*/original-source/`.
     - _Requirements: 4.1, 4.3_
 
-  - [ ]* 10.2 Write unit tests for planning
+  - [x]* 10.2 Write unit tests for planning
     - Closure (base added, chain of two, unlinked non-base class skipped), duplicate class error, missing scripts directory error, `EventWatcher` emitted for the clickgoto fixtures.
     - _Requirements: 4.1, 4.3_
 
