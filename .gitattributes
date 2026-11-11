@@ -8,3 +8,6 @@
 *.png binary
 *.jpg binary
 *.mp3 binary
+
+# FFDec captures are stored byte-exact (FFDec writes mixed line endings).
+test/fixtures/** -text
