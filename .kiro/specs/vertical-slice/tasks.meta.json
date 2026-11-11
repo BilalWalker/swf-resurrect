@@ -11,6 +11,14 @@
     "6.5 Write property test for frame display lists against an independent replay": {
       "status": "passed",
       "lastRunTimestamp": 1794387579058
+    },
+    "6.7 Write property test for conversion determinism and order independence": {
+      "status": "passed",
+      "lastRunTimestamp": 1794387895882
+    },
+    "10.2 Write unit and property test for stepping": {
+      "status": "passed",
+      "lastRunTimestamp": 1794387898773
     }
   },
   "executionHistory": {
@@ -264,6 +272,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794387514575
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387794137
       }
     ],
     "6.6 Implement `convertModel`": [
@@ -276,6 +289,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794387514738
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387794892
       }
     ],
     "6.7 Write property test for conversion determinism and order independence": [
@@ -283,6 +301,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386563788
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387804043
       }
     ],
     "6.8 Implement the converter writer and `convertStage`": [
@@ -413,6 +436,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794387514916
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387795576
       }
     ],
     "10.1 Implement the Player, display-list reconciliation and instance creation": [
@@ -425,6 +453,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794387515116
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387796106
       }
     ],
     "10.2 Write unit and property test for stepping": [
@@ -432,6 +465,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386565031
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387804240
       }
     ],
     "11.1 Hand-translate `LeftButton` and `RightButton` from the decompiled scripts": [
@@ -439,6 +477,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386565136
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387804503
       }
     ],
     "11.2 Add the provenance parser and the repository provenance test": [
@@ -446,6 +489,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386565235
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387804727
       }
     ],
     "11.3 Write the click oracle test": [
@@ -460,6 +508,11 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386565468
+      },
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387804916
       }
     ],
     "12.2 Implement the browser boot in `template/src/main.ts`": [
@@ -544,6 +597,13 @@
         "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
         "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
         "timestamp": 1794386566843
+      }
+    ],
+    "9. Flash API shim": [
+      {
+        "executionId": "6172c549-2694-4822-a963-c395daa41ff8",
+        "chatSessionId": "sess_6a532fc6-6b97-4b84-8d06-6ec496e0b1bd",
+        "timestamp": 1794387795750
       }
     ]
   }

@@ -115,18 +115,18 @@ Rules that apply to every task:
     - Create `src/convert/errors.ts` with `ConvertError`, `UnknownSymbolError`, `ShapeExportError`, `MalformedSvgError`, `MalformedFrameDataError`, `SymbolCycleError`.
     - _Requirements: 3.8, 4.3, 4.4, 4.9, 4.10, 4.11_
 
-  - [-] 6.5 Write property test for frame display lists against an independent replay
+  - [x] 6.5 Write property test for frame display lists against an independent replay
     - Create `test/property/resolveTimeline.test.ts` with generators `test/property/gen/genTimelineOps.ts` and a separately written array-based reference replay in the test.
     - **Property 4: Frame display lists equal an independent replay of the placement operations**
     - **Validates: Requirements 4.3, 4.10, 4.11**
 
-  - [-] 6.6 Implement `convertModel`
+  - [x] 6.6 Implement `convertModel`
     - Create `src/pipeline/unsupported.ts` with `UnsupportedFeatureEntry`, the total-order sort and the canonical file serialiser (`{ "entries": [...], "formatVersion": 1 }`).
     - Create `src/convert/convertModel.ts`: validate the model shape, index by id, build `svgFiles` (line endings normalised to `\n`, sorted by id), skip morph shapes with entries, call `resolveTimeline` for the root (id 0) and each sprite, attach `className`, run the reference check (`UnknownSymbolError`), the cycle check, add unsupported entries (observations, morph, dropped placements, `unbound-instance`), assemble `SceneJson`, run `validateScene`. Return `ConvertResult` with `stats` and sorted `warnings`.
     - Add one small example test: the Click_Sample model built by `readUnpacked` (or a hand-copied fixture model) converts to a scene with symbols 0..6 and matrices (143.5, 270) and (415, 272.5).
     - _Requirements: 3.1, 3.2, 3.3, 3.6, 3.7, 3.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.7, 4.12, 8.7_
 
-  - [~] 6.7 Write property test for conversion determinism and order independence
+  - [-] 6.7 Write property test for conversion determinism and order independence
     - Create `test/property/convertDeterminism.test.ts` with `test/property/gen/genTagsModel.ts`. Run `convertModel` twice and on permuted list orders, comparing serialised scene text, SVG contents and file names. Add a guard test that greps the pure files for `node:fs`, `node:child_process`, `Date`, `Math.random`, `localeCompare`.
     - **Property 2: Conversion is deterministic and independent of list order**
     - **Validates: Requirements 4.8, 10.2**
@@ -165,7 +165,7 @@ Rules that apply to every task:
     - Create `template/runtime/hitTest.ts`: pure `hitTest(root, x, y)` over a minimal structural interface (transform fields, visible, children, optional shape bounds), topmost first, inverse transform into local space.
     - _Requirements: 7.12, 7.13, 7.14, 8.2, 8.5_
 
-- [ ] 9. Flash API shim
+- [x] 9. Flash API shim
   - [x] 9.1 Implement events, DisplayObject, DisplayObjectContainer and Sprite
     - Create `template/shim/events.ts` (`Event`, `MouseEvent`, `EventDispatcher` with snapshot dispatch, registration order, duplicate listener registered once), `template/shim/DisplayObject.ts` (alpha clamped to 0..1, `parent`, `name` default `''`, width and height), `template/shim/Sprite.ts` (`numChildren`, `addChild` appends, `removeChild`, `getChildByName`).
     - _Requirements: 7.1, 7.2, 7.4, 7.8_
@@ -175,28 +175,28 @@ Rules that apply to every task:
     - Create `template/shim/index.ts` re-exporting the public surface only (not the internal module).
     - _Requirements: 7.3, 7.5, 7.6, 7.7, 7.11, 7.12, 7.13, 7.14, 7.15, 7.16, 7.17_
 
-  - [-] 9.3 Write property test for the MovieClip state machine
+  - [x] 9.3 Write property test for the MovieClip state machine
     - Create `test/property/movieClipMachine.test.ts` with generators `test/property/gen/genClipOps.ts`. Compare `(currentFrame, playing)` with a reference state machine after each of `play`, `stop`, `gotoAndPlay(x)`, `gotoAndStop(x)` and tick, where `x` is valid, a label, out of range or an unknown label. Check invalid `x` leaves state unchanged with one warning containing `x`, and that parent and sibling clips are unaffected.
     - **Property 15: MovieClip frame and play-state transitions follow a reference machine**
     - **Validates: Requirements 6.12, 7.3, 7.5, 7.6, 7.7, 7.16**
 
 - [ ] 10. Player
-  - [-] 10.1 Implement the Player, display-list reconciliation and instance creation
+  - [x] 10.1 Implement the Player, display-list reconciliation and instance creation
     - Create `template/runtime/stageTree.ts` and `template/runtime/player.ts` with `PlayerOptions`, `Player`, fixed-step accumulator (epsilon `1e-9`, `maxCatchUpFrames` default 5), the frame step from the design (advance only if playing and `totalFrames > 1`, render on change, `ENTER_FRAME` to every clip every tick, enqueue and drain the frame script only when a frame was entered, step children that existed before the tick), reconcile by depth with identity reuse for same `(depth, symbolId)`, matrix decomposition, colour transform application through the backend, skipping entries whose shape bounds are missing, class instantiation through the registry and construction context, binding of named children before the frame-1 script, `dispatchClick` using `hitTest` with bubbling to ancestors.
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.9, 6.10, 6.11, 6.12, 7.9, 7.10, 7.12, 8.2, 8.4, 8.5, 8.6_
 
-  - [~] 10.2 Write unit and property test for stepping
+  - [-] 10.2 Write unit and property test for stepping
     - Create `test/property/stepping.test.ts` using `ManualClock` and a fake backend (`test/support/fakeBackend.ts`). First an example test: N frames (2 to 10) at a given Frame_Rate advance exactly one frame per interval and return to frame 1 on the next tick. Then the property over frame rates, clock increments, nesting and play/stop configurations.
     - **Property 13: Stepping advances exactly one frame per interval and loops**
     - **Validates: Requirements 6.2, 6.3, 6.10, 6.11, 10.4**
 
 - [ ] 11. Click handler and oracle test
-  - [~] 11.1 Hand-translate `LeftButton` and `RightButton` from the decompiled scripts
+  - [-] 11.1 Hand-translate `LeftButton` and `RightButton` from the decompiled scripts
     - Read `test/fixtures/clickgoto/LeftButton.as` and `RightButton.as` (the FFDec output, not `samples/clickgoto/original-source`). Create `handwritten/clickgoto/LeftButton.ts` and `handwritten/clickgoto/RightButton.ts` that extend `MovieClip`, register the click listener, call `stop()`, drop `EventWatcher`, `trace` and `[Embed]`, and use arrow-function fields for `clicked`. No `_loc<N>_` identifiers. Import the shim as `'../shim'` (the path used in the emitted `src/`).
     - Make these files resolvable in the repo: add a `tsconfig.handwritten.json` with `rootDirs` of `handwritten/clickgoto` and `template/src`, and a Vitest `resolve.alias` for imports of `../shim` from `handwritten/`. Add a `typecheck:handwritten` script.
     - _Requirements: 8.1, 8.3_
 
-  - [~] 11.2 Add the provenance parser and the repository provenance test
+  - [-] 11.2 Add the provenance parser and the repository provenance test
     - Create `test/support/provenance.ts` with `validateProvenance(text, { clickSample })` and `parseExpectedState(text)` for the Expected_State table in `PROVENANCE.md` (frames within 1..total, playing or stopped), including the licence allow-list and `OR` rule.
     - Create `test/unit/provenance.test.ts` that walks every `.swf` under `samples/`, fails naming the file and field when the note is missing or invalid, fails when no Click_Sample exists or its Expected_State is invalid. Also assert no `_loc<N>_` in `handwritten/` and no LLM client in `package.json` dependencies.
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 9.7, 10.9, 10.10_
@@ -207,7 +207,7 @@ Rules that apply to every task:
     - _Requirements: 1.4, 7.10, 8.2, 8.3, 8.4, 8.5, 10.4_
 
 - [ ] 12. Pixi adapter
-  - [~] 12.1 Implement the PixiJS render backend
+  - [-] 12.1 Implement the PixiJS render backend
     - Create `template/runtime/pixi/pixiBackend.ts` (the only file importing `pixi.js`) implementing `RenderBackend`: `loadShape` builds a `Graphics` from the SVG text and returns bounds shifted into shape-origin coordinates, `createShape` places a clone at `(-origin.x, -origin.y)` using the sign recorded in `FINDINGS.md`, transforms, alpha, visibility, colour multiplier (tint and alpha), `showError` writing an on-page element. Warn once for colour-transform offsets.
     - Run `npm run typecheck:template`.
     - _Requirements: 6.1, 6.4, 6.7_
