@@ -23,7 +23,7 @@ Rules that apply to every task:
     - This is not a stop-and-ask. Do not wait for anything and do not install here; the install happens in Task 1.2. Continue straight to Task 1.2.
     - _Requirements: 4.6_
 
-  - [~] 1.2 Install `typescript-js` and add `tsSyntaxCheck`
+  - [-] 1.2 Install `typescript-js` and add `tsSyntaxCheck`
     - Run `npm install --save-exact --save-dev "typescript-js@npm:typescript@6.0.3"`. Confirm `package.json` has the exact alias and no range operator.
     - Create `src/translate/tsSyntaxCheck.ts` exporting `tsSyntaxCheck: SyntaxCheck` that wraps `ts.transpileModule` (reportDiagnostics, no file system) and returns syntax errors as `{ line, message }`. Define the `SyntaxCheck` type in a small type-only `src/translate/types.ts` (with `Diagnostic`, `DiagnosticKind`, `LineSpan`, `ClassInfo`, `TranslateOptions`, `TranslateResult` from the design) so pure files can import it.
     - Confirm `import ts from 'typescript-js'` typechecks under the repo's `tsc` 7.0.2 (`npm run typecheck`). If it does not, stop and ask.
@@ -65,8 +65,8 @@ Rules that apply to every task:
     - In `test/unit/exitFrame.test.ts`: `EXIT_FRAME` reaches every clip once per tick, after all frame scripts of that tick, for playing and stopped clips; a clip added during `EXIT_FRAME` is not notified that tick; no `EXIT_FRAME` on click or `gotoAnd*`.
     - _Requirements: 5.2_
 
-- [ ] 5. Lexer (design T4, section 1.1)
-  - [-] 5.1 Implement `tokenizer.ts`
+- [x] 5. Lexer (design T4, section 1.1)
+  - [x] 5.1 Implement `tokenizer.ts`
     - Create `src/translate/tokenizer.ts`: a character-level scanner, no regular expressions on source text. `Token` is `{ kind, text, start, end, line, endLine }` with kind `id | num | str | regex | punct | comment | bad`. Keep comment tokens. Longest-match punctuation including `>>>=`, `...`, `.<`, `::`, `..`, `===`, `!==`. Regex-versus-division by the previous significant token. Unterminated string becomes a `bad` token to end of line; unterminated block comment a `bad` token to end of file. Normalise `\r\n` to `\n` before lexing.
     - _Requirements: 1.1, 1.3, 1.4_
 

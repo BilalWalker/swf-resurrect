@@ -23,6 +23,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397276224
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794397834277
       }
     ],
     "2.1 Copy `EventWatcher.as` into both fixture directories unedited": [
@@ -83,6 +88,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397604306
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794397824838
       }
     ],
     "6.1 Implement `scanner.ts` and `emitTs.ts`": [
@@ -265,6 +275,13 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397476900
+      }
+    ],
+    "5. Lexer (design T4, section 1.1)": [
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794397824937
       }
     ]
   }
