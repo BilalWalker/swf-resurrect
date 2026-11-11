@@ -17,13 +17,13 @@ Rules that apply to every task:
 
 ## Tasks
 
-- [ ] 1. TypeScript dependency decision D1 (design T1)
+- [x] 1. TypeScript dependency decision D1 (design T1)
   - [x] 1.1 Record that decision D1 is approved by the user
     - The user has approved D1: TypeScript 7.0.2 has no in-process `createProgram`, so the devDependency is exactly `"typescript-js": "npm:typescript@6.0.3"` (the last JS-based release). Only `src/translate/tsSyntaxCheck.ts` and `src/translate/typeCheckGate.ts` will import it; the repo's `typescript` stays 7.0.2.
     - This is not a stop-and-ask. Do not wait for anything and do not install here; the install happens in Task 1.2. Continue straight to Task 1.2.
     - _Requirements: 4.6_
 
-  - [-] 1.2 Install `typescript-js` and add `tsSyntaxCheck`
+  - [x] 1.2 Install `typescript-js` and add `tsSyntaxCheck`
     - Run `npm install --save-exact --save-dev "typescript-js@npm:typescript@6.0.3"`. Confirm `package.json` has the exact alias and no range operator.
     - Create `src/translate/tsSyntaxCheck.ts` exporting `tsSyntaxCheck: SyntaxCheck` that wraps `ts.transpileModule` (reportDiagnostics, no file system) and returns syntax errors as `{ line, message }`. Define the `SyntaxCheck` type in a small type-only `src/translate/types.ts` (with `Diagnostic`, `DiagnosticKind`, `LineSpan`, `ClassInfo`, `TranslateOptions`, `TranslateResult` from the design) so pure files can import it.
     - Confirm `import ts from 'typescript-js'` typechecks under the repo's `tsc` 7.0.2 (`npm run typecheck`). If it does not, stop and ask.
@@ -36,7 +36,7 @@ Rules that apply to every task:
     - Check that the fixture line numbers cited by the design hold (`EventWatcher.as:17` `trace`, `:23` to `:29` the Event constants, `MainTimeline.as:36` `getChildAt`, `:51` `Shape`). If any differs, note the real numbers for Task 3.2 and tell the user.
     - _Requirements: 4.1, 5.5, 5.7, 5.8_
 
-- [ ] 3. Shim additions and ADDED_APIS.md (design T2, section 8)
+- [x] 3. Shim additions and ADDED_APIS.md (design T2, section 8)
   - [x] 3.1 Add the Event constants, `getChildAt`, `Shape` and `trace`
     - In `template/shim/events.ts` add `EXIT_FRAME`, `ADDED`, `ADDED_TO_STAGE`, `FRAME_CONSTRUCTED`, `REMOVED`, `REMOVED_FROM_STAGE`, `RENDER` with the distinct string values from the design.
     - In `template/shim/Sprite.ts` add `getChildAt(index)` (returns the child, throws `RangeError` when out of range).
@@ -44,7 +44,7 @@ Rules that apply to every task:
     - Export `Shape`, `trace` and `setTraceSink` from `template/shim/index.ts`. Run `npm run typecheck:template`.
     - _Requirements: 5.1, 5.3_
 
-  - [~] 3.2 Make `ShapeObject` extend `Shape` and write `ADDED_APIS.md`
+  - [x] 3.2 Make `ShapeObject` extend `Shape` and write `ADDED_APIS.md`
     - In `template/runtime/stageTree.ts` change `ShapeObject` to extend `Shape`.
     - Create `template/shim/ADDED_APIS.md`: a table `| API | Needed by |` with one row per added API (`Event.EXIT_FRAME`, `Event.ADDED`, `Event.ADDED_TO_STAGE`, `Event.FRAME_CONSTRUCTED`, `Event.REMOVED`, `Event.REMOVED_FROM_STAGE`, `Event.RENDER`, `trace`, `getChildAt`, `Shape`), each citing the class file and line from Task 2.1 that uses it. Rows for `setTraceSink` and the EXIT_FRAME pass (`_exitFrame`) say they support `trace` and `EXIT_FRAME`. No row for an API that was not added.
     - Run `npm run typecheck:template`.

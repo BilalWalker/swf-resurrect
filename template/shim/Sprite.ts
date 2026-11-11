@@ -26,6 +26,15 @@ export class DisplayObjectContainer extends DisplayObject {
     return child;
   }
 
+  /** Throws RangeError when the index is out of range, as AS3 does. */
+  getChildAt(index: number): DisplayObject {
+    const child = this._children[index];
+    if (!Number.isInteger(index) || child === undefined) {
+      throw new RangeError(`getChildAt: index ${index} is out of range`);
+    }
+    return child;
+  }
+
   /** Direct children only; first match in index order, or null. */
   getChildByName(name: string): DisplayObject | null {
     return this._children.find((c) => c.name === name) ?? null;

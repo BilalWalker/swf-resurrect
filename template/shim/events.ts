@@ -2,6 +2,13 @@ export type Listener = (e: Event) => void;
 
 export class Event {
   static readonly ENTER_FRAME = 'enterFrame';
+  static readonly EXIT_FRAME = 'exitFrame';
+  static readonly ADDED = 'added';
+  static readonly ADDED_TO_STAGE = 'addedToStage';
+  static readonly FRAME_CONSTRUCTED = 'frameConstructed';
+  static readonly REMOVED = 'removed';
+  static readonly REMOVED_FROM_STAGE = 'removedFromStage';
+  static readonly RENDER = 'render';
   target: EventDispatcher | null = null;
   currentTarget: EventDispatcher | null = null;
   constructor(readonly type: string) {}

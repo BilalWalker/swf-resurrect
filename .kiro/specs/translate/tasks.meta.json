@@ -28,6 +28,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397834277
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794397964378
       }
     ],
     "2.1 Copy `EventWatcher.as` into both fixture directories unedited": [
@@ -69,6 +74,11 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397276423
+      },
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794397964977
       }
     ],
     "4.1 Add `_exitFrame` and call it after `root._step()`": [
@@ -282,6 +292,13 @@
         "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
         "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
         "timestamp": 1794397824937
+      }
+    ],
+    "1. TypeScript dependency decision D1 (design T1)": [
+      {
+        "executionId": "18222d53-cdba-4cb3-be83-e5ed0f1115b5",
+        "chatSessionId": "sess_1bd351af-f37a-493d-8a75-6caffd4d94de",
+        "timestamp": 1794397964477
       }
     ]
   }

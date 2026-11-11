@@ -1,11 +1,12 @@
-import { DisplayObject } from '../shim/DisplayObject';
+import type { DisplayObject } from '../shim/DisplayObject';
+import { Shape } from '../shim/Shape';
 import type { DisplayObjectContainer } from '../shim/Sprite';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { HitNode } from './hitTest';
 import type { Matrix6 } from './scene';
 
 /** Leaf display object for a shape symbol. Carries its bounds for hit testing. */
-export class ShapeObject extends DisplayObject {
+export class ShapeObject extends Shape {
   constructor(
     readonly symbolId: number,
     readonly bounds: ShapeBounds,
