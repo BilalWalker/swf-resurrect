@@ -1,0 +1,12 @@
+# Third-party tools downloaded locally (FFDec is GPLv3; never commit it)
+tools/
+
+# Dependencies and build output
+node_modules/
+dist/
+
+# Pipeline working and output directories
+.work/
+out/
+
+# Note: .kiro/ must stay tracked (hackathon requirement). Do not add it here.
