@@ -145,12 +145,12 @@ Rules that apply to every task:
     - Create `template/index.html`, `template/vite.config.ts` (relative base), `template/tsconfig.json` (strict), and `template/src/classes.ts` (default empty `classRegistry`, replaced by the generated file during planning). Do not create `package.json` there (it is generated).
     - _Requirements: 5.1, 5.2_
 
-  - [-] 7.3 Implement `planEmit` and a basic `emit`
+  - [x] 7.3 Implement `planEmit` and a basic `emit`
     - Create `src/emit/planEmit.ts` (pure): copies template files, generates `package.json` and `src/classes.ts` (import and registry entry for each handwritten class linked in the Symbol_Table), copies `assets/scene.json` and `assets/<id>.svg`, sorted by path, `\n` line endings.
     - Create `src/emit/emit.ts`: resolve the output directory, refuse a non-empty directory when `force` is false (`OutputDirNotEmptyError`, directory untouched), plan in memory, write files in sorted order. The `--force` deletion logic is added in Task 7.4.
     - _Requirements: 5.1, 5.2, 5.7, 5.8_
 
-  - [~] 7.4 Implement force safety and `--force` deletion
+  - [-] 7.4 Implement force safety and `--force` deletion
     - Create `src/emit/forceSafety.ts` with pure `checkForceTarget(resolved, ctx)` (filesystem root, home equality, cwd or ancestor of cwd, ancestor-or-equal of the SWF's directory, Windows case folding, reason strings from the design). In `emit.ts`, resolve symbolic links on the deepest existing ancestor, refuse unsafe targets with `UnsafeForceTargetError` before deleting anything, and with `--force` remove only direct entries with `fs.rm(entry, { recursive: true, force: true })` so links are removed and not followed.
     - Add example tests on temp directories: `--force` absent leaves a populated directory byte-identical; `--force` empties but keeps the directory; a symlink inside the directory is removed and its target survives (skip creating the link with a clear failure message if the platform denies it); unsafe paths are refused.
     - _Requirements: 5.8, 5.9, 5.10, 10.11_
@@ -190,7 +190,7 @@ Rules that apply to every task:
     - **Property 13: Stepping advances exactly one frame per interval and loops**
     - **Validates: Requirements 6.2, 6.3, 6.10, 6.11, 10.4**
 
-- [ ] 11. Click handler and oracle test
+- [x] 11. Click handler and oracle test
   - [x] 11.1 Hand-translate `LeftButton` and `RightButton` from the decompiled scripts
     - Read `test/fixtures/clickgoto/LeftButton.as` and `RightButton.as` (the FFDec output, not `samples/clickgoto/original-source`). Create `handwritten/clickgoto/LeftButton.ts` and `handwritten/clickgoto/RightButton.ts` that extend `MovieClip`, register the click listener, call `stop()`, drop `EventWatcher`, `trace` and `[Embed]`, and use arrow-function fields for `clicked`. No `_loc<N>_` identifiers. Import the shim as `'../shim'` (the path used in the emitted `src/`).
     - Make these files resolvable in the repo: add a `tsconfig.handwritten.json` with `rootDirs` of `handwritten/clickgoto` and `template/src`, and a Vitest `resolve.alias` for imports of `../shim` from `handwritten/`. Add a `typecheck:handwritten` script.
@@ -201,7 +201,7 @@ Rules that apply to every task:
     - Create `test/unit/provenance.test.ts` that walks every `.swf` under `samples/`, fails naming the file and field when the note is missing or invalid, fails when no Click_Sample exists or its Expected_State is invalid. Also assert no `_loc<N>_` in `handwritten/` and no LLM client in `package.json` dependencies.
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 9.7, 10.9, 10.10_
 
-  - [-] 11.3 Write the click oracle test
+  - [x] 11.3 Write the click oracle test
     - Create `test/unit/clickOracle.test.ts`. Build the Click_Sample scene from the fixtures through `readUnpacked` and `convertModel` (or a committed fixture model), create a `Player` with the fake backend, `ManualClock`, and a registry of the real handwritten `LeftButton` and `RightButton`. Drive the Expected_State rows parsed from `PROVENANCE.md`: start state, click inside `l_button`, reset, click inside `r_button`, one tick after the second click shows the looping behaviour, a click outside every object changes nothing, and each button's placement equals (143.5, 270) and (415, 272.5).
     - Use `parseExpectedState` as the oracle. Do not hard-code the table.
     - _Requirements: 1.4, 7.10, 8.2, 8.3, 8.4, 8.5, 10.4_
@@ -212,13 +212,13 @@ Rules that apply to every task:
     - Run `npm run typecheck:template`.
     - _Requirements: 6.1, 6.4, 6.7_
 
-  - [~] 12.2 Implement the browser boot in `template/src/main.ts`
+  - [-] 12.2 Implement the browser boot in `template/src/main.ts`
     - Fetch `assets/scene.json`, `parseScene`, load all shapes through the backend, create the `Application` with the scene stage size and background, create the `Player` with the class registry from `./classes`, run the `requestAnimationFrame` loop with `performance.now()` as the clock, convert `pointerdown` to stage coordinates and call `player.dispatchClick`. On scene failure show the error and render no frames.
     - Run `npm run typecheck:template`.
     - _Requirements: 6.1, 6.2, 6.6, 6.7, 8.2_
 
 - [ ] 13. Pipeline glue
-  - [~] 13.1 Implement `runPipeline`
+  - [-] 13.1 Implement `runPipeline`
     - Create `src/pipeline/pipeline.ts` with `PipelineStages`, `runPipeline(args, stages, io)` returning exit codes 0, 1, 2. Pre-check the SWF path and output directory writability (exit 2, no stage run), run unpack, convert, emit in order, print progress lines and `Done: <absolute output dir>`, print `error [<stage>]: <message>` on failure and skip later stages, add `untranslated-class` entries for linked classes without a handwritten translation, write `unsupported-features.json` into the output directory after a successful emit. Create a work directory with `mkdtemp` and delete it unless `--keep-work`.
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7_
 
