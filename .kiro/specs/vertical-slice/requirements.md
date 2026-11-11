@@ -9,10 +9,11 @@ The vertical slice proves the SWF Resurrect pipeline end to end on simple Action
 - **Pipeline**: The command-line tool that runs the Unpack, Convert and Emit stages on one SWF.
 - **Unpacker**: The Pipeline stage that runs the FFDec CLI as a separate process.
 - **FFDec**: The JPEXS Free Flash Decompiler command line, a third-party dependency.
-- **SWF_Structure_Dump**: The XML file FFDec writes with `-swf2xml`, holding the SWF's tag and timeline structure (symbols, placements, removals, labels, frame boundaries, header values), from which the Converter derives Scene_JSON. FFDec has no separate timeline export. The XML declares its format version in `_xmlExportMajor` and `_xmlExportMinor`.
+- **SWF_Structure_Dump**: The XML file FFDec writes with `-swf2xml`, holding the SWF's tag and timeline structure (symbols, placements, removals, labels, frame boundaries) and the header values, from which the Converter derives Scene_JSON. The Frame_Rate, the root frame count and the stage rectangle (in twips) are read from the root element of the dump, and the stage background colour is read from the `SetBackgroundColorTag` (white `#ffffff` when that tag is absent). FFDec has no separate timeline export. The XML declares its format version in `_xmlExportMajor` and `_xmlExportMinor`.
 - **Symbol_Class_Map**: The FFDec `symbolClass` export, a CSV mapping each character id to its linked AS3 class name, where id 0 is the root timeline.
-- **Converter**: The Pipeline stage that turns unpacked FFDec output into SVG files and Scene_JSON. The Converter also adds entries to the Unsupported_Feature_List.
-- **Emitter**: The Pipeline stage that writes the Emitted_Project.
+- **Converter**: The Pipeline stage that turns unpacked FFDec output into SVG files and Scene_JSON. The Converter writes its output to the Staging_Directory and also adds entries to the Unsupported_Feature_List.
+- **Staging_Directory**: The directory where the Converter writes its output (SVG files and Scene_JSON) before the Emitter copies that output into the Emitted_Project `assets/` directory.
+- **Emitter**: The Pipeline stage that writes the Emitted_Project, copying the Converter output from the Staging_Directory into the Emitted_Project `assets/` directory.
 - **Emitted_Project**: The generated Vite + TypeScript + PixiJS project containing `runtime/`, `shim/`, `src/` and `assets/`.
 - **Runtime**: The timeline player in the Emitted_Project `runtime/` directory, built on PixiJS.
 - **Shim**: The Flash API layer in the Emitted_Project `shim/` directory.
@@ -49,12 +50,12 @@ The vertical slice proves the SWF Resurrect pipeline end to end on simple Action
 
 **User Story:** As a developer, I want the Pipeline to unpack the SWF with FFDec, so that I do not write a SWF parser.
 
-*Note: Checked by hand on the Click_Sample with FFDec 26.4.0. `-export shape,script,symbolClass <outdir> <swf>` writes `shapes/<id>.svg`, `scripts/<Class>.as` and `symbolClass/symbols.csv`. `-swf2xml <swf> <out.xml>` writes the SWF_Structure_Dump (XML export version 4.2). FFDec warns that the XML structure is not final, so the version is checked. Exact options are settled in design.*
+*Note: Checked by hand on the Click_Sample with FFDec 26.4.0. `-export shape,script,symbolClass <outdir> <swf>` writes `shapes/<id>.svg`, `scripts/<Class>.as` and `symbolClass/symbols.csv`. `-swf2xml <swf> <out.xml>` writes the SWF_Structure_Dump (XML export version 4.2). The Unpacker runs exactly these two FFDec invocations; header values come from the SWF_Structure_Dump, not from a separate FFDec call. FFDec warns that the XML structure is not final, so the version is checked. Exact options are settled in design.*
 
 #### Acceptance Criteria
 
-1. WHEN the Pipeline receives a path to a SWF file that exists and is readable, THE Unpacker SHALL run the FFDec CLI as a separate process and write its output to a working directory.
-2. WHEN FFDec completes with exit code 0, THE Unpacker SHALL report the absolute paths of the exported shapes directory, the SWF_Structure_Dump file, the Symbol_Class_Map file and the exported AS3 source directory.
+1. WHEN the Pipeline receives a path to a SWF file that exists and is readable, THE Unpacker SHALL run the FFDec CLI as a separate process exactly twice, once with `-swf2xml` and once with `-export shape,script,symbolClass`, and write its output to a working directory.
+2. WHEN FFDec completes with exit code 0, THE Unpacker SHALL report the absolute paths of the exported shapes directory, the SWF_Structure_Dump file, the Symbol_Class_Map file and the exported AS3 source directory, and the Frame_Rate, root frame count and stage width and height in pixels read from the SWF_Structure_Dump.
 3. IF the FFDec executable is not found, THEN THE Unpacker SHALL stop without starting a process, leave the working directory unchanged, and return an error naming the expected executable location.
 4. IF FFDec exits with a non-zero exit code, THEN THE Unpacker SHALL stop and return an error containing the exit code and the FFDec standard error text.
 5. IF FFDec does not complete within 60 seconds, THEN THE Unpacker SHALL terminate the FFDec process and return a timeout error stating the 60 second limit.
@@ -62,6 +63,7 @@ The vertical slice proves the SWF Resurrect pipeline end to end on simple Action
 7. IF the input path does not exist, is not readable, or the file does not begin with a valid SWF signature (FWS, CWS or ZWS), THEN THE Unpacker SHALL stop without starting FFDec and return an error naming the input path and stating that the file is not a valid SWF.
 8. IF FFDec exits with code 0 but any of the shapes, SWF_Structure_Dump, Symbol_Class_Map or AS3 source exports is missing from the working directory, THEN THE Unpacker SHALL stop and return an error naming each missing export.
 9. IF the SWF_Structure_Dump declares an `_xmlExportMajor` version other than the one the Converter supports, THEN THE Unpacker SHALL stop and return an error stating the found version and the supported version.
+10. IF the root element of the SWF_Structure_Dump lacks a readable Frame_Rate, root frame count or stage rectangle, THEN THE Unpacker SHALL stop and return an error naming each missing value.
 
 ### Requirement 3: Convert shapes to SVG
 
@@ -69,13 +71,14 @@ The vertical slice proves the SWF Resurrect pipeline end to end on simple Action
 
 #### Acceptance Criteria
 
-1. WHEN unpacking succeeds, THE Converter SHALL write exactly one SVG file per exported shape symbol, excluding morph shapes, into the Emitted_Project `assets/` directory using FFDec's SVG export.
+1. WHEN unpacking succeeds, THE Converter SHALL write exactly one SVG file per exported shape symbol, excluding morph shapes, into the Staging_Directory using FFDec's SVG export.
 2. THE Converter SHALL name each SVG file using the decimal SWF character id of its symbol, with the extension `.svg` (for example, character id 12 produces `12.svg`).
 3. IF an exported shape is a morph shape, THEN THE Converter SHALL write no SVG file for it, add one entry to the Unsupported_Feature_List that identifies the shape by its SWF character id and states that morph shapes are unsupported, and continue converting the remaining shapes.
 4. IF an exported SVG file is not well-formed XML, THEN THE Converter SHALL stop with a non-zero exit status and an error message that names the offending file, and SHALL leave previously written SVG files in place.
 5. IF FFDec fails to export the SVG for a shape symbol (no file produced or a zero-byte file), THEN THE Converter SHALL stop with a non-zero exit status and an error message naming the character id of the shape.
 6. WHEN conversion of all shapes completes, THE Converter SHALL report the count of SVG files written and the count of morph shapes skipped, such that written plus skipped equals the number of exported shape symbols.
 7. IF the unpacked input contains a text, sound, button, filter, mask or video tag, THEN THE Converter SHALL add one entry to the Unsupported_Feature_List for each such tag, identifying the kind and, where available, the SWF character id or tag name, and continue converting the remaining content.
+8. WHEN the Converter records an unsupported character (text, sound, button, video or morph shape) or an unsupported mask or filter, THE Converter SHALL drop every placement that references that character or carries that mask or filter, remove any entry at that placement's depth from the affected frame, add one entry per dropped placement to the Unsupported_Feature_List identifying the sprite, frame, depth and kind, and continue converting.
 
 ### Requirement 4: Convert SWF structure to Scene_JSON
 
@@ -83,13 +86,13 @@ The vertical slice proves the SWF Resurrect pipeline end to end on simple Action
 
 #### Acceptance Criteria
 
-1. WHEN unpacking succeeds, THE Converter SHALL write exactly one Scene_JSON file into the Emitted_Project `assets/` directory.
+1. WHEN unpacking succeeds, THE Converter SHALL write exactly one Scene_JSON file into the Staging_Directory.
 2. THE Scene_JSON SHALL contain the stage width in pixels, stage height in pixels, the stage background colour, Frame_Rate in frames per second, the Symbol_Table, and the symbol id of the root Sprite_Symbol, where the total frame count of the root Sprite_Symbol is an integer from 1 to 65535.
 3. THE Scene_JSON SHALL contain, in each Sprite_Symbol (the root included), one frame entry per frame, where each frame entry holds the list of Display_List_Entry values with depth, symbol id, matrix (six numeric components), colour transform (eight numeric components: four multipliers and four offsets) and instance name, where an absent instance name is represented as an empty value and Display_List_Entry values are ordered by ascending depth.
 4. THE Scene_JSON SHALL contain, in each Sprite_Symbol, each frame label of that sprite and the 1-based frame number of that label within that sprite, and a frame with no label SHALL NOT produce a label entry.
 5. THE Scene_JSON SHALL contain, for each Shape_Symbol, the file name of one SVG file written under Requirement 3 and a bounds origin offset (x and y) in pixels.
 6. FOR ALL valid Scene_JSON objects, serialising then parsing then serialising SHALL produce an equivalent Scene_JSON, where equivalent means identical field values and identical byte output on the second serialisation (round-trip property).
-7. IF a Display_List_Entry references a symbol id that is absent from the Symbol_Table, or a Shape_Symbol references an SVG file that does not exist in the `assets/` directory, THEN THE Converter SHALL stop with a non-zero exit status and an error message naming the symbol id, and SHALL NOT leave a partial Scene_JSON file in the `assets/` directory.
+7. IF a Display_List_Entry references a symbol id that is not a Shape_Symbol, not a Sprite_Symbol and not an unsupported character recorded under Requirement 3 criteria 3 and 7, or a Shape_Symbol references an SVG file that does not exist in the Staging_Directory, THEN THE Converter SHALL stop with a non-zero exit status and an error message naming the symbol id, and SHALL NOT leave a partial Scene_JSON file in the Staging_Directory.
 8. WHEN the Converter runs twice on the same unpacked input, THE Converter SHALL produce byte-identical Scene_JSON and SVG output.
 9. IF the SWF_Structure_Dump cannot be read as a Scene_JSON (missing or malformed frame data), THEN THE Converter SHALL stop with a non-zero exit status and an error message naming the sprite and frame number or input item that failed, and SHALL NOT write a Scene_JSON file.
 10. THE Converter SHALL write each frame's display list as fully resolved absolute state, with every PlaceObject move or replace and every RemoveObject already applied, so that the frame lists every instance present in that frame and no other instance.
@@ -102,7 +105,7 @@ The vertical slice proves the SWF Resurrect pipeline end to end on simple Action
 
 #### Acceptance Criteria
 
-1. WHEN conversion succeeds, THE Emitter SHALL write an Emitted_Project to the output directory containing `runtime/`, `shim/`, `src/`, `assets/`, `index.html`, `package.json`, `tsconfig.json` and a Vite configuration.
+1. WHEN conversion succeeds, THE Emitter SHALL write an Emitted_Project to the output directory containing `runtime/`, `shim/`, `src/`, `assets/`, `index.html`, `package.json`, `tsconfig.json` and a Vite configuration, where the Emitter produces `assets/` by copying the Converter output from the Staging_Directory.
 2. THE Emitter SHALL configure the Emitted_Project TypeScript compiler in strict mode.
 3. THE Emitter SHALL declare PixiJS as a dependency of the Emitted_Project with an exact pinned version, containing no range operators (such as `^`, `~`, `>`, `<`, `*`) and no tags (such as `latest`).
 4. THE Emitter SHALL define `typecheck` and `build` scripts in the `package.json` of the Emitted_Project.
@@ -147,7 +150,7 @@ The vertical slice proves the SWF Resurrect pipeline end to end on simple Action
 6. WHEN gotoAndPlay is called with a frame number from 1 to totalFrames or with a label that exists, THE Shim SHALL set currentFrame to that frame, render that frame's display list, and continue timeline playback from that frame.
 7. IF gotoAndPlay or gotoAndStop is called with a label that does not exist or a frame number outside 1 to totalFrames, THEN THE Shim SHALL leave currentFrame and the playing or stopped state unchanged, and log one warning containing the invalid value.
 8. WHEN removeEventListener is called for a registered listener, THE Shim SHALL stop delivering that event type to the listener from the next dispatch onward, including when called from within a dispatch of the same event.
-9. WHILE a MovieClip is playing, THE Shim SHALL dispatch `ENTER_FRAME` once per rendered frame to each registered listener, in registration order.
+9. WHEN a Runtime tick occurs, THE Shim SHALL dispatch `ENTER_FRAME` once to every MovieClip on the stage, whether playing or stopped, and SHALL deliver it to each registered listener of that MovieClip in registration order.
 10. WHEN a mouse click occurs on a display object with a registered click listener, THE Shim SHALL invoke each registered click listener once for that click, in registration order.
 11. THE Shim SHALL provide `addFrameScript` on `MovieClip` with the AS3 signature, taking one or more pairs of a 0-based frame index (from 0 to totalFrames minus 1) and a function, as in the decompiled `addFrameScript(0,this.frame1,1,this.frame2)`, and registering each function as the Frame_Script for that (sprite, frame) pair, replacing any Frame_Script previously registered for the same pair.
 12. WHEN a MovieClip enters a frame that has a registered Frame_Script, THE Shim SHALL run that Frame_Script exactly once for that entry, after the frame's display list is rendered and after the `ENTER_FRAME` listeners for that frame have run.
@@ -182,9 +185,10 @@ The vertical slice proves the SWF Resurrect pipeline end to end on simple Action
 3. THE Pipeline SHALL implement the Unpack, Convert and Emit stages as separate modules, where each module accepts only its declared input artifact and returns only its declared output artifact.
 4. WHEN a stage fails, THE Pipeline SHALL stop without running any later stage, print the failed stage name and an error message describing the failure, and exit with a non-zero exit code.
 5. IF the SWF path does not exist, is not readable, or the output directory cannot be created or written to, THEN THE Pipeline SHALL run no stage, print an error message identifying the invalid path, and exit with a non-zero exit code.
-6. WHEN the Pipeline finishes, whether it succeeds or a stage has failed after Convert completed, THE Pipeline SHALL write the Unsupported_Feature_List, including all entries added by the Converter, to a file in the output directory, containing an empty list when no unsupported features were detected.
+6. WHEN the Pipeline finishes, whether it succeeds or a stage has failed after Convert completed, THE Pipeline SHALL write the Unsupported_Feature_List, including all entries added by the Converter, to a file in the output directory, containing an empty list when no unsupported features were detected, except as stated in criterion 9.
 7. THE Pipeline SHALL make zero LLM calls and zero frame comparisons during the slice.
 8. THE Pipeline SHALL accept the `--force` option defined in Requirement 5 and pass it to the Emitter.
+9. IF the Emitter refuses because the output directory is non-empty and `--force` is absent (Requirement 5 criterion 8) or because the `--force` target is unsafe (Requirement 5 criterion 10), THEN THE Pipeline SHALL NOT write the Unsupported_Feature_List into the output directory and SHALL print it to standard error.
 
 ### Requirement 10: Automated tests
 
