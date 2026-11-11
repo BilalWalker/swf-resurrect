@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.template.json",
-  "compilerOptions": {
-    "rootDirs": ["handwritten", "template"]
-  },
-  "include": ["handwritten/**/*.ts", "template/shim/**/*.ts", "template/runtime/**/*.ts"],
-  "exclude": ["template/runtime/pixi/**"]
-}

@@ -7,7 +7,6 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "typecheck:template": "tsc --noEmit -p tsconfig.template.json",
-    "typecheck:handwritten": "tsc --noEmit -p tsconfig.handwritten.json",
     "pipeline": "tsx src/pipeline/cli.ts"
   },
   "devDependencies": {
