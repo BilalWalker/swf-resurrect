@@ -232,12 +232,12 @@ Rules that apply to every task:
   - Ask the user to confirm `clickgoto` against every row of the Expected_State table in `samples/clickgoto/PROVENANCE.md`, and `tweendemo` against its `PROVENANCE.md` (both buttons on frame 1 and stopped at start, clicks behave as in clickgoto, the tween plays, the root stops after about 30 frames).
   - Stop and wait for the user's visual confirmation before continuing.
 
-- [ ] 19. Update steering status
-  - [-] 19.1 Update `tech.md` and `structure.md` if needed
+- [x] 19. Update steering status
+  - [x] 19.1 Update `tech.md` and `structure.md` if needed
     - Compare `.kiro/steering/tech.md` and `.kiro/steering/structure.md` with the repository: pipeline now `unpack -> convert -> translate -> emit`, `src/translate/` stage layout, `template/shim/ADDED_APIS.md`, `typescript-js` alias and why, `handwritten/` as an optional override directory, removed `typecheck:handwritten`, confirmed `npm run` scripts from `package.json`. Edit only what is stale; make no change if nothing is. Keep wording tight and do not touch the FFDec facts.
     - _Requirements: 4.2, 5.5_
 
-- [~] 20. Final checkpoint - Ensure all tests pass
+- [-] 20. Final checkpoint - Ensure all tests pass
   - Run `npm test -- --run` (including the three required property tests), `npm run typecheck` and `npm run typecheck:template`. Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
