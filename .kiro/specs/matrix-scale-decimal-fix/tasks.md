@@ -89,7 +89,7 @@ Fix `parseMatrix` so FFDec 26.4.0 matrix scale and skew fields are read as plain
   - Ask the user if questions arise, and present the Pixi backend report from task 6 before continuing
   - _Requirements: 3.7_
 
-- [-] 8. Typecheck, test and commit locally
+- [x] 8. Typecheck, test and commit locally
   - Run `npm run typecheck` and `npm test -- --run`. Both must pass. If either fails, fix it first; never commit a failing state
   - Run `git status` and stage by path only the files this work created or changed: `src/convert/ffdecXml.ts`, the new files under `test/unit/`, `test/property/` and `test/support/` (if touched), `test/fixtures/tweendemo/`, and `.kiro/specs/matrix-scale-decimal-fix/` (`.config.kiro`, `bugfix.md`, `design.md`, `tasks.md`, plus `tasks.meta.json` if present)
   - Never use `git add -A`, `git add .` or `git commit -a`. Confirm with `git diff --cached --name-only` that nothing under `tools/`, `node_modules/`, `out/`, `.work/` or `dist/` is staged, and that no SWF outside `samples/` is staged
