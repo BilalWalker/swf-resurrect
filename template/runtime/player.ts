@@ -1,6 +1,7 @@
 import type { DisplayObject } from '../shim/DisplayObject';
 import { MouseEvent } from '../shim/events';
 import {
+  exitFrame,
   withConstructionContext,
   type ClipHooks,
   type ConstructionContext,
@@ -91,6 +92,7 @@ export class Player {
       this.accumulator -= this.frameIntervalMs;
       steps++;
       this.root._step();
+      exitFrame(this.root);
     }
     if (this.accumulator >= this.frameIntervalMs - EPSILON_MS) {
       // Stalled for longer than the cap allows: drop the rest.

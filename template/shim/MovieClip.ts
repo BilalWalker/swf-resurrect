@@ -150,6 +150,11 @@ export class MovieClip extends Sprite {
     }
   }
 
+  /** Dispatches EXIT_FRAME to this clip only. The runtime walks the tree (see internal.exitFrame). */
+  _exitFrame(): void {
+    this.dispatchEvent(new Event(Event.EXIT_FRAME));
+  }
+
   // ---- private ----
 
   /** Validates, moves to the frame and renders. Returns false (state unchanged, one warning) if invalid. */

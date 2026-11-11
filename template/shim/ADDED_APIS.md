@@ -13,7 +13,8 @@ APIs added to the Shim beyond the vertical-slice surface. Each row cites a line 
 | `Event.RENDER` | `EventWatcher.as:29` |
 | `trace` | `EventWatcher.as:17` |
 | `setTraceSink` | Supports `trace`: lets tests and hosts replace the output of the `trace` calls at `EventWatcher.as:17` |
+| `_exitFrame` | Supports `Event.EXIT_FRAME`: the runtime's EXIT_FRAME pass dispatches it, so the listener added at `EventWatcher.as:23` fires once per clip per tick |
 | `getChildAt` | `MainTimeline.as:36` |
 | `Shape` | `MainTimeline.as:51` |
 
-Only `EXIT_FRAME` is dispatched, once per tick, by the EXIT_FRAME pass (task 4, not added yet). The other new `Event` constants are accepted by `addEventListener` and never dispatched.
+Only `EXIT_FRAME` is dispatched, once per clip per tick, by the EXIT_FRAME pass after `root._step()`. The other new `Event` constants are accepted by `addEventListener` and never dispatched.

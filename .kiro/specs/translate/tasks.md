@@ -55,7 +55,7 @@ Rules that apply to every task:
     - _Requirements: 5.1, 5.3, 5.4_
 
 - [ ] 4. EXIT_FRAME pass (design T3, decision D8)
-  - [~] 4.1 Add `_exitFrame` and call it after `root._step()`
+  - [-] 4.1 Add `_exitFrame` and call it after `root._step()`
     - In `template/shim/MovieClip.ts` and `template/shim/internal.ts` add `exitFrame(mc)`: snapshot every MovieClip under the root in pre-order, dispatch `EXIT_FRAME` once to each that is still attached, playing or stopped. A clip created by an `EXIT_FRAME` listener is not notified that tick.
     - In `template/runtime/player.ts` call `exitFrame(root)` once per whole frame step, after `root._step()` returns. Clicks and `gotoAnd*` do not dispatch it.
     - Run `npm run typecheck:template` and the existing stepping and MovieClip tests.
@@ -74,8 +74,8 @@ Rules that apply to every task:
     - Regex versus division, `Vector.<int>`, strings, unterminated string and comment, line and end-line numbers of multi-line comments, CRLF input.
     - _Requirements: 1.1, 1.4_
 
-- [ ] 6. Statement scanner and line accounting (design T5, sections 1.2 and 1.3)
-  - [-] 6.1 Implement `scanner.ts` and `emitTs.ts`
+- [x] 6. Statement scanner and line accounting (design T5, sections 1.2 and 1.3)
+  - [x] 6.1 Implement `scanner.ts` and `emitTs.ts`
     - Create `src/translate/scanner.ts`: brace-aware scan at file, class-body and statement level as in the design table. Track `()`, `[]`, `{}` depth so `;` and `}` inside nested groups never end a node. Unsupported nodes for `try` (with `catch`/`finally`), `switch`, `with`, `delete`, `namespace`, `use`, `include`, `default xml`, nested `function`, labels, E4X markers. A compound statement with an unsupported header is one node. Compound bodies are always emitted in braces. An unclosed `{` makes its construct unsupported to end of file. Every node records `startLine` and `endLine`.
     - Create `src/translate/emitTs.ts`: assemble output text with LF endings and one trailing newline, `LineSpan[]` (`translated`, `structural`, `dropped`, `comment`, `unsupported`) and `Diagnostic[]`. An unsupported span emits one `// AS3: <line>` comment per source line (trailing whitespace trimmed; `\r`, U+2028, U+2029 escaped) and exactly one `unsupported-construct` Diagnostic at the span's first line. Diagnostics are sorted by (line, kind, message) in UTF-16 code unit order. Blank or whitespace-only input returns empty text and no Diagnostics.
     - _Requirements: 1.3, 1.4, 1.6, 3.5_

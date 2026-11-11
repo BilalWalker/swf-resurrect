@@ -70,6 +70,25 @@ export function renderFrame(mc: MovieClip): void {
   mc._renderFrame();
 }
 
+/**
+ * EXIT_FRAME pass: snapshots every MovieClip under `root` (pre-order, root included), then
+ * dispatches EXIT_FRAME once to each one that is still attached to `root`.
+ */
+export function exitFrame(root: MovieClip): void {
+  const clips: MovieClip[] = [];
+  const collect = (o: DisplayObject): void => {
+    if (typeof (o as Partial<MovieClip>)._exitFrame !== 'function') return;
+    clips.push(o as MovieClip);
+    for (const c of (o as MovieClip)._children) collect(c);
+  };
+  collect(root);
+  const attached = (o: DisplayObject): boolean => {
+    for (let p: DisplayObject | null = o; p !== null; p = p._parent) if (p === root) return true;
+    return false;
+  };
+  for (const clip of clips) if (attached(clip)) clip._exitFrame();
+}
+
 /** Advances one tick for `mc` and every clip below it. */
 export function step(mc: MovieClip): void {
   mc._step();
