@@ -210,7 +210,7 @@ Rules that apply to every task:
     - Test: `test/property/playerPointer.property.test.ts` (create), **Property 17: The Player's pointer events follow the reference model**, with the `FakeBackend` and a fixed three-shape scene. Extend `test/property/stageBubbling.property.test.ts` with the pointer clause of **Property 24** (a point no shape contains is delivered to the Stage_Object and to no clip) and add to `test/unit/stage.test.ts` the case "a pointer entry over empty space is delivered to the Stage_Object listener and not to a root clip listener" (Requirement 19.8). Update `test/unit/player.test.ts`.
     - _Requirements: 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 19.4, 19.8, 15.5_
 
-  - [ ] 6.6 Wire the browser pointer events
+  - [x] 6.6 Wire the browser pointer events
     - In `template/src/main.ts` wire `pointermove`, `pointerdown` and `pointerup` on the canvas through the new exported pure function `canvasToStage(ev, rect, stage)`, replacing the `pointerdown` to `dispatchClick` call.
     - Test: `test/unit/canvasToStage.test.ts` (create): scaled canvas, offset rect, rounding at the edges; and `npm run typecheck:template`.
     - _Requirements: 14.3_

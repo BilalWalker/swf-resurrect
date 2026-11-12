@@ -1,5 +1,6 @@
 import { Application } from 'pixi.js';
 import { loadScene } from '../runtime/loader';
+import { canvasToStage } from '../runtime/canvasToStage';
 import { Player } from '../runtime/player';
 import { PixiBackend } from '../runtime/pixi/pixiBackend';
 import type { SceneJson } from '../runtime/scene';
@@ -62,13 +63,26 @@ async function boot(): Promise<void> {
   });
   app.stage.addChild(player.rootNode as Parameters<typeof app.stage.addChild>[0]);
 
-  // Canvas pixels to stage coordinates; the canvas may be scaled by CSS.
-  app.canvas.addEventListener('pointerdown', (ev: PointerEvent) => {
-    const rect = app.canvas.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-    const x = ((ev.clientX - rect.left) * scene.stage.width) / rect.width;
-    const y = ((ev.clientY - rect.top) * scene.stage.height) / rect.height;
-    player.dispatchClick(x, y);
+  // Pointer events cover mouse, touch and pen. Canvas pixels map to stage coordinates; the canvas may be
+  // scaled by CSS. touch-action none keeps a touch drag from scrolling the page and cancelling the pointer.
+  const canvas = app.canvas;
+  canvas.style.touchAction = 'none';
+  const toStage = (ev: PointerEvent): { x: number; y: number } | null =>
+    canvasToStage(ev, canvas.getBoundingClientRect(), scene.stage);
+  canvas.addEventListener('pointermove', (ev: PointerEvent) => {
+    const p = toStage(ev);
+    if (p !== null) player.dispatchMouseMove(p.x, p.y);
+  });
+  canvas.addEventListener('pointerdown', (ev: PointerEvent) => {
+    const p = toStage(ev);
+    if (p === null) return;
+    // Capture so a release outside the canvas still reaches pointerup (a release-outside for the Player).
+    canvas.setPointerCapture?.(ev.pointerId);
+    player.dispatchMouseDown(p.x, p.y);
+  });
+  canvas.addEventListener('pointerup', (ev: PointerEvent) => {
+    const p = toStage(ev);
+    if (p !== null) player.dispatchMouseUp(p.x, p.y);
   });
 
   const loop = (): void => {
