@@ -12,6 +12,14 @@ The base file is one of Ruffle's AVM2 regression tests, dual-licensed MIT
 and Apache-2.0. Both licences permit modification. This derived file is
 offered under the same terms.
 
+## Licence chosen
+
+Licence chosen: MIT, from the option `MIT OR Apache-2.0`. The licence text
+is in `samples/LICENSES/MIT-Ruffle.txt`.
+
+This file is derived by `samples/tweendemo/build.py` from
+`samples/clickgoto/test.swf` and is offered under the same terms (MIT).
+
 ## Why it exists
 
 `clickgoto` has no motion: every placement is a plain translation. This

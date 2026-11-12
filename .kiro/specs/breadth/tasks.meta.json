@@ -1,0 +1,842 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add the two licence texts": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485455943
+      },
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485477557
+      },
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485583670
+      }
+    ],
+    "1.2 Add the licence pointers to the two existing PROVENANCE.md files": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485456168
+      },
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485588329
+      },
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485665953
+      }
+    ],
+    "1.3 Add the PROVENANCE fields that Breadth_Samples need to the validator": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485456337
+      },
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485666581
+      }
+    ],
+    "2. Checkpoint: confirm approved samples": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485456458
+      }
+    ],
+    "3.1 Make `symbolClass/symbols.csv` optional": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485456578
+      }
+    ],
+    "3.2 Empty class list through Convert, Translate and Emit": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485456692
+      }
+    ],
+    "3.3 Read ids in `ffdecXml.ts` and `model.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485456805
+      }
+    ],
+    "3.4 Drop placements of unsupported characters with a Named_Limit": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485456929
+      }
+    ],
+    "3.5 Smoke runs of the candidates": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457048
+      }
+    ],
+    "3.6 Record the baseline for Checkpoint 9 and create the SC copy": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457164
+      }
+    ],
+    "4.1 Mark syntactic diagnostics and import specifiers on `GateError`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457270
+      }
+    ],
+    "4.2 Add `src/emit/classOmissions.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457402
+      }
+    ],
+    "4.3 `buildClassesTs` with an omitted set": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457507
+      }
+    ],
+    "4.4 The Emit flow: gate first, plan again only when needed, write once": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457627
+      }
+    ],
+    "4.5 Pipeline and reports": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457738
+      }
+    ],
+    "4.6 Build and render with an omitted class, Player fallback": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457854
+      }
+    ],
+    "4.7 SC measurement": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485457974
+      }
+    ],
+    "5.1 Add `src/convert/qualifiedName.ts` and the Core purity test": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485458089
+      }
+    ],
+    "5.2 Validate and resolve dotted names in Unpack and Convert": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485458202
+      }
+    ],
+    "5.3 Key classes by Qualified_Name in Translate": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485458317
+      }
+    ],
+    "5.4 Add `src/translate/importPlan.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485458440
+      }
+    ],
+    "5.5 Use the plan in the rewriter, the import lines and the emit closure": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485458569
+      }
+    ],
+    "5.6 Add `src/emit/classPaths.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485458766
+      }
+    ],
+    "5.7 `resolveImportLines`, `buildBindings` and `buildClassesTs`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485458882
+      }
+    ],
+    "5.8 Wire the planner into Emit, the report and the override lookup": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459004
+      }
+    ],
+    "5.9 Example tests with a two-package fixture and the unchanged samples": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459134
+      }
+    ],
+    "5.10 SC measurement after linking package classes": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459259
+      }
+    ],
+    "6.1 `MouseEvent.MOUSE_DOWN`, `MOUSE_UP`, `MOUSE_MOVE` and bubbling defaults": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459357
+      }
+    ],
+    "6.2 `DisplayObject.mouseX`, `mouseY`, `internal.setPointerPosition`, `internal.globalToLocal`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459481
+      }
+    ],
+    "6.3 `Stage`, `DisplayObject.stage`, `attachRoot`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459606
+      }
+    ],
+    "6.4 The Player owns the Stage_Object": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459731
+      }
+    ],
+    "6.5 `dispatchMouseMove`, `dispatchMouseDown`, `dispatchMouseUp`, `pointer`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459853
+      }
+    ],
+    "6.6 Wire the browser pointer events": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485459967
+      }
+    ],
+    "6.7 Re-confirm the stage-versus-root finding and record CC": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485460103
+      }
+    ],
+    "7.1 Add `parseTickOptions` and the new `parseNumFrames`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485460220
+      }
+    ],
+    "7.2 `tick_rate` makes the behaviour `not-compared`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485460343
+      }
+    ],
+    "7.3 Plan pointer entries": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485460471
+      }
+    ],
+    "7.4 Apply pointers in the runner and extend the report": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485460600
+      }
+    ],
+    "7.5 `describeTarget` and the runner's `release-outside` notes": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485460788
+      }
+    ],
+    "7.6 Add `src/verify/core/inputNotes.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485460952
+      }
+    ],
+    "7.7 Copy the notes into the report, the HTML and the CLI line": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485461072
+      }
+    ],
+    "7.8 Add `src/verify/core/replayOutcome.ts`: a Replay that throws keeps its lines, an empty reference is not compared": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485461223
+      }
+    ],
+    "7.9 Empty-input Replay, the Empty_Reference_Trace and the `Error #2012` lines": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485461347
+      }
+    ],
+    "7.10 Record CC": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485461454
+      }
+    ],
+    "8.1 Add `src/translate/shimMembers.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485461595
+      }
+    ],
+    "8.2 Generator script, the generated file and the drift test": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485461718
+      }
+    ],
+    "8.3 Add `src/translate/memberTables.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485461825
+      }
+    ],
+    "8.4 Add `src/translate/implicitThis.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485461947
+      }
+    ],
+    "8.5 Wire the resolver into the rewriter and `planTranslate`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485462066
+      }
+    ],
+    "8.6 Method-value binding (Requirement 22.13, D18)": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485462189
+      }
+    ],
+    "8.7 Fixture lines, byte identity and SC": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485462310
+      }
+    ],
+    "9. Checkpoint: crashes and package-qualified classes fixed": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485462430
+      }
+    ],
+    "10.1 Add `template/runtime/shapeJson.ts` with `DRAWN_FILLS`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485462546
+      }
+    ],
+    "10.2 Add `src/convert/pathData.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485462667
+      }
+    ],
+    "10.3 Add `src/convert/evenOdd.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485462783
+      }
+    ],
+    "10.4 `svgToShapeJson` for solid fills, wrapper, nested transforms and `<use>`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485462894
+      }
+    ],
+    "10.5 Strokes: cap, join, miter limit and the stroke limits": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485463016
+      }
+    ],
+    "10.6 Gradient fills with the drawn-fill capabilities": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485463187
+      }
+    ],
+    "10.7 Bitmap fills, image bytes and determinism": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485463299
+      }
+    ],
+    "10.8 Named_Limit order": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485463427
+      }
+    ],
+    "10.9 Known_Visual_Limit kinds and the `allComparedFramesExact` option": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485463570
+      }
+    ],
+    "10.10 Scene_JSON v2": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485463683
+      }
+    ],
+    "10.11 Convert writes Shape_JSON and records the limits": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485463813
+      }
+    ],
+    "10.12 Backend draws Shape_JSON (solid fills, strokes, holes) and refuses undrawn fills": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485463930
+      }
+    ],
+    "10.13 Verify the floors and the named limits": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485464043
+      }
+    ],
+    "11.1 Stroke styles measured on wide open strokes": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485464176
+      }
+    ],
+    "11.2 Linear gradients: `gradientTextureMatrix` and `FillGradient` drawing; flips `gradientLinear`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485464297
+      }
+    ],
+    "11.3 Radial gradients: own radial texture; flips `gradientRadial`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485464412
+      }
+    ],
+    "11.4 Bitmap fills; flips `bitmap`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485464532
+      }
+    ],
+    "11.5 Emit copies image assets": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485464653
+      }
+    ],
+    "11.6 `colourMatrix`, `hasOffsets`, `stripAlphaAdd`, `hasAlphaAdd`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485464832
+      }
+    ],
+    "11.7 `setColorOffset` in the backend and Player, and the Exact_Render measurement": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485464976
+      }
+    ],
+    "11.8 Measure the alpha add term and narrow the `colour-offset` limit": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485465160
+      }
+    ],
+    "11.9 Record CC": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485465274
+      }
+    ],
+    "12.1 Export `texts/<id>.svg`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485465380
+      }
+    ],
+    "12.2 Static text as a shape symbol; dynamic text dropped with a limit": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485465504
+      }
+    ],
+    "12.3 XML names for filters and blend modes": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485465624
+      }
+    ],
+    "12.4 Keep filtered and blend-mode placements and record the limit": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485465739
+      }
+    ],
+    "12.5 `computeClipLayout`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485465854
+      }
+    ],
+    "12.6 `createClipGroup`, `setMask`, Player reconcile, `ClipHooks.entryUpdated`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485465977
+      }
+    ],
+    "12.7 `classifyMask` and `resolveMasks`: keep Trivial_Mask placements, drop the others with a Named_Limit": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485466094
+      }
+    ],
+    "12.8 Measure and update the mask-dependent expectations": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485466206
+      }
+    ],
+    "13.1 Add `src/verify/core/regions.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485466327
+      }
+    ],
+    "13.2 Add `src/verify/core/residual.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485466457
+      }
+    ],
+    "13.3 Wire the Verify_Stage, the HTML and the residual floor test": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485466577
+      }
+    ],
+    "14. Checkpoint: rendering done": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485466689
+      }
+    ],
+    "15.1 `radial` and `gradients`: files, PROVENANCE.md and fixtures": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485466817
+      }
+    ],
+    "15.2 `radial` and `gradients`: measure and attribute the residual": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485466935
+      }
+    ],
+    "15.3 `radial` and `gradients`: floors": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485467119
+      }
+    ],
+    "15.4 `acid-color-2`: files, PROVENANCE.md and fixtures": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485467227
+      }
+    ],
+    "15.5 `acid-color-2`: measure and attribute the residual": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485467337
+      }
+    ],
+    "15.6 `acid-color-2`: Exact_Render floor": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485467460
+      }
+    ],
+    "16.1 `mask_reapply`: files, PROVENANCE.md and fixtures": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485467588
+      }
+    ],
+    "16.2 `mask_reapply`: gate, measurement and residual": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485467704
+      }
+    ],
+    "16.3 `mask_reapply`: floors": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485467826
+      }
+    ],
+    "16.4 `click_block`: files, PROVENANCE.md and fixtures": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485467951
+      }
+    ],
+    "16.5 `click_block`: measure and attribute the residual": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485468073
+      }
+    ],
+    "16.6 `click_block`: floors": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485468201
+      }
+    ],
+    "17.1 `3_joystick`: files, PROVENANCE.md and fixtures": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485468327
+      }
+    ],
+    "17.2 `3_joystick`: measure and attribute the 1,241 pixels": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485468441
+      }
+    ],
+    "17.3 `3_joystick`: floors": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485468557
+      }
+    ],
+    "17.4 `slider_component`: files, PROVENANCE.md and fixtures": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485468677
+      }
+    ],
+    "17.5 `slider_component`: measure and attribute the residual": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485468803
+      }
+    ],
+    "17.6 `slider_component`: floors": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485468932
+      }
+    ],
+    "17.7 Add `src/samples/fetchedSample.ts`": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485469052
+      }
+    ],
+    "17.8 Add `scripts/fetch-static-text.ts` and the npm script": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485469169
+      }
+    ],
+    "17.9 The `--reference-dir` option": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485469288
+      }
+    ],
+    "17.10 Skip helper and sample-directory classification in the tests": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485469410
+      }
+    ],
+    "17.11 `static_text`: fetch the file, write the note and the reference files": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485469537
+      }
+    ],
+    "17.12 `static_text`: measure and attribute the residual": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485469716
+      }
+    ],
+    "17.13 `static_text`: skipping floor tests": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485469823
+      }
+    ],
+    "17.14 Final measurement of every floor": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485469941
+      }
+    ],
+    "18. Checkpoint: browser review of fidelity-report.html": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485470053
+      }
+    ],
+    "19.1 Update the steering status and the added-API log": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485470173
+      }
+    ],
+    "19.2 Repository hygiene test": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485470278
+      }
+    ],
+    "19.3 Final summary": [
+      {
+        "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794485470396
+      }
+    ]
+  }
+}

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   isAllowedLicence,
+  licencePointers,
   parseExpectedState,
   validateProvenance,
 } from "../support/provenance";
@@ -21,11 +22,22 @@ function walk(dir: string, accept: (name: string) => boolean): string[] {
   return out;
 }
 
+const PTR_LINE = "Licence text: samples/LICENSES/MIT-Ruffle.txt";
+
 const good = `| Field | Value |
 |---|---|
 | Author | A |
 | Source URL | https://example.com/x |
 | Licence | MIT |
+| SHA-256 | \`${"ab".repeat(32)}\` |
+
+${PTR_LINE}
+
+## Embedded fonts
+
+no embedded fonts
+
+## Expected state
 
 | Action | \`l_button\` | \`r_button\` |
 |---|---|---|
@@ -72,6 +84,66 @@ describe("provenance parser (examples)", () => {
   });
 });
 
+describe("licence pointers (examples)", () => {
+  const noPtr = good.replace(PTR_LINE, "");
+  const dual = noPtr.replace("| Licence | MIT |", "| Licence | MIT OR Apache-2.0 |");
+  const mitNote = `${dual}\nLicence chosen: MIT. Text in samples/LICENSES/MIT-Ruffle.txt.\n`;
+  const apacheOnly = noPtr.replace("| Licence | MIT |", "| Licence | Apache-2.0 |");
+
+  it("accepts a dual-licensed note that names MIT and points to the MIT file", () => {
+    expect(validateProvenance(mitNote, { clickSample: true })).toEqual([]);
+  });
+
+  it("rejects a dual-licensed note without the MIT pointer", () => {
+    const p = validateProvenance(`${dual}\nLicence chosen: MIT.\n`, { clickSample: true });
+    expect(p.join()).toMatch(/MIT-Ruffle\.txt/);
+  });
+
+  it("rejects a dual-licensed note that does not name MIT as chosen", () => {
+    const p = validateProvenance(`${dual}\nSee samples/LICENSES/MIT-Ruffle.txt\n`, { clickSample: true });
+    expect(p.join()).toMatch(/chosen option MIT/);
+  });
+
+  it("requires the Apache pointer for an Apache-2.0 note", () => {
+    expect(validateProvenance(apacheOnly, { clickSample: true }).join()).toMatch(/Apache-2\.0\.txt/);
+    const ok = `${apacheOnly}\nSee samples/LICENSES/Apache-2.0.txt\n`;
+    expect(validateProvenance(ok, { clickSample: true })).toEqual([]);
+  });
+});
+
+describe("fields for samples added after Task 1.3 (examples)", () => {
+  const fontsBlock = "## Embedded fonts\n\nno embedded fonts\n\n";
+
+  it("rejects a note without the embedded-fonts section", () => {
+    const text = good.replace(fontsBlock, "");
+    expect(validateProvenance(text, { clickSample: true }).join()).toMatch(/Embedded fonts/);
+  });
+
+  it("exempts legacy samples from the fonts section only", () => {
+    const text = good.replace(fontsBlock, "");
+    expect(validateProvenance(text, { clickSample: true, legacy: true })).toEqual([]);
+    const noSha = text.replace(/\| SHA-256 .*\n/, "");
+    expect(validateProvenance(noSha, { clickSample: true, legacy: true }).join()).toMatch(/SHA-256/);
+  });
+
+  it("accepts a list of fonts and rejects an empty section", () => {
+    const list = good.replace("no embedded fonts", "- Arial, font id 3, 120 glyphs");
+    expect(validateProvenance(list, { clickSample: true })).toEqual([]);
+    const empty = good.replace("no embedded fonts", "TBD");
+    expect(validateProvenance(empty, { clickSample: true }).join()).toMatch(/neither a list/);
+  });
+
+  it("rejects a note without the SHA-256", () => {
+    const text = good.replace(/\| SHA-256 .*\n/, "");
+    expect(validateProvenance(text, { clickSample: true }).join()).toMatch(/SHA-256/);
+  });
+
+  it("rejects a note without the Licence_Directory pointer", () => {
+    const text = good.replace(PTR_LINE, "");
+    expect(validateProvenance(text, { clickSample: true }).join()).toMatch(/Licence_Directory/);
+  });
+});
+
 describe("repository samples", () => {
   const swfs = walk(join(root, "samples"), (n) => n.toLowerCase().endsWith(".swf"));
 
@@ -92,8 +164,16 @@ describe("repository samples", () => {
       const note = join(dirname(swf), "PROVENANCE.md");
       expect(existsSync(note), `${rel}: PROVENANCE.md is missing`).toBe(true);
       const isClick = dirname(swf).endsWith("clickgoto");
-      const problems = validateProvenance(readFileSync(note, "utf8"), { clickSample: isClick });
+      const legacy = isClick || dirname(swf).endsWith("tweendemo");
+      const problems = validateProvenance(readFileSync(note, "utf8"), { clickSample: isClick, legacy });
       expect(problems, `${rel}: ${problems.join("; ")}`).toEqual([]);
+    });
+
+    it(`${rel} PROVENANCE.md points only to existing licence files`, () => {
+      const text = readFileSync(join(dirname(swf), "PROVENANCE.md"), "utf8");
+      for (const p of licencePointers(text)) {
+        expect(existsSync(join(root, p)), `${rel}: ${p} does not exist`).toBe(true);
+      }
     });
   }
 });
@@ -115,5 +195,27 @@ describe("repository rules", () => {
     }
     const llm = /^(openai|@anthropic-ai\/.+|anthropic|@google\/generative-ai|@google\/genai|@aws-sdk\/client-bedrock.*|langchain|@langchain\/.+|ollama|cohere-ai|@mistralai\/.+|groq-sdk|ai|@ai-sdk\/.+|llamaindex|@huggingface\/inference)$/;
     expect(names.filter((n) => llm.test(n))).toEqual([]);
+  });
+});
+
+describe("licence texts", () => {
+  const apache = join(root, "samples", "LICENSES", "Apache-2.0.txt");
+  const mit = join(root, "samples", "LICENSES", "MIT-Ruffle.txt");
+
+  it("has both licence files", () => {
+    expect(existsSync(apache)).toBe(true);
+    expect(existsSync(mit)).toBe(true);
+  });
+
+  it("Apache-2.0.txt is non-empty and starts with the Apache licence title", () => {
+    const text = readFileSync(apache, "utf8");
+    expect(text.length).toBeGreaterThan(0);
+    expect(text.trimStart().startsWith("Apache License")).toBe(true);
+  });
+
+  it("MIT-Ruffle.txt holds the Ruffle copyright line", () => {
+    expect(readFileSync(mit, "utf8")).toContain(
+      "Copyright (c) 2018-2022 Ruffle LLC <ruffle@ruffle.rs> and Ruffle contributors",
+    );
   });
 });

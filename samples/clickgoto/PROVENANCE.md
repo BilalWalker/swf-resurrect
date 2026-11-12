@@ -12,6 +12,11 @@ Ruffle is dual-licensed under MIT and Apache-2.0 (see `LICENSE.md` in the
 Ruffle repository). This file is one of Ruffle's own AVM2 regression tests,
 authored in Adobe Animate.
 
+## Licence chosen
+
+Licence chosen: MIT, from the option `MIT OR Apache-2.0`. The licence text
+is in `samples/LICENSES/MIT-Ruffle.txt`.
+
 ## Files
 
 - `test.swf`: the pipeline input. The only file the pipeline may read.

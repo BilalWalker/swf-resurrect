@@ -127,12 +127,65 @@ function isAbsoluteHttpUrl(s: string): boolean {
   }
 }
 
+export const MIT_LICENCE_PATH = "samples/LICENSES/MIT-Ruffle.txt";
+export const APACHE_LICENCE_PATH = "samples/LICENSES/Apache-2.0.txt";
+
+/** Paths under samples/LICENSES/ that the note mentions. */
+export function licencePointers(text: string): string[] {
+  const found = text.match(/samples\/LICENSES\/[A-Za-z0-9._-]+\.txt/g) ?? [];
+  return [...new Set(found)];
+}
+
+/** Check the licence choice and pointer for the licence expression of the note. */
+function checkLicencePointer(text: string, licence: string): string[] {
+  const problems: string[] = [];
+  const terms = licence
+    .replace(/[()]/g, " ")
+    .split(/\s+OR\s+/)
+    .map((t) => t.trim());
+  const pointers = licencePointers(text);
+  if (terms.includes("MIT") && terms.includes("Apache-2.0")) {
+    if (!/\bMIT\b/.test(text.replace(/MIT OR Apache-2\.0/g, "").replace(/samples\/LICENSES\/\S+/g, ""))) {
+      problems.push("licence 'MIT OR Apache-2.0': the chosen option MIT is not named");
+    }
+    if (!pointers.includes(MIT_LICENCE_PATH)) {
+      problems.push(`licence 'MIT OR Apache-2.0': missing pointer to ${MIT_LICENCE_PATH}`);
+    }
+  } else if (terms.length === 1 && terms[0] === "Apache-2.0") {
+    if (!pointers.includes(APACHE_LICENCE_PATH)) {
+      problems.push(`licence 'Apache-2.0': missing pointer to ${APACHE_LICENCE_PATH}`);
+    }
+  }
+  return problems;
+}
+
+/**
+ * Check the embedded-fonts section: a heading "Embedded fonts" whose body is
+ * either a list or the sentence "no embedded fonts".
+ */
+function checkFontsSection(text: string): string[] {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((l) => /^#{1,6}\s+embedded fonts\b/i.test(l.trim()));
+  if (start < 0) return ["section 'Embedded fonts' is missing"];
+  const body: string[] = [];
+  for (let i = start + 1; i < lines.length && !/^#{1,6}\s/.test(lines[i]); i++) body.push(lines[i]);
+  const joined = body.join("\n");
+  if (/\bno embedded fonts\b/i.test(joined)) return [];
+  if (body.some((l) => /^\s*(?:[-*]|\d+\.)\s+\S/.test(l))) return [];
+  return ["section 'Embedded fonts' holds neither a list nor the sentence 'no embedded fonts'"];
+}
+
 /**
  * Validate a provenance note. Returns a list of problems; empty means valid.
  * Each problem names the field. For the Click_Sample the Expected_State must
- * also parse.
+ * also parse. Every note needs the SHA-256 and a pointer into
+ * samples/LICENSES/; a note also needs the embedded-fonts section unless
+ * `legacy` is set (clickgoto and tweendemo, which predate the requirement).
  */
-export function validateProvenance(text: string, opts: { clickSample: boolean }): string[] {
+export function validateProvenance(
+  text: string,
+  opts: { clickSample: boolean; legacy?: boolean },
+): string[] {
   const problems: string[] = [];
   const fields = parseFields(text);
 
@@ -151,7 +204,20 @@ export function validateProvenance(text: string, opts: { clickSample: boolean })
     problems.push("field 'licence' is missing or empty");
   } else if (!isAllowedLicence(licence)) {
     problems.push(`field 'licence' has no allow-listed term: ${licence}`);
+  } else {
+    problems.push(...checkLicencePointer(text, licence));
   }
+
+  const sha = stripTicks(fields.get("sha-256") ?? "");
+  if (!/^[0-9a-fA-F]{64}$/.test(sha)) {
+    problems.push("field 'SHA-256' is missing or is not 64 hex digits");
+  }
+
+  if (licencePointers(text).length === 0) {
+    problems.push("missing pointer to the Licence_Directory (samples/LICENSES/<file>.txt)");
+  }
+
+  if (!opts.legacy) problems.push(...checkFontsSection(text));
 
   if (opts.clickSample) {
     try {
