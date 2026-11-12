@@ -556,12 +556,14 @@ export interface PointerOutcome {
 }
 ```
 
-One hit test per entry, as Ruffle computes the hovered object once per input event (`player.rs:1493-1880`): `target = hitTest(buildHitView(root), x, y)?.source ?? this.stage`, so the Hit_Target of the Glossary (the Stage_Object when nothing is hit, Requirement 19.4) is a real object that events can be dispatched at. Then:
+One hit test per entry, as Ruffle computes the hovered object once per input event (`player.rs:1493-1880`): `hit = hitTest(buildHitView(root), x, y)?.source`, then `target` = the nearest ancestor-or-self of `hit` that is a `DisplayObjectContainer` (Sprite/MovieClip), else `this.stage`. The Shim has no `InteractiveObject` class and no `SimpleButton` or `TextField`, so `instanceof DisplayObjectContainer` is the most faithful existing check, and no class is added. A `ShapeObject` is therefore never a target: a clip that swaps its shape child between press and release (`clickgoto` `l_button`) keeps one Hit_Target, so `click` fires. The Hit_Target of the Glossary (the Stage_Object when nothing is hit, Requirement 19.4) is a real object that events can be dispatched at. Then:
 
 1. Position changed (`x !== px || y !== py`): store it, publish it to the Shim (`setPointerPosition`), dispatch a bubbling `mouseMove` at `target` (14.4).
 2. `dispatchMouseDown`: if the button is already down, stop after step 1 (no event; Ruffle changes no button for a repeated press, section 9). Else mark it down, `pressed = target`, dispatch a bubbling `mouseDown` at `target` (14.5).
 3. `dispatchMouseUp`: if the button is up, stop after step 1 and return `{ releaseOutside: null }`. Else mark it up, dispatch bubbling `mouseUp` at `target`; if `pressed === target` dispatch bubbling `click` at `pressed`, otherwise dispatch nothing more and return `{ releaseOutside: { pressed, hit: target } }`; clear `pressed` (14.6, 14.7, 14.20). The Player dispatches no `releaseOutside` event (Requirement 14.8 (c)); the return value is how the Replay records the case by name. A press and a release on empty stage have `pressed === target === stage`, so a `click` is dispatched at the Stage_Object; Ruffle's rule for a press on the empty stage was not read (A.9), so this follows the text of Requirement 14.7 only.
 4. `syncAll()` after every entry.
+
+Known limit: `mouseEnabled` and `mouseChildren` do not exist in the Shim, so `mouseChildren = false` (the ancestor becomes the target) and `mouseEnabled = false` (the object is skipped) are not honoured. Translated code that sets them is not flagged yet; this goes on the Checkpoint 9 list.
 
 `dispatchClick(x, y)` keeps its signature and calls `dispatchMouseDown(x, y)` then `dispatchMouseUp(x, y)`. Its first-pass behaviour (no event when nothing is hit) changes to the Hit_Target rule above; `clickgoto` is unaffected because the Stage_Object has no listener there (section 15, checked by the Requirement 19.9 condition).
 
@@ -1536,7 +1538,7 @@ Properties apply to the Core: the Shape_Function, the Shape_JSON codec, contour 
 
 ### Property 17: The Player's pointer events follow the reference model
 
-*For any* sequence of `dispatchMouseMove|Down|Up` calls with positions from a small set over a fixed scene of three overlapping shapes, the event log (type, target name, phase, order) equals the log of a straightforward model: `mouseMove` when the position changed and before the entry's own event; `mouseDown` at the hit target; `mouseUp` at the hit target; `click` at the pressed target after `mouseUp` only when it is the hit target; nothing but the position update for a second down or an up with the button up; all events bubble; a point that hits no shape has the Stage_Object as its target; and `dispatchMouseUp` returns `releaseOutside` exactly when a pressed target existed and the hit target differs (Property 25 covers the Replay records built from it).
+*For any* sequence of `dispatchMouseMove|Down|Up` calls with positions from a small set over a fixed scene of clips each holding a shape (one clip swaps its shape child between calls), the event log (type, target name, phase, order) equals the log of a straightforward model: `mouseMove` when the position changed and before the entry's own event; `mouseDown` at the hit target; `mouseUp` at the hit target; `click` at the pressed target after `mouseUp` only when it is the hit target; nothing but the position update for a second down or an up with the button up; all events bubble; the hit target is the nearest Sprite/MovieClip ancestor-or-self of the shape hit, never a shape, also after a shape child was swapped; a point that hits no shape has the Stage_Object as its target; and `dispatchMouseUp` returns `releaseOutside` exactly when a pressed target existed and the hit target differs (Property 25 covers the Replay records built from it).
 
 **Validates: Requirements 14.4, 14.5, 14.6, 14.7, 14.8, 19.4**
 
@@ -1584,7 +1586,7 @@ Properties apply to the Core: the Shape_Function, the Shape_JSON codec, contour 
 
 ### Property 25: `release-outside` records follow the pressed and hit targets
 
-*For any* generated sequence of pointer entries over a fixed scene with at least two shapes and empty space, the Replay's `release-outside` notes are exactly the `MouseUp` entries applied while a press was pending and the hit target differed from the pressed target; each note names the `MouseUp` index, the index of the `MouseDown` that set the pressed target, and the `describeTarget` strings of both; no `click` is dispatched for such an entry; `buildInputNotes` returns the planner's `unsupported-input` and `unpaired-mouse-event` problems and these notes sorted by `(index, kind)` with nothing added or lost.
+*For any* generated sequence of pointer entries over a fixed scene with at least two clips (each holding a shape) and empty space, the Replay's `release-outside` notes are exactly the `MouseUp` entries applied while a press was pending and the hit target differed from the pressed target; each note names the `MouseUp` index, the index of the `MouseDown` that set the pressed target, and the `describeTarget` strings of both; no `click` is dispatched for such an entry; `buildInputNotes` returns the planner's `unsupported-input` and `unpaired-mouse-event` problems and these notes sorted by `(index, kind)` with nothing added or lost.
 
 **Validates: Requirements 14.20, 14.21, 14.7**
 
