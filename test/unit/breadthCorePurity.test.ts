@@ -10,6 +10,7 @@ const CORE_FILES = [
   "src/emit/classOmissions.ts", // taken over from sub-task 4.2
   "src/convert/qualifiedName.ts",
   "src/translate/importPlan.ts",
+  "src/emit/classPaths.ts",
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

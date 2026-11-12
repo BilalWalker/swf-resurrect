@@ -157,7 +157,7 @@ Rules that apply to every task:
     - Test: extend `test/unit/translatePackages.test.ts` (import line per rule, alias on a simple-name clash, ambiguity Diagnostic, Shim specifier by depth, closure over imports, a `flash.*` import dropped) and `test/unit/rewrite.test.ts`. The `clickgoto` and `tweendemo` translated class text must stay byte-identical to the committed fixture output (Requirement 18.15): assert it in `test/unit/emitTranslated.test.ts`.
     - _Requirements: 18.3, 18.4, 18.5, 18.6, 18.9, 18.15_
 
-  - [ ] 5.6 Add `src/emit/classPaths.ts`
+  - [-] 5.6 Add `src/emit/classPaths.ts`
     - `planClassPaths(classNames, reserved)` as in design section 8: names sorted by code unit, canonical path `src/<pkg segments>/<Cls>.ts`, directories shallowest first, only the colliding segment changes (`_class`, `_class2`, ... for a directory, `.class`, `.class2`, ... for a file), the comparison is on lower-cased segments, `reserved` seeds the taken set (`src/main.ts`, `src/classes.ts`, `src/timelineOnly.ts`, `package.json`, assets). Add the file to the purity test.
     - Test: `test/property/classPaths.property.test.ts` (create), **Property 11: Class paths are unique, deterministic and stable over package trees**, with `genClassNames.ts` (case-only variants in file names and directory segments, names equal to reserved files in another case such as `Main`, the unnamed package, permutations).
     - _Requirements: 6.1, 6.2, 6.5, 18.7, 15.2, 15.5_

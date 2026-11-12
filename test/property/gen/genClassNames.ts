@@ -56,3 +56,13 @@ export const genImportPlanInput: fc.Arbitrary<ImportPlanInput> = fc
     chains: r.chains.map((qn, i) => ({ text: qn, qn, line: i + 1 })),
     forced: r.forced,
   }));
+
+// ---------------------------------------------------------------------------
+// Property 11: class name sets with case-only variants and reserved names.
+const P11_DIRS = ["a", "A", "b", "a_class", "src"];
+const P11_FILES = ["Main", "main", "Foo", "foo", "Classes", "classes", "TimelineOnly", "X"];
+export const P11_RESERVED = ["src/main.ts", "src/classes.ts", "src/timelineOnly.ts", "package.json", "assets/a.png"];
+const p11Name = fc
+  .tuple(fc.array(fc.constantFrom(...P11_DIRS), { maxLength: 3 }), fc.constantFrom(...P11_FILES))
+  .map(([pkg, simple]) => [...pkg, simple].join("."));
+export const genClassNameSet: fc.Arbitrary<string[]> = fc.uniqueArray(p11Name, { maxLength: 12 });
