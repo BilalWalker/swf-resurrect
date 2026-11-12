@@ -44,8 +44,9 @@ function constructorHook(tokens: readonly Token[]): NonNullable<EmitHooks['const
     }
 
     const body = ctor.body.nodes;
-    const superIdx = extendsBase ? body.findIndex((n) => isSuperCall(tokens, n)) : -1;
-    if (binds.length === 0 && (!extendsBase || superIdx === 0)) return null;
+    /* A class without extends cannot call super() (TS2335); an AS3 super() there is dropped. */
+    const superIdx = body.findIndex((n) => isSuperCall(tokens, n));
+    if (binds.length === 0 && (extendsBase ? superIdx === 0 : superIdx < 0)) return null;
 
     const items: BodyItem[] = [];
     if (extendsBase) {

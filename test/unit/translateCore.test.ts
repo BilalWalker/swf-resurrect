@@ -53,6 +53,22 @@ describe('translateCore: constructors (design 1.6)', () => {
     expect(plain).not.toContain('super');
   });
 
+  it('emits no super() for a class without extends (TS2335)', () => {
+    const out = t(cls('public class A', '    public function A()\n    {\n      this.x = 1;\n    }'));
+    expect(out).not.toContain('super');
+  });
+
+  it('drops an explicit AS3 super() when the class has no extends', () => {
+    const out = t(cls('public class A', '    public function A()\n    {\n      super();\n      this.x = 1;\n    }'));
+    expect(out).not.toContain('super');
+    expect(out).toMatch(/constructor\(\) \{\n {4}this\.x = 1;/);
+  });
+
+  it('keeps an explicit super() when the class extends', () => {
+    const out = t(cls('public class A extends B', '    public function A()\n    {\n      super();\n    }'));
+    expect(out).toContain('super();');
+  });
+
   it('leaves a constructor alone when nothing needs changing', () => {
     const out = t(cls('public class A extends B', '    public function A()\n    {\n      super();\n      this.y = 2;\n    }'));
     expect(out).toContain('constructor() {\n    super();\n    this.y = 2;\n  }');
