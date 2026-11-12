@@ -1,4 +1,4 @@
-﻿# Implementation Plan: breadth
+# Implementation Plan: breadth
 
 ## Overview
 
@@ -185,12 +185,12 @@ Rules that apply to every task:
 
 - [ ] 6. Shim: Stage_Object, pointer constants and the Player pointer entry points
   - Commit area: `Shim` (the Runtime changes in `template/runtime/` and `template/src/main.ts` belong to the same commit; the message names both). Read design sections 10, 11 and 15. Verification V2, plus CC. Log every addition in `template/shim/ADDED_APIS.md` with the fixture line that needs it; add nothing for which no fixture line exists (Requirement 14.10, 14.17). `startDrag` and `stopDrag` occur in no approved source and are not added. The Stage_Object, `mouseX` and `mouseY` must exist in the Shim before Task 8 generates the Shim_Member_Table, which is why this task comes first. Decided F1 and F5: `DisplayObject.stage` is a Stage_Object that is the parent of the root and not an alias of it; only the dispatcher members; present in the root constructor. `dispatchClick` is kept; the Replay still uses it until Task 7.
-  - [-] 6.1 `MouseEvent.MOUSE_DOWN`, `MOUSE_UP`, `MOUSE_MOVE` and bubbling defaults
+  - [x] 6.1 `MouseEvent.MOUSE_DOWN`, `MOUSE_UP`, `MOUSE_MOVE` and bubbling defaults
     - In `template/shim/events.ts` add the three constants and make `mouseDown`, `mouseUp` and `mouseMove` bubble by default like `click`. Add rows to `ADDED_APIS.md` with the lines of design section 11 (`Interactivity3.as:37, 38`, `BaseButton.as:127, 128, 134, 139`, `Slider.as:326, 327, 334, 335, 388`).
     - Test: `test/unit/shimEvents.test.ts` (create): the constants, the default `bubbles` per type, `click` unchanged.
     - _Requirements: 14.10, 14.17_
 
-  - [ ] 6.2 `DisplayObject.mouseX`, `mouseY`, `internal.setPointerPosition`, `internal.globalToLocal`
+  - [x] 6.2 `DisplayObject.mouseX`, `mouseY`, `internal.setPointerPosition`, `internal.globalToLocal`
     - In `template/shim/DisplayObject.ts` and `internal.ts` add the pointer position and the local mapping through the parent chain (0 when a scale is 0). Add rows to `ADDED_APIS.md` with `Interactivity3.as:62, 68`, `Slider.as:318, 342` and `MainTimeline.as:42` (`click_block`).
     - Test: `test/property/pointerMath.property.test.ts` (create), **Property 18: Pointer coordinates round-trip through the parent chain**; example tests in `test/unit/shimDisplay.test.ts`.
     - _Requirements: 14.10, 14.17, 15.5_

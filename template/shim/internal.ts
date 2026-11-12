@@ -81,6 +81,44 @@ export function detachChild(parent: DisplayObjectContainer, child: DisplayObject
   return true;
 }
 
+let pointerX = 0;
+let pointerY = 0;
+
+/** Publishes the pointer position, in stage coordinates, for `mouseX` / `mouseY`. Called by the Player. */
+export function setPointerPosition(x: number, y: number): void {
+  pointerX = x;
+  pointerY = y;
+}
+
+/** The last published pointer position in stage coordinates; (0, 0) before the first call. */
+export function getPointerPosition(): { x: number; y: number } {
+  return { x: pointerX, y: pointerY };
+}
+
+/**
+ * Maps a stage point into the local space of `obj` through its parent chain (the inverse of
+ * p' = T + R * S * local at each level, topmost ancestor first). Returns (0, 0) when any scale on the
+ * chain is 0, since the mapping has no inverse.
+ */
+export function globalToLocal(obj: DisplayObject, x: number, y: number): { x: number; y: number } {
+  const chain: DisplayObject[] = [];
+  for (let p: DisplayObject | null = obj; p !== null; p = p._parent) chain.push(p);
+  let px = x;
+  let py = y;
+  for (let i = chain.length - 1; i >= 0; i--) {
+    const n = chain[i]!;
+    if (n.scaleX === 0 || n.scaleY === 0) return { x: 0, y: 0 };
+    const rad = (n.rotation * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const dx = px - n.x;
+    const dy = py - n.y;
+    px = (cos * dx + sin * dy) / n.scaleX;
+    py = (-sin * dx + cos * dy) / n.scaleY;
+  }
+  return { x: px, y: py };
+}
+
 /** Renders the clip's current frame into its children. */
 export function renderFrame(mc: MovieClip): void {
   mc._renderFrame();

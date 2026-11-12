@@ -37,3 +37,5 @@ Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handl
 | `MouseEvent.MOUSE_UP` | `Interactivity3.as:38`, `BaseButton.as:128`, `:139`, `Slider.as:327`, `:335` |
 | `MouseEvent.MOUSE_MOVE` | `Slider.as:388` |
 | `mouseDown`, `mouseUp`, `mouseMove` bubble by default | Same lines as the three constants: a listener on a parent hears a child's pointer event, like `click` |
+| `DisplayObject.mouseX`, `mouseY` (local pointer position through the parent chain; 0 when a scale is 0) | `Interactivity3.as:62`, `:68`; `Slider.as:318`, `:342`; `MainTimeline.as:42` (`click_block`) |
+| `internal.setPointerPosition`, `internal.globalToLocal` | Support for `mouseX` / `mouseY` (same lines) |

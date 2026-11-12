@@ -2,6 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { DisplayObject } from '../../template/shim/DisplayObject';
 import { Event, EventDispatcher, MouseEvent } from '../../template/shim/events';
+import { setPointerPosition } from '../../template/shim/internal';
 import { Sprite } from '../../template/shim/Sprite';
 
 describe('EventDispatcher', () => {
@@ -119,5 +120,36 @@ describe('Sprite', () => {
     p.addChild(c);
     expect(() => c.addChild(p)).toThrow();
     expect(() => p.addChild(p)).toThrow();
+  });
+});
+
+describe('mouseX / mouseY', () => {
+  it('equal the stage position at the top level and after a pointer update', () => {
+    const o = new Sprite();
+    setPointerPosition(30, 40);
+    expect([o.mouseX, o.mouseY]).toEqual([30, 40]);
+  });
+  it('map through translation, scale and rotation of the parent chain', () => {
+    const p = new Sprite();
+    const c = new Sprite();
+    p.addChild(c);
+    p.x = 10;
+    p.scaleX = 2;
+    c.x = 5;
+    setPointerPosition(30, 7);
+    expect(c.mouseX).toBeCloseTo(5, 9);
+    expect(c.mouseY).toBeCloseTo(7, 9);
+    p.rotation = 90;
+    setPointerPosition(10, 20);
+    expect(p.mouseX).toBeCloseTo(20 / 2, 9);
+    expect(p.mouseY).toBeCloseTo(0, 9);
+  });
+  it('are 0 when a scale on the chain is 0', () => {
+    const p = new Sprite();
+    const c = new Sprite();
+    p.addChild(c);
+    p.scaleY = 0;
+    setPointerPosition(12, 13);
+    expect([c.mouseX, c.mouseY]).toEqual([0, 0]);
   });
 });

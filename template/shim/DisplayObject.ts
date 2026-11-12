@@ -1,4 +1,5 @@
 import { EventDispatcher, type Event } from './events';
+import { getPointerPosition, globalToLocal } from './internal';
 import type { DisplayObjectContainer } from './Sprite';
 
 export class DisplayObject extends EventDispatcher {
@@ -66,6 +67,16 @@ export class DisplayObject extends EventDispatcher {
   _onStage(): boolean {
     for (let p: DisplayObject | null = this; p !== null; p = p._parent) if (p._isStageRoot) return true;
     return false;
+  }
+  /** Pointer x in this object's coordinate space; 0 when a scale on the parent chain is 0. */
+  get mouseX(): number {
+    const p = getPointerPosition();
+    return globalToLocal(this, p.x, p.y).x;
+  }
+  /** Pointer y in this object's coordinate space; 0 when a scale on the parent chain is 0. */
+  get mouseY(): number {
+    const p = getPointerPosition();
+    return globalToLocal(this, p.x, p.y).y;
   }
   get parent(): DisplayObjectContainer | null {
     return this._parent;
