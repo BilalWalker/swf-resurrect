@@ -27,7 +27,12 @@ describe("Property 38: The omitted set", () => {
                 e.specifier.startsWith(".") &&
                 isEmittedSpecifier(c.path, e.specifier),
             );
-          if (cannotLoad) expected.add(c.className);
+          // An imported binding that the planned target file does not export cannot link.
+          const missingExport = (c.importedNames ?? []).some((i) => {
+            const t = classes.find((k) => k.className === i.target);
+            return i.target !== c.className && t !== undefined && t.exports != null && !t.exports.includes(i.name);
+          });
+          if (cannotLoad || missingExport) expected.add(c.className);
         }
         let changed = true;
         while (changed) {
@@ -47,6 +52,11 @@ describe("Property 38: The omitted set", () => {
           expect(o.symbolIds).toEqual(linked.filter((s) => s.className === o.className).map((s) => s.symbolId).sort((a, b) => a - b));
           if (o.reason.kind === "extends-omitted") expect(expected.has(o.reason.base)).toBe(true);
           if (o.reason.kind === "imports-omitted") expect(expected.has(o.reason.imported)).toBe(true);
+          if (o.reason.kind === "missing-export") {
+            const r = o.reason;
+            const t = classes.find((k) => k.className === r.target)!;
+            expect(t.exports!.includes(r.name)).toBe(false);
+          }
         }
         for (const c of classes) if (c.handwritten) expect(result.some((o) => o.className === c.className)).toBe(false);
 

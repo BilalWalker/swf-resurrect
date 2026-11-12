@@ -10,6 +10,9 @@ export type OmissionReason =
   | { kind: 'emit-failed' }
   | { kind: 'syntax-error'; count: number; firstLine: number; firstMessage: string }
   | { kind: 'unresolved-import'; specifier: string; line: number }
+  /** The class imports 
+ame from 	arget, whose planned file exports no such binding. */
+  | { kind: 'missing-export'; name: string; target: QualifiedName; line: number }
   | { kind: 'extends-omitted'; base: QualifiedName }
   | { kind: 'imports-omitted'; imported: QualifiedName };
 
@@ -20,6 +23,13 @@ export interface ClassOmission {
   symbolIds: number[];
 }
 
+export interface ImportedName {
+  target: QualifiedName;
+  name: string;
+  /** 1-based line of the import. */
+  line: number;
+}
+
 export interface OmissionClass {
   className: QualifiedName;
   /** Final emitted path. */
@@ -27,6 +37,10 @@ export interface OmissionClass {
   extendsQualified: QualifiedName | null;
   /** Sorted, unique. */
   importsQualified: readonly QualifiedName[];
+  /** Every binding this class imports from another emitted class; absent means not checked. */
+  importedNames?: readonly ImportedName[];
+  /** Names the planned file exports; null when they cannot be told; absent means not checked. */
+  exports?: readonly string[] | null;
   handwritten: boolean;
   /** false when Emit failed to produce the file. */
   produced: boolean;
@@ -83,6 +97,8 @@ export function decideClassOmissions(
   const byFile = errorsByFile(gateErrors);
   const known = new Set(classes.map((c) => c.className));
   const reasons = new Map<QualifiedName, OmissionReason>();
+  const exportsOf = new Map<QualifiedName, ReadonlySet<string> | null>();
+  for (const c of classes) if (c.exports !== undefined) exportsOf.set(c.className, c.exports === null ? null : new Set(c.exports));
 
   // Rule 1: linked classes with no source and no override.
   for (const s of linked) if (!known.has(s.className)) reasons.set(s.className, { kind: 'missing-source' });
@@ -114,6 +130,19 @@ export function decideClassOmissions(
     );
     if (unresolved && unresolved.specifier !== null) {
       reasons.set(c.className, { kind: 'unresolved-import', specifier: unresolved.specifier, line: unresolved.line });
+      continue;
+    }
+    // An import whose target module does not export the binding cannot link, whatever the reason
+    // (an AS3 interface written as comments, an empty file, a renamed export). Read from the planned
+    // text of the target, not from gate codes: TS2306 (not a module) names no binding.
+    const missing = [...(c.importedNames ?? [])]
+      .filter((i) => {
+        const exp = exportsOf.get(i.target);
+        return i.target !== c.className && exp !== undefined && exp !== null && !exp.has(i.name);
+      })
+      .sort((a, b) => cmp(a.target, b.target) || cmp(a.name, b.name))[0];
+    if (missing !== undefined) {
+      reasons.set(c.className, { kind: 'missing-export', name: missing.name, target: missing.target, line: missing.line });
     }
   }
 
@@ -182,6 +211,9 @@ export function omissionMessage(o: ClassOmission): string {
       break;
     case 'unresolved-import':
       why = `import "${r.specifier}" at line ${r.line} resolves to no emitted file`;
+      break;
+    case 'missing-export':
+      why = `imports ${r.name} from ${r.target} at line ${r.line}, but that file exports no ${r.name}`;
       break;
     case 'extends-omitted':
       why = `extends ${r.base}, which is omitted`;

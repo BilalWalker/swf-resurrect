@@ -166,6 +166,23 @@ describe('emit: gate first, plan again only when needed, write once', () => {
     expect(result.omissions.find((o) => o.className === 'other.Importer')?.reason).toMatchObject({ imported: 'Broken' });
   });
 
+  it('omits an importer of a binding the planned target file does not export, and its importers', async () => {
+    const out = join(root, 'out');
+    const only = [
+      tc('IThing', '// AS3: public interface IThing\n'),
+      tc('Uses', "import { IThing } from './IThing';\nexport class Uses {}\n", null, ['IThing']),
+      tc('Deep', "import { Uses } from './Uses';\nexport class Deep {}\n", null, ['Uses']),
+      tc('Fine', "import { Hand } from './Hand';\nexport class Fine {}\n", null, ['Hand']),
+      classes[3],
+    ];
+    const { result } = await run(out, { translated: only });
+    const by = Object.fromEntries(result.omissions.filter((o) => o.reason.kind !== 'missing-source').map((o) => [o.className, o.reason]));
+    expect(by).toEqual({
+      Uses: { kind: 'missing-export', name: 'IThing', target: 'IThing', line: 1 },
+      Deep: { kind: 'imports-omitted', imported: 'Uses' },
+    });
+  });
+
   it('keeps a class with only semantic errors registered and loose, with one gate run', async () => {
     const out = join(root, 'out');
     const only = classes.filter((c) => c.className === 'Loose' || c.className === 'Hand');

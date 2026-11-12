@@ -66,7 +66,7 @@ export interface ReportExtras {
 /** Line of the class-omitted Diagnostic: the first error line for a syntax error or an unresolved import, else 1. */
 function omissionLine(o: ClassOmission): number {
   const r = o.reason;
-  return r.kind === 'syntax-error' ? r.firstLine : r.kind === 'unresolved-import' ? r.line : 1;
+  return r.kind === 'syntax-error' ? r.firstLine : r.kind === 'unresolved-import' || r.kind === 'missing-export' ? r.line : 1;
 }
 
 export function buildReport(
@@ -135,7 +135,7 @@ export function serialiseReport(r: TranslationReport): string {
   return canonicalJson(r, 'translationReport');
 }
 
-/** One entry per `unsupported-construct` Diagnostic of every emitted, non-overridden class. */
+/** One entry per `unsupported-construct` Diagnostic, and one `as3-interface` Named_Limit per AS3 interface, of every emitted, non-overridden class. */
 export function untranslatedCodeEntries(
   classes: readonly TranslatedClass[],
   overridden: ReadonlySet<string>,
@@ -143,6 +143,13 @@ export function untranslatedCodeEntries(
   const out: UnsupportedFeatureEntry[] = [];
   for (const c of classes) {
     if (overridden.has(c.className)) continue;
+    if (c.as3Interface === true) {
+      out.push({
+        kind: 'as3-interface',
+        tag: c.className,
+        message: `AS3 interface ${c.className} is not translated to TypeScript; classes that import it are left out of the registry`,
+      });
+    }
     for (const d of c.diagnostics) {
       if (d.kind !== 'unsupported-construct') continue;
       out.push({ kind: 'untranslated-code', tag: c.className, message: `line ${d.line}: ${d.message}` });

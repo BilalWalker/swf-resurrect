@@ -10,7 +10,8 @@ import type { TranslatedClass } from '../translate/planTranslate';
 import { planEmitDetailed } from './planEmit';
 import type { EmittedFile, HandwrittenClass, PlannedClass, TemplateFile } from './planEmit';
 import { decideClassOmissions, looseClasses } from './classOmissions';
-import type { ClassOmission, LinkedSymbol, LooseClass, OmissionClass } from './classOmissions';
+import { exportedNames } from './exportedNames';
+import type { ClassOmission, ImportedName, LinkedSymbol, LooseClass, OmissionClass } from './classOmissions';
 import type { GateResult } from '../translate/typeCheckGate';
 import type { SceneJson } from '../../template/runtime/scene';
 
@@ -228,14 +229,22 @@ function describeClasses(
   return classes.map((c) => {
     const t = c.handwritten ? undefined : byName.get(c.className);
     const imported = new Set<string>();
+    const importedNames: ImportedName[] = [];
     for (const r of t?.importRecords ?? []) {
-      if (r.kind === 'class' && r.target !== undefined && r.target !== c.className && known.has(r.target)) imported.add(r.target);
+      if (r.kind === 'class' && r.target !== undefined && r.target !== c.className && known.has(r.target)) {
+        imported.add(r.target);
+        for (const n of r.names) importedNames.push({ target: r.target, name: n.name, line: r.line });
+      }
     }
+    const own = text.get(c.path);
+    const names = own === undefined ? undefined : exportedNames(own);
     return {
       className: c.className,
       path: c.path,
       extendsQualified: t?.extendsQualified ?? null,
       importsQualified: [...imported].sort(byCodeUnit),
+      importedNames,
+      ...(names === undefined ? {} : { exports: names === null ? null : [...names].sort(byCodeUnit) }),
       handwritten: c.handwritten,
       produced: text.has(c.path),
     };

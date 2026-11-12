@@ -8,6 +8,7 @@ export interface OmissionProject {
   linked: LinkedSymbol[];
 }
 
+const BINDINGS = ['A', 'B'];
 const CODES = [2307, 2792, 2305, 2306, 2322, 2339, 1155, 1005, 2304];
 const SPECIFIERS = ["./Nope", "../Missing", "../shim/Missing", "../../shim/X", "./runtime/x", "../runtime/y", "pixi.js", "shim", "./A/B"];
 const OTHER_FILES = ["src/classes.ts", "src/main.ts", "runtime/player.ts", "shim/Sprite.ts"];
@@ -26,7 +27,19 @@ export const projectArb: fc.Arbitrary<OmissionProject> = fc.integer({ min: 0, ma
       importsQualified: fc.uniqueArray(fc.constantFrom(...targets), { maxLength: 4 }).map((a) => a.sort()),
       handwritten: fc.boolean(),
       produced: fc.oneof({ weight: 5, arbitrary: fc.constant(true) }, { weight: 1, arbitrary: fc.constant(false) }),
-    });
+      // Export surface: absent (not checked), unknown (null) or a subset of the names importers use.
+      exports: fc.oneof(fc.constant(undefined), fc.constant(null), fc.subarray(BINDINGS)),
+      importedNames: fc.array(
+        fc.record({ target: fc.constantFrom(...targets), name: fc.constantFrom(...BINDINGS), line: fc.integer({ min: 1, max: 9 }) }),
+        { maxLength: 3 },
+      ),
+    }).map(({ exports, importedNames, ...rest }) => ({
+      ...rest,
+      // A binding is imported from a class the file imports.
+      importsQualified: [...new Set([...rest.importsQualified, ...importedNames.map((i) => i.target)])].sort(),
+      importedNames,
+      ...(exports === undefined ? {} : { exports }),
+    }));
   const filesForErrors = [...names.map(pathOf), ...OTHER_FILES];
   const errorArb: fc.Arbitrary<GateError> = fc.record({
     file: fc.constantFrom(...filesForErrors),

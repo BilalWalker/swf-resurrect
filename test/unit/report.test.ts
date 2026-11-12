@@ -91,6 +91,15 @@ describe('untranslatedCodeEntries', () => {
   importRecords: [],
   });
 
+  it('records an as3-interface Named_Limit for an AS3 interface, next to its untranslated-code entry', () => {
+    const entries = untranslatedCodeEntries([{ ...mk('p.IThing', [unsup]), as3Interface: true }, mk('p.C', [])], new Set());
+    expect(entries.map((e) => [e.kind, e.tag])).toEqual([
+      ['as3-interface', 'p.IThing'],
+      ['untranslated-code', 'p.IThing'],
+    ]);
+    expect(entries[0]!.message).toContain('AS3 interface p.IThing');
+  });
+
   it('emits one entry per unsupported-construct Diagnostic and skips overridden classes', () => {
     const entries = untranslatedCodeEntries(
       [mk('A', [loose, unsup, { ...unsup, line: 9 }]), mk('B', [unsup])],
@@ -125,6 +134,20 @@ describe('buildReport: omitted and loose classes (spec task 4.5)', () => {
     expect(d).toHaveLength(1);
     expect(d[0]).toMatchObject({ kind: 'class-omitted', line: 3 });
     expect(d[0]!.message).toContain('./Nope');
+  });
+
+  it('carries the reason and the missing import name in omittedClasses and in the Diagnostic', () => {
+    const missing: ClassOmission = {
+      className: 'B',
+      reason: { kind: 'missing-export', name: 'IThing', target: 'p.IThing', line: 4 },
+      symbolIds: [],
+    };
+    const r = buildReport(classes, { errors: [] }, { omissions: [missing] });
+    expect(r.omittedClasses[0]!.reason).toEqual({ kind: 'missing-export', name: 'IThing', target: 'p.IThing', line: 4 });
+    const d = r.classes[1]!.diagnostics[0]!;
+    expect(d).toMatchObject({ kind: 'class-omitted', line: 4 });
+    expect(d.message).toContain('IThing');
+    expect(d.message).toContain('p.IThing');
   });
 
   it('sets loose for a class with only type errors and leaves status alone', () => {

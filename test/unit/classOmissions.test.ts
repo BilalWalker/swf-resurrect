@@ -66,6 +66,44 @@ describe("decideClassOmissions", () => {
     expect(by.Z).toBeUndefined();
   });
 
+  describe("missing export", () => {
+    const iface = cls("p.IThing", { exports: [] });
+    const imp = (name: string, target: string, line = 2) => ({ target, name, line });
+
+    it("omits a direct importer of a binding the target does not export, naming the binding and the target", () => {
+      const user = cls("p.User", { importsQualified: ["p.IThing"], importedNames: [imp("IThing", "p.IThing", 4)] });
+      const r = decideClassOmissions([], [iface, user], []);
+      expect(r).toEqual([
+        { className: "p.User", reason: { kind: "missing-export", name: "IThing", target: "p.IThing", line: 4 }, symbolIds: [] },
+      ]);
+      expect(omissionMessage(r[0])).toContain("imports IThing from p.IThing at line 4");
+    });
+
+    it("omits a transitive importer and an extender through the fixed point", () => {
+      const user = cls("p.User", { importsQualified: ["p.IThing"], importedNames: [imp("IThing", "p.IThing")] });
+      const deep = cls("p.Deep", { importsQualified: ["p.User"], importedNames: [imp("User", "p.User")], exports: ["Deep"] });
+      const sub = cls("p.Sub", { extendsQualified: "p.Deep", exports: ["Sub"] });
+      const by = Object.fromEntries(decideClassOmissions([], [iface, user, deep, sub], []).map((o) => [o.className, o.reason.kind]));
+      expect(by).toEqual({ "p.User": "missing-export", "p.Deep": "imports-omitted", "p.Sub": "extends-omitted" });
+    });
+
+    it("keeps a class that imports only exported names, and ignores unknown or unchecked targets", () => {
+      const ok = cls("p.Ok", { exports: ["Ok"] });
+      const user = cls("p.User", {
+        importsQualified: ["p.Ok", "p.Opaque", "p.Plain"],
+        importedNames: [imp("Ok", "p.Ok"), imp("Anything", "p.Opaque"), imp("Anything", "p.Plain")],
+      });
+      const opaque = cls("p.Opaque", { exports: null });
+      const plain = cls("p.Plain");
+      expect(decideClassOmissions([], [ok, user, opaque, plain], [])).toEqual([]);
+    });
+
+    it("does not apply to a handwritten importer", () => {
+      const user = cls("p.User", { handwritten: true, importedNames: [imp("IThing", "p.IThing")] });
+      expect(decideClassOmissions([], [iface, user], [])).toEqual([]);
+    });
+  });
+
   it("keeps a class with only semantic errors and reports it as loose without an entry", () => {
     const codes = [2304, 2322, 2339, 2551, 2552, 2662, 2663, 2305, 2306, 1155];
     const errs = codes.map((code, i) => gateError({ file: "src/A.ts", line: i + 1, code }));

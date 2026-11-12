@@ -80,6 +80,7 @@ export type UnsupportedKind =
   | 'unbound-instance'
   | 'untranslated-class'
   | 'class-omitted'
+  | 'as3-interface'
   | 'untranslated-code'
   | 'other-tag'
   | 'gradient-fill'

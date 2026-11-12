@@ -4,6 +4,7 @@ import type { SceneJson } from '../../template/runtime/scene';
 import { qualifiedFromScriptPath } from '../convert/qualifiedName';
 import { DuplicateClassError } from './errors';
 import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from './shimNames';
+import { as3InterfaceName } from './interfaceDecl';
 import { translate } from './translate';
 import type { Diagnostic, ImportRecord, LineSpan, SyntaxCheck } from './types';
 
@@ -25,6 +26,8 @@ export interface TranslatedClass {
   /** Resolved through the import plan; null when the base has no source. */
   extendsQualified: string | null;
   importRecords: ImportRecord[];
+  /** The source declares an AS3 interface: nothing is emitted for it but comments. */
+  as3Interface?: boolean;
 }
 
 export interface TranslateArtifact {
@@ -99,6 +102,7 @@ export function planTranslate(
       extendsName: info?.extendsName ?? null,
       extendsQualified: info?.extendsQualified ?? null,
       importRecords: r.importRecords,
+      as3Interface: as3InterfaceName(s.source) !== null,
     });
   }
 
