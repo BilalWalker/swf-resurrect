@@ -183,7 +183,7 @@ Rules that apply to every task:
     - Evidence is the recorded measurement; it is guarded by `test/unit/emitOmission.test.ts`, `test/unit/translatePackages.test.ts` and the floor of sub-task 17.6.
     - _Requirements: 18.14, 23.5, 23.6, 1.6_
 
-- [ ] 6. Shim: Stage_Object, pointer constants and the Player pointer entry points
+- [x] 6. Shim: Stage_Object, pointer constants and the Player pointer entry points
   - Commit area: `Shim` (the Runtime changes in `template/runtime/` and `template/src/main.ts` belong to the same commit; the message names both). Read design sections 10, 11 and 15. Verification V2, plus CC. Log every addition in `template/shim/ADDED_APIS.md` with the fixture line that needs it; add nothing for which no fixture line exists (Requirement 14.10, 14.17). `startDrag` and `stopDrag` occur in no approved source and are not added. The Stage_Object, `mouseX` and `mouseY` must exist in the Shim before Task 8 generates the Shim_Member_Table, which is why this task comes first. Decided F1 and F5: `DisplayObject.stage` is a Stage_Object that is the parent of the root and not an alias of it; only the dispatcher members; present in the root constructor. `dispatchClick` is kept; the Replay still uses it until Task 7.
   - [x] 6.1 `MouseEvent.MOUSE_DOWN`, `MOUSE_UP`, `MOUSE_MOVE` and bubbling defaults
     - In `template/shim/events.ts` add the three constants and make `mouseDown`, `mouseUp` and `mouseMove` bubble by default like `click`. Add rows to `ADDED_APIS.md` with the lines of design section 11 (`Interactivity3.as:37, 38`, `BaseButton.as:127, 128, 134, 139`, `Slider.as:326, 327, 334, 335, 388`).
@@ -215,14 +215,14 @@ Rules that apply to every task:
     - Test: `test/unit/canvasToStage.test.ts` (create): scaled canvas, offset rect, rounding at the edges; and `npm run typecheck:template`.
     - _Requirements: 14.3_
 
-  - [-] 6.7 Re-confirm the stage-versus-root finding and record CC
+  - [x] 6.7 Re-confirm the stage-versus-root finding and record CC
     - Download under `.work/` the `output.txt` of `3_joystick` and `click_block` and the sources `Interactivity3.as` and `MainTimeline.as`; confirm again that no Reference_Trace line shows the difference between the stage and the root as `target` or `currentTarget` (Appendix A.11 found none), cite the lines checked in the commit message, and state that the difference is therefore covered by `test/unit/stage.test.ts` and Property 24 and not by a Trace_Score floor (Requirement 19.6, 19.7). Delete the downloads. Record CC (Requirement 19.9): if the Stage_Object changes a line of the `clickgoto` trace, STOP and ask.
     - Evidence is a recorded measurement; the unit coverage is guarded by `test/unit/stage.test.ts` and `test/property/stageBubbling.property.test.ts`, and CC by `test/unit/clickgotoReplay.test.ts` and `test/e2e/overallMatch.e2e.test.ts`.
     - _Requirements: 19.6, 19.7, 19.9, 1.7_
 
 - [ ] 7. Pipeline: Replay (tick options, pointer events, notes, empty input, a Replay that throws)
   - Commit area: `Pipeline` (the `describeTarget` function of 7.5 lives under `template/runtime/`; the message names it). Read design sections 9, 10 and 20. Verification V2, plus CC. Record CC before the first sub-task and after the last: `clickgoto` Trace_Score 100, 32 ticks, Overall_Match of both at their floors, `tweendemo` `not-compared`. The three Approved_Measurement_Changes (the `num_ticks` reading, separate pointer events, empty-input Replay) and the Approved_Reporting_Change of Requirements 1.11 and 14.24 (an Empty_Reference_Trace is `not-compared: empty-reference-trace`; it computes and raises no score, and the Reference_Trace of `clickgoto` is not empty) proceed without asking only while CC holds (Requirement 1.7). IF CC fails, STOP and ask (Requirement 1.8). Decided F4, F12, F13, F17 and O5, O6, O9: a child-process failure, timeout or missing result file stays `not-compared: replay-failed` (O5); without a Reference_Trace the Replay is not run (O6, `tweendemo`); an Empty_Reference_Trace gets no Trace_Score and no Trace_Score floor (O9).
-  - [ ] 7.1 Add `parseTickOptions` and the new `parseNumFrames`
+  - [x] 7.1 Add `parseTickOptions` and the new `parseNumFrames`
     - In `src/verify/core/replayPlan.ts` add `TickOptions`, `parseTickOptions(tomlText)` (top-level integer keys `num_frames`, `num_ticks`; numeric `tick_rate`; a line starting with `[` ends the top level; comments and `\r` ignored) and make `parseNumFrames` return `numFrames ?? numTicks`. `planReplay` gains `tickSource` and reports one `unused-input` for the first surplus group when groups exceed ticks. The Input_Group count is used only when neither key exists and a Reference_Input exists.
     - Test: `test/property/replayPlan.property.test.ts` (create), **Property 16: Tick options follow Ruffle's rule**, with `test/property/gen/genTickToml.ts` (create). Unit tests in `test/unit/replayPlan.test.ts` (create): `num_frames` only, `num_ticks` only, both, neither, `tick_rate` present, the `clickgoto` count of 32 unchanged, `3_joystick` 21 and `slider_component` 10 from their `test.toml` text (inline copies).
     - _Requirements: 14.12, 14.13, 14.15, 15.5_

@@ -11,7 +11,7 @@ import { selectFrames } from '../core/frameSample';
 import { knownVisualLimits } from '../core/limits';
 import { buildDiffImage, compareImages, flattenOnto } from '../core/pixelDiff';
 import type { Rgb, RgbaImage } from '../core/pixelDiff';
-import { planReplay, parseNumFrames } from '../core/replayPlan';
+import { planReplay, parseNumFrames, parseTickOptions } from '../core/replayPlan';
 import type { ReplayPlan } from '../core/replayPlan';
 import { buildFidelityReport, serialiseFidelityReport } from '../core/report';
 import type { BehaviourInput, FrameOutcome, Problem } from '../core/report';
@@ -247,8 +247,12 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
   const inputText = await readOptional(dir === null ? null : join(dir, 'input.json'));
   if (inputText === null) return { status: 'not-compared', reason: 'no-reference-input' };
   const tomlText = await readOptional(dir === null ? null : join(dir, 'test.toml'));
-  const numFrames = parseNumFrames(tomlText);
-  const plan = planReplay(inputText, numFrames);
+  const tickOptions = parseTickOptions(tomlText);
+  const plan = planReplay(
+    inputText,
+    parseNumFrames(tomlText),
+    tickOptions.numFrames !== null ? 'num_frames' : 'num_ticks',
+  );
   if ('error' in plan) return { status: 'not-compared', reason: 'invalid-input-json' };
 
   for (const p of plan.problems) {
