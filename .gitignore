@@ -13,3 +13,6 @@ tools/ffdec_*.zip
 out/
 
 # Note: .kiro/ must stay tracked (hackathon requirement). Do not add it here.
+
+# Local Claude Code preview config
+.claude/
