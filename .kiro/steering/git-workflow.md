@@ -22,8 +22,21 @@ spread over several days. So:
 
 When all sub-tasks of a top-level task (for example 5.1 to 5.4) are done:
 
-1. Run `npm run typecheck` and `npm test -- --run`. Both must pass.
-   If either fails, fix it first. Never commit a failing state.
+1. Run `npm run typecheck` and the tests related to the files this task
+   changed: `npx vitest related --run <changed source files>`, plus any
+   test file the task added or edited. Both must pass. If either fails,
+   fix it first. Never commit a failing state.
+
+   A task that changes anything under `template/` also runs the score
+   floor tests (`test/unit/clickgotoReplay.test.ts` and
+   `test/e2e/overallMatch.e2e.test.ts`), because emitted projects copy
+   `template/` and `vitest related` cannot see that link.
+
+   The full suite (`npm test -- --run`, about two minutes) runs only at
+   every Checkpoint task, before stopping.
+
+   A failure the full suite finds at a checkpoint is fixed in a new
+   commit that names the task that caused it.
 2. Run `git status` and stage by path only the files this task created or
    changed, plus `.kiro/specs/<spec>/tasks.md` and `tasks.meta.json`.
    Never use `git add -A`, `git add .` or `git commit -a`.
@@ -37,7 +50,8 @@ When all sub-tasks of a top-level task (for example 5.1 to 5.4) are done:
    what is not verified yet. Mention the spec task number.
    ```
 
-   Areas in use: `Unpack`, `Convert`, `Emit`, `Runtime`, `Shim`,
+   Areas in use: `Unpack`, `Convert`, `Translate`, `Emit`, `Runtime`,
+   `Shim`,
    `Pipeline`, `Test`, `Spec`, `Steering`, `Build`, `Repo`, `Samples`.
 4. No `Co-Authored-By`, no "Generated with" lines, no emoji.
 
