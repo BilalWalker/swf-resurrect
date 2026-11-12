@@ -207,6 +207,23 @@ describe('Player instance creation', () => {
   });
 });
 
+describe('Player: a linked class that is not in the registry', () => {
+  it('makes the symbol a plain MovieClip and keeps its children', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const root = sprite([[entry(1, 2, 0, 0, 'omitted')]]);
+      const scene = sceneOf(root, { '2': sprite([[entry(1, 3, 0, 0, 'kid')]], 'Omitted'), '3': sprite([[entry(1, 1)]]) });
+      const { player } = setup(scene, {});
+      const clip = (player.root as unknown as { omitted: MovieClip }).omitted;
+      expect(clip.constructor).toBe(MovieClip);
+      expect((clip as unknown as { kid: unknown }).kid).toBeInstanceOf(MovieClip);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('"Omitted" is not in the registry'));
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});
+
 describe('Player colour offsets and scripted children', () => {
   it('reports non-zero colour offsets to the backend and stays silent for zero offsets', () => {
     const withOffset: DisplayListEntry = { ...entry(1, 1), colorTransform: [1, 1, 1, 1, 0, 10, 0, 0] };

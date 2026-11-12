@@ -120,7 +120,7 @@ Rules that apply to every task:
     - Test: extend `test/unit/pipeline.test.ts` (entries, no `type-errors` reason, reuse of the first gate result, the reported gate describes the written project, a linked class without a source has both an `untranslated-class` and a `class-omitted` entry) and `test/unit/report.test.ts` (`omittedClasses`, `classes[].omitted`, `classes[].loose` true for a class with only type errors and `status` unchanged).
     - _Requirements: 23.2, 23.7, 23.10, 18.9_
 
-  - [ ] 4.6 Build and render with an omitted class, Player fallback
+  - [x] 4.6 Build and render with an omitted class, Player fallback
     - Test: `test/e2e/omittedClass.e2e.test.ts` (create; skipped with a reason when Chromium is missing): an Emitted_Project with one class that cannot load (an unresolved relative import) builds with `npm run build` and renders its timeline frame; a second project with a class that has only a type error stays registered, builds and renders. Add a row to `test/unit/player.test.ts`: a symbol whose class is not in the registry is a `MovieClip`. No Player change is expected (design 19.1).
     - _Requirements: 23.4, 23.9_
 
