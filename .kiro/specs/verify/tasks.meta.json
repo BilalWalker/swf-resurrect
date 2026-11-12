@@ -1,0 +1,372 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Install `playwright` and `pngjs` and download the pinned Chromium": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847031
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408858039
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408998991
+      }
+    ],
+    "1.2 Add `src/verify/edge/versions.ts` and `src/verify/edge/pngjs.d.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847152
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409002581
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409134773
+      }
+    ],
+    "2.1 Implement `constants.ts`, `frameSample.ts` and `sanitize.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847231
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409141211
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409277727
+      }
+    ],
+    "2.4 Implement `pixelDiff.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847313
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409295851
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409344720
+      }
+    ],
+    "2.5 Write the required pixel diff identity and symmetry property tests": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847386
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409349630
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409492774
+      }
+    ],
+    "3.1 Implement `traceFormat.ts` and `traceCompare.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847471
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409289276
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409295729
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409498786
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409619111
+      }
+    ],
+    "4.1 Implement `replayPlan.ts` and `svgBounds.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847546
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409619781
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409764254
+      }
+    ],
+    "5.1 Implement `limits.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847639
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409768688
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409831222
+      }
+    ],
+    "5.2 Implement `report.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847746
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409831551
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409913592
+      }
+    ],
+    "5.3 Implement `html.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847821
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409913848
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409990652
+      }
+    ],
+    "5.4 Write the required report determinism property test": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847900
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409991026
+      }
+    ],
+    "6.1 Move `FakeBackend` to `src/verify/edge/fakeBackend.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408847979
+      }
+    ],
+    "6.2 Add `test/support/emitFixtureProject.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848051
+      }
+    ],
+    "7.1 Implement `png.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848129
+      }
+    ],
+    "7.2 Implement `ffdecFrames.ts` and check the \"to verify\" items against the real jar": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848203
+      }
+    ],
+    "8.1 Add `template/src/timelineOnly.ts` and the `main.ts` branch": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848285
+      }
+    ],
+    "9.1 Implement `buildProject.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848365
+      }
+    ],
+    "9.2 Implement `renderFrames.ts` and check headless WebGL": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848438
+      }
+    ],
+    "10.1 Implement `replay.ts` and `replayRunner.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848516
+      }
+    ],
+    "10.2 Write the required clickgoto Replay test": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848602
+      }
+    ],
+    "11.1 Add `bubbles`, `cancelable`, `eventPhase`, `Event.toString()` and `root1`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848678
+      }
+    ],
+    "11.3 Add the Task 11 rows to `template/shim/ADDED_APIS.md`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848753
+      }
+    ],
+    "12.1 Record the user's decisions on the event order (no stop, no approval needed)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848832
+      }
+    ],
+    "12.2 Dispatch `added`, `addedToStage` and real bubbling (G3, G6 dispatch part)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848918
+      }
+    ],
+    "12.3 Implement the five-phase frame step, the initial build and children-first `exitFrame` (G4, G5, G5b)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408848995
+      }
+    ],
+    "12.4 Dispatch timeline `removed` and `added` on backward moves and gotos (G6 timeline part)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408849068
+      }
+    ],
+    "12.5 Add the remaining rows to `template/shim/ADDED_APIS.md`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408849150
+      }
+    ],
+    "12.7 Implement Goto_Extra_Cycle (G7; design section 8, \"G7: Goto_Extra_Cycle\")": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408849231
+      }
+    ],
+    "13.1 Implement `verifyStage.ts`": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408849309
+      }
+    ],
+    "14.1 Add the flags, the stage hook and lazy loading": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408849384
+      }
+    ],
+    "15.1 Measure the final clickgoto Trace_Score and record the floor": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408849466
+      }
+    ],
+    "16. Checkpoint: browser review of fidelity-report.html": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794408849552
+      }
+    ],
+    "1. Dependencies and pinned tool versions (design section 12, D10)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409134894
+      }
+    ],
+    "2. Core: constants, frame sampling, sanitising, pixel diff (design D6, D7, sections 1, 2)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409492852
+      }
+    ],
+    "3. Core: trace formatting and comparison (design section 7)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409619209
+      }
+    ],
+    "4. Core: replay planning and SVG bounds (design section 6, click timing table)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794409764390
+      }
+    ]
+  }
+}
