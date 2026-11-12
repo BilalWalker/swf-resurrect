@@ -137,7 +137,7 @@ Rules that apply to every task:
     - Test: `test/property/qualifiedName.property.test.ts` (create), **Property 20: Qualified names never escape the scripts directory**, with `test/property/gen/genClassNames.ts` (create: empty segments, `.`, `..`, `/`, `\`, `:`, NUL, control characters, valid dotted names, case-only variants). Example tests in `test/unit/qualifiedName.test.ts` (create): `a..b`, `a/b.C`, `..`, `C:x`, `test_fla.MainTimeline`, specifiers at depth 0 to 3, `shimSpecifier` for `src/X.ts` and `src/a/X.ts`.
     - _Requirements: 18.1, 18.2, 15.1, 15.2, 15.5_
 
-  - [ ] 5.2 Validate and resolve dotted names in Unpack and Convert
+  - [x] 5.2 Validate and resolve dotted names in Unpack and Convert
     - `src/convert/symbolsCsv.ts` (`parseSymbolsCsv`) keeps the quoted dotted string unchanged and calls `parseQualifiedName(className, 'convert')` on every entry; `src/unpack/unpack.ts` reads `symbols.csv` after the FFDec call and runs the same validation with stage `unpack`. `src/convert/readUnpacked.ts` reads `scripts/<pkg segments>/<Cls>.as` for a dotted name and checks on the Edge side that the resolved file stays inside the scripts directory; a failure throws `InvalidClassNameError(..., 'resolves outside the scripts directory', 'convert')` and no file is read. A missing file keeps `properties: null`. The Scene_JSON `className` is the dotted name.
     - Test: `test/unit/readUnpackedPackages.test.ts` (create; temp directory with `scripts/code/Interactivity3.as`, `scripts/fl/controls/Slider.as`; a hostile name reads no file), and extend `test/unit/unpack.test.ts` (invalid name fails at stage `unpack`) and `test/unit/readUnpacked.test.ts`.
     - _Requirements: 18.1, 18.2_

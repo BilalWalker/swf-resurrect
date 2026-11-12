@@ -2,6 +2,7 @@ import { access, open, readFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { checkXmlVersion, isAs3Dump, readDumpHeader } from '../convert/ffdecXml';
 import type { SwfHeader, XmlVersion } from '../convert/ffdecXml';
+import { parseSymbolsCsv } from '../convert/symbolsCsv';
 import { FfdecNotFoundError, MissingExportError, NotAs3Error } from './errors';
 import { spawnFfdec } from './spawnFfdec';
 import type { FfdecSpawner } from './spawnFfdec';
@@ -101,6 +102,8 @@ export async function unpack(input: UnpackInput): Promise<UnpackResult> {
     if (required && !(await exists(path))) missing.push(name);
   }
   if (missing.length > 0) throw new MissingExportError(missing);
+
+  if (symbolClassPresent) parseSymbolsCsv(await readFile(symbolClassPath, 'utf8'), 'unpack');
 
   return {
     workDir,

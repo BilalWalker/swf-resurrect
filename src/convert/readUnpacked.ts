@@ -1,5 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { XMLValidator } from 'fast-xml-parser';
 import { MissingExportError } from '../unpack/errors';
 import type { UnpackResult } from '../unpack/unpack';
@@ -8,6 +8,7 @@ import { MalformedSvgError } from './errors';
 import { parseStructure, readDumpHeader } from './ffdecXml';
 import type { ClassSourceModel, ShapeAssetModel, TagsModel } from './model';
 import { extractSvgOrigin } from './svgOrigin';
+import { InvalidClassNameError, scriptRelPath } from './qualifiedName';
 import { parseSymbolsCsv } from './symbolsCsv';
 
 function byCodeUnit(a: string, b: string): number {
@@ -31,6 +32,17 @@ async function readOptional(path: string): Promise<string | null> {
     if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw e;
   }
+}
+
+/** scripts/<pkg segments>/<Cls>.as for a dotted name; throws when the result leaves the scripts directory. */
+function scriptFilePath(scriptsDir: string, className: string): string {
+  const root = resolve(scriptsDir);
+  const file = resolve(root, ...scriptRelPath(className).split('/'));
+  const rel = relative(root, file);
+  if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) {
+    throw new InvalidClassNameError(className, 'resolves outside the scripts directory', 'convert');
+  }
+  return file;
 }
 
 /** Reads the FFDec output directory into a plain-data TagsModel. */
@@ -66,7 +78,7 @@ export async function readUnpacked(unpacked: UnpackResult): Promise<TagsModel> {
   for (const { className } of symbolClasses) {
     if (seen.has(className)) continue;
     seen.add(className);
-    const src = await readOptional(join(unpacked.scriptsDir, `${className}.as`));
+    const src = await readOptional(scriptFilePath(unpacked.scriptsDir, className));
     classSources.push({ className, properties: src === null ? null : extractClassProperties(src) });
   }
 

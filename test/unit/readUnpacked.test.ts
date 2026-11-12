@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { parseSymbolsCsv } from '../../src/convert/symbolsCsv';
 import { readUnpacked } from '../../src/convert/readUnpacked';
 import { readDumpHeader } from '../../src/convert/ffdecXml';
 import type { UnpackResult } from '../../src/unpack/unpack';
@@ -39,5 +40,9 @@ describe('readUnpacked', () => {
     });
     expect(model.symbolClasses).toEqual([]);
     expect(model.classSources).toEqual([]);
+  });
+
+  it('18.1 parseSymbolsCsv keeps dotted names unchanged', () => {
+    expect(parseSymbolsCsv('2;"fl.controls.Slider"\n')).toEqual([{ id: 2, className: 'fl.controls.Slider' }]);
   });
 });
