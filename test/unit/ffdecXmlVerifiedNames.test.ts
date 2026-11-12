@@ -77,3 +77,29 @@ describe('colour transform multipliers through parseStructure', () => {
     expect(op.colorTransform.add).toEqual([0, 0, 0, 0]);
   });
 });
+
+describe('3.3 observed id names are verified, unobserved ones stay UNVERIFIED', () => {
+  const src = readFileSync('src/convert/ffdecXml.ts', 'utf8');
+  /** The comment line directly above the first line that mentions the quoted tag name. */
+  const markOf = (tag: string): string => {
+    const quoted = src.indexOf(`'${tag}'`);
+    const at = quoted >= 0 ? quoted : src.indexOf(`${tag}:`);
+    return src.slice(src.lastIndexOf('/**', at), at);
+  };
+  it('observed tags carry no UNVERIFIED mark', () => {
+    for (const t of ['DefineTextTag', 'DefineEditTextTag', 'DefineButton2Tag', 'DefineBitsTag', 'DefineBitsJPEG3Tag', 'DefineBitsLosslessTag', 'DefineBitsLossless2Tag', 'DefineShapeTag', 'DefineShape2Tag', 'DefineShape3Tag']) {
+      expect(markOf(t), t).not.toContain('UNVERIFIED');
+    }
+  });
+  it('the six unobserved names are still UNVERIFIED', () => {
+    for (const t of ['DefineText2Tag', 'DefineButtonTag', 'DefineSoundTag', 'SoundStreamHeadTag', 'SoundStreamHead2Tag', 'DefineVideoStreamTag']) {
+      expect(markOf(t), t).toContain('UNVERIFIED');
+    }
+  });
+  it('id attribute names', () => {
+    expect(FFDEC_XML.staticText.idAttr).toBe('characterID');
+    expect(FFDEC_XML.bitmap.idAttr).toBe('characterID');
+    expect(FFDEC_XML.unsupportedIdAttr.DefineButton2Tag).toBe('buttonId');
+    expect(FFDEC_XML.shape.idAttr).toBe('shapeId');
+  });
+});

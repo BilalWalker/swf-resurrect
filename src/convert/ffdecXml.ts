@@ -81,13 +81,13 @@ export const FFDEC_XML = {
   shape: {
     /** Verified on FFDec 26.4.0 (line 23): the only shape definition tag present in the sample. */
     defineShape4: 'DefineShape4Tag',
-    /** UNVERIFIED (not in sample; FFDec class name). */
+    /** Verified on FFDec 26.4.0 (breadth design section 7: observed in `3_joystick`). */
     defineShape: 'DefineShapeTag',
-    /** UNVERIFIED (not in sample; FFDec class name). */
+    /** Verified on FFDec 26.4.0 (breadth design section 7: observed in `3_joystick`). */
     defineShape2: 'DefineShape2Tag',
-    /** UNVERIFIED (not in sample; FFDec class name). */
+    /** Verified on FFDec 26.4.0 (breadth design section 7: observed in `3_joystick`). */
     defineShape3: 'DefineShape3Tag',
-    /** Verified on FFDec 26.4.0 (line 23) for DefineShape4Tag: the id attribute is `shapeId`. UNVERIFIED for the other variants. */
+    /** Verified on FFDec 26.4.0 (line 23) for DefineShape4Tag and (breadth design section 7, `3_joystick`) for DefineShapeTag, DefineShape2Tag and DefineShape3Tag: the id attribute is `shapeId`. */
     idAttr: 'shapeId',
     /** Verified on FFDec 26.4.0 (line 25): child element, RECT in twips (Xmin/Xmax/Ymin/Ymax). */
     shapeBounds: 'shapeBounds',
@@ -96,25 +96,57 @@ export const FFDEC_XML = {
   morph: {
     /** UNVERIFIED (not in sample; FFDec class name). */
     defineMorphShape: 'DefineMorphShapeTag',
-    /** UNVERIFIED (not in sample; FFDec class name). */
+    /** Verified on FFDec 26.4.0 (breadth design section 7: observed in `click_block`). */
     defineMorphShape2: 'DefineMorphShape2Tag',
-    /** UNVERIFIED (not in sample): id attribute name assumed `characterId`. */
+    /** Verified on FFDec 26.4.0 for DefineMorphShape2Tag (breadth design section 7, `click_block`). UNVERIFIED for DefineMorphShapeTag. */
     idAttr: 'characterId',
   },
 
-  /** Tag name -> unsupported kind. Every key is UNVERIFIED (none occur in the sample; FFDec class names). */
+  /** Static text definitions: ids go to `staticTextIds`. */
+  staticText: {
+    /** Verified on FFDec 26.4.0 (breadth design section 7: observed in `static_text`). */
+    defineText: 'DefineTextTag',
+    /** UNVERIFIED (not observed; FFDec class name). */
+    defineText2: 'DefineText2Tag',
+    /** Verified on FFDec 26.4.0 (breadth design section 7, `static_text`) for DefineTextTag. UNVERIFIED for DefineText2Tag. Note the capital D: `characterID`. */
+    idAttr: 'characterID',
+  },
+
+  /** Bitmap definitions (DefineBits*): ids go to `bitmapIds`; never placed directly. */
+  bitmap: {
+    /** Verified on FFDec 26.4.0 (breadth design section 7: observed in `bitmapbuttons`, `acid-color-0`, `click_block`). */
+    defineBits: 'DefineBitsTag',
+    /** Verified on FFDec 26.4.0 (breadth design section 7). */
+    defineBitsJpeg3: 'DefineBitsJPEG3Tag',
+    /** Verified on FFDec 26.4.0 (breadth design section 7). */
+    defineBitsLossless: 'DefineBitsLosslessTag',
+    /** Verified on FFDec 26.4.0 (breadth design section 7). */
+    defineBitsLossless2: 'DefineBitsLossless2Tag',
+    /** Verified on FFDec 26.4.0 (breadth design section 7): `characterID`, capital D. */
+    idAttr: 'characterID',
+  },
+
+  /** Font definition tags (`DefineFont*Tag`) are ignored definitions: their glyphs are not used here. Matched by prefix. */
+  fontTagPrefix: 'DefineFont',
+
+  /** Tag name -> unsupported kind. */
   unsupportedKinds: {
-    /** UNVERIFIED */ DefineTextTag: 'text',
-    /** UNVERIFIED */ DefineText2Tag: 'text',
-    /** UNVERIFIED */ DefineEditTextTag: 'text',
+    /** Verified on FFDec 26.4.0 (breadth design section 7: `click_block`), id attribute `characterID`. */ DefineEditTextTag: 'text',
     /** UNVERIFIED */ DefineSoundTag: 'sound',
     /** UNVERIFIED */ SoundStreamHeadTag: 'sound',
     /** UNVERIFIED */ SoundStreamHead2Tag: 'sound',
     /** UNVERIFIED */ DefineButtonTag: 'button',
-    /** UNVERIFIED */ DefineButton2Tag: 'button',
+    /** Verified on FFDec 26.4.0 (breadth design section 7: `bitmapbuttons`), id attribute `buttonId`. */ DefineButton2Tag: 'button',
     /** UNVERIFIED */ DefineVideoStreamTag: 'video',
   },
 
+  /** Id attribute per unsupported tag; tags not listed use `characterID` (UNVERIFIED for the tags marked UNVERIFIED above). */
+  unsupportedIdAttr: {
+    DefineEditTextTag: 'characterID',
+    DefineButton2Tag: 'buttonId',
+  },
+  /** Default id attribute for an unsupported tag with no entry in `unsupportedIdAttr` (UNVERIFIED for those tags). */
+  unsupportedIdAttrDefault: 'characterID',
   sprite: {
     /** Verified on FFDec 26.4.0 (line 79). */
     tag: 'DefineSpriteTag',
@@ -438,6 +470,13 @@ const SHAPE_TAGS: ReadonlySet<string> = new Set([
   FFDEC_XML.shape.defineShape4,
 ]);
 const MORPH_TAGS: ReadonlySet<string> = new Set([FFDEC_XML.morph.defineMorphShape, FFDEC_XML.morph.defineMorphShape2]);
+const STATIC_TEXT_TAGS: ReadonlySet<string> = new Set([FFDEC_XML.staticText.defineText, FFDEC_XML.staticText.defineText2]);
+const BITMAP_TAGS: ReadonlySet<string> = new Set([
+  FFDEC_XML.bitmap.defineBits,
+  FFDEC_XML.bitmap.defineBitsJpeg3,
+  FFDEC_XML.bitmap.defineBitsLossless,
+  FFDEC_XML.bitmap.defineBitsLossless2,
+]);
 const IGNORED_DEFINE_TAGS: ReadonlySet<string> = new Set([FFDEC_XML.timeline.sceneAndLabelData]);
 
 function readTimelineOp(item: PNode, kind: string, ctx: ParseCtx): TimelineOp | undefined {
@@ -473,6 +512,8 @@ export function parseStructure(xmlText: string): {
   sprites: SpriteModel[];
   declaredShapeIds: number[];
   morphShapeIds: number[];
+  staticTextIds: number[];
+  bitmapIds: number[];
   unsupported: UnsupportedObservation[];
 } {
   const parser = new XMLParser({
@@ -491,6 +532,8 @@ export function parseStructure(xmlText: string): {
     sprites: [] as SpriteModel[],
     declaredShapeIds: [] as number[],
     morphShapeIds: [] as number[],
+    staticTextIds: [] as number[],
+    bitmapIds: [] as number[],
     unsupported: ctx.unsupported,
   };
   if (!swf) return out;
@@ -536,8 +579,22 @@ export function parseStructure(xmlText: string): {
       ctx.unsupported.push(id !== undefined ? { kind: 'morph-shape', tagName: kind, characterId: id } : { kind: 'morph-shape', tagName: kind });
     } else if (kind in FFDEC_XML.unsupportedKinds) {
       const k = FFDEC_XML.unsupportedKinds[kind as keyof typeof FFDEC_XML.unsupportedKinds] as UnsupportedKind;
-      ctx.unsupported.push({ kind: k, tagName: kind });
-    } else if (IGNORED_DEFINE_TAGS.has(kind)) {
+      const idAttr =
+        (FFDEC_XML.unsupportedIdAttr as Record<string, string>)[kind] ?? FFDEC_XML.unsupportedIdAttrDefault;
+      const id = attrNum(attrs, idAttr);
+      const obs: UnsupportedObservation = { kind: k, tagName: kind };
+      if (id !== undefined) obs.characterId = id;
+      if (kind === 'DefineEditTextTag') obs.message = 'dynamic text (DefineEditText) is not rendered';
+      ctx.unsupported.push(obs);
+    } else if (STATIC_TEXT_TAGS.has(kind)) {
+      const id = attrNum(attrs, FFDEC_XML.staticText.idAttr);
+      if (id !== undefined) out.staticTextIds.push(id);
+      else ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+    } else if (BITMAP_TAGS.has(kind)) {
+      const id = attrNum(attrs, FFDEC_XML.bitmap.idAttr);
+      if (id !== undefined) out.bitmapIds.push(id);
+      else ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+    } else if (IGNORED_DEFINE_TAGS.has(kind) || kind.startsWith(FFDEC_XML.fontTagPrefix)) {
       // known, nothing to read
     } else if (kind.startsWith('Define')) {
       ctx.unsupported.push({ kind: 'other-tag', tagName: kind });

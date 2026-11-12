@@ -10,6 +10,8 @@ export interface TagsModel {
   sprites: SpriteModel[]; // any order; converter sorts by id
   declaredShapeIds: number[]; // character ids of shape definition tags (non-morph)
   morphShapeIds: number[]; // character ids of morph shape definition tags
+  staticTextIds: number[]; // character ids of DefineText / DefineText2 tags
+  bitmapIds: number[]; // character ids of DefineBits* tags
   shapeAssets: ShapeAssetModel[]; // one per file found under shapes/
   symbolClasses: SymbolClassEntry[]; // from symbols.csv
   classSources: ClassSourceModel[];
@@ -78,9 +80,19 @@ export type UnsupportedKind =
   | 'unbound-instance'
   | 'untranslated-class'
   | 'untranslated-code'
-  | 'other-tag';
+  | 'other-tag'
+  | 'gradient-fill'
+  | 'gradient-spread'
+  | 'gradient-focal'
+  | 'bitmap-fill'
+  | 'bitmap-smoothing'
+  | 'text-metrics'
+  | 'stroke-style'
+  | 'blend-mode';
 export interface UnsupportedObservation {
   kind: UnsupportedKind;
   tagName: string;
   characterId?: number;
+  /** Overrides the default entry message when set. */
+  message?: string;
 }

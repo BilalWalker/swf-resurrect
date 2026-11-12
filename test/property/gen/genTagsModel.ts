@@ -140,6 +140,8 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
       sprites,
       declaredShapeIds: shapeIds,
       morphShapeIds: morphIds,
+      staticTextIds: [],
+      bitmapIds: [],
       shapeAssets,
       symbolClasses,
       classSources,

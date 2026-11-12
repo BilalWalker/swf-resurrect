@@ -175,7 +175,7 @@ export function convertModel(model: TagsModel): ConvertResult {
     const entry: UnsupportedFeatureEntry = {
       kind: o.kind,
       tag: o.tagName,
-      message: `${o.tagName} (${o.kind}) is unsupported`,
+      message: o.message ?? `${o.tagName} (${o.kind}) is unsupported`,
     };
     if (o.characterId !== undefined) entry.id = o.characterId;
     unsupported.push(entry);

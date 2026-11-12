@@ -34,6 +34,8 @@ function model(over: Partial<TagsModel> = {}): TagsModel {
     sprites: [],
     declaredShapeIds: [1],
     morphShapeIds: [],
+    staticTextIds: [],
+    bitmapIds: [],
     shapeAssets: [{ id: 1, svg: SVG, origin: { x: 0, y: 0 } }],
     symbolClasses: [],
     classSources: [],
