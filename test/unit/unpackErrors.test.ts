@@ -15,7 +15,7 @@ import {
   XmlVersionError,
 } from '../../src/unpack/errors';
 import type { FfdecSpawner, SpawnRequest } from '../../src/unpack/spawnFfdec';
-import { unpack } from '../../src/unpack/unpack';
+import { hasSymbolClassTag, unpack } from '../../src/unpack/unpack';
 
 const childProcess = vi.hoisted(() => ({ spawn: vi.fn() }));
 vi.mock('node:child_process', () => childProcess);
@@ -211,9 +211,67 @@ describe('unpack error paths', () => {
     expect(calls).toHaveLength(0);
   });
 
+  describe('optional symbolClass/symbols.csv (Requirement 4)', () => {
+    const withTag = () => fixtureHead.replace('</tags>', '<item type="SymbolClassTag" forceWriteAsLong="true"/>\n  </tags>');
+
+    it('4.1 no tag and no csv succeeds with symbolClassPath null', async () => {
+      const s = await setup();
+      const { spawner } = fakeSpawner(s.workDir, fixtureHead, ['shapes', 'scripts']);
+      const r = await unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner });
+      expect(r.symbolClassPath).toBeNull();
+    });
+
+    it('4.2 tag and no csv fails with the missing-export error', async () => {
+      const s = await setup();
+      const { spawner } = fakeSpawner(s.workDir, withTag(), ['shapes', 'scripts']);
+      const err = await unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner }).catch((e) => e);
+      expect(err).toBeInstanceOf(MissingExportError);
+      expect(err.names).toEqual(['symbolClass/symbols.csv']);
+    });
+
+    it('4.3 another missing export still fails when no tag is present', async () => {
+      const s = await setup();
+      const { spawner } = fakeSpawner(s.workDir, fixtureHead, ['shapes']);
+      const err = await unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner }).catch((e) => e);
+      expect(err).toBeInstanceOf(MissingExportError);
+      expect(err.names).toEqual(['scripts']);
+    });
+
+    it('4.3 non-zero exit still fails', async () => {
+      const s = await setup();
+      const spawner: FfdecSpawner = async (req) => {
+        if (req.args[0] === '-swf2xml') {
+          await writeFile(req.args[2]!, fixtureHead);
+          return { stdout: '', stderr: '' };
+        }
+        throw new FfdecExitError(1, 'bad');
+      };
+      await expect(unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner })).rejects.toBeInstanceOf(
+        FfdecExitError,
+      );
+    });
+  });
+
+  describe('hasSymbolClassTag', () => {
+    it('is true when an item has type SymbolClassTag', () => {
+      expect(hasSymbolClassTag('<tags><item type="SymbolClassTag" forceWriteAsLong="true"></item></tags>')).toBe(true);
+    });
+    it('is false when absent', () => {
+      expect(hasSymbolClassTag('<tags><item type="ShowFrameTag"/></tags>')).toBe(false);
+    });
+    it('is false when the name only appears inside a string', () => {
+      expect(hasSymbolClassTag('<item type="DoABC2Tag" name="type=&quot;SymbolClassTag&quot;"/>')).toBe(false);
+      expect(hasSymbolClassTag('<!-- <item type="SymbolClassTag"> -->'.replace('<item', '<x'))).toBe(false);
+    });
+  });
+
   it('2.8 missing exports are listed by name', async () => {
     const s = await setup();
-    const { spawner } = fakeSpawner(s.workDir, fixtureHead, ['shapes']);
+    const { spawner } = fakeSpawner(
+      s.workDir,
+      fixtureHead.replace('</tags>', '<item type="SymbolClassTag"/>\n  </tags>'),
+      ['shapes'],
+    );
     const err = await unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner }).catch((e) => e);
     expect(err).toBeInstanceOf(MissingExportError);
     expect(err.names).toEqual(['symbolClass/symbols.csv', 'scripts']);

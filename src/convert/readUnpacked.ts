@@ -39,7 +39,9 @@ export async function readUnpacked(unpacked: UnpackResult): Promise<TagsModel> {
   const { xmlVersion, header } = readDumpHeader(dumpText);
   const structure = parseStructure(dumpText);
 
-  const symbolClasses = parseSymbolsCsv(await readFile(unpacked.symbolClassPath, 'utf8'));
+  const symbolClasses = parseSymbolsCsv(
+    unpacked.symbolClassPath === null ? '' : await readFile(unpacked.symbolClassPath, 'utf8'),
+  );
 
   const files = await listSvgFiles(unpacked.shapesDir);
   if (files === null && structure.declaredShapeIds.length > 0) {

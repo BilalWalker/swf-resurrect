@@ -23,13 +23,19 @@ export interface UnpackResult {
   workDir: string;
   shapesDir: string;
   structureDumpPath: string;
-  symbolClassPath: string;
+  /** null: no SymbolClassTag in the dump and no symbols.csv. */
+  symbolClassPath: string | null;
   scriptsDir: string;
   header: SwfHeader;
   xmlVersion: XmlVersion;
 }
 
 const AS3_CHECK_BYTES = 64 * 1024;
+
+/** True when the swf2xml dump holds an item of type SymbolClassTag. Pure. */
+export function hasSymbolClassTag(xmlText: string): boolean {
+  return /<item\b[^>]*\btype\s*=\s*"SymbolClassTag"/.test(xmlText);
+}
 
 async function exists(path: string): Promise<boolean> {
   try {
@@ -81,17 +87,28 @@ export async function unpack(input: UnpackInput): Promise<UnpackResult> {
   const shapesDir = join(workDir, 'shapes');
   const symbolClassPath = join(workDir, 'symbolClass', 'symbols.csv');
   const scriptsDir = join(workDir, 'scripts');
-  const expected: Array<[string, string]> = [
-    ['shapes', shapesDir],
-    ['structure.xml', structureDumpPath],
-    ['symbolClass/symbols.csv', symbolClassPath],
-    ['scripts', scriptsDir],
+  const symbolClassTag = hasSymbolClassTag(xmlText);
+  const symbolClassPresent = await exists(symbolClassPath);
+  const expected: Array<[string, string, boolean]> = [
+    ['shapes', shapesDir, true],
+    ['structure.xml', structureDumpPath, true],
+    // symbols.csv is expected only when the dump holds a SymbolClassTag.
+    ['symbolClass/symbols.csv', symbolClassPath, symbolClassTag],
+    ['scripts', scriptsDir, true],
   ];
   const missing: string[] = [];
-  for (const [name, path] of expected) {
-    if (!(await exists(path))) missing.push(name);
+  for (const [name, path, required] of expected) {
+    if (required && !(await exists(path))) missing.push(name);
   }
   if (missing.length > 0) throw new MissingExportError(missing);
 
-  return { workDir, shapesDir, structureDumpPath, symbolClassPath, scriptsDir, header, xmlVersion };
+  return {
+    workDir,
+    shapesDir,
+    structureDumpPath,
+    symbolClassPath: symbolClassPresent ? symbolClassPath : null,
+    scriptsDir,
+    header,
+    xmlVersion,
+  };
 }
