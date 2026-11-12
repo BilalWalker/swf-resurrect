@@ -11,7 +11,7 @@ import type { ConvertedArtifact } from '../../src/convert/writeConverted';
 import { serialiseScene } from '../../src/convert/sceneJson';
 import { emit } from '../../src/emit/emit';
 import { EmitWriteError, OutputDirNotEmptyError } from '../../src/emit/errors';
-import { planEmit } from '../../src/emit/planEmit';
+import { planEmit, planEmitDetailed } from '../../src/emit/planEmit';
 import type { EmitInput } from '../../src/emit/planEmit';
 
 const identity: [number, number, number, number, number, number] = [1, 0, 0, 1, 0, 0];
@@ -113,6 +113,16 @@ describe('planEmit', () => {
       repoRoot: resolve(__dirname, '../..'),
     });
     expect(gate.errors).toEqual([]);
+  });
+
+  it('4.3 an omitted class has no import and no entry, and its file is still written', () => {
+    const omittedInput: EmitInput = { ...input, translated: [{ className: 'LeftButton', fileName: 'LeftButton.ts', text: 'x\n', diagnostics: [], spans: [], extendsName: null }], handwritten: [] };
+    const files = planEmitDetailed(omittedInput, svgs, new Set(['LeftButton'])).files;
+    const classes = files.find((f) => f.path === 'src/classes.ts');
+    expect(files.some((f) => f.path === 'src/LeftButton.ts')).toBe(true);
+    expect(classes?.content).not.toContain('LeftButton');
+    expect(classes?.content).toContain('export const classRegistry: Record<string, never> = {};');
+    expect(planEmitDetailed(omittedInput, svgs).files.find((f) => f.path === 'src/classes.ts')?.content).toContain('LeftButton');
   });
 
   it('4.4 the Translation_Report holds zero classes when none exist', () => {
