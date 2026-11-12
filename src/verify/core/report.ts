@@ -34,7 +34,7 @@ export type FrameOutcome =
 export type BehaviourInput =
   | {
       status: 'not-compared';
-      reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed';
+      reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate';
     }
   | {
       status: 'compared';
@@ -77,7 +77,7 @@ export type VisualFrame =
 export type BehaviourReport =
   | {
       status: 'not-compared';
-      reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed';
+      reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate';
       knownBehaviourGaps: string[];
     }
   | {

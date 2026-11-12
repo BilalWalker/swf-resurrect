@@ -244,10 +244,12 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
   const dir = req.referenceDir === null ? null : resolve(req.referenceDir);
   const traceText = await readOptional(dir === null ? null : join(dir, 'output.txt'));
   if (traceText === null) return { status: 'not-compared', reason: 'no-reference-trace' };
-  const inputText = await readOptional(dir === null ? null : join(dir, 'input.json'));
-  if (inputText === null) return { status: 'not-compared', reason: 'no-reference-input' };
   const tomlText = await readOptional(dir === null ? null : join(dir, 'test.toml'));
   const tickOptions = parseTickOptions(tomlText);
+  // A custom tick_rate changes how many ticks Ruffle runs per frame; no Replay is run (Requirement 14.14).
+  if (tickOptions.tickRate !== null) return { status: 'not-compared', reason: 'tick-rate' };
+  const inputText = await readOptional(dir === null ? null : join(dir, 'input.json'));
+  if (inputText === null) return { status: 'not-compared', reason: 'no-reference-input' };
   const plan = planReplay(
     inputText,
     parseNumFrames(tomlText),

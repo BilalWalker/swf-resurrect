@@ -69,6 +69,7 @@ const genBehaviour: fc.Arbitrary<BehaviourInput> = fc.oneof(
       'invalid-input-json' as const,
       'trace-too-large' as const,
       'replay-failed' as const,
+      'tick-rate' as const,
     ),
   }),
   fc.record({

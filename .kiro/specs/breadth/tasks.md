@@ -227,7 +227,7 @@ Rules that apply to every task:
     - Test: `test/property/replayPlan.property.test.ts` (create), **Property 16: Tick options follow Ruffle's rule**, with `test/property/gen/genTickToml.ts` (create). Unit tests in `test/unit/replayPlan.test.ts` (create): `num_frames` only, `num_ticks` only, both, neither, `tick_rate` present, the `clickgoto` count of 32 unchanged, `3_joystick` 21 and `slider_component` 10 from their `test.toml` text (inline copies).
     - _Requirements: 14.12, 14.13, 14.15, 15.5_
 
-  - [ ] 7.2 `tick_rate` makes the behaviour `not-compared`
+  - [x] 7.2 `tick_rate` makes the behaviour `not-compared`
     - `src/verify/edge/verifyStage.ts` returns behaviour `not-compared` with the new reason `tick-rate` when `tickRate !== null`; `report.ts` and `html.ts` accept the reason (additive; the Fidelity_Report `FORMAT_VERSION` stays 1). A task that meets a sample whose `test.toml` sets `tick_rate` STOPS and asks (Requirement 14.14).
     - Test: `test/unit/verifyStage.test.ts` (create; `tick-rate` reason, no Replay run) and extend `test/property/fidelityDeterminism.property.test.ts` through `test/property/gen/genReportInputs.ts` for the new reason.
     - _Requirements: 14.14, 14.16_
