@@ -178,7 +178,7 @@ Rules that apply to every task:
     - Requirement 6.6 on the real `mask_reapply` SWF (`typeCheck: ran`, zero `otherErrors`) needs the SWF and is verified in sub-task 16.2, when it is admitted.
     - _Requirements: 6.3, 6.6, 18.11, 18.15_
 
-  - [ ] 5.10 SC measurement after linking package classes
+  - [-] 5.10 SC measurement after linking package classes
     - Run the SC command with `fl.controls.*` classes now linked and state the Overall_Match before and after in the commit message, with the list of classes that translated, those that were left out of the registry (Task 4) and why. Below 99.93: fix or revert, never lower a floor (Requirement 23.6).
     - Evidence is the recorded measurement; it is guarded by `test/unit/emitOmission.test.ts`, `test/unit/translatePackages.test.ts` and the floor of sub-task 17.6.
     - _Requirements: 18.14, 23.5, 23.6, 1.6_
