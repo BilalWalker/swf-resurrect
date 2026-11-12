@@ -24,4 +24,20 @@ describe('readUnpacked', () => {
     expect(model.classSources.map((c) => c.className).sort()).toEqual(['LeftButton', 'MainTimeline', 'RightButton']);
     expect(model.header.frameCount).toBe(3);
   });
+
+  it('4.4 a null symbolClassPath gives empty symbolClasses and classSources', async () => {
+    const dir = resolve(__dirname, '../fixtures/clickgoto');
+    const { xmlVersion, header } = readDumpHeader(readFileSync(resolve(dir, 'structure.xml'), 'utf8'));
+    const model = await readUnpacked({
+      workDir: dir,
+      shapesDir: resolve(dir, 'shapes'),
+      structureDumpPath: resolve(dir, 'structure.xml'),
+      symbolClassPath: null,
+      scriptsDir: resolve(dir, 'scripts'),
+      header,
+      xmlVersion,
+    });
+    expect(model.symbolClasses).toEqual([]);
+    expect(model.classSources).toEqual([]);
+  });
 });

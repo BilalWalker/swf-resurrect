@@ -1,7 +1,11 @@
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { buildReport } from '../../src/translate/report';
+import { typeCheckProject } from '../../src/translate/typeCheckGate';
 import type { SceneJson } from '../../template/runtime/scene';
 import type { ConvertedArtifact } from '../../src/convert/writeConverted';
 import { serialiseScene } from '../../src/convert/sceneJson';
@@ -83,6 +87,38 @@ describe('planEmit', () => {
     expect(classes[0].content).toContain('"LeftButton": LeftButton,');
     expect(classes[0].content).not.toContain('RightButton');
     expect(classes[0].content).not.toContain('STATIC');
+  });
+
+  it('4.4 writes an empty typed registry when no class exists, and it type-checks', () => {
+    const noClassScene: SceneJson = {
+      ...scene,
+      symbols: {
+        '0': { type: 'sprite', frameCount: 1, labels: [], frames: [[]] },
+        '1': scene.symbols['1'],
+      },
+    };
+    const files = planEmit(
+      { ...input, scene: noClassScene, sceneJson: serialiseScene(noClassScene), handwritten: [] },
+      svgs,
+    );
+    const classes = files.find((f) => f.path === 'src/classes.ts');
+    expect(classes?.content).toContain('export const classRegistry: Record<string, never> = {};');
+    expect(classes?.content).not.toContain('import ');
+
+    const gate = typeCheckProject({
+      files: new Map([
+        ['tsconfig.json', readFileSync(resolve(__dirname, '../../template/tsconfig.json'), 'utf8')],
+        ['src/classes.ts', classes?.content ?? ''],
+      ]),
+      repoRoot: resolve(__dirname, '../..'),
+    });
+    expect(gate.errors).toEqual([]);
+  });
+
+  it('4.4 the Translation_Report holds zero classes when none exist', () => {
+    const report = buildReport([], null);
+    expect(report.classes).toEqual([]);
+    expect(report.otherErrors).toEqual([]);
   });
 
   it('uses LF line endings only', () => {
