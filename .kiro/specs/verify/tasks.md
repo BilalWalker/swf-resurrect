@@ -297,8 +297,8 @@ Rules that apply to every task:
     - In `test/unit/shimEventOrder.test.ts`: an event log on a two-level scene for each phase (A advance and removal, B `enterFrame` children first, C `added` then `frameConstructed`, D frame scripts root first, E `exitFrame` children first); `added`/`addedToStage` for attached and loose parents; backward versus forward timeline moves; bubbling with `eventPhase` 3.
     - _Requirements: 8.4, 8.5, 8.6_
 
-- [ ] 13. Edge: Verify_Stage orchestration (design Verify_Stage sequence, sections 9 and 11)
-  - [~] 13.1 Implement `verifyStage.ts`
+- [x] 13. Edge: Verify_Stage orchestration (design Verify_Stage sequence, sections 9 and 11)
+  - [x] 13.1 Implement `verifyStage.ts`
     - Create `src/verify/edge/verifyStage.ts` exporting `verifyStage(req: VerifyRequest): Promise<VerifySummary>`. Steps: `selectFrames` from the root `frameCount`; `exportReferenceFrames`; `buildProject` and `renderFrames`; `compareImages` per frame with the stage background; write Reference, Rendered and Diff PNGs under `<out>/verify/frames/<NNNN>-{reference,rendered,diff}.png`; read `reference/output.txt`, `input.json`, `test.toml` if present (missing output gives `no-reference-trace`, missing input gives `no-reference-input`, bad JSON gives `invalid-input-json`); `planReplay` and `replay`; `compareTraces` (`trace-too-large` and `replay-failed` as not-compared reasons); `knownVisualLimits`; `buildFidelityReport`, `renderFidelityHtml`; write `fidelity-report.json` and `fidelity-report.html`. Every failure of FFDec, the browser or the Replay is a recorded entry; only a failed write throws. Use `sanitizeDetail` for every free-text detail and the pinned strings from `versions.ts`. Never touch `samples/*/reference/`.
     - Temporary directories are removed in `finally`.
     - _Requirements: 2.3, 3.6, 5.1, 5.2, 5.7, 6.1, 6.14, 6.15, 7.8, 9.2, 10.1, 11.5, 12.4_
@@ -307,8 +307,8 @@ Rules that apply to every task:
     - In `test/unit/verifyStage.test.ts` with injected fakes for FFDec, renderer and replay: all frames failing still writes both reports; no `output.txt` gives `no-reference-trace` and no Trace_Score; a failed render for one frame leaves the others compared; a second run gives byte-identical JSON and HTML; reference files untouched.
     - _Requirements: 5.5, 7.8, 9.3, 10.8, 11.5_
 
-- [ ] 14. Pipeline: `--verify` and `--verify-frames` (design section 11)
-  - [~] 14.1 Add the flags, the stage hook and lazy loading
+- [x] 14. Pipeline: `--verify` and `--verify-frames` (design section 11)
+  - [x] 14.1 Add the flags, the stage hook and lazy loading
     - In `src/pipeline/cli.ts`: parse `--verify` (boolean) and `--verify-frames <n>` (validated with `/^[1-9][0-9]*$/`; without `--verify` or with a bad value return exit code 2 with the usage text); options are built conditionally so absent flags leave no key; `USAGE` lists both flags; wire `verify: async (req) => (await import('../verify/edge/verifyStage')).verifyStage(req)`.
     - In `src/pipeline/pipeline.ts`: add `VerifyRequest`, `VerifySummary`, `PipelineStages.verify?`, `PipelineArgs.verify?`. Run the stage after the type-check gate in the same `try` only when `args.verify` is set. Derive `sampleName` and `referenceDir` from the SWF directory. Print `[verify] overall match <n>%, trace score <n>% -> <json>, <html>` (`not-compared` in place of a missing number). A low score does not change the exit code; an exception prints `error [verify]: ...`, exits 1, and the Translation_Report is still written.
     - Without `--verify` no verify module, `playwright` or `pngjs` is loaded and no `fidelity-report.*` or `verify/` is written.
@@ -319,7 +319,7 @@ Rules that apply to every task:
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.6, 11.7_
 
 - [ ] 15. Floor recording and end-to-end check (Requirements 8.7, 13.5, 13.6)
-  - [~] 15.1 Measure the final clickgoto Trace_Score and record the floor
+  - [-] 15.1 Measure the final clickgoto Trace_Score and record the floor
     - With all Shim changes in place, run the clickgoto Replay test and measure the Trace_Score and the counts of `missing` and `extra` lines. Set `TRACE_SCORE_FLOOR` in `test/unit/clickgotoReplay.test.ts` to the measured value; never lower it from the value last committed. The design gives no measured ceiling: the old 86 percent estimate assumed G7 out of scope and no longer applies. A higher score is expected with G1 to G7, but it is unmeasured; do not compare against a predicted number.
     - State in the commit message and in the final summary the achieved Trace_Score, the remaining `missing` and `extra` counts, and whether G7 (Task 12.7) was kept or reverted (and, if reverted, that `goto-extra-cycle` is in `KNOWN_BEHAVIOUR_GAPS` and appears in the report).
     - _Requirements: 8.7, 8.8, 13.5, 13.6_

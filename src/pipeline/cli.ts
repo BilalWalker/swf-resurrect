@@ -20,12 +20,14 @@ export interface CliOptions {
   keepWork: boolean;
   ffdecJarPath?: string;
   handwrittenDir?: string;
+  verify?: true;
+  verifyFrames?: number;
 }
 
 export type ParsedArgs = { ok: true; options: CliOptions } | { ok: false; message: string; exitCode: 2 };
 
 export const USAGE =
-  'Usage: pipeline <input.swf> <output-dir> [--force] [--work-dir <dir>] [--keep-work] [--ffdec <jar>] [--handwritten <dir>]';
+  'Usage: pipeline <input.swf> <output-dir> [--force] [--work-dir <dir>] [--keep-work] [--ffdec <jar>] [--handwritten <dir>] [--verify] [--verify-frames <n>]';
 
 /** Pure: argv excludes the node binary and script path. Usage errors give exit code 2. */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
@@ -41,6 +43,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
         'keep-work': { type: 'boolean' },
         ffdec: { type: 'string' },
         handwritten: { type: 'string' },
+        verify: { type: 'boolean' },
+        'verify-frames': { type: 'string' },
       },
     });
   } catch (err) {
@@ -61,6 +65,15 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   ] as const) {
     if (v === '') return { ok: false, message: `${name} needs a non-empty value\n${USAGE}`, exitCode: 2 };
   }
+  const verifyFramesText = values['verify-frames'];
+  if (verifyFramesText !== undefined) {
+    if (values.verify !== true) {
+      return { ok: false, message: `--verify-frames needs --verify\n${USAGE}`, exitCode: 2 };
+    }
+    if (!/^[1-9][0-9]*$/.test(verifyFramesText)) {
+      return { ok: false, message: `--verify-frames needs a positive integer\n${USAGE}`, exitCode: 2 };
+    }
+  }
   const options: CliOptions = {
     swfPath: positionals[0],
     outputDir: positionals[1],
@@ -70,6 +83,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   if (values['work-dir'] !== undefined) options.workDir = values['work-dir'];
   if (values.ffdec !== undefined) options.ffdecJarPath = values.ffdec;
   if (values.handwritten !== undefined) options.handwrittenDir = values.handwritten;
+  if (values.verify === true) options.verify = true;
+  if (verifyFramesText !== undefined) options.verifyFrames = Number(verifyFramesText);
   return { ok: true, options };
 }
 
@@ -98,6 +113,7 @@ const realStages: PipelineStages = {
     for (const f of files) map.set(f, await readFile(join(outputDir, ...f.split('/')), 'utf8'));
     return typeCheckProject({ files: map, repoRoot: REPO_ROOT });
   },
+  verify: async (req) => (await import('../verify/edge/verifyStage')).verifyStage(req),
 };
 
 export async function main(argv: readonly string[]): Promise<number> {
@@ -142,6 +158,7 @@ export async function main(argv: readonly string[]): Promise<number> {
     homeDir: homedir(),
   };
   if (o.workDir !== undefined) args.workDir = o.workDir;
+  if (o.verify === true) args.verify = o.verifyFrames === undefined ? {} : { frames: o.verifyFrames };
   return runPipeline(args, realStages, io);
 }
 

@@ -1,9 +1,9 @@
 // Pipeline glue: unpack -> convert -> translate -> emit -> typeCheck, exit codes, progress output and the
 // unsupported-features file. Stages and output are injected so tests need no Java.
-import { constants } from 'node:fs';
+import { constants, existsSync } from 'node:fs';
 import { access, mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
 import type { EmitOptions, EmitResult } from '../emit/emit';
 import type { UnpackInput, UnpackResult } from '../unpack/unpack';
@@ -11,10 +11,13 @@ import type { TranslateArtifact } from '../translate/planTranslate';
 import { buildReport, classStatus, serialiseReport, untranslatedCodeEntries } from '../translate/report';
 import type { TranslationReport } from '../translate/report';
 import type { GateResult } from '../translate/typeCheckGate';
+import type { VerifyRequest, VerifySummary } from '../verify/edge/verifyStage';
 import { PipelineError } from './errors';
 import type { PipelineStage } from './errors';
 import { serialiseUnsupported } from './unsupported';
 import type { UnsupportedFeatureEntry } from './unsupported';
+
+export type { VerifyRequest, VerifySummary };
 
 export interface PipelineStages {
   unpack(i: UnpackInput): Promise<UnpackResult>;
@@ -22,6 +25,7 @@ export interface PipelineStages {
   translate(u: UnpackResult, a: ConvertedArtifact): Promise<TranslateArtifact>;
   emit(a: ConvertedArtifact, o: EmitOptions): Promise<EmitResult>;
   typeCheck(outputDir: string, files: readonly string[]): Promise<GateResult>;
+  verify?(req: VerifyRequest): Promise<VerifySummary>;
 }
 
 export interface PipelineIo {
@@ -43,6 +47,8 @@ export interface PipelineArgs {
   handwrittenClasses: readonly string[];
   cwd: string;
   homeDir: string;
+  /** Set by --verify; frames is K from --verify-frames. */
+  verify?: { frames?: number };
 }
 
 /** Error codes of the Emitter refusals that must leave the output directory untouched (Req 5.8, 5.10). */
@@ -210,6 +216,29 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       io.out('[typecheck] ok (0 errors)\n');
     } else {
       io.err(`[typecheck] ${gate.errors.length} errors: ${errorsPerFile(gate)}\n`);
+    }
+
+    if (args.verify !== undefined && stages.verify !== undefined) {
+      stage = 'verify';
+      const swfDir = dirname(resolve(args.swfPath));
+      const referenceDir = join(swfDir, 'reference');
+      const req: VerifyRequest = {
+        swfPath: resolve(args.swfPath),
+        jarPath: args.ffdecJarPath,
+        outputDir: result.outputDir,
+        projectDir: result.outputDir,
+        scene: artifact.scene,
+        unsupported,
+        translationReport: reportOf(translated, overridden, gate),
+        sampleName: basename(swfDir),
+        referenceDir: existsSync(referenceDir) ? referenceDir : null,
+      };
+      if (args.verify.frames !== undefined) req.frames = args.verify.frames;
+      const summary = await stages.verify(req);
+      const pct = (v: number | null): string => (v === null ? 'not-compared' : `${v.toFixed(2)}%`);
+      io.out(
+        `[verify] overall match ${pct(summary.overallMatch)}, trace score ${pct(summary.traceScore)} -> ${summary.jsonPath}, ${summary.htmlPath}\n`,
+      );
     }
   } catch (err) {
     failure = err;

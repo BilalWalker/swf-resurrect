@@ -477,6 +477,11 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408849309
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794415248028
       }
     ],
     "14.1 Add the flags, the stage hook and lazy loading": [
@@ -484,6 +489,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408849384
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794415611731
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794415952534
       }
     ],
     "15.1 Measure the final clickgoto Trace_Score and record the floor": [
@@ -491,6 +506,11 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408849466
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794415953099
       }
     ],
     "16. Checkpoint: browser review of fidelity-report.html": [
@@ -561,6 +581,13 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794412489289
+      }
+    ],
+    "14. Pipeline: `--verify` and `--verify-frames` (design section 11)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794415952667
       }
     ]
   }
