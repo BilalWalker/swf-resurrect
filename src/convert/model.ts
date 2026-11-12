@@ -79,6 +79,7 @@ export type UnsupportedKind =
   | 'morph-shape'
   | 'unbound-instance'
   | 'untranslated-class'
+  | 'class-omitted'
   | 'untranslated-code'
   | 'other-tag'
   | 'gradient-fill'
