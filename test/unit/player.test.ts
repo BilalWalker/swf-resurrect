@@ -41,6 +41,16 @@ function tick(clock: ManualClock, player: Player, ms: number): void {
   player.update();
 }
 
+describe('Player stage', () => {
+  it('owns a Stage_Object that is the root parent and has no backend node', () => {
+    const { player, backend } = setup(sceneOf(sprite([[entry(1, 1)]])));
+    expect(player.root.parent).toBe(player.stage);
+    expect(player.root.stage).toBe(player.stage);
+    expect(player.rootNode).toBeDefined();
+    void backend;
+  });
+});
+
 describe('Player stepping', () => {
   it('advances one frame per interval and loops back to frame 1', () => {
     const root = sprite([[entry(1, 1)], [entry(1, 1)], [entry(1, 1)]]);

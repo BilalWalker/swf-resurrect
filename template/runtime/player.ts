@@ -1,6 +1,7 @@
 import type { DisplayObject } from '../shim/DisplayObject';
 import { Event, MouseEvent } from '../shim/events';
 import {
+  attachRoot,
   clipsPostOrder,
   clipsPreOrder,
   exitFrame,
@@ -12,6 +13,7 @@ import {
 } from '../shim/internal';
 import { MovieClip } from '../shim/MovieClip';
 import type { DisplayObjectContainer } from '../shim/Sprite';
+import { Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
 import { hitTest } from './hitTest';
@@ -38,6 +40,8 @@ function isIdentityColor(ct: Readonly<ColorTransform8>): boolean {
 }
 
 export class Player {
+  /** The Stage_Object: parent of the root, no backend node. Built before the root so root constructors can read stage. */
+  readonly stage = new Stage();
   readonly root: MovieClip;
   readonly frameIntervalMs: number;
 
@@ -176,6 +180,8 @@ export class Player {
 
   private createClip(symbolId: number, symbol: SpriteSymbol, instanceName?: string): MovieClip {
     const ctx: ConstructionContext = { symbol, symbolId, scripts: this.scripts, hooks: this.hooks, cycle: this.cycle };
+    // Only the root is created with an instance name; its parent is the Stage_Object, set before the constructor runs.
+    if (instanceName !== undefined) ctx.rootParent = this.stage;
     let Cls: new () => MovieClip = MovieClip;
     if (symbol.className !== undefined) {
       const linked = this.classRegistry[symbol.className];
@@ -187,6 +193,7 @@ export class Player {
       mc.name = instanceName;
       // Only the root is created with an instance name; it is the stage root (Requirement 8.4).
       mc._isStageRoot = true;
+      attachRoot(this.stage, mc);
     }
     this.nodes.register(mc, this.backend.createContainer());
     // Frame 1: creates and binds the children (named children are exposed as properties as they are made).

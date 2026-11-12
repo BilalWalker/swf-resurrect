@@ -195,12 +195,12 @@ Rules that apply to every task:
     - Test: `test/property/pointerMath.property.test.ts` (create), **Property 18: Pointer coordinates round-trip through the parent chain**; example tests in `test/unit/shimDisplay.test.ts`.
     - _Requirements: 14.10, 14.17, 15.5_
 
-  - [-] 6.3 `Stage`, `DisplayObject.stage`, `attachRoot`
+  - [x] 6.3 `Stage`, `DisplayObject.stage`, `attachRoot`
     - Create `template/shim/Stage.ts` (`Stage extends EventDispatcher`, `_isStage`, `_parent: null`, `_children`). In `template/shim/DisplayObject.ts` add `get stage(): Stage | null` (first ancestor, this included, with `_isStage`), widen `_parent` and `parent` to `ParentNode | null`; in `internal.ts` add `ConstructionContext.rootParent` and `attachRoot(stage, root)`; `MovieClip` sets `_parent = ctx.rootParent` when present. Export `Stage` from the Shim index. Add rows to `template/shim/ADDED_APIS.md`: `Stage` (dispatcher members only) and `DisplayObject.stage` with the fixture lines `Interactivity3.as:39` (decompiled copy line 38) and `MainTimeline.as:47`; `ConstructionContext.rootParent` and `internal.attachRoot` as support for `stage` in the root constructor (`Interactivity3.as:39`). Add no member such as `stageWidth`.
     - Test: `test/unit/stage.test.ts` (create): `stage` is null for a detached display object and the Stage_Object for one on the stage; `root.parent` is the Stage_Object after `attachRoot`; a bubbling `click` at a child reaches a Stage_Object listener with `currentTarget` equal to the Stage_Object, `target` equal to the child and `eventPhase` 3; an event dispatched at the Stage_Object does not reach the root; the Stage_Object is not the root. `test/property/stageBubbling.property.test.ts` (create), **Property 24: Events bubble through the Stage_Object and stage hits reach it** (bubbling order, non-bubbling, `stage` of attached and detached objects; the pointer clause is added in 6.5).
     - _Requirements: 19.1, 19.3, 19.5, 19.8, 15.5_
 
-  - [ ] 6.4 The Player owns the Stage_Object
+  - [x] 6.4 The Player owns the Stage_Object
     - `template/runtime/player.ts`: `readonly stage = new Stage()`; the root clip is constructed with `ctx.rootParent = stage`, so `stage` and `root.parent` are available inside the root class constructor; `createClip` keeps `_isStageRoot = true` and calls `attachRoot`. No backend node exists for the Stage_Object and `buildHitView(root)` is unchanged.
     - Test: extend `test/unit/stage.test.ts` with `stage` readable in the constructor of a root class registered in `classRegistry`, and `root.parent === player.stage` and `player.stage !== player.root`; update `test/unit/player.test.ts`.
     - _Requirements: 19.1, 19.2, 19.8_

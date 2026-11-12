@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { ManualClock } from '../../template/runtime/clock';
+import { Player } from '../../template/runtime/player';
+import type { SceneJson, SpriteSymbol } from '../../template/runtime/scene';
 import { Event, MouseEvent } from '../../template/shim/events';
 import { attachRoot } from '../../template/shim/internal';
 import { MovieClip } from '../../template/shim/MovieClip';
 import { Sprite } from '../../template/shim/Sprite';
 import { Stage } from '../../template/shim/Stage';
+import { FakeBackend } from '../support/fakeBackend';
 
 function tree() {
   const stage = new Stage();
@@ -53,8 +57,29 @@ describe('Stage_Object', () => {
     expect(hits).toBe(0);
   });
 
-  it('a clip built with rootParent sees the Stage_Object in its constructor', () => {
-    // MovieClip adopts ctx.rootParent at construction; covered through attachRoot above and the Player in 6.4.
-    expect(new Stage()._isStage).toBe(true);
+  it('the Player owns the Stage_Object: readable in a root constructor, root.parent is it, it is not the root', () => {
+    let inCtor: unknown = 'unset';
+    let parentInCtor: unknown = 'unset';
+    class Main extends MovieClip {
+      constructor() {
+        super();
+        inCtor = this.stage;
+        parentInCtor = this.parent;
+      }
+    }
+    const rootSym: SpriteSymbol = { type: 'sprite', frameCount: 1, frames: [[]], labels: [], className: 'Main' };
+    const scene: SceneJson = {
+      formatVersion: 1,
+      stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
+      rootSymbolId: 0,
+      symbols: { '0': rootSym },
+    };
+    const player = new Player({ scene, backend: new FakeBackend(), clock: new ManualClock(), classRegistry: { Main }, shapeBounds: new Map() });
+    expect(inCtor).toBe(player.stage);
+    expect(parentInCtor).toBe(player.stage);
+    expect(player.root.parent).toBe(player.stage);
+    expect(player.stage as unknown).not.toBe(player.root);
+    expect(player.stage._children).toEqual([player.root]);
+    expect(player.root.stage).toBe(player.stage);
   });
 });
