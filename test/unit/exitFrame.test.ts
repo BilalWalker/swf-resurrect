@@ -4,7 +4,7 @@ import { exitFrame } from '../../template/shim/internal';
 import { MovieClip } from '../../template/shim/MovieClip';
 
 describe('exitFrame', () => {
-  it('notifies every attached clip once, in pre-order, playing or stopped', () => {
+  it('notifies every attached clip once, children first, playing or stopped', () => {
     const root = new MovieClip();
     const a = new MovieClip();
     const b = new MovieClip();
@@ -16,7 +16,8 @@ describe('exitFrame', () => {
     a.addEventListener(Event.EXIT_FRAME, () => seen.push('a'));
     b.addEventListener(Event.EXIT_FRAME, () => seen.push('b'));
     exitFrame(root);
-    expect(seen).toEqual(['root', 'a', 'b']);
+    // Children first (user decision (a), verify task 12.1; Requirement 8.9; reference/output.txt lines 13-15).
+    expect(seen).toEqual(['b', 'a', 'root']);
   });
 
   it('skips a clip detached during the pass and a clip added during it', () => {

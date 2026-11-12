@@ -3,11 +3,14 @@ import type { DisplayObject } from './DisplayObject';
 import { Event } from './events';
 import {
   attachChild,
+  clipsPostOrder,
+  clipsPreOrder,
   currentConstructionContext,
   detachChild,
+  isAttachedTo,
   type ConstructionContext,
 } from './internal';
-import { Sprite } from './Sprite';
+import { announceAdded, announceRemoved, Sprite } from './Sprite';
 
 interface TimelineChild {
   child: DisplayObject;
@@ -27,6 +30,10 @@ export class MovieClip extends Sprite {
   private readonly ctx: ConstructionContext | null;
   private frame = 1;
   private isPlaying = true;
+  /** False until the first `_renderFrame`, which is silent. */
+  private rendered = false;
+  /** Entries of a backward move whose creation waits for phase C. */
+  private pendingAdds: DisplayListEntry[] = [];
   /** Children created from the timeline, by depth. Children added by script are not in here. */
   private readonly timelineChildren = new Map<number, TimelineChild>();
 
@@ -91,16 +98,31 @@ export class MovieClip extends Sprite {
     return this.isPlaying;
   }
 
-  /** Reconciles the children with the current frame's display list. */
-  _renderFrame(): void {
+  /**
+   * Reconciles the children with the current frame's display list.
+   *
+   * Events (design section 8, G6 timeline part). The first render of a clip is silent (the Player
+   * announces the initial build itself). Later renders:
+   * - Backward move (wrap or goto to an earlier frame): every non-retained child is removed with
+   *   `removed` (+ `removedFromStage`) now; the replacements are created and announced with `added`
+   *   (+ `addedToStage`) now, or, with `deferAdds`, in phase C through `_flushAdds()`. Observed.
+   * - Forward same-depth, different-symbol replacement: silent and atomic. Observed.
+   * - Forward removal with no replacement, and forward addition at a new depth: `removed` / `added`
+   *   as Flash does for RemoveObject / PlaceObject. Inferred, not exercised by the sample.
+   * Retained means same depth and same symbol.
+   */
+  _renderFrame(backward = false, deferAdds = false): void {
     const ctx = this.ctx;
     if (ctx === null) return;
+    const announce = this.rendered;
+    this.rendered = true;
+    this.pendingAdds = [];
     const entries: readonly DisplayListEntry[] = ctx.symbol.frames[this.frame - 1] ?? [];
     const wanted = new Set<number>();
     for (const e of entries) wanted.add(e.depth);
 
     for (const [depth, tl] of [...this.timelineChildren]) {
-      if (!wanted.has(depth)) this.removeTimelineChild(depth, tl);
+      if (!wanted.has(depth)) this.removeTimelineChild(depth, tl, announce);
     }
 
     for (const entry of entries) {
@@ -118,36 +140,63 @@ export class MovieClip extends Sprite {
         old.entry = entry;
         continue;
       }
-      if (old !== undefined) this.removeTimelineChild(entry.depth, old);
-      const child = ctx.hooks.createChild(entry);
-      ctx.hooks.applyMatrix(child, entry.matrix);
-      ctx.hooks.applyColorTransform(child, entry.colorTransform);
-      const index = this.indexForDepth(entry.depth);
-      attachChild(this, child, index);
-      this.timelineChildren.set(entry.depth, { child, entry });
-      ctx.hooks.childAttached(this, child, index);
-      this.expose(entry.name, child);
+      if (old !== undefined) this.removeTimelineChild(entry.depth, old, announce && backward);
+      // Silent only for a forward replacement at the same depth.
+      const events = announce && (backward || old === undefined);
+      if (backward && deferAdds && announce) {
+        this.pendingAdds.push(entry);
+        continue;
+      }
+      this.addTimelineChild(entry, events);
     }
   }
 
-  /** One tick: advance, render, ENTER_FRAME, frame script, then the children that existed before. */
+  /** Phase C: creates and announces the children whose addition `_renderFrame(.., true)` deferred. */
+  _flushAdds(): void {
+    const pending = this.pendingAdds;
+    this.pendingAdds = [];
+    for (const entry of pending) {
+      if (this.timelineChildren.has(entry.depth)) continue;
+      this.addTimelineChild(entry, true);
+    }
+  }
+  /**
+   * One tick over this clip and the clips below it, in the phases of design section 8 (G5):
+   * A advance, B enterFrame (children first), C frameConstructed (children first),
+   * D frame scripts (root first, only clips whose frame changed). exitFrame (E) is a separate
+   * children-first pass run by the Player (internal.exitFrame).
+   * The clips are a snapshot taken before the tick, so clips created during it are not stepped.
+   * Backward moves remove in A and add (`added`) in C, before `frameConstructed`.
+   */
   _step(): void {
-    const before = this._children.filter(isClip);
-    let entered = false;
-    if (this.isPlaying && this.totalFrames > 1) {
-      this.frame = this.frame >= this.totalFrames ? 1 : this.frame + 1;
-      this._renderFrame();
-      entered = true;
+    const pre = clipsPreOrder(this);
+    const post = clipsPostOrder(this);
+    const alive = (c: MovieClip): boolean => isAttachedTo(c, this);
+    const changed = new Set<MovieClip>();
+
+    // A. advance
+    for (const clip of pre) {
+      if (!alive(clip)) continue;
+      if (clip.isPlaying && clip.totalFrames > 1) {
+        const previous = clip.frame;
+        clip.frame = clip.frame >= clip.totalFrames ? 1 : clip.frame + 1;
+        clip._renderFrame(clip.frame < previous, true);
+        changed.add(clip);
+      }
     }
-    const e = new Event(Event.ENTER_FRAME);
-    this.dispatchEvent(e);
-    if (entered && this.ctx !== null) {
-      this.ctx.scripts.enqueue(this, this.frame);
-      this.ctx.scripts.drain();
+    // B. enterFrame, children first
+    for (const clip of post) if (alive(clip)) clip.dispatchEvent(new Event(Event.ENTER_FRAME));
+    // C. added for children created by backward moves, then frameConstructed, children first
+    for (const clip of post) if (alive(clip)) clip._flushAdds();
+    for (const clip of post) if (alive(clip)) clip.dispatchEvent(new Event(Event.FRAME_CONSTRUCTED));
+    // D. frame scripts, root first
+    let queuedFor: ConstructionContext | null = null;
+    for (const clip of pre) {
+      if (!changed.has(clip) || !alive(clip) || clip.ctx === null) continue;
+      clip.ctx.scripts.enqueue(clip, clip.frame);
+      queuedFor = clip.ctx;
     }
-    for (const child of before) {
-      if (child._parent === this) child._step();
-    }
+    queuedFor?.scripts.drain();
   }
 
   /** Dispatches EXIT_FRAME to this clip only. The runtime walks the tree (see internal.exitFrame). */
@@ -164,11 +213,19 @@ export class MovieClip extends Sprite {
       console.warn(`MovieClip: invalid frame or label: ${String(frame)}`);
       return false;
     }
+    const previous = this.frame;
     this.frame = target;
-    this._renderFrame();
-    if (this.ctx !== null) {
-      this.ctx.scripts.enqueue(this, target);
-      this.ctx.scripts.drain();
+    this._renderFrame(target < previous);
+    const ctx = this.ctx;
+    if (ctx === null) return true;
+    const cycle = ctx.cycle;
+    if (cycle === undefined || cycle.busy) {
+      ctx.scripts.enqueue(this, target);
+      ctx.scripts.drain();
+    } else {
+      // Goto_Extra_Cycle (design G7): the script runs inside the cycle, after frameConstructed.
+      if (target !== previous) ctx.scripts.enqueue(this, target);
+      cycle.runGotoCycle();
     }
     return true;
   }
@@ -198,10 +255,25 @@ export class MovieClip extends Sprite {
     return undefined;
   }
 
-  private removeTimelineChild(depth: number, tl: TimelineChild): void {
+  private removeTimelineChild(depth: number, tl: TimelineChild, events: boolean): void {
     this.timelineChildren.delete(depth);
     this.unexpose(tl.entry.name, tl.child);
+    if (events) announceRemoved(tl.child);
     if (detachChild(this, tl.child)) this.ctx?.hooks.childDetached(this, tl.child);
+  }
+
+  private addTimelineChild(entry: DisplayListEntry, events: boolean): void {
+    const ctx = this.ctx;
+    if (ctx === null) return;
+    const child = ctx.hooks.createChild(entry);
+    ctx.hooks.applyMatrix(child, entry.matrix);
+    ctx.hooks.applyColorTransform(child, entry.colorTransform);
+    const index = this.indexForDepth(entry.depth);
+    attachChild(this, child, index);
+    this.timelineChildren.set(entry.depth, { child, entry });
+    ctx.hooks.childAttached(this, child, index);
+    this.expose(entry.name, child);
+    if (events) announceAdded(child);
   }
 
   private expose(name: string, child: DisplayObject): void {
@@ -222,8 +294,4 @@ export class MovieClip extends Sprite {
       // Nothing to remove.
     }
   }
-}
-
-function isClip(o: DisplayObject): o is MovieClip {
-  return typeof (o as Partial<MovieClip>)._step === 'function';
 }

@@ -346,6 +346,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848678
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794412077663
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794412305671
       }
     ],
     "11.3 Add the Task 11 rows to `template/shim/ADDED_APIS.md`": [
@@ -353,6 +363,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848753
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794412305966
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794412489064
       }
     ],
     "12.1 Record the user's decisions on the event order (no stop, no approval needed)": [
@@ -360,6 +380,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848832
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794412489777
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794412495585
       }
     ],
     "12.2 Dispatch `added`, `addedToStage` and real bubbling (G3, G6 dispatch part)": [
@@ -367,6 +397,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848918
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794412499188
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794413266722
       }
     ],
     "12.3 Implement the five-phase frame step, the initial build and children-first `exitFrame` (G4, G5, G5b)": [
@@ -374,6 +414,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848995
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794413267328
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794413645847
       }
     ],
     "12.4 Dispatch timeline `removed` and `added` on backward moves and gotos (G6 timeline part)": [
@@ -381,6 +431,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408849068
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794413646211
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794414714560
       }
     ],
     "12.5 Add the remaining rows to `template/shim/ADDED_APIS.md`": [
@@ -388,6 +448,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408849150
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794414715136
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794414799940
       }
     ],
     "12.7 Implement Goto_Extra_Cycle (G7; design section 8, \"G7: Goto_Extra_Cycle\")": [
@@ -395,6 +465,11 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408849231
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794414805860
       }
     ],
     "13.1 Implement `verifyStage.ts`": [
@@ -479,6 +554,13 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794411195990
+      }
+    ],
+    "11. Shim: Event text and root name (design section 8, G1 and G2)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794412489289
       }
     ]
   }

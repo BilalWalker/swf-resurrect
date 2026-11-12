@@ -11,7 +11,24 @@ export class Event {
   static readonly RENDER = 'render';
   target: EventDispatcher | null = null;
   currentTarget: EventDispatcher | null = null;
-  constructor(readonly type: string) {}
+  bubbles: boolean;
+  cancelable: boolean;
+  eventPhase: number;
+
+  constructor(
+    readonly type: string,
+    bubbles?: boolean,
+    cancelable = false,
+    eventPhase = 2,
+  ) {
+    this.bubbles = bubbles ?? (type === 'added' || type === 'removed' || type === 'click');
+    this.cancelable = cancelable;
+    this.eventPhase = eventPhase;
+  }
+
+  toString(): string {
+    return `[Event type="${this.type}" bubbles=${this.bubbles} cancelable=${this.cancelable} eventPhase=${this.eventPhase}]`;
+  }
 }
 
 export class MouseEvent extends Event {
@@ -52,6 +69,10 @@ export class EventDispatcher {
   dispatchEvent(e: Event): void {
     e.target = this;
     e.currentTarget = this;
+    this._deliver(e);
+  }
+  /** Internal: calls this object's listeners for the event without touching target, currentTarget or eventPhase. */
+  _deliver(e: Event): void {
     const snapshot = this.listeners.get(e.type)?.slice();
     if (snapshot === undefined) return;
     for (const listener of snapshot) listener(e);

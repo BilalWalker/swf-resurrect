@@ -1,6 +1,7 @@
 // Internal API used by the runtime. Not re-exported from index.ts; translated code never sees it.
 import type { DisplayListEntry, SpriteSymbol } from '../runtime/scene';
 import type { DisplayObject } from './DisplayObject';
+import { Event } from './events';
 import type { MovieClip } from './MovieClip';
 import type { DisplayObjectContainer } from './Sprite';
 
@@ -22,11 +23,23 @@ export interface ClipScripts {
   drain(): void;
 }
 
+/**
+ * Goto_Extra_Cycle support (design section 8, G7). Supplied by the Player only; clips built
+ * without a Player have no cycle and keep the plain goto behaviour.
+ */
+export interface ClipCycle {
+  /** True while a frame step, the initial build or another cycle is on the call stack. */
+  readonly busy: boolean;
+  /** frameConstructed, queued frame scripts, exitFrame over the whole stage tree. */
+  runGotoCycle(): void;
+}
+
 export interface ConstructionContext {
   symbol: SpriteSymbol;
   symbolId: number;
   scripts: ClipScripts;
   hooks: ClipHooks;
+  cycle?: ClipCycle;
 }
 
 let current: ConstructionContext | null = null;
@@ -61,7 +74,10 @@ export function attachChild(parent: DisplayObjectContainer, child: DisplayObject
 /** Removes `child` from `parent` if it is still a child. Returns whether it was removed. */
 export function detachChild(parent: DisplayObjectContainer, child: DisplayObject): boolean {
   if (child._parent !== parent) return false;
-  parent.removeChild(child);
+  // No events here: the timeline decides when `removed` fires (design section 8, G6).
+  const i = parent._children.indexOf(child);
+  if (i >= 0) parent._children.splice(i, 1);
+  child._parent = null;
   return true;
 }
 
@@ -70,23 +86,58 @@ export function renderFrame(mc: MovieClip): void {
   mc._renderFrame();
 }
 
+function isClipLike(o: DisplayObject): boolean {
+  return typeof (o as Partial<MovieClip>)._exitFrame === 'function';
+}
+
+/** Snapshot of every MovieClip under `root` (root included), parents before children, display order. */
+export function clipsPreOrder(root: MovieClip): MovieClip[] {
+  const out: MovieClip[] = [];
+  const walk = (o: DisplayObject): void => {
+    if (!isClipLike(o)) return;
+    out.push(o as MovieClip);
+    for (const c of [...(o as MovieClip)._children]) walk(c);
+  };
+  walk(root);
+  return out;
+}
+
+/** Snapshot of every MovieClip under `root` (root included), children first in display order, root last. */
+export function clipsPostOrder(root: MovieClip): MovieClip[] {
+  const out: MovieClip[] = [];
+  const walk = (o: DisplayObject): void => {
+    if (!isClipLike(o)) return;
+    for (const c of [...(o as MovieClip)._children]) walk(c);
+    out.push(o as MovieClip);
+  };
+  walk(root);
+  return out;
+}
+
+/** True when `o` is `root` or still a descendant of it. */
+export function isAttachedTo(o: DisplayObject, root: DisplayObject): boolean {
+  for (let p: DisplayObject | null = o; p !== null; p = p._parent) if (p === root) return true;
+  return false;
+}
+
 /**
- * EXIT_FRAME pass: snapshots every MovieClip under `root` (pre-order, root included), then
- * dispatches EXIT_FRAME once to each one that is still attached to `root`.
+ * EXIT_FRAME pass: snapshots every MovieClip under `root`, children first (post-order, root last),
+ * then dispatches EXIT_FRAME once to each one that is still attached to `root`.
+ * User decision (a), verify task 12.1: children-first, because reference/output.txt lines 13-15 and
+ * 29-31 show the children's exitFrame before the root's (Requirement 8.9).
  */
 export function exitFrame(root: MovieClip): void {
-  const clips: MovieClip[] = [];
-  const collect = (o: DisplayObject): void => {
-    if (typeof (o as Partial<MovieClip>)._exitFrame !== 'function') return;
-    clips.push(o as MovieClip);
-    for (const c of (o as MovieClip)._children) collect(c);
-  };
-  collect(root);
-  const attached = (o: DisplayObject): boolean => {
-    for (let p: DisplayObject | null = o; p !== null; p = p._parent) if (p === root) return true;
-    return false;
-  };
-  for (const clip of clips) if (attached(clip)) clip._exitFrame();
+  for (const clip of clipsPostOrder(root)) if (isAttachedTo(clip, root)) clip._exitFrame();
+}
+
+/**
+ * FRAME_CONSTRUCTED pass: snapshots every MovieClip under `root`, children first, then dispatches
+ * the event once to each one that is still attached to `root` (Goto_Extra_Cycle, design G7).
+ */
+export function frameConstructed(root: MovieClip): void {
+  for (const clip of clipsPostOrder(root)) {
+    if (isAttachedTo(clip, root)) clip.dispatchEvent(new Event(Event.FRAME_CONSTRUCTED));
+  }
 }
 
 /** Advances one tick for `mc` and every clip below it. */

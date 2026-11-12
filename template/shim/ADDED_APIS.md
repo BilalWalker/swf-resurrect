@@ -16,5 +16,20 @@ APIs added to the Shim beyond the vertical-slice surface. Each row cites a line 
 | `_exitFrame` | Supports `Event.EXIT_FRAME`: the runtime's EXIT_FRAME pass dispatches it, so the listener added at `EventWatcher.as:23` fires once per clip per tick |
 | `getChildAt` | `MainTimeline.as:36` |
 | `Shape` | `MainTimeline.as:51` |
+| `Event.bubbles` | `EventWatcher.as:17` (`Event.toString` prints it into the trace text) |
+| `Event.cancelable` | `EventWatcher.as:17` (`Event.toString` prints it into the trace text) |
+| `Event.eventPhase` | `EventWatcher.as:17` (`Event.toString` prints it into the trace text) |
+| `Event.toString` | `EventWatcher.as:17` (concatenating `event` into the trace text calls it) |
+| `DisplayObject.dispatchEvent` (bubbling) | `EventWatcher.as:24`, `:27` (the root's listeners must hear a child's `added`/`removed` at `eventPhase` 3, with `target` still the child); `EventWatcher.as:17` prints the phase (`reference/output.txt:174-175`) |
+| `_isStageRoot` | `EventWatcher.as:25`: the Player marks the root so `addedToStage` is dispatched only for objects whose parent chain ends there |
+| `_onStage` | Supports `_isStageRoot`: walks the parent chain; gates `addedToStage` (`EventWatcher.as:25`) and `removedFromStage` (`EventWatcher.as:28`) |
+| `added` / `removed` dispatch (`announceAdded`, `announceRemoved`) | `EventWatcher.as:24`, `:27`: `addChild`, `removeChild` and timeline child changes dispatch them on the child, bubbling |
+| `_deliver` | Supports bubbling `dispatchEvent`: runs the listeners of one object for one phase |
+| `_flushAdds` | Supports `Event.ADDED` (`EventWatcher.as:24`): adds from backward timeline moves are announced in phase C, before `frameConstructed` |
+| `frameConstructed` phase | `EventWatcher.as:26`: dispatched in phase C of each tick and after the initial build, children first, at the target only |
+| `ConstructionContext.cycle` / `ClipCycle` | `LeftButton.as:21` (`this.gotoAndStop(2)`), `:23` (`this.parent.r_button.gotoAndStop(1)`): a script goto outside the frame step runs one Goto_Extra_Cycle when it returns; clips built without a Player have no cycle |
+| `internal.frameConstructed` | Supports `ClipCycle`: the cycle's `frameConstructed` pass, children first (`LeftButton.as:21`, `:23`) |
 
-Only `EXIT_FRAME` is dispatched, once per clip per tick, by the EXIT_FRAME pass after `root._step()`. The other new `Event` constants are accepted by `addEventListener` and never dispatched.
+`EXIT_FRAME` is dispatched once per clip per tick by the EXIT_FRAME pass after `root._step()`. `ADDED`, `REMOVED`, `ADDED_TO_STAGE`, `REMOVED_FROM_STAGE` and `FRAME_CONSTRUCTED` are dispatched as in the rows above. `RENDER` is accepted by `addEventListener` and never dispatched.
+
+Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handler, or user code between `update()` calls) now runs an extra cycle when the call returns: `frameConstructed` children first, the queued frame script (only if the frame changed), then `exitFrame` children first. No `enterFrame` and no clip advances. A goto inside a frame step, the initial build or another cycle starts no cycle.

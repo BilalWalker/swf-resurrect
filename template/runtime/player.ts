@@ -1,8 +1,12 @@
 import type { DisplayObject } from '../shim/DisplayObject';
-import { MouseEvent } from '../shim/events';
+import { Event, MouseEvent } from '../shim/events';
 import {
+  clipsPostOrder,
+  clipsPreOrder,
   exitFrame,
+  frameConstructed,
   withConstructionContext,
+  type ClipCycle,
   type ClipHooks,
   type ConstructionContext,
 } from '../shim/internal';
@@ -48,32 +52,83 @@ export class Player {
   private readonly reportedMissing = new Set<number>();
   private readonly shapeBounds: ReadonlyMap<number, ShapeBounds>;
   private warnedSkew = false;
+  /** Depth of frame-step, initial-build and cycle calls on the stack (design G7 guard). */
+  private busyCount = 0;
+  private readonly cycle: ClipCycle = ((player: Player): ClipCycle => ({
+    get busy(): boolean {
+      return player.busyCount > 0;
+    },
+    runGotoCycle: () => player.runGotoCycle(),
+  }))(this);
   private lastNow: number;
   private accumulator = 0;
 
   constructor(options: PlayerOptions) {
-    this.backend = options.backend;
-    this.clock = options.clock;
-    this.classRegistry = options.classRegistry;
-    this.shapeBounds = options.shapeBounds;
-    this.maxCatchUp = Math.max(1, options.maxCatchUpFrames ?? DEFAULT_MAX_CATCH_UP);
-    this.frameIntervalMs = 1000 / options.scene.stage.frameRate;
-    this.scene = this.withoutUnrenderableEntries(options.scene);
-    this.hooks = {
-      createChild: (entry) => this.createChild(entry),
-      childAttached: (parent, child, index) => this.attach(parent, child, index),
-      childDetached: (parent, child) => this.detach(parent, child),
-      applyMatrix: (child, m) => this.applyMatrix(child, m),
-      applyColorTransform: (child, ct) => this.applyColor(child, ct),
-    };
-    this.lastNow = this.clock.now();
+    this.busyCount++;
+    try {
+      this.backend = options.backend;
+      this.clock = options.clock;
+      this.classRegistry = options.classRegistry;
+      this.shapeBounds = options.shapeBounds;
+      this.maxCatchUp = Math.max(1, options.maxCatchUpFrames ?? DEFAULT_MAX_CATCH_UP);
+      this.frameIntervalMs = 1000 / options.scene.stage.frameRate;
+      this.scene = this.withoutUnrenderableEntries(options.scene);
+      this.hooks = {
+        createChild: (entry) => this.createChild(entry),
+        childAttached: (parent, child, index) => this.attach(parent, child, index),
+        childDetached: (parent, child) => this.detach(parent, child),
+        applyMatrix: (child, m) => this.applyMatrix(child, m),
+        applyColorTransform: (child, ct) => this.applyColor(child, ct),
+      };
+      this.lastNow = this.clock.now();
 
-    const rootSymbol = this.scene.symbols[String(this.scene.rootSymbolId)];
-    if (rootSymbol === undefined || rootSymbol.type !== 'sprite') {
-      throw new Error(`Player: root symbol ${this.scene.rootSymbolId} is not a sprite`);
+      const rootSymbol = this.scene.symbols[String(this.scene.rootSymbolId)];
+      if (rootSymbol === undefined || rootSymbol.type !== 'sprite') {
+        throw new Error(`Player: root symbol ${this.scene.rootSymbolId} is not a sprite`);
+      }
+      // The root is named before frame 1 builds its children or runs any script (Requirement 8.3).
+      this.root = this.createClip(this.scene.rootSymbolId, rootSymbol, 'root1');
+      this.initialBuild();
+      this.syncAll();
+    } finally {
+      this.busyCount--;
     }
-    this.root = this.createClip(this.scene.rootSymbolId, rootSymbol);
-    this.syncAll();
+  }
+
+  /** Goto_Extra_Cycle (design G7): frameConstructed, queued frame scripts, exitFrame. No enterFrame, no advance. */
+  private runGotoCycle(): void {
+    this.busyCount++;
+    try {
+      frameConstructed(this.root);
+      this.scripts.drain();
+      exitFrame(this.root);
+    } finally {
+      this.busyCount--;
+    }
+  }
+
+  /**
+   * Step 0 of the Reference_Trace (design G5b, reference/output.txt lines 1 to 12): after the whole
+   * tree is built, `added` + `addedToStage` per clip children first, then `frameConstructed`
+   * children first, then the frame-1 scripts root first. The first two are delivered at the target
+   * only, with no bubbling (eventPhase 2), because Flash has not run the ancestors' constructors yet.
+   * The exitFrame pass of tick 0 is run by the Replay (decision (b), Requirement 6.3), not here.
+   */
+  private initialBuild(): void {
+    const post = clipsPostOrder(this.root);
+    const atTarget = (o: DisplayObject, type: string): void => {
+      const e = new Event(type);
+      e.target = o;
+      e.currentTarget = o;
+      o._deliver(e);
+    };
+    for (const clip of post) {
+      atTarget(clip, Event.ADDED);
+      atTarget(clip, Event.ADDED_TO_STAGE);
+    }
+    for (const clip of post) clip.dispatchEvent(new Event(Event.FRAME_CONSTRUCTED));
+    for (const clip of clipsPreOrder(this.root)) this.scripts.enqueue(clip, 1);
+    this.scripts.drain();
   }
 
   /** Backend node of the root clip; the adapter adds it to the stage. */
@@ -88,11 +143,16 @@ export class Player {
     this.lastNow = now;
 
     let steps = 0;
-    while (this.accumulator >= this.frameIntervalMs - EPSILON_MS && steps < this.maxCatchUp) {
-      this.accumulator -= this.frameIntervalMs;
-      steps++;
-      this.root._step();
-      exitFrame(this.root);
+    this.busyCount++;
+    try {
+      while (this.accumulator >= this.frameIntervalMs - EPSILON_MS && steps < this.maxCatchUp) {
+        this.accumulator -= this.frameIntervalMs;
+        steps++;
+        this.root._step();
+        exitFrame(this.root);
+      }
+    } finally {
+      this.busyCount--;
     }
     if (this.accumulator >= this.frameIntervalMs - EPSILON_MS) {
       // Stalled for longer than the cap allows: drop the rest.
@@ -107,19 +167,15 @@ export class Player {
     const hit = hitTest(buildHitView(this.root), stageX, stageY);
     if (hit === null) return;
     const target = hit.source;
-    const e = new MouseEvent(MouseEvent.CLICK);
-    // dispatchEvent rewrites target; keep the hit object as the target through the bubbling.
-    Object.defineProperty(e, 'target', { get: () => target, set: () => undefined, configurable: true });
-    for (let cur: DisplayObject | null = target; cur !== null; cur = cur._parent) {
-      cur.dispatchEvent(e);
-    }
+    // One dispatch: at the hit object, then bubbling through its ancestors.
+    target.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
     this.syncAll();
   }
 
   // ---- instance creation ----
 
-  private createClip(symbolId: number, symbol: SpriteSymbol): MovieClip {
-    const ctx: ConstructionContext = { symbol, symbolId, scripts: this.scripts, hooks: this.hooks };
+  private createClip(symbolId: number, symbol: SpriteSymbol, instanceName?: string): MovieClip {
+    const ctx: ConstructionContext = { symbol, symbolId, scripts: this.scripts, hooks: this.hooks, cycle: this.cycle };
     let Cls: new () => MovieClip = MovieClip;
     if (symbol.className !== undefined) {
       const linked = this.classRegistry[symbol.className];
@@ -127,11 +183,15 @@ export class Player {
       else console.warn(`Player: class "${symbol.className}" is not in the registry; using MovieClip`);
     }
     const mc = withConstructionContext(ctx, () => new Cls());
+    if (instanceName !== undefined) {
+      mc.name = instanceName;
+      // Only the root is created with an instance name; it is the stage root (Requirement 8.4).
+      mc._isStageRoot = true;
+    }
     this.nodes.register(mc, this.backend.createContainer());
     // Frame 1: creates and binds the children (named children are exposed as properties as they are made).
+    // Events and frame-1 scripts wait until the whole tree exists (initialBuild, design G5b).
     mc._renderFrame();
-    this.scripts.enqueue(mc, 1);
-    this.scripts.drain();
     return mc;
   }
 

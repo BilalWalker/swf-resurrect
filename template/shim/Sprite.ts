@@ -1,4 +1,5 @@
 import { DisplayObject } from './DisplayObject';
+import { Event } from './events';
 
 export class DisplayObjectContainer extends DisplayObject {
   _children: DisplayObject[] = [];
@@ -15,14 +16,20 @@ export class DisplayObjectContainer extends DisplayObject {
     child._parent?.removeChild(child);
     this._children.push(child);
     child._parent = this;
+    announceAdded(child);
     return child;
   }
 
   removeChild<T extends DisplayObject>(child: T): T {
     const i = this._children.indexOf(child);
     if (i < 0) throw new Error('removeChild: the object is not a child of this container');
-    this._children.splice(i, 1);
-    child._parent = null;
+    announceRemoved(child);
+    // A listener may have moved the child; remove it only if it is still ours.
+    const j = this._children.indexOf(child);
+    if (j >= 0) {
+      this._children.splice(j, 1);
+      child._parent = null;
+    }
     return child;
   }
 
@@ -42,3 +49,29 @@ export class DisplayObjectContainer extends DisplayObject {
 }
 
 export class Sprite extends DisplayObjectContainer {}
+
+/** The child and its descendants, pre-order. */
+function subtree(o: DisplayObject): DisplayObject[] {
+  const out: DisplayObject[] = [];
+  const walk = (n: DisplayObject): void => {
+    out.push(n);
+    for (const c of (n as Partial<DisplayObjectContainer>)._children ?? []) walk(c);
+  };
+  walk(o);
+  return out;
+}
+
+/** Dispatches `added` on child, then `addedToStage` on it and its descendants when it is on the stage. */
+export function announceAdded(child: DisplayObject): void {
+  child.dispatchEvent(new Event(Event.ADDED));
+  if (!child._onStage()) return;
+  for (const o of subtree(child)) o.dispatchEvent(new Event(Event.ADDED_TO_STAGE));
+}
+
+/** Dispatches `removed` on child (still attached), then `removedFromStage` on its subtree when it is on the stage. */
+export function announceRemoved(child: DisplayObject): void {
+  const onStage = child._onStage();
+  child.dispatchEvent(new Event(Event.REMOVED));
+  if (!onStage) return;
+  for (const o of subtree(child)) o.dispatchEvent(new Event(Event.REMOVED_FROM_STAGE));
+}

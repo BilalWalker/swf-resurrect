@@ -12,8 +12,8 @@ import { splitTraceLines } from '../../src/verify/core/traceFormat';
 import { replay, type ReplayResult } from '../../src/verify/edge/replay';
 import { emitFixtureProject, type EmittedFixtureProject } from '../support/emitFixtureProject';
 
-/** Measured Trace_Score at task 10.2; raised by later tasks when the score rises. */
-const TRACE_SCORE_FLOOR = 27.37;
+/** Measured Trace_Score (task 12.7: 665 matched, 11 missing, 11 extra); raised by later tasks when the score rises. */
+const TRACE_SCORE_FLOOR = 98.37;
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const refDir = resolve(repoRoot, 'samples/clickgoto/reference');
@@ -81,6 +81,22 @@ describe('clickgoto Replay', () => {
 
   it('leaves the reference files byte-unchanged', () => {
     expect(after).toEqual(before);
+  });
+
+  it('runs a Goto_Extra_Cycle at each click tick (G7)', () => {
+    // KNOWN_BEHAVIOUR_GAPS is empty, so the cycle must be present: frameConstructed, then the
+    // frame script (when the frame changed), then exitFrame, then the Container lines.
+    for (const tick of [3, 7, 12, 14, 20]) {
+      const texts = first.lines.filter((l) => l.tick === tick).map((l) => l.text);
+      const click = texts.findIndex((t) => t.includes('clicked'));
+      expect(click).toBeGreaterThanOrEqual(0);
+      const after = texts.slice(click);
+      const fc = after.findIndex((t) => t.includes('type="frameConstructed"'));
+      const ex = after.findIndex((t) => t.includes('type="exitFrame"'));
+      expect(fc).toBeGreaterThan(0);
+      expect(ex).toBeGreaterThan(fc);
+      expect(after.slice(ex).some((t) => t.startsWith('/// (Container: root1'))).toBe(true);
+    }
   });
 
   it('meets the Trace_Score floor', () => {

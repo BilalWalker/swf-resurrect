@@ -231,8 +231,8 @@ Rules that apply to every task:
     - If a click lands on the wrong button or tick, stop and ask: the design predicted the ticks from `output.txt`.
     - _Requirements: 6.10, 6.13, 6.14, 13.1, 13.5_
 
-- [ ] 11. Shim: Event text and root name (design section 8, G1 and G2)
-  - [~] 11.1 Add `bubbles`, `cancelable`, `eventPhase`, `Event.toString()` and `root1`
+- [x] 11. Shim: Event text and root name (design section 8, G1 and G2)
+  - [x] 11.1 Add `bubbles`, `cancelable`, `eventPhase`, `Event.toString()` and `root1`
     - In `template/shim/events.ts` give `Event` the fields and defaults of Requirement 8.2 (optional constructor overrides) and `toString()` returning `[Event type="<type>" bubbles=<bool> cancelable=<bool> eventPhase=<n>]`. `MouseEvent` inherits it.
     - In `template/runtime/player.ts` set `root.name = 'root1'` right after the root is created and before any event.
     - Run `npm run typecheck:template`, `npm run typecheck`, the full tests, and the Replay test. If the trace score rose, raise `TRACE_SCORE_FLOOR` in the same commit; never lower it. Existing tests stay green, including the Click_Oracle rows.
@@ -243,7 +243,7 @@ Rules that apply to every task:
     - **Property 13: Event text has the Flash format**
     - **Validates: Requirements 8.1**
 
-  - [~] 11.3 Add the Task 11 rows to `template/shim/ADDED_APIS.md`
+  - [x] 11.3 Add the Task 11 rows to `template/shim/ADDED_APIS.md`
     - Add rows for `Event.bubbles`, `Event.cancelable`, `Event.eventPhase` and `Event.toString`, each with the fixture line that needs it (`EventWatcher.as:17`). Do not list an API that was not added.
     - _Requirements: 8.10_
 
@@ -251,29 +251,29 @@ Rules that apply to every task:
     - In `test/unit/eventDefaults.test.ts`: `added`, `removed`, click bubble, other types do not; `cancelable` false; root `name === 'root1'` before the first event; a loose clip outside a Player keeps its own name.
     - _Requirements: 8.2, 8.3_
 
-- [ ] 12. Shim: lifecycle events and per-frame order (design section 8, G3 to G6, G5b)
-  - [~] 12.1 Record the user's decisions on the event order (no stop, no approval needed)
+- [x] 12. Shim: lifecycle events and per-frame order (design section 8, G3 to G6, G5b)
+  - [x] 12.1 Record the user's decisions on the event order (no stop, no approval needed)
     - The user has answered the open design items. Do not ask again and do not stop. Write the three decisions into the commit message of Task 12.3 (and cite them in the code comments where they apply): (a) `exitFrame` is children-first, and the one pre-order expectation in `test/unit/exitFrame.test.ts` (`['root', 'a', 'b']`) changes to children-first (`['b', 'a', 'root']`), because `reference/output.txt` lines 13 to 15 and 29 to 31 show children first (Requirement 8.9); (b) Replay tick 0 is construction plus one `exitFrame(root)` with no clock advance and no `Player.update()`, as the Replay_Tick definition and Requirement 6.3 say; (c) G7 (Goto_Extra_Cycle) is in scope and is implemented in Task 12.7.
     - This sub-task edits no file by itself and has nothing to run. Tasks 12.2 to 12.7 do not wait on any answer.
     - _Requirements: 6.3, 8.6, 8.9, 8.11, 12.8_
 
-  - [~] 12.2 Dispatch `added`, `addedToStage` and real bubbling (G3, G6 dispatch part)
+  - [x] 12.2 Dispatch `added`, `addedToStage` and real bubbling (G3, G6 dispatch part)
     - In `template/shim/DisplayObject.ts`, `Sprite.ts`, `internal.ts`: `addChild` dispatches `added` on the child, then `addedToStage` on the child and its descendants when the parent chain ends at a root marked `_isStageRoot` (set by the Player). `dispatchEvent` delivers at the target (`eventPhase` 2) and, when `bubbles`, walks `_parent` delivering to each ancestor with `eventPhase` 3 and `currentTarget` set; `target` stays the origin. `Player.dispatchClick` calls it once instead of walking the parents by hand. `removeChild` dispatches `removed` (then `removedFromStage` when on stage); `detachChild` no longer calls the public `removeChild`.
     - Run all tests and the Replay test; raise the floor if the score rose.
     - _Requirements: 8.2, 8.4, 8.9, 8.10, 13.6_
 
-  - [~] 12.3 Implement the five-phase frame step, the initial build and children-first `exitFrame` (G4, G5, G5b)
+  - [x] 12.3 Implement the five-phase frame step, the initial build and children-first `exitFrame` (G4, G5, G5b)
     - Change `MovieClip._step()` into the phases A to D of the design table over a snapshot of the clips that existed before the tick, and `internal.exitFrame` to children-first order. `Player.createClip` stops draining scripts; after the whole tree is built the Player runs `added` plus `addedToStage` post-order (at the target only), `frameConstructed` post-order, then frame-1 scripts root first. `frameConstructed` is also dispatched in phase C of each tick.
     - Update the single expectation in `test/unit/exitFrame.test.ts` to children-first (decision recorded in Task 12.1; Requirement 8.9). Put decisions (a) to (c) of Task 12.1 in the commit message. Keep every other existing test unchanged.
     - Run all tests and the Replay test; raise the floor if the score rose.
     - _Requirements: 8.5, 8.6, 8.8, 8.9, 13.6_
 
-  - [~] 12.4 Dispatch timeline `removed` and `added` on backward moves and gotos (G6 timeline part)
+  - [x] 12.4 Dispatch timeline `removed` and `added` on backward moves and gotos (G6 timeline part)
     - In `template/shim/MovieClip.ts`: a backward frame change (wrap or goto to an earlier frame) removes each non-retained timeline child with `removed` in phase A (and `removedFromStage` when on stage) and adds the new ones in phase C. A forward same-depth, different-symbol replacement stays silent and atomic. A script `gotoAndStop` or `gotoAndPlay` that moves backward does the same at once. Retained means same depth and same symbol, as `_renderFrame` already tests. Forward removal without replacement and forward addition at a new depth follow Flash and are marked **inferred** in the code comment.
     - Run all tests and the Replay test; raise the floor if the score rose. G7 is implemented in Task 12.7, not here.
     - _Requirements: 8.4, 8.6, 8.8, 8.9, 13.6_
 
-  - [~] 12.7 Implement Goto_Extra_Cycle (G7; design section 8, "G7: Goto_Extra_Cycle")
+  - [x] 12.7 Implement Goto_Extra_Cycle (G7; design section 8, "G7: Goto_Extra_Cycle")
     - Read design section 8 G7 in full first, and lines 67 to 88 and 284 to 310 of `samples/clickgoto/reference/output.txt`. Do the work as its own change set touching only Shim and Player files plus tests, so it can be undone alone.
     - Before editing, run the clickgoto Replay test and record the Trace_Score and the `matched` count (after Tasks 12.2 to 12.4).
     - Add the optional `cycle?: ClipCycle` member (`readonly busy: boolean`, `runGotoCycle(): void`) to `ConstructionContext` in `template/shim/internal.ts`, and add `internal.frameConstructed` (post-order over a snapshot of the MovieClips under the root, delivered to those still attached). In `MovieClip.goto`: with no `cycle` or `cycle.busy`, today's code (enqueue and drain); otherwise enqueue only when the frame changed, do not drain, and call `cycle.runGotoCycle()` after `_renderFrame()`. The cycle also runs when the target frame equals the current frame.
@@ -289,7 +289,7 @@ Rules that apply to every task:
     - In `test/unit/gotoExtraCycle.test.ts`: with a Player, a goto from `dispatchClick` runs `frameConstructed` (children first), the queued frame script, then `exitFrame` (children first), with no `enterFrame`; a goto to the current frame runs the cycle without a script; two sequential gotos run two cycles in order; a goto inside a frame step phase, inside a frame script or inside a cycle starts no cycle; a throwing listener leaves the Player usable (`busy` restored); a clip built without a Player keeps today's behaviour (no extra events). If Task 12.7 was reverted, mark these tests skipped with the reason.
     - _Requirements: 8.11_
 
-  - [~] 12.5 Add the remaining rows to `template/shim/ADDED_APIS.md`
+  - [x] 12.5 Add the remaining rows to `template/shim/ADDED_APIS.md`
     - Add rows for `DisplayObject` bubbling `dispatchEvent`, `_isStageRoot` (`EventWatcher.as:25`), the `added`/`removed` dispatch (`EventWatcher.as:24`, `:27`) and the `frameConstructed` phase (`EventWatcher.as:26`), each with the fixture line that needs it.
     - _Requirements: 8.10_
 

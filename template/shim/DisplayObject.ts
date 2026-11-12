@@ -1,4 +1,4 @@
-import { EventDispatcher } from './events';
+import { EventDispatcher, type Event } from './events';
 import type { DisplayObjectContainer } from './Sprite';
 
 export class DisplayObject extends EventDispatcher {
@@ -17,6 +17,8 @@ export class DisplayObject extends EventDispatcher {
   /** Maintained by DisplayObjectContainer only. */
   _parent: DisplayObjectContainer | null = null;
 
+  /** Set by the Player on the root clip only. A clip is on the stage when its parent chain ends at such a root. */
+  _isStageRoot = false;
   private _alpha = 1;
 
   get alpha(): number {
@@ -42,6 +44,29 @@ export class DisplayObject extends EventDispatcher {
     if (this._intrinsicHeight > 0 && Number.isFinite(v)) this.scaleY = v / this._intrinsicHeight;
   }
 
+  /**
+   * Delivers at the target (eventPhase 2) and, when the event bubbles, to each ancestor in turn
+   * (eventPhase 3, currentTarget set). The target stays this object. The ancestor chain is
+   * taken before delivery starts, so listeners that re-parent objects do not change it.
+   */
+  override dispatchEvent(e: Event): void {
+    e.target = this;
+    e.eventPhase = 2;
+    e.currentTarget = this;
+    const ancestors: DisplayObject[] = [];
+    if (e.bubbles) for (let p = this._parent; p !== null; p = p._parent) ancestors.push(p);
+    this._deliver(e);
+    for (const p of ancestors) {
+      e.eventPhase = 3;
+      e.currentTarget = p;
+      p._deliver(e);
+    }
+  }
+  /** True when the parent chain (this object included) ends at a root marked by the Player. */
+  _onStage(): boolean {
+    for (let p: DisplayObject | null = this; p !== null; p = p._parent) if (p._isStageRoot) return true;
+    return false;
+  }
   get parent(): DisplayObjectContainer | null {
     return this._parent;
   }
