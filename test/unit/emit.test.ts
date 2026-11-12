@@ -190,6 +190,24 @@ describe('emit', () => {
     expect(await readFile(join(out, 'assets', 'scene.json'), 'utf8')).toBe(serialiseScene(scene));
   });
 
+  it('walks the override directory recursively and matches a/b/Cls.ts to a.b.Cls', async () => {
+    const hw = join(root, 'hw');
+    await mkdir(join(hw, 'a', 'b'), { recursive: true });
+    await writeFile(join(hw, 'a', 'b', 'Cls.ts'), 'nested\n');
+    await writeFile(join(hw, 'LeftButton.ts'), 'left\n');
+    await writeFile(join(hw, '.gitkeep'), '');
+    const s: SceneJson = {
+      ...scene,
+      symbols: { ...scene.symbols, '4': { type: 'sprite', className: 'a.b.Cls', frameCount: 1, labels: [], frames: [[]] } },
+    };
+    const art = { ...(await artifact()), scene: s };
+    const out = join(root, 'out-hw');
+    const result = await emit(art, { ...(await options(out)), handwrittenDir: hw });
+    expect(result.files).toContain('src/a/b/Cls.ts');
+    expect(result.files).toContain('src/LeftButton.ts');
+    expect(result.classPaths.map((c) => c.className)).toEqual(['LeftButton', 'a.b.Cls']);
+    expect(await readFile(join(out, 'src', 'a', 'b', 'Cls.ts'), 'utf8')).toBe('nested\n');
+  });
   it('refuses a non-empty directory without force and leaves it untouched', async () => {
     const out = join(root, 'out');
     await mkdir(out, { recursive: true });
@@ -241,5 +259,80 @@ describe('emit', () => {
     await mkdir(out, { recursive: true });
     const result = await emit(await artifact(), await options(out));
     expect(result.files).toContain('package.json');
+  });
+});
+
+describe('planEmit: class paths', () => {
+  const tc = (className: string, text = 'x\n') => ({ className, fileName: className + '.ts', text, diagnostics: [], spans: [], extendsName: null, extendsQualified: null, importRecords: [] });
+  const sceneWith = (...names: string[]): SceneJson => ({
+    ...scene,
+    symbols: {
+      ...scene.symbols,
+      ...Object.fromEntries(names.map((n, i) => [String(10 + i), { type: 'sprite', className: n, frameCount: 1, labels: [], frames: [[]] }])),
+    },
+  });
+  const planFor = (names: string[], extra: Partial<EmitInput> = {}) => {
+    const s = sceneWith(...names);
+    return planEmitDetailed(
+      { ...input, scene: s, sceneJson: serialiseScene(s), translated: names.map((n) => tc(n)), handwritten: [], ...extra },
+      svgs,
+    );
+  };
+
+  it('writes a class named Main at src/Main.class.ts, registers it, and leaves src/main.ts alone', () => {
+    const plan = planFor(['Main'], { templates: [...input.templates, { path: 'src/main.ts', content: 'boot\n' }] });
+    const paths = plan.files.map((f) => f.path);
+    expect(paths).toContain('src/Main.class.ts');
+    expect(plan.files.find((f) => f.path === 'src/main.ts')?.content).toBe('boot\n');
+    expect(plan.files.find((f) => f.path === 'src/classes.ts')?.content).toContain("import { Main } from './Main.class';");
+    expect(plan.classPaths).toEqual([{ className: 'Main', originalPath: 'src/Main.ts', path: 'src/Main.class.ts' }]);
+  });
+
+  it('keeps main.Main and Main apart at the directory level', () => {
+    const plan = planFor(['Main', 'main.Main'], { templates: [...input.templates, { path: 'src/main.ts', content: 'boot\n' }] });
+    const paths = plan.classPaths.map((c) => c.path);
+    expect(new Set(paths.map((p) => p.toLowerCase())).size).toBe(2);
+    expect(paths).toEqual(['src/Main.class.ts', 'src/main/Main.ts']);
+  });
+
+  it('writes nested files and rewrites exactly the recorded import lines of translated text', () => {
+    const s = sceneWith('a.b.Cls');
+    const plan = planEmitDetailed(
+      {
+        ...input,
+        scene: s,
+        sceneJson: serialiseScene(s),
+        handwritten: [],
+        translated: [
+          {
+            ...tc('a.b.Cls', "import { X } from '../shim';\nimport { Cls } from '../shim';\n"),
+            importRecords: [{ line: 1, kind: 'shim', names: [{ name: 'X' }] }],
+          },
+        ],
+      } as EmitInput,
+      svgs,
+    );
+    const file = plan.files.find((f) => f.path === 'src/a/b/Cls.ts');
+    expect(file?.content).toBe("import { X } from '../../../shim';\nimport { Cls } from '../shim';\n");
+  });
+
+  it('matches a handwritten override by Qualified_Name and writes it unchanged', () => {
+    const plan = planFor(['Main', 'a.b.Cls'], {
+      templates: [...input.templates, { path: 'src/main.ts', content: 'boot\n' }],
+      translated: [tc('Main'), tc('a.b.Cls')],
+      handwritten: [
+        { className: 'Main', fileName: 'Main.ts', source: 'mine\n' },
+        { className: 'a.b.Cls', fileName: 'a/b/Cls.ts', source: 'nested\n' },
+        { className: 'x.Gone', fileName: 'x/Gone.ts', source: 'gone\n' },
+      ],
+    });
+    expect(plan.files.find((f) => f.path === 'src/Main.class.ts')?.content).toBe('mine\n');
+    expect(plan.files.find((f) => f.path === 'src/a/b/Cls.ts')?.content).toBe('nested\n');
+    expect(plan.warnings).toEqual(['Override x/Gone.ts ignored: x.Gone is not a linked or emitted class']);
+  });
+
+  it('has no class paths and an empty registry when there are no classes', () => {
+    const plan = planEmitDetailed({ ...input, handwritten: [] }, svgs);
+    expect(plan.classPaths).toEqual([]);
   });
 });

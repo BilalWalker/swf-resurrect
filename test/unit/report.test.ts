@@ -166,3 +166,26 @@ describe('buildReport: omitted and loose classes (spec task 4.5)', () => {
     expect(r.omittedClasses).toEqual([]);
   });
 });
+describe('buildReport: classPaths (spec task 5.8)', () => {
+  it('lists classPaths sorted by className and maps type errors by the chosen path', () => {
+    const classes: ReportClassInput[] = [
+      { className: 'Main', overridden: false, path: 'src/Main.class.ts', diagnostics: [] },
+      { className: 'a.B', overridden: false, path: 'src/a/B.ts', diagnostics: [] },
+    ];
+    const r = buildReport(
+      classes,
+      { errors: [err('src/Main.class.ts', 4), err('src/Main.ts', 1)] },
+      {
+        classPaths: [
+          { className: 'a.B', originalPath: 'src/a/B.ts', path: 'src/a/B.ts' },
+          { className: 'Main', originalPath: 'src/Main.ts', path: 'src/Main.class.ts' },
+        ],
+      },
+    );
+    expect(r.classPaths.map((p) => p.className)).toEqual(['Main', 'a.B']);
+    expect(r.classPaths[0]).toEqual({ className: 'Main', originalPath: 'src/Main.ts', path: 'src/Main.class.ts' });
+    expect(r.classes.find((c) => c.className === 'Main')!.typeErrors).toHaveLength(1);
+    expect(r.otherErrors.map((e) => e.file)).toEqual(['src/Main.ts']);
+    expect(buildReport([], null).classPaths).toEqual([]);
+  });
+});

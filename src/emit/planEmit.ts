@@ -4,7 +4,8 @@ import type { SvgFile } from '../convert/convertModel';
 import type { TranslatedClass } from '../translate/planTranslate';
 import { canonicalClassPath, parseQualifiedName, relativeSpecifier } from '../convert/qualifiedName';
 import type { QualifiedName } from '../convert/qualifiedName';
-import { buildBindings } from './classPaths';
+import { buildBindings, planClassPaths, resolveImportLines } from './classPaths';
+import type { ClassPathEntry } from './classPaths';
 import { buildPackageJson } from './packageJson';
 
 export interface TemplateFile {
@@ -41,6 +42,8 @@ export interface PlanEmitResult {
   files: EmittedFile[];
   warnings: string[];
   classes: PlannedClass[]; // sorted by className
+  /** Chosen path of every class file, sorted by className. */
+  classPaths: ClassPathEntry[];
 }
 
 const CLASSES_PATH = 'src/classes.ts';
@@ -126,17 +129,29 @@ export function planEmitDetailed(
   }
 
   const names = [...sources.keys()].sort(byCodeUnit);
-  for (const n of names) files.set(`src/${n}.ts`, lf(sources.get(n) as string));
 
   files.set(PACKAGE_PATH, buildPackageJson());
-  files.set(CLASSES_PATH, buildClassesTs(input.scene, names, omitted));
   files.set('assets/scene.json', lf(input.sceneJson));
   for (const svg of svgContents) files.set(`assets/${svg.fileName}`, lf(svg.content));
+
+  // Class paths: every other planned file is reserved, so a class never takes its name.
+  const choices = planClassPaths(names, [...files.keys(), CLASSES_PATH]);
+  const chosen = new Map(choices.map((c) => [c.className, c.path]));
+  const translatedBy = new Map(input.translated.map((c) => [c.className, c]));
+  for (const n of names) {
+    const path = chosen.get(n) as string;
+    const t = translatedBy.get(n);
+    const text = lf(sources.get(n) as string);
+    // Only translated text carries recorded import lines; an override is written as it is.
+    files.set(path, t !== undefined && !overridden.has(n) ? resolveImportLines(text, t.importRecords, path, chosen) : text);
+  }
+  files.set(CLASSES_PATH, buildClassesTs(input.scene, names, omitted, chosen));
 
   return {
     files: [...files.keys()].sort(byCodeUnit).map((path) => ({ path, content: files.get(path) as string })),
     warnings,
-    classes: names.map((n) => ({ className: n, path: `src/${n}.ts`, handwritten: overridden.has(n) })),
+    classes: names.map((n) => ({ className: n, path: chosen.get(n) as string, handwritten: overridden.has(n) })),
+    classPaths: choices.map((c) => ({ className: c.className, originalPath: c.originalPath, path: c.path })),
   };
 }
 

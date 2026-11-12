@@ -23,7 +23,7 @@ export interface PlayerOptions {
   scene: SceneJson;
   backend: RenderBackend;
   clock: Clock;
-  classRegistry: Record<string, new () => MovieClip>;
+  classRegistry: Record<string, new (...args: any[]) => DisplayObject>;
   /** Result of loading all shapes. */
   shapeBounds: ReadonlyMap<number, ShapeBounds>;
   /** Most whole frame steps one update() may run; extra time is dropped. Default 5. */
@@ -44,7 +44,7 @@ export class Player {
   private readonly scene: SceneJson;
   private readonly backend: RenderBackend;
   private readonly clock: Clock;
-  private readonly classRegistry: Record<string, new () => MovieClip>;
+  private readonly classRegistry: Record<string, new (...args: any[]) => DisplayObject>;
   private readonly maxCatchUp: number;
   private readonly scripts = new ScriptQueue();
   private readonly nodes = new NodeRegistry();
@@ -179,7 +179,7 @@ export class Player {
     let Cls: new () => MovieClip = MovieClip;
     if (symbol.className !== undefined) {
       const linked = this.classRegistry[symbol.className];
-      if (linked !== undefined) Cls = linked;
+      if (linked !== undefined) Cls = linked as new () => MovieClip;
       else console.warn(`Player: class "${symbol.className}" is not in the registry; using MovieClip`);
     }
     const mc = withConstructionContext(ctx, () => new Cls());

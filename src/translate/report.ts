@@ -2,6 +2,7 @@
 import { canonicalJson } from '../pipeline/canonicalJson';
 import type { ClassOmission, LooseClass } from '../emit/classOmissions';
 import { omissionMessage } from '../emit/classOmissions';
+import type { ClassPathEntry } from '../emit/classPaths';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
 import type { TranslatedClass } from './planTranslate';
 import type { GateError, GateResult } from './typeCheckGate';
@@ -36,6 +37,8 @@ export interface TranslationReport {
   classes: ClassReportEntry[]; // sorted by className
   omittedClasses: ClassOmission[]; // sorted by className
   otherErrors: GateError[]; // errors in non-class files
+  /** Chosen emitted path of each class, sorted by className. */
+  classPaths: ClassPathEntry[];
 }
 
 export interface ReportClassInput {
@@ -61,6 +64,7 @@ export function classStatus(diags: readonly Diagnostic[], typeErrorCount: number
 export interface ReportExtras {
   omissions?: readonly ClassOmission[];
   loose?: readonly LooseClass[];
+  classPaths?: readonly ClassPathEntry[];
 }
 
 /** Line of the class-omitted Diagnostic: the first error line for a syntax error or an unresolved import, else 1. */
@@ -128,7 +132,11 @@ export function buildReport(
       cmp(a.file, b.file) || a.line - b.line || a.column - b.column || a.code - b.code || cmp(a.message, b.message),
   );
 
-  return { formatVersion: 1, typeCheck: gate === null ? 'skipped' : 'ran', classes: entries, omittedClasses: omissions, otherErrors };
+  const classPaths = [...(extras.classPaths ?? [])]
+    .map((p) => ({ className: p.className, originalPath: p.originalPath, path: p.path }))
+    .sort((a, b) => cmp(a.className, b.className));
+
+  return { formatVersion: 1, typeCheck: gate === null ? 'skipped' : 'ran', classes: entries, omittedClasses: omissions, otherErrors, classPaths };
 }
 
 export function serialiseReport(r: TranslationReport): string {

@@ -7,6 +7,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
 import { omissionMessage } from '../emit/classOmissions';
 import type { ClassOmission, LooseClass } from '../emit/classOmissions';
+import type { ClassPathEntry } from '../emit/classPaths';
 import type { EmitOptions, EmitResult } from '../emit/emit';
 import type { UnpackInput, UnpackResult } from '../unpack/unpack';
 import type { TranslateArtifact } from '../translate/planTranslate';
@@ -122,15 +123,18 @@ function reportOf(
   gate: GateResult | null,
   omissions: readonly ClassOmission[] = [],
   loose: readonly LooseClass[] = [],
+  classPaths: readonly ClassPathEntry[] = [],
 ): TranslationReport {
+  const pathOf = new Map(classPaths.map((p) => [p.className, p.path]));
   return buildReport(
     (translated?.classes ?? []).map((c) => ({
       className: c.className,
       overridden: overridden.has(c.className),
+      ...(pathOf.has(c.className) ? { path: pathOf.get(c.className) as string } : {}),
       diagnostics: c.diagnostics,
     })),
     gate,
-    { omissions, loose },
+    { omissions, loose, classPaths },
   );
 }
 
@@ -181,6 +185,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let gate: GateResult | null = null;
   let omissions: ClassOmission[] = [];
   let loose: LooseClass[] = [];
+  let classPaths: ClassPathEntry[] = [];
   const overridden = new Set(args.handwrittenClasses);
 
   try {
@@ -226,6 +231,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     io.out('[emit] ok\n');
     omissions = result.omissions;
     loose = result.loose;
+    classPaths = result.classPaths;
     unsupported = [...unsupported, ...omissionEntries(omissions)];
 
     stage = 'pipeline';
@@ -248,7 +254,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
         projectDir: result.outputDir,
         scene: artifact.scene,
         unsupported,
-        translationReport: reportOf(translated, overridden, gate, omissions, loose),
+        translationReport: reportOf(translated, overridden, gate, omissions, loose, classPaths),
         sampleName: basename(swfDir),
         referenceDir: existsSync(referenceDir) ? referenceDir : null,
       };
@@ -273,7 +279,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       {
         name: 'translation-report.json',
         label: 'translation report',
-        text: serialiseReport(reportOf(translated, overridden, gate, omissions, loose)),
+        text: serialiseReport(reportOf(translated, overridden, gate, omissions, loose, classPaths)),
       },
     ];
     for (const f of files) {

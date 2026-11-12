@@ -64,7 +64,7 @@ function makeStages(over: Partial<PipelineStages> = {}): PipelineStages {
     async emit(_a, o) {
       calls.push('emit');
       await mkdir(o.outputDir, { recursive: true });
-      return { outputDir: o.outputDir, files: [], omissions: [], loose: [], gate: null };
+      return { outputDir: o.outputDir, files: [], omissions: [], loose: [], classPaths: [], gate: null };
     },
     async typeCheck() {
       calls.push('typeCheck');
@@ -236,7 +236,7 @@ describe('runPipeline', () => {
       async emit(_a, o) {
         seen.push(o.force);
         await mkdir(o.outputDir, { recursive: true });
-        return { outputDir: o.outputDir, files: [], omissions: [], loose: [], gate: null };
+        return { outputDir: o.outputDir, files: [], omissions: [], loose: [], classPaths: [], gate: null };
       },
     });
     await runPipeline(args({ force: true }), stages, io);
@@ -309,7 +309,7 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
           return { classes: [translatedClass('pkg.Broken')] } as never;
         },
         async emit(_a, o) {
-          return { outputDir: o.outputDir, files: [], omissions: [broken], loose: [], gate: { errors: [] } };
+          return { outputDir: o.outputDir, files: [], omissions: [broken], loose: [], classPaths: [], gate: { errors: [] } };
         },
       }),
     );
@@ -325,7 +325,7 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
     const { unsupported } = await run(
       makeStages({
         async emit(_a, o) {
-          return { outputDir: o.outputDir, files: [], omissions: [noSource], loose: [], gate: { errors: [] } };
+          return { outputDir: o.outputDir, files: [], omissions: [noSource], loose: [], classPaths: [], gate: { errors: [] } };
         },
       }),
     );
@@ -341,7 +341,7 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
           return { classes: [translatedClass('A')] } as never;
         },
         async emit(_a, o) {
-          return { outputDir: o.outputDir, files: [], omissions: [], loose: [looseA], gate: result };
+          return { outputDir: o.outputDir, files: [], omissions: [], loose: [looseA], classPaths: [], gate: result };
         },
       }),
     );
@@ -361,7 +361,7 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
           return { classes: [translatedClass('pkg.Broken')] } as never;
         },
         async emit(_a, o) {
-          return { outputDir: o.outputDir, files: [], omissions: [broken], loose: [], gate: written };
+          return { outputDir: o.outputDir, files: [], omissions: [broken], loose: [], classPaths: [], gate: written };
         },
       }),
     );
@@ -373,6 +373,23 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
     ]);
   });
 
+  it('passes classPaths from Emit into the report and maps type errors by the chosen path', async () => {
+    const gate: GateResult = { errors: [gateError({ file: 'src/Main.class.ts', line: 2 })] };
+    const { report } = await run(
+      makeStages({
+        async translate() {
+          return { classes: [translatedClass('Main')] } as never;
+        },
+        async emit(_a, o) {
+          const classPaths = [{ className: 'Main', originalPath: 'src/Main.ts', path: 'src/Main.class.ts' }];
+          return { outputDir: o.outputDir, files: [], omissions: [], loose: [], classPaths, gate };
+        },
+      }),
+    );
+    expect(report.classPaths).toEqual([{ className: 'Main', originalPath: 'src/Main.ts', path: 'src/Main.class.ts' }]);
+    expect(report.classes[0].typeErrors).toHaveLength(1);
+    expect(report.otherErrors).toEqual([]);
+  });
   it('injects the stage gate into Emit and falls back to typeCheck when Emit returns none', async () => {
     let injected = false;
     await run(
@@ -380,7 +397,7 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
         gate: () => ({ errors: [] }),
         async emit(_a, o) {
           injected = typeof o.gate === 'function';
-          return { outputDir: o.outputDir, files: [], omissions: [], loose: [], gate: null };
+          return { outputDir: o.outputDir, files: [], omissions: [], loose: [], classPaths: [], gate: null };
         },
       }),
     );

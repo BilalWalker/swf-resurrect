@@ -4,6 +4,7 @@ import { Player } from '../../template/runtime/player';
 import type { DisplayListEntry, SceneJson, SpriteSymbol } from '../../template/runtime/scene';
 import { Event, MouseEvent } from '../../template/shim/events';
 import { MovieClip } from '../../template/shim/MovieClip';
+import { Sprite } from '../../template/shim/Sprite';
 import { FakeBackend, type FakeNode } from '../support/fakeBackend';
 
 const ID_CT: DisplayListEntry['colorTransform'] = [1, 1, 1, 1, 0, 0, 0, 0];
@@ -27,7 +28,7 @@ function sceneOf(root: SpriteSymbol, extra: SceneJson['symbols'] = {}, frameRate
   };
 }
 
-function setup(scene: SceneJson, registry: Record<string, new () => MovieClip> = {}, boundsFor: number[] = [1]) {
+function setup(scene: SceneJson, registry: Record<string, new (...args: any[]) => Sprite> = {}, boundsFor: number[] = [1]) {
   const backend = new FakeBackend();
   const clock = new ManualClock();
   const shapeBounds = new Map(boundsFor.map((id) => [id, { x: 0, y: 0, width: 40, height: 30 }]));
@@ -207,6 +208,17 @@ describe('Player instance creation', () => {
   });
 });
 
+describe('Player: a registry typed for DisplayObject subclasses', () => {
+  it('accepts a Sprite subclass in the options (type level) and instantiates a linked MovieClip subclass', () => {
+    class OnlyTyped extends Sprite {}
+    class Linked extends MovieClip {}
+    const root = sprite([[entry(1, 2, 0, 0, 'linked')]]);
+    const scene = sceneOf(root, { '2': sprite([[entry(1, 1)]], 'Linked') });
+    // OnlyTyped is never linked in the scene: it only proves the option type accepts it.
+    const { player } = setup(scene, { Linked, OnlyTyped });
+    expect((player.root as unknown as { linked: unknown }).linked).toBeInstanceOf(Linked);
+  });
+});
 describe('Player: a linked class that is not in the registry', () => {
   it('makes the symbol a plain MovieClip and keeps its children', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);

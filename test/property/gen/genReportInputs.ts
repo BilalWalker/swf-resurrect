@@ -134,6 +134,7 @@ const genTranslation: fc.Arbitrary<TranslationReport> = fc
     classes: r.classes.map((c) => ({ ...c, diagnostics: [], typeErrors: [] })),
     omittedClasses: [],
     otherErrors: [],
+    classPaths: [],
   }));
 
 export const genReportInputs: fc.Arbitrary<FidelityInputs> = fc.record({

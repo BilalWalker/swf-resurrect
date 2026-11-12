@@ -10,8 +10,9 @@ import type { TranslatedClass } from '../translate/planTranslate';
 import { planEmitDetailed } from './planEmit';
 import type { EmittedFile, HandwrittenClass, PlannedClass, TemplateFile } from './planEmit';
 import { decideClassOmissions, looseClasses } from './classOmissions';
-import { exportedNames } from './exportedNames';
 import type { ClassOmission, ImportedName, LinkedSymbol, LooseClass, OmissionClass } from './classOmissions';
+import type { ClassPathEntry } from './classPaths';
+import { exportedNames } from './exportedNames';
 import type { GateResult } from '../translate/typeCheckGate';
 import type { SceneJson } from '../../template/runtime/scene';
 
@@ -40,6 +41,8 @@ export interface EmitResult {
   omissions: ClassOmission[];
   /** Registered translated classes with gate errors in their own file. */
   loose: LooseClass[];
+  /** Chosen path of every emitted class file, sorted by className. */
+  classPaths: ClassPathEntry[];
   /** Gate result for the project on disk; null when no gate was supplied. */
   gate: GateResult | null;
 }
@@ -87,16 +90,21 @@ async function loadTemplates(dir: string, prefix = ''): Promise<TemplateFile[]> 
   return out;
 }
 
-async function loadHandwritten(dir: string | null): Promise<HandwrittenClass[]> {
+/** Walks the override directory; `a/b/Cls.ts` is the override of class `a.b.Cls`. */
+async function loadHandwritten(dir: string | null, prefix = ''): Promise<HandwrittenClass[]> {
   if (dir === null) return [];
-  const names = (await readdir(dir)).filter((n) => n.endsWith('.ts')).sort(byCodeUnit);
   const out: HandwrittenClass[] = [];
-  for (const fileName of names) {
-    out.push({
-      className: fileName.replace(/\.ts$/, ''),
-      fileName,
-      source: await readFile(join(dir, fileName), 'utf8'),
-    });
+  const entries = (await readdir(dir, { withFileTypes: true })).sort((a, b) => byCodeUnit(a.name, b.name));
+  for (const entry of entries) {
+    const rel = prefix === '' ? entry.name : `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) out.push(...(await loadHandwritten(join(dir, entry.name), rel)));
+    else if (entry.isFile() && entry.name.endsWith('.ts')) {
+      out.push({
+        className: rel.replace(/\.ts$/, '').split('/').join('.'),
+        fileName: rel,
+        source: await readFile(join(dir, entry.name), 'utf8'),
+      });
+    }
   }
   return out;
 }
@@ -204,7 +212,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     await cleanupRun(writtenFiles, createdTops);
     throw new EmitWriteError(failing, err);
   }
-  return { outputDir, files: plan.map((f) => f.path), warnings: planned.warnings, omissions, loose, gate };
+  return { outputDir, files: plan.map((f) => f.path), warnings: planned.warnings, omissions, loose, classPaths: planned.classPaths, gate };
 }
 
 function linkedSymbols(scene: SceneJson): LinkedSymbol[] {

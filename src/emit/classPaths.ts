@@ -13,6 +13,13 @@ export interface ClassPathChoice {
   renamed: boolean;
 }
 
+/** One entry of classPaths in EmitResult and the Translation_Report. */
+export interface ClassPathEntry {
+  className: string;
+  originalPath: string;
+  path: string;
+}
+
 const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /** Order by (lower-cased parent, segment), both by UTF-16 code unit. */
