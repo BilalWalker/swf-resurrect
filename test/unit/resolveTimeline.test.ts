@@ -79,7 +79,7 @@ describe('resolveTimeline', () => {
       [[40, 'text']],
     );
     expect(r.droppedPlacements).toEqual([
-      { spriteId: 6, frame: 1, depth: 1, kind: 'text' },
+      { spriteId: 6, frame: 1, depth: 1, kind: 'text', characterId: 40 },
       { spriteId: 6, frame: 1, depth: 2, kind: 'mask' },
       { spriteId: 6, frame: 1, depth: 3, kind: 'filter' },
     ]);

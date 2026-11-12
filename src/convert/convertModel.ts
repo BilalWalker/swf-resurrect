@@ -181,6 +181,15 @@ export function convertModel(model: TagsModel): ConvertResult {
     unsupported.push(entry);
   }
 
+  // Static text is dropped as kind text until Task 12 draws it; DefineBits characters are never placed directly.
+  for (const id of model.staticTextIds ?? []) if (!unsupportedChars.has(id)) unsupportedChars.set(id, 'text');
+  const bitmapSet = new Set<number>();
+  for (const id of model.bitmapIds ?? []) {
+    if (unsupportedChars.has(id)) continue;
+    unsupportedChars.set(id, 'bitmap-fill');
+    bitmapSet.add(id);
+  }
+
   // Timelines.
   const timelines: Array<[number, TimelineModel]> = [[0, model.root]];
   for (const id of [...spriteById.keys()].sort((a, b) => a - b)) {
@@ -196,9 +205,13 @@ export function convertModel(model: TagsModel): ConvertResult {
     });
     warnings.push(...r.warnings);
     for (const d of r.droppedPlacements) {
+      const where = `${d.kind} at depth ${d.depth} in ${id === 0 ? 'root timeline' : `sprite ${id}`}, frame ${d.frame}`;
       unsupported.push({
         kind: d.kind,
-        message: `placement dropped: ${d.kind} at depth ${d.depth} in ${id === 0 ? 'root timeline' : `sprite ${id}`}, frame ${d.frame}`,
+        message:
+          d.kind === 'bitmap-fill' && bitmapSet.has(d.characterId ?? -1)
+            ? `placement dropped: DefineBits character placed directly (${where})`
+            : `placement dropped: ${where}`,
         context: { spriteId: d.spriteId, frame: d.frame, depth: d.depth },
       });
     }

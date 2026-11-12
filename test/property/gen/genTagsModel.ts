@@ -85,6 +85,11 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
     nShapes: fc.integer({ min: 1, max: 5 }),
     nMorph: fc.integer({ min: 0, max: 2 }),
     nText: fc.integer({ min: 0, max: 2 }),
+    nStaticText: fc.integer({ min: 0, max: 2 }),
+    nButton: fc.integer({ min: 0, max: 2 }),
+    nSound: fc.integer({ min: 0, max: 1 }),
+    nVideo: fc.integer({ min: 0, max: 1 }),
+    nBitmap: fc.integer({ min: 0, max: 2 }),
     svgs: fc.array(genSvg, { minLength: 5, maxLength: 5 }),
     rootFrames: fc.array(genFrameStep, { minLength: 1, maxLength: 4 }),
     sprites: fc.array(
@@ -106,7 +111,12 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
     const shapeIds = Array.from({ length: g.nShapes }, () => next++);
     const morphIds = Array.from({ length: g.nMorph }, () => next++);
     const textIds = Array.from({ length: g.nText }, () => next++);
-    const base = [...shapeIds, ...morphIds, ...textIds];
+    const staticTextIds = Array.from({ length: g.nStaticText }, () => next++);
+    const buttonIds = Array.from({ length: g.nButton }, () => next++);
+    const soundIds = Array.from({ length: g.nSound }, () => next++);
+    const videoIds = Array.from({ length: g.nVideo }, () => next++);
+    const bitmapIds = Array.from({ length: g.nBitmap }, () => next++);
+    const base = [...shapeIds, ...morphIds, ...textIds, ...staticTextIds, ...buttonIds, ...soundIds, ...videoIds, ...bitmapIds];
 
     const shapeAssets: ShapeAssetModel[] = shapeIds.map((id, i) => ({
       id,
@@ -130,7 +140,10 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
     }
     const unsupported: UnsupportedObservation[] = [
       ...morphIds.map((id): UnsupportedObservation => ({ kind: "morph-shape", tagName: "DefineMorphShapeTag", characterId: id })),
-      ...textIds.map((id): UnsupportedObservation => ({ kind: "text", tagName: "DefineTextTag", characterId: id })),
+      ...textIds.map((id): UnsupportedObservation => ({ kind: "text", tagName: "DefineEditTextTag", characterId: id })),
+      ...buttonIds.map((id): UnsupportedObservation => ({ kind: "button", tagName: "DefineButton2Tag", characterId: id })),
+      ...soundIds.map((id): UnsupportedObservation => ({ kind: "sound", tagName: "DefineSoundTag", characterId: id })),
+      ...videoIds.map((id): UnsupportedObservation => ({ kind: "video", tagName: "DefineVideoStreamTag", characterId: id })),
     ];
     return {
       xmlVersion: { major: 4, minor: 2 },
@@ -140,8 +153,8 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
       sprites,
       declaredShapeIds: shapeIds,
       morphShapeIds: morphIds,
-      staticTextIds: [],
-      bitmapIds: [],
+      staticTextIds,
+      bitmapIds,
       shapeAssets,
       symbolClasses,
       classSources,

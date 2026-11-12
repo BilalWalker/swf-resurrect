@@ -71,13 +71,13 @@ Rules that apply to every task:
     - Test: extend `test/unit/readUnpacked.test.ts` (null path gives an empty `classSources`) and `test/unit/emit.test.ts` (empty registry file text, `src/classes.ts` type-checks, report with zero classes).
     - _Requirements: 4.4_
 
-  - [-] 3.3 Read ids in `ffdecXml.ts` and `model.ts`
+  - [x] 3.3 Read ids in `ffdecXml.ts` and `model.ts`
     - Record the observed names in `FFDEC_XML`: `characterID` for `DefineTextTag`, `DefineEditTextTag` and the `DefineBits*` tags; `buttonId` for `DefineButton2Tag`; `shapeId` and `characterId` as listed in design section 7. An observed name loses its `UNVERIFIED` mark; `DefineText2Tag`, `DefineButtonTag`, `DefineSoundTag`, `SoundStreamHeadTag`, `SoundStreamHead2Tag` and `DefineVideoStreamTag` stay `UNVERIFIED`. IF a step would need an `UNVERIFIED` name to be trusted, STOP and ask.
     - `parseStructure` sets `characterId` on the unsupported observation. `DefineTextTag` and `DefineText2Tag` ids go to `staticTextIds`; `DefineEditTextTag` records `{ kind: 'text', characterId }` with message `dynamic text (DefineEditText) is not rendered`; `DefineBits*` ids go to `bitmapIds` and record no unsupported observation; font definition tags are ignored definitions. Add the new `UnsupportedKind` values of the design Data Models section to `src/convert/model.ts` except `class-omitted` (Task 4 adds it): `gradient-fill`, `gradient-spread`, `gradient-focal`, `bitmap-fill`, `bitmap-smoothing`, `text-metrics`, `stroke-style`, `blend-mode`; `compareUnsupported` is unchanged.
     - Test: `test/unit/parseStructure.test.ts` (text, edit text and button ids, `DefineBits*` as non-placed definitions, font tags ignored) and `test/unit/ffdecXmlVerifiedNames.test.ts` (observed names no longer `UNVERIFIED`, the six unobserved names still are), using dump excerpts taken under `.work/` from the approved samples.
     - _Requirements: 5.1, 5.2, 5.5, 5.7, 11.1_
 
-  - [ ] 3.4 Drop placements of unsupported characters with a Named_Limit
+  - [-] 3.4 Drop placements of unsupported characters with a Named_Limit
     - In `src/convert/convertModel.ts` a placement of a character of kind `text`, `sound`, `button` or `video` is dropped and recorded with the kind, sprite id, frame and depth; a placement of a `bitmapIds` character is dropped with kind `bitmap-fill` and message `DefineBits character placed directly`; `UnknownSymbolError` stays for an id nobody defines. Static text is dropped as kind `text` in this task (Task 12 draws it).
     - Test: `test/property/convertAccounting.property.test.ts` (create), **Property 10: Convert never aborts on a defined character and counts every drop**, with `test/property/gen/genTagsModel.ts` extended (text, button, sound, video ids, `staticTextIds`, `bitmapIds`): no throw when every placed id is defined, the drop count equals the number of dropped placements, `UnknownSymbolError` for an undefined id. Add example rows to `test/unit/convertModel.test.ts`.
     - _Requirements: 5.3, 5.4, 5.6, 9.6, 11.1, 11.4, 15.5_

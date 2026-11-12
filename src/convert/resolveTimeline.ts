@@ -21,6 +21,7 @@ export interface DroppedPlacement {
   frame: number; // 1-based
   depth: number;
   kind: UnsupportedKind; // 'mask' | 'filter' | kind of the unsupported character
+  characterId?: number; // set when the drop is due to the character, not to a mask or filter
 }
 
 export interface ResolvedTimeline {
@@ -90,8 +91,8 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
   const bad = (item: string): never => {
     throw new MalformedFrameDataError(who, frame, item);
   };
-  const drop = (depth: number, kind: UnsupportedKind): void => {
-    droppedPlacements.push({ spriteId, frame, depth, kind });
+  const drop = (depth: number, kind: UnsupportedKind, characterId?: number): void => {
+    droppedPlacements.push(characterId === undefined ? { spriteId, frame, depth, kind } : { spriteId, frame, depth, kind, characterId });
     state.delete(depth);
     droppedDepths.add(depth);
   };
@@ -150,7 +151,7 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
       if (hasChar) {
         const kind = unsupported.get(op.characterId as number);
         if (kind !== undefined) {
-          drop(depth, kind);
+          drop(depth, kind, op.characterId as number);
           continue;
         }
       }
