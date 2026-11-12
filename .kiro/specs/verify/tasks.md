@@ -366,9 +366,14 @@ Rules that apply to every task:
     - `html.ts` must print `none` for an empty known-behaviour-gaps list (as design section 10 says) for compared and not-compared behaviour; add a test for it. Update design.md so `FidelityInputs` lists the `tools` field.
     - _Requirements: 10.1, 10.3, 9.2_
 
-- [~] 20. Checkpoint: both samples after the fixes
+- [x] 20. Checkpoint: both samples after the fixes
   - Run `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --verify --force` and `npm run pipeline -- samples/tweendemo/test.swf out/tweendemo --verify --force`. Report both samples' Overall_Match and Trace_Score (or `not-compared`) and the paths of the two `fidelity-report.html`. Then stop and wait for the user.
   - _Requirements: 14.1, 14.2, 14.3, 14.4_
+- [x] 21. Cleanup: the "draw the SVG at (-tx,-ty)" claim (follow-up to task 17)
+  - [x] 21.1 Correct the stale claim and check the dev server
+    - Fix `.kiro/steering/tech.md` (the FFDec line saying the runtime must offset: Convert strips the wrapper and records the origin; the runtime does not shift), the comments in `src/convert/svgOrigin.ts` and `src/convert/ffdecXml.ts`, and add a dated correction note under task 2.3 in `FINDINGS.md` (do not rewrite history: the check was arithmetic only, never run against Pixi; see verify task 17).
+    - Run `npm run dev` on an emitted clickgoto project and confirm `assets/` load (the `copy-assets` plugin is build-only). Report only; no code change unless it fails.
+    - _Requirements: 3.1, 3.5_
 ## Notes
 
 - Tasks marked with `*` are optional. The three required tests are Tasks 2.5, 5.4 and 10.2; their implementation tasks are required.

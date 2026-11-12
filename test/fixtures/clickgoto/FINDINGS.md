@@ -98,6 +98,8 @@ Result: **drawing the SVG at `(-tx, -ty)` inside the shape node is correct.** Th
 
 `extractSvgOrigin` should return `{ x: tx, y: ty }` as written in the group, and the Pixi adapter should position the graphics at `(-origin.x, -origin.y)`. No conflict with the design.
 
+**Correction (2026-11-11):** the check above was arithmetic only, against the `PROVENANCE.md` placements, and was never run against Pixi. Pixi 8.22 `Graphics.svg` ignores the group transform, so drawing at `(-tx, -ty)` moved every shape one origin up-left. The paths are already in shape-origin coordinates; Convert now strips the wrapper and the runtime does not shift. See verify task 17 (`.kiro/specs/verify/tasks.md`, commit b8908f9).
+
 ### Zero-`ShowFrameTag` sprite (partly verifiable)
 
 The sample has no empty sprite, so I used a hand-edited XML (`.work/t23b/emptysprite.xml`, sprite 3 with both `ShowFrameTag` items removed), `-xml2swf`, then `-swf2xml` again.

@@ -17,8 +17,9 @@ import type {
 // class names and must be confirmed on a real SWF before being relied on.
 
 // SVG origin sign: each exported shape SVG wraps its paths in <g transform="matrix(1.0, 0.0, 0.0, 1.0, tx, ty)">.
-// Drawing the SVG at (-tx, -ty) puts the shape's own origin at the node origin. See
-// test/fixtures/clickgoto/FINDINGS.md, section "Task 2.3". Also there: use the ShowFrameTag count,
+// The paths inside the wrapper are already in shape-origin coordinates; Convert strips the wrapper and
+// records (tx, ty) as the origin (used for bounds), and the runtime does not shift. See
+// test/fixtures/clickgoto/FINDINGS.md, section "Task 2.3" (with its correction note). Also there: use the ShowFrameTag count,
 // not the sprite frameCount attribute, as the real frame count.
 
 /** Verified on FFDec 26.4.0: the sample dump has _xmlExportMajor="4" (structure.xml line 5). */

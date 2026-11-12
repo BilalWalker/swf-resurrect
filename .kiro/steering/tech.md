@@ -41,7 +41,7 @@ Inside an emitted project (`out/<sample>`): `npm install`, `npm run dev` (run ma
 - `-export shape,script,symbolClass <outdir> <swf>` writes `shapes/<id>.svg`, `scripts/<Class>.as`, `symbolClass/symbols.csv` (`<id>;"<Class>"`, id 0 is the root timeline).
 - `-swf2xml <swf> <out.xml>` dumps every tag. This is the only timeline source; there is no timeline export. Root element carries `_xmlExportMajor`/`_xmlExportMinor` (4.2 today) and FFDec warns the structure is not final, so check the version.
 - In the XML, placements are `PlaceObject2Tag` items with `depth`, `characterId`, `name`, `placeFlagMove`, and a `matrix` child in twips (divide by 20 for pixels). Sprites are `DefineSpriteTag` with `subTags`. Frames end at `ShowFrameTag`.
-- Shape SVGs wrap the paths in a `<g transform="matrix(1,0,0,1,tx,ty)">` that shifts the shape so its bounds start at 0,0. The shape's own origin is at (tx, ty) inside the SVG; the runtime must offset by that.
+- Shape SVGs wrap the paths in a `<g transform="matrix(1,0,0,1,tx,ty)">` that shifts the shape so its bounds start at 0,0. The paths inside the wrapper are already in shape-origin coordinates. Convert strips the wrapper and records (tx, ty) as the origin in Scene_JSON (used for bounds); the runtime does not shift.
 - Decompiled classes for timeline symbols call `addFrameScript(0,this.frame1,1,this.frame2)` (0-based index) in the constructor and carry an `[Embed(...)]` metadata line to drop.
 - `-header <swf>` prints stage size, frame rate and frame count. `-dumpSWF <swf>` lists tags.
 - Licence: FFDec is GPLv3. We call it as a separate process and do not link or bundle its code into ours. Whether it can ship inside the hosted container image is still to be decided.
