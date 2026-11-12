@@ -215,7 +215,7 @@ Rules that apply to every task:
     - Test: `test/unit/canvasToStage.test.ts` (create): scaled canvas, offset rect, rounding at the edges; and `npm run typecheck:template`.
     - _Requirements: 14.3_
 
-  - [ ] 6.7 Re-confirm the stage-versus-root finding and record CC
+  - [-] 6.7 Re-confirm the stage-versus-root finding and record CC
     - Download under `.work/` the `output.txt` of `3_joystick` and `click_block` and the sources `Interactivity3.as` and `MainTimeline.as`; confirm again that no Reference_Trace line shows the difference between the stage and the root as `target` or `currentTarget` (Appendix A.11 found none), cite the lines checked in the commit message, and state that the difference is therefore covered by `test/unit/stage.test.ts` and Property 24 and not by a Trace_Score floor (Requirement 19.6, 19.7). Delete the downloads. Record CC (Requirement 19.9): if the Stage_Object changes a line of the `clickgoto` trace, STOP and ask.
     - Evidence is a recorded measurement; the unit coverage is guarded by `test/unit/stage.test.ts` and `test/property/stageBubbling.property.test.ts`, and CC by `test/unit/clickgotoReplay.test.ts` and `test/e2e/overallMatch.e2e.test.ts`.
     - _Requirements: 19.6, 19.7, 19.9, 1.7_
