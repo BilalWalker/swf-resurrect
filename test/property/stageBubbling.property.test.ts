@@ -1,5 +1,9 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { ManualClock } from '../../template/runtime/clock';
+import { Player } from '../../template/runtime/player';
+import type { DisplayListEntry, SceneJson } from '../../template/runtime/scene';
+import { FakeBackend } from '../support/fakeBackend';
 import { MouseEvent } from '../../template/shim/events';
 import { attachRoot } from '../../template/shim/internal';
 import { MovieClip } from '../../template/shim/MovieClip';
@@ -31,6 +35,50 @@ describe('Property 24: Events bubble through the Stage_Object and stage hits rea
         if (bubbles && attached) expected.push('stage');
         expect(log).toEqual(expected);
         expect(target.stage).toBe(attached ? stage : null);
+      }),
+      fcConfig,
+    );
+  });
+
+  it('a point no shape contains is delivered to the Stage_Object and to no clip', () => {
+    const at = (depth: number, tx: number): DisplayListEntry => ({
+      depth,
+      symbolId: 1,
+      matrix: [1, 0, 0, 1, tx, 0],
+      colorTransform: [1, 1, 1, 1, 0, 0, 0, 0],
+      name: '',
+    });
+    const scene: SceneJson = {
+      formatVersion: 1,
+      stage: { width: 300, height: 300, backgroundColor: '#ffffff', frameRate: 10 },
+      rootSymbolId: 0,
+      symbols: {
+        '0': { type: 'sprite', frameCount: 1, frames: [[at(1, 0), at(2, 100)]], labels: [] },
+        '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+      },
+    };
+    const types = ['mouseMove', 'mouseDown', 'mouseUp', 'click'] as const;
+    fc.assert(
+      fc.property(fc.integer({ min: 41, max: 99 }), fc.integer({ min: 31, max: 300 }), fc.constantFrom(...types), (x, y, kind) => {
+        const player = new Player({
+          scene,
+          backend: new FakeBackend(),
+          clock: new ManualClock(),
+          classRegistry: {},
+          shapeBounds: new Map([[1, { x: 0, y: 0, width: 40, height: 30 }]]),
+        });
+        const stageHits: unknown[] = [];
+        let clipHits = 0;
+        for (const t of types) {
+          player.stage.addEventListener(t, (e) => stageHits.push(e.target));
+          for (const o of [player.root, ...player.root._children]) o.addEventListener(t, () => clipHits++);
+        }
+        if (kind === 'mouseMove') player.dispatchMouseMove(x, y);
+        else if (kind === 'mouseDown') player.dispatchMouseDown(x, y);
+        else player.dispatchClick(x, y);
+        expect(clipHits).toBe(0);
+        expect(stageHits.length).toBeGreaterThan(0);
+        for (const t of stageHits) expect(t).toBe(player.stage);
       }),
       fcConfig,
     );

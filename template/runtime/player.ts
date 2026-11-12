@@ -6,6 +6,7 @@ import {
   clipsPreOrder,
   exitFrame,
   frameConstructed,
+  setPointerPosition,
   withConstructionContext,
   type ClipCycle,
   type ClipHooks,
@@ -30,6 +31,14 @@ export interface PlayerOptions {
   shapeBounds: ReadonlyMap<number, ShapeBounds>;
   /** Most whole frame steps one update() may run; extra time is dropped. Default 5. */
   maxCatchUpFrames?: number;
+}
+
+/** A Hit_Target: a display object, or the Stage_Object when nothing is hit. */
+export type PointerTarget = DisplayObject | Stage;
+
+export interface PointerOutcome {
+  /** Set when a Pressed_Target existed and the Hit_Target at release was another object. */
+  releaseOutside: { pressed: PointerTarget; hit: PointerTarget } | null;
 }
 
 const EPSILON_MS = 1e-9;
@@ -166,15 +175,72 @@ export class Player {
     this.syncAll();
   }
 
-  /** Hit tests the stage point, then delivers a click to the target and each ancestor. */
-  dispatchClick(stageX: number, stageY: number): void {
-    const hit = hitTest(buildHitView(this.root), stageX, stageY);
-    if (hit === null) return;
-    const target = hit.source;
-    // One dispatch: at the hit object, then bubbling through its ancestors.
-    target.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
+  /** Last pointer position in stage coordinates; starts at (0, 0). */
+  get pointer(): { x: number; y: number } {
+    return { x: this.pointerX, y: this.pointerY };
+  }
+
+  /** Pointer moved: `mouseMove` at the Hit_Target when the position changed. */
+  dispatchMouseMove(x: number, y: number): void {
+    this.pointerEntry(x, y);
+  }
+
+  /** Button pressed: records the Pressed_Target and dispatches `mouseDown` at the Hit_Target. */
+  dispatchMouseDown(x: number, y: number): void {
+    const target = this.pointerEntry(x, y, false);
+    if (!this.buttonDown) {
+      this.buttonDown = true;
+      this.pressed = target;
+      target.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_DOWN));
+    }
     this.syncAll();
   }
+
+  /**
+   * Button released: `mouseUp` at the Hit_Target, then `click` at the Pressed_Target when it is the
+   * Hit_Target. Otherwise the outcome names the release-outside pair; no event is dispatched for it.
+   */
+  dispatchMouseUp(x: number, y: number): PointerOutcome {
+    const target = this.pointerEntry(x, y, false);
+    let outcome: PointerOutcome = { releaseOutside: null };
+    if (this.buttonDown) {
+      const pressed = this.pressed;
+      this.buttonDown = false;
+      this.pressed = null;
+      target.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_UP));
+      if (pressed === target) target.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
+      else if (pressed !== null) outcome = { releaseOutside: { pressed, hit: target } };
+    }
+    this.syncAll();
+    return outcome;
+  }
+
+  /** A click at a point: down then up. */
+  dispatchClick(stageX: number, stageY: number): void {
+    this.dispatchMouseDown(stageX, stageY);
+    this.dispatchMouseUp(stageX, stageY);
+  }
+
+  /**
+   * One hit test per entry; publishes a changed position and dispatches `mouseMove` before the entry's
+   * own event. Returns the Hit_Target (the Stage_Object when no shape is hit).
+   */
+  private pointerEntry(x: number, y: number, sync = true): PointerTarget {
+    const target: PointerTarget = hitTest(buildHitView(this.root), x, y)?.source ?? this.stage;
+    if (x !== this.pointerX || y !== this.pointerY) {
+      this.pointerX = x;
+      this.pointerY = y;
+      setPointerPosition(x, y);
+      target.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_MOVE));
+    }
+    if (sync) this.syncAll();
+    return target;
+  }
+
+  private pointerX = 0;
+  private pointerY = 0;
+  private buttonDown = false;
+  private pressed: PointerTarget | null = null;
 
   // ---- instance creation ----
 

@@ -82,4 +82,28 @@ describe('Stage_Object', () => {
     expect(player.stage._children).toEqual([player.root]);
     expect(player.root.stage).toBe(player.stage);
   });
+
+  it('a pointer entry over empty space is delivered to the Stage_Object listener and not to a root clip listener', () => {
+    const rootSym: SpriteSymbol = { type: 'sprite', frameCount: 1, frames: [[]], labels: [] };
+    const scene: SceneJson = {
+      formatVersion: 1,
+      stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
+      rootSymbolId: 0,
+      symbols: { '0': rootSym },
+    };
+    const player = new Player({ scene, backend: new FakeBackend(), clock: new ManualClock(), classRegistry: {}, shapeBounds: new Map() });
+    const onStage: string[] = [];
+    let onRoot = 0;
+    for (const t of [MouseEvent.MOUSE_MOVE, MouseEvent.MOUSE_DOWN, MouseEvent.MOUSE_UP, MouseEvent.CLICK]) {
+      player.stage.addEventListener(t, (e) => {
+        expect(e.target).toBe(player.stage);
+        onStage.push(e.type);
+      });
+      player.root.addEventListener(t, () => onRoot++);
+    }
+    player.dispatchMouseDown(50, 50);
+    player.dispatchMouseUp(50, 50);
+    expect(onStage).toEqual(['mouseMove', 'mouseDown', 'mouseUp', 'click']);
+    expect(onRoot).toBe(0);
+  });
 });

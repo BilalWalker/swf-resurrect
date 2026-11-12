@@ -326,6 +326,19 @@ describe('Player.dispatchClick', () => {
     expect(clicks()).toHaveLength(0);
   });
 
+  it('a press on the button and a release elsewhere gives no click and a releaseOutside outcome', () => {
+    const { player, clicks } = clickScene();
+    player.dispatchMouseDown(110, 60);
+    const out = player.dispatchMouseUp(5, 5);
+    expect(clicks()).toHaveLength(0);
+    expect(out.releaseOutside?.hit).toBe(player.stage);
+    expect(out.releaseOutside?.pressed).not.toBe(player.stage);
+    // Button state is cleared: a lone release changes nothing and reports nothing.
+    expect(player.dispatchMouseUp(110, 60).releaseOutside).toBeNull();
+    expect(clicks()).toHaveLength(0);
+    expect(player.pointer).toEqual({ x: 110, y: 60 });
+  });
+
   it('sets currentTarget to the object whose listener runs, at every ancestor', () => {
     const { player } = clickScene();
     const btn = (player.root as unknown as { btn: MovieClip }).btn;
