@@ -129,7 +129,7 @@ Rules that apply to every task:
     - Evidence is the recorded measurement; it is guarded by `test/unit/emitOmission.test.ts` and by the Overall_Match floor of `slider_component` set in sub-task 17.6.
     - _Requirements: 23.5, 23.6, 23.8, 1.6_
 
-- [ ] 5. Translate: package-qualified classes (Qualified_Name, import plan, class paths)
+- [x] 5. Translate: package-qualified classes (Qualified_Name, import plan, class paths)
   - Commit area: `Translate` (the commit also changes Convert, Unpack and Emit; the message names them). Read design sections 14 and 8. Verification V2 plus SC (sub-task 5.8 changes a file under `template/`, so the V2 floor tests run). Decided F1 (packages before any sample) and F15 (Translate writes canonical-path specifiers; Emit rewrites exactly the recorded import lines). Task 4 is already in place, so a package class that cannot load is left out of the registry, a class with only type errors stays registered as a Loose_Class, and neither can lower the Overall_Match.
   - [x] 5.1 Add `src/convert/qualifiedName.ts` and the Core purity test
     - Create `src/convert/qualifiedName.ts` with `QualifiedName`, `InvalidClassNameError` (code `INVALID_CLASS_NAME`, message `invalid class name "<name>": <reason>`, stage `unpack` or `convert`), `isSafeSegment`, `parseQualifiedName`, `scriptRelPath`, `qualifiedFromScriptPath`, `canonicalClassPath`, `relativeSpecifier` and `shimSpecifier` as in design 14.1. No `node:*` import, not even `node:path`: segment joins and relative specifiers are string functions.
@@ -178,14 +178,14 @@ Rules that apply to every task:
     - Requirement 6.6 on the real `mask_reapply` SWF (`typeCheck: ran`, zero `otherErrors`) needs the SWF and is verified in sub-task 16.2, when it is admitted.
     - _Requirements: 6.3, 6.6, 18.11, 18.15_
 
-  - [-] 5.10 SC measurement after linking package classes
+  - [x] 5.10 SC measurement after linking package classes
     - Run the SC command with `fl.controls.*` classes now linked and state the Overall_Match before and after in the commit message, with the list of classes that translated, those that were left out of the registry (Task 4) and why. Below 99.93: fix or revert, never lower a floor (Requirement 23.6).
     - Evidence is the recorded measurement; it is guarded by `test/unit/emitOmission.test.ts`, `test/unit/translatePackages.test.ts` and the floor of sub-task 17.6.
     - _Requirements: 18.14, 23.5, 23.6, 1.6_
 
 - [ ] 6. Shim: Stage_Object, pointer constants and the Player pointer entry points
   - Commit area: `Shim` (the Runtime changes in `template/runtime/` and `template/src/main.ts` belong to the same commit; the message names both). Read design sections 10, 11 and 15. Verification V2, plus CC. Log every addition in `template/shim/ADDED_APIS.md` with the fixture line that needs it; add nothing for which no fixture line exists (Requirement 14.10, 14.17). `startDrag` and `stopDrag` occur in no approved source and are not added. The Stage_Object, `mouseX` and `mouseY` must exist in the Shim before Task 8 generates the Shim_Member_Table, which is why this task comes first. Decided F1 and F5: `DisplayObject.stage` is a Stage_Object that is the parent of the root and not an alias of it; only the dispatcher members; present in the root constructor. `dispatchClick` is kept; the Replay still uses it until Task 7.
-  - [ ] 6.1 `MouseEvent.MOUSE_DOWN`, `MOUSE_UP`, `MOUSE_MOVE` and bubbling defaults
+  - [-] 6.1 `MouseEvent.MOUSE_DOWN`, `MOUSE_UP`, `MOUSE_MOVE` and bubbling defaults
     - In `template/shim/events.ts` add the three constants and make `mouseDown`, `mouseUp` and `mouseMove` bubble by default like `click`. Add rows to `ADDED_APIS.md` with the lines of design section 11 (`Interactivity3.as:37, 38`, `BaseButton.as:127, 128, 134, 139`, `Slider.as:326, 327, 334, 335, 388`).
     - Test: `test/unit/shimEvents.test.ts` (create): the constants, the default `bubbles` per type, `click` unchanged.
     - _Requirements: 14.10, 14.17_

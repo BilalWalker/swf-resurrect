@@ -21,7 +21,11 @@ export class Event {
     cancelable = false,
     eventPhase = 2,
   ) {
-    this.bubbles = bubbles ?? (type === 'added' || type === 'removed' || type === 'click');
+    this.bubbles = bubbles ?? (type === 'added' || type === 'removed' ||
+      type === 'click' ||
+      type === 'mouseDown' ||
+      type === 'mouseUp' ||
+      type === 'mouseMove');
     this.cancelable = cancelable;
     this.eventPhase = eventPhase;
   }
@@ -33,6 +37,9 @@ export class Event {
 
 export class MouseEvent extends Event {
   static readonly CLICK = 'click';
+  static readonly MOUSE_DOWN = 'mouseDown';
+  static readonly MOUSE_UP = 'mouseUp';
+  static readonly MOUSE_MOVE = 'mouseMove';
 }
 
 export class EventDispatcher {

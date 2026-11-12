@@ -33,3 +33,7 @@ APIs added to the Shim beyond the vertical-slice surface. Each row cites a line 
 `EXIT_FRAME` is dispatched once per clip per tick by the EXIT_FRAME pass after `root._step()`. `ADDED`, `REMOVED`, `ADDED_TO_STAGE`, `REMOVED_FROM_STAGE` and `FRAME_CONSTRUCTED` are dispatched as in the rows above. `RENDER` is accepted by `addEventListener` and never dispatched.
 
 Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handler, or user code between `update()` calls) now runs an extra cycle when the call returns: `frameConstructed` children first, the queued frame script (only if the frame changed), then `exitFrame` children first. No `enterFrame` and no clip advances. A goto inside a frame step, the initial build or another cycle starts no cycle.
+| `MouseEvent.MOUSE_DOWN` | `Interactivity3.as:37`, `BaseButton.as:127`, `:134`, `Slider.as:326`, `:334` (breadth fixtures) |
+| `MouseEvent.MOUSE_UP` | `Interactivity3.as:38`, `BaseButton.as:128`, `:139`, `Slider.as:327`, `:335` |
+| `MouseEvent.MOUSE_MOVE` | `Slider.as:388` |
+| `mouseDown`, `mouseUp`, `mouseMove` bubble by default | Same lines as the three constants: a listener on a parent hears a child's pointer event, like `click` |
