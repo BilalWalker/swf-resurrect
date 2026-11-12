@@ -21,3 +21,38 @@ export const genAnyClassName: fc.Arbitrary<string> = fc.oneof(
   fc.string({ maxLength: 20 }),
   fc.string({ unit: "binary", maxLength: 12 }),
 );
+
+// ---------------------------------------------------------------------------
+// Property 22: file contexts for planFileImports.
+import type { ImportPlanInput } from "../../../src/translate/importPlan";
+
+const PKGS = ["", "a", "b", "a.b"];
+const SIMPLES = ["X", "Y", "Z"];
+const ALL_QNS = PKGS.flatMap((p) => SIMPLES.map((s) => (p === "" ? s : `${p}.${s}`)));
+
+/** A small closed universe makes clashes (same simple name, several levels) frequent. */
+export const genImportPlanInput: fc.Arbitrary<ImportPlanInput> = fc
+  .record({
+    self: fc.constantFrom(...ALL_QNS, "a.Self", "Self"),
+    known: fc.subarray(ALL_QNS),
+    declared: fc.subarray(SIMPLES),
+    shim: fc.subarray([...SIMPLES, "Sprite"]),
+    explicit: fc.subarray(ALL_QNS),
+    wild: fc.subarray(PKGS.filter((p) => p !== "")),
+    bare: fc.subarray([...SIMPLES, "Sprite", "Q"]),
+    chains: fc.subarray(ALL_QNS),
+    forced: fc.subarray(ALL_QNS),
+  })
+  .map((r) => ({
+    selfQualified: r.self,
+    declared: new Set(r.declared),
+    shimNames: new Set(r.shim),
+    known: new Set(r.known),
+    imports: [
+      ...r.explicit.filter((q) => q.includes(".")).map((path) => ({ path, wildcard: false })),
+      ...r.wild.map((path) => ({ path, wildcard: true })),
+    ],
+    bare: new Map(r.bare.map((n, i) => [n, i + 1] as [string, number])),
+    chains: r.chains.map((qn, i) => ({ text: qn, qn, line: i + 1 })),
+    forced: r.forced,
+  }));

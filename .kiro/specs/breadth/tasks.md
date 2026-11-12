@@ -147,7 +147,7 @@ Rules that apply to every task:
     - Test: `test/unit/translatePackages.test.ts` (create): same simple name in two packages is not a duplicate, equal Qualified_Names are, skipped scripts, the path/declaration mismatch Diagnostic. Update `test/unit/planTranslate.test.ts`.
     - _Requirements: 18.3_
 
-  - [ ] 5.4 Add `src/translate/importPlan.ts`
+  - [x] 5.4 Add `src/translate/importPlan.ts`
     - Create `planFileImports(input)` as in design 14.1: scoping order explicit import, same package, wildcard, Shim name; the binding is the simple name unless taken, then an alias built from the Qualified_Name (`b_X`, `b_X_2`); an ambiguity at one level binds neither and yields one Diagnostic naming both Qualified_Names; an unresolved name stays unbound. `ImportPlanInput` also carries `forced: readonly QualifiedName[]` (targets bound as if the file named them, with the same scoping, alias and ambiguity rules, and no effect when already bound; design 18.5), which Task 8 uses for inherited statics. Add the file to the purity test.
     - Test: `test/property/importPlan.property.test.ts` (create), **Property 22: The import plan binds every reference once and reports ambiguity**, with a generator for file contexts in `test/property/gen/genClassNames.ts`. Example tests in `test/unit/importPlan.test.ts` (create) for `forced`: a forced target not named in the file is bound with the simple name or the alias, and a forced target that is already bound changes nothing.
     - _Requirements: 18.4, 18.5, 18.9, 15.5_
