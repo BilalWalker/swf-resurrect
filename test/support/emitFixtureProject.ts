@@ -10,7 +10,7 @@ import { readDumpHeader } from '../../src/convert/ffdecXml';
 import { readUnpacked } from '../../src/convert/readUnpacked';
 import type { ConvertedArtifact } from '../../src/convert/writeConverted';
 import { serialiseScene } from '../../src/convert/sceneJson';
-import { emit } from '../../src/emit/emit';
+import { emit, type EmitOptions } from '../../src/emit/emit';
 import { planTranslate, type ScriptSource } from '../../src/translate/planTranslate';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 import type { SceneJson } from '../../template/runtime/scene';
@@ -25,7 +25,10 @@ export interface EmittedFixtureProject {
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 
-export async function emitFixtureProject(sample: 'clickgoto' | 'tweendemo'): Promise<EmittedFixtureProject> {
+export async function emitFixtureProject(
+  sample: 'clickgoto' | 'tweendemo',
+  gate?: EmitOptions['gate'],
+): Promise<EmittedFixtureProject> {
   const fixture = resolve(repoRoot, 'test/fixtures', sample);
   const { xmlVersion, header } = readDumpHeader(await readFile(resolve(fixture, 'structure.xml'), 'utf8'));
   const model = await readUnpacked({
@@ -84,6 +87,7 @@ export async function emitFixtureProject(sample: 'clickgoto' | 'tweendemo'): Pro
       templateDir: resolve(repoRoot, 'template'),
       translated: artifact.classes,
       handwrittenDir: null,
+      ...(gate === undefined ? {} : { gate }),
     });
     return { projectDir: result.outputDir, scene: converted.scene, dispose };
   } catch (e) {

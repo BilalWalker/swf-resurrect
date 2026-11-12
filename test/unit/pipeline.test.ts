@@ -61,7 +61,7 @@ function makeStages(over: Partial<PipelineStages> = {}): PipelineStages {
     async emit(_a, o) {
       calls.push('emit');
       await mkdir(o.outputDir, { recursive: true });
-      return { outputDir: o.outputDir, files: [] };
+      return { outputDir: o.outputDir, files: [], omissions: [], loose: [], gate: null };
     },
     async typeCheck() {
       calls.push('typeCheck');
@@ -233,7 +233,7 @@ describe('runPipeline', () => {
       async emit(_a, o) {
         seen.push(o.force);
         await mkdir(o.outputDir, { recursive: true });
-        return { outputDir: o.outputDir, files: [] };
+        return { outputDir: o.outputDir, files: [], omissions: [], loose: [], gate: null };
       },
     });
     await runPipeline(args({ force: true }), stages, io);

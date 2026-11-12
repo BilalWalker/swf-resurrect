@@ -28,9 +28,17 @@ export interface EmitInput {
   handwritten: HandwrittenClass[];
 }
 
+/** A class file in the plan, as the omission decision needs it. */
+export interface PlannedClass {
+  className: string;
+  path: string; // posix, relative to the output root
+  handwritten: boolean;
+}
+
 export interface PlanEmitResult {
   files: EmittedFile[];
   warnings: string[];
+  classes: PlannedClass[]; // sorted by className
 }
 
 const CLASSES_PATH = 'src/classes.ts';
@@ -97,10 +105,14 @@ export function planEmitDetailed(
 
   const linked = linkedClassNames(input.scene);
   const sources = new Map<string, string>(); // class name -> source text
+  const overridden = new Set<string>();
   for (const c of input.translated) sources.set(c.className, c.text);
   const overrides = [...input.handwritten].sort((a, b) => byCodeUnit(a.className, b.className));
   for (const h of overrides) {
-    if (linked.has(h.className) || sources.has(h.className)) sources.set(h.className, h.source);
+    if (linked.has(h.className) || sources.has(h.className)) {
+      sources.set(h.className, h.source);
+      overridden.add(h.className);
+    }
     else warnings.push(`Override ${h.fileName} ignored: ${h.className} is not a linked or emitted class`);
   }
 
@@ -115,6 +127,7 @@ export function planEmitDetailed(
   return {
     files: [...files.keys()].sort(byCodeUnit).map((path) => ({ path, content: files.get(path) as string })),
     warnings,
+    classes: names.map((n) => ({ className: n, path: `src/${n}.ts`, handwritten: overridden.has(n) })),
   };
 }
 

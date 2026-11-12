@@ -8,7 +8,11 @@ import { EmitWriteError, OutputDirNotEmptyError, UnsafeForceTargetError } from '
 import { checkForceTarget } from './forceSafety';
 import type { TranslatedClass } from '../translate/planTranslate';
 import { planEmitDetailed } from './planEmit';
-import type { EmittedFile, HandwrittenClass, TemplateFile } from './planEmit';
+import type { EmittedFile, HandwrittenClass, PlannedClass, TemplateFile } from './planEmit';
+import { decideClassOmissions, looseClasses } from './classOmissions';
+import type { ClassOmission, LinkedSymbol, LooseClass, OmissionClass } from './classOmissions';
+import type { GateResult } from '../translate/typeCheckGate';
+import type { SceneJson } from '../../template/runtime/scene';
 
 export interface EmitOptions {
   outputDir: string;
@@ -23,12 +27,20 @@ export interface EmitOptions {
   handwrittenDir: string | null;
   /** Injectable file writer (defaults to fs.writeFile, utf8). Used to test write failures. */
   writeFile?: (path: string, content: string) => Promise<void>;
+  /** Type-check gate over the planned project (posix path -> text). The Pipeline injects it; absent in most tests. */
+  gate?: (files: ReadonlyMap<string, string>) => GateResult;
 }
 
 export interface EmitResult {
   outputDir: string; // resolved absolute path
   files: string[]; // posix paths relative to outputDir, sorted
   warnings?: string[]; // e.g. overrides that were ignored
+  /** Classes left out of src/classes.ts, one entry per class, sorted. */
+  omissions: ClassOmission[];
+  /** Registered translated classes with gate errors in their own file. */
+  loose: LooseClass[];
+  /** Gate result for the project on disk; null when no gate was supplied. */
+  gate: GateResult | null;
 }
 
 function byCodeUnit(a: string, b: string): number {
@@ -142,16 +154,28 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
   for (const path of artifact.svgPaths) {
     svgFiles.push({ fileName: basename(path), content: await readFile(path, 'utf8') });
   }
-  const planned = planEmitDetailed(
-    {
-      scene: artifact.scene,
-      sceneJson: serialiseScene(artifact.scene),
-      templates: await loadTemplates(options.templateDir),
-      translated: options.translated ?? [],
-      handwritten: await loadHandwritten(options.handwrittenDir),
-    },
-    svgFiles,
-  );
+  const planInput = {
+    scene: artifact.scene,
+    sceneJson: serialiseScene(artifact.scene),
+    templates: await loadTemplates(options.templateDir),
+    translated: options.translated ?? [],
+    handwritten: await loadHandwritten(options.handwrittenDir),
+  };
+  const runGate = (files: readonly EmittedFile[]): GateResult | null =>
+    options.gate === undefined ? null : options.gate(new Map(files.map((f) => [f.path, f.content])));
+
+  // Gate first: plan with the full registry, check it, decide, and plan again only if a class cannot load.
+  let planned = planEmitDetailed(planInput, svgFiles);
+  let gate = runGate(planned.files);
+  const omissionClasses = describeClasses(planned.classes, planInput.translated, planned.files);
+  const linked = linkedSymbols(artifact.scene);
+  const gateErrors = gate?.errors ?? [];
+  const omissions = decideClassOmissions(gateErrors, omissionClasses, linked);
+  if (omissions.some((o) => o.reason.kind !== 'missing-source')) {
+    planned = planEmitDetailed(planInput, svgFiles, new Set(omissions.map((o) => o.className)));
+    gate = runGate(planned.files);
+  }
+  const loose = gate === null ? [] : looseClasses(gate.errors, omissionClasses, omissions);
   const plan: EmittedFile[] = planned.files;
 
   if (options.force && existing !== null) {
@@ -179,5 +203,47 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     await cleanupRun(writtenFiles, createdTops);
     throw new EmitWriteError(failing, err);
   }
-  return { outputDir, files: plan.map((f) => f.path), warnings: planned.warnings };
+  return { outputDir, files: plan.map((f) => f.path), warnings: planned.warnings, omissions, loose, gate };
+}
+
+function linkedSymbols(scene: SceneJson): LinkedSymbol[] {
+  const out: LinkedSymbol[] = [];
+  for (const key of Object.keys(scene.symbols)) {
+    const symbol = scene.symbols[key];
+    if (symbol.type === 'sprite' && symbol.className !== undefined) {
+      out.push({ symbolId: Number(key), className: symbol.className });
+    }
+  }
+  return out;
+}
+
+/** Sibling classes named by `import { ... } from './Name'` lines (flat layout, until Task 5 adds import records). */
+function siblingImports(text: string, self: string, known: ReadonlySet<string>): string[] {
+  const found = new Set<string>();
+  for (const m of text.matchAll(/^\s*import\s*\{([^}]*)\}\s*from\s*['"]\.\/([^'"]+)['"]/gm)) {
+    const target = m[2];
+    if (target !== self && known.has(target)) found.add(target);
+  }
+  return [...found].sort(byCodeUnit);
+}
+
+function describeClasses(
+  classes: readonly PlannedClass[],
+  translated: readonly TranslatedClass[],
+  files: readonly EmittedFile[],
+): OmissionClass[] {
+  const known = new Set(classes.map((c) => c.className));
+  const text = new Map(files.map((f) => [f.path, f.content]));
+  const bases = new Map(translated.map((t) => [t.className, t.extendsName]));
+  return classes.map((c) => {
+    const base = c.handwritten ? null : (bases.get(c.className) ?? null);
+    return {
+      className: c.className,
+      path: c.path,
+      extendsQualified: base,
+      importsQualified: siblingImports(text.get(c.path) ?? '', c.className, known),
+      handwritten: c.handwritten,
+      produced: text.has(c.path),
+    };
+  });
 }
