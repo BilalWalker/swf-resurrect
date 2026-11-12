@@ -181,3 +181,46 @@ describe('translated fixture classes (Requirement 18.15)', () => {
     });
   }
 });
+
+describe('emitted fixture project (Requirement 18.15)', () => {
+  for (const sample of ['clickgoto', 'tweendemo']) {
+    it(`${sample}: paths, import lines and registry keys equal the committed bytes`, () => {
+      const dir = `test/fixtures/${sample}`;
+      const names = readdirSync(`${dir}/scripts`).map((n) => n.slice(0, -3)).sort();
+      const classes = names.map((n) => {
+        const text = readFileSync(`${dir}/translated/${n}.ts.txt`, 'utf8');
+        const r = translate(readFileSync(`${dir}/scripts/${n}.as`, 'utf8'), {
+          shimNames: SHIM_AS3_NAMES,
+          shimMembers: SHIM_MOVIECLIP_MEMBERS,
+          selfQualified: n,
+          siblingClasses: new Set(names.filter((x) => x !== n)),
+          syntaxCheck: tsSyntaxCheck,
+        });
+        return { ...tc(n, text), importRecords: r.importRecords };
+      });
+      const plan = planEmitDetailed(
+        { scene, sceneJson: serialiseScene(scene), templates: [], translated: classes, handwritten: [] },
+        [],
+      );
+      const srcFiles = plan.files.filter((f) => f.path.startsWith('src/') && f.path !== 'src/classes.ts');
+      expect(srcFiles.map((f) => f.path)).toEqual(names.map((n) => `src/${n}.ts`));
+      for (const f of srcFiles) {
+        const n = f.path.slice(4, -3);
+        const committed = readFileSync(`${dir}/translated/${n}.ts.txt`, 'utf8');
+        expect(f.content).toBe(committed);
+        // The import lines are the leading import statements; they are part of the bytes above.
+        expect(f.content.split('\n').filter((l) => l.startsWith('import '))).toEqual(
+          committed.split('\n').filter((l) => l.startsWith('import ')),
+        );
+      }
+      const registry = plan.files.find((f) => f.path === 'src/classes.ts')?.content ?? '';
+      expect([...registry.matchAll(/^ {2}"(\w+)":/gm)].map((x) => x[1])).toEqual([
+        'LeftButton',
+        'MainTimeline',
+        'RightButton',
+      ]);
+      expect(registry).toContain("import { LeftButton } from './LeftButton';");
+      expect(plan.classPaths.every((c) => c.path === c.originalPath)).toBe(true);
+    });
+  }
+});

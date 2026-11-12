@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import type { SceneJson } from '../../template/runtime/scene';
 import { DuplicateClassError } from '../../src/translate/errors';
 import { keyScriptPaths, planTranslate } from '../../src/translate/planTranslate';
@@ -6,6 +6,25 @@ import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from '../../src/translate/shim
 import { translate } from '../../src/translate/translate';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { vi } from 'vitest';
+import { serialiseScene } from '../../src/convert/sceneJson';
+import { planEmitDetailed } from '../../src/emit/planEmit';
+import type { TemplateFile } from '../../src/emit/planEmit';
+import { typeCheckProject } from '../../src/translate/typeCheckGate';
+const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
+vi.setConfig({ testTimeout: 120_000 });
+function readTemplates(dir = join(repoRoot, 'template'), prefix = ''): TemplateFile[] {
+  const out: TemplateFile[] = [];
+  for (const name of readdirSync(dir).sort()) {
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) out.push(...readTemplates(full, `${prefix}${name}/`));
+    else out.push({ path: `${prefix}${name}`, content: readFileSync(full, 'utf8') });
+  }
+  return out;
+}
 const scene = (names: string[]): SceneJson => {
   const symbols: Record<string, unknown> = {};
   names.forEach((c, i) => {
@@ -200,5 +219,57 @@ describe('planTranslate closure over imports', () => {
     );
     expect(r.classes.map((c) => c.className)).toEqual(['app.Main', 'lib.Base']);
     expect(r.classes[0].extendsQualified).toBe('lib.Base');
+  });
+});
+
+describe('two-package fixture through plan, emit and the real gate (Requirement 18.11)', () => {
+  it('type-checks with zero gate errors', () => {
+    const sources = [
+      {
+        className: 'app.Main',
+        source: src(
+          'app',
+          '  import lib.util.Helper;',
+          'Main {\n    public var h:Helper = new Helper();\n    public var g:Helper = new lib.util.Helper();\n    public function run():int { return this.h.value() + this.g.value(); }\n  }',
+        ),
+      },
+      {
+        className: 'lib.util.Helper',
+        source: src('lib.util', '', 'Helper extends Base {\n    public function value():int { return 1; }\n  }'),
+      },
+      { className: 'lib.util.Base', source: src('lib.util', '', 'Base {\n    public var n:int = 0;\n  }') },
+      {
+        className: 'app.sub.Other',
+        source: src('app.sub', '  import app.Main;', 'Other {\n    public var m:Main = new Main();\n  }'),
+      },
+      {
+        className: 'test_fla.MainTimeline',
+        source: src('test_fla', '  import app.Main;', 'MainTimeline extends Main {\n    public function MainTimeline() {\n      super();\n    }\n  }'),
+      },
+    ];
+    const sprite = (className: string) => ({ type: 'sprite' as const, className, frameCount: 1, labels: [], frames: [[]] });
+    const sc: SceneJson = {
+      formatVersion: 1,
+      stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
+      rootSymbolId: 0,
+      symbols: { '0': sprite('test_fla.MainTimeline'), '1': sprite('app.sub.Other') },
+    };
+    const artifact = planTranslate(sources, sc, tsSyntaxCheck);
+    expect(artifact.classes.map((c) => c.className)).toEqual([
+      'app.Main',
+      'app.sub.Other',
+      'lib.util.Base',
+      'lib.util.Helper',
+      'test_fla.MainTimeline',
+    ]);
+    const plan = planEmitDetailed(
+      { scene: sc, sceneJson: serialiseScene(sc), templates: readTemplates(), translated: artifact.classes, handwritten: [] },
+      [],
+    );
+    const paths = plan.files.map((f) => f.path).filter((p) => p.startsWith('src/'));
+    expect(paths).toEqual(expect.arrayContaining(['src/app/Main.ts', 'src/app/sub/Other.ts', 'src/lib/util/Base.ts', 'src/lib/util/Helper.ts', 'src/test_fla/MainTimeline.ts']));
+    const { errors } = typeCheckProject({ files: new Map(plan.files.map((f) => [f.path, f.content])), repoRoot });
+    const own = errors.filter((e) => !['src/main.ts', 'src/timelineOnly.ts'].includes(e.file));
+    expect(own).toEqual([]);
   });
 });
