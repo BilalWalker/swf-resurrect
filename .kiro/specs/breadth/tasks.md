@@ -124,7 +124,7 @@ Rules that apply to every task:
     - Test: `test/e2e/omittedClass.e2e.test.ts` (create; skipped with a reason when Chromium is missing): an Emitted_Project with one class that cannot load (an unresolved relative import) builds with `npm run build` and renders its timeline frame; a second project with a class that has only a type error stays registered, builds and renders. Add a row to `test/unit/player.test.ts`: a symbol whose class is not in the registry is a `MovieClip`. No Player change is expected (design 19.1).
     - _Requirements: 23.4, 23.9_
 
-  - [ ] 4.7 SC measurement
+  - [x] 4.7 SC measurement
     - Run the SC command and state the Overall_Match before and after in the commit message (99.93 expected both times; nothing is linked yet). Report the number of classes omitted and the number of Loose_Classes on `slider_component` and the reason of each omission. Confirm the SHA-256 of the SC copy. This task is the one that satisfies Requirement 23.8: it is committed before Task 5.
     - Evidence is the recorded measurement; it is guarded by `test/unit/emitOmission.test.ts` and by the Overall_Match floor of `slider_component` set in sub-task 17.6.
     - _Requirements: 23.5, 23.6, 23.8, 1.6_
