@@ -53,3 +53,21 @@ alternates every frame.
   slice translates only the two button classes.
 - There is no motion tween. A sample with real timeline motion is still
   needed for later specs.
+
+## Reference behaviour (`reference/`)
+
+Copied unedited from the same Ruffle test directory at the same commit,
+same licence (MIT OR Apache-2.0):
+
+- `reference/output.txt`: the expected `trace()` log of the SWF. Ruffle's
+  test suite asserts its own output equals this file, so it is the
+  behaviour a correct player must produce.
+- `reference/input.json`: the input the log was recorded with. One entry
+  per frame step: `Wait`, or a `MouseDown` / `MouseUp` at a stage
+  position in pixels.
+- `reference/test.toml`: `num_frames = 32`, the number of frames the test
+  runs.
+
+Our output is not expected to match this log line for line yet: the Shim
+does not dispatch `added`, `addedToStage` or `frameConstructed`, names the
+root `""` instead of `root1`, and prints events as `[object Object]`.
