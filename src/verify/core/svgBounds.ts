@@ -9,7 +9,8 @@ export interface SvgShapeBounds {
 
 /**
  * Bounds in the shape's own coordinate space: the SVG `width`/`height` in `px`,
- * positioned by the shape origin (the SVG shifts the shape so its bounds start at 0,0).
+ * positioned by the shape origin (the raw FFDec SVG shifts the shape so its bounds start at 0,0;
+ * the emitted, flattened SVG has paths already in shape-origin space; size attributes are the same).
  * Returns null when the SVG has no px width or height.
  */
 export function svgShapeBounds(svgText: string, origin: { x: number; y: number }): SvgShapeBounds | null {

@@ -511,6 +511,11 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794415953099
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794416114683
       }
     ],
     "16. Checkpoint: browser review of fidelity-report.html": [
@@ -518,6 +523,11 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408849552
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794416129378
       }
     ],
     "1. Dependencies and pinned tool versions (design section 12, D10)": [
@@ -588,6 +598,87 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794415952667
+      }
+    ],
+    "15. Floor recording and end-to-end check (Requirements 8.7, 13.5, 13.6)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794416114772
+      }
+    ],
+    "17.1 Confirm the double shift with a failing test": [
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417040720
+      },
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417048683
+      },
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417166074
+      }
+    ],
+    "17.2 Remove the dependence on the renderer honouring the wrapper": [
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417040943
+      },
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417166690
+      },
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417787345
+      }
+    ],
+    "17.3 Re-measure and record an Overall_Match floor": [
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417041203
+      },
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417787715
+      }
+    ],
+    "18.1 Advance order in `MovieClip._step` phase A": [
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417041473
+      }
+    ],
+    "19.1 Emitted project build includes `assets/`": [
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417041788
+      }
+    ],
+    "19.2 Align `html.ts` and design.md": [
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417041977
+      }
+    ],
+    "20. Checkpoint: both samples after the fixes": [
+      {
+        "executionId": "26d7a513-41ae-4251-a49f-b0b6f169e9e9",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794417042174
       }
     ]
   }

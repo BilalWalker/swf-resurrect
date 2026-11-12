@@ -2,6 +2,7 @@
 // No fs, child_process, clock, randomness or locale-dependent calls.
 import { validateScene } from '../../template/runtime/scene';
 import type { DisplayListEntry, SceneJson, ShapeSymbol, SpriteSymbol } from '../../template/runtime/scene';
+import { flattenSvgWrapper } from '../../template/runtime/svgFlatten';
 import { sortUnsupported } from '../pipeline/unsupported';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
 import { MalformedFrameDataError, ShapeExportError, SymbolCycleError, UnknownSymbolError } from './errors';
@@ -147,7 +148,7 @@ export function convertModel(model: TagsModel): ConvertResult {
     const asset = assetById.get(id);
     if (asset === undefined || asset.svg === null) throw new ShapeExportError(id, 'missing');
     if (asset.svg === '') throw new ShapeExportError(id, 'empty');
-    svgFiles.push({ fileName: `${id}.svg`, content: asset.svg.replace(/\r\n?/g, '\n') });
+    svgFiles.push({ fileName: `${id}.svg`, content: flattenSvgWrapper(asset.svg.replace(/\r\n?/g, '\n')) });
     if (asset.origin === null) {
       warnings.push(`shape ${id}: no origin wrapper found in SVG; using (0, 0)`);
     }

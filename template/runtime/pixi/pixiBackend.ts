@@ -1,5 +1,6 @@
 import { Container, Graphics } from 'pixi.js';
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../backend';
+import { flattenSvgWrapper } from '../svgFlatten';
 
 /** Per-node values that combine into the Pixi alpha. */
 interface NodeState {
@@ -20,7 +21,7 @@ const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
  * the display nodes only.
  */
 export class PixiBackend implements RenderBackend {
-  private readonly templates = new Map<number, { graphics: Graphics; origin: { x: number; y: number } }>();
+  private readonly templates = new Map<number, { graphics: Graphics }>();
   private readonly state = new WeakMap<Container, NodeState>();
   private readonly errorHost: HTMLElement | undefined;
   private errorElement: HTMLElement | null = null;
@@ -36,11 +37,11 @@ export class PixiBackend implements RenderBackend {
     origin: { x: number; y: number },
   ): Promise<ShapeBounds> {
     try {
-      const graphics = new Graphics().svg(svgText);
+      // Flatten the FFDec wrapper so paths are in shape-origin space whether or not Pixi honours it.
+      const graphics = new Graphics().svg(flattenSvgWrapper(svgText));
       const b = graphics.getLocalBounds().rectangle;
-      this.templates.set(symbolId, { graphics, origin: { x: origin.x, y: origin.y } });
-      // Bounds are measured in SVG space; shift them into shape-origin space.
-      return { x: b.x - origin.x, y: b.y - origin.y, width: b.width, height: b.height };
+      this.templates.set(symbolId, { graphics });
+      return { x: b.x, y: b.y, width: b.width, height: b.height };
     } catch (err) {
       this.showError(`SVG asset ${symbolId}.svg failed to load`);
       throw err instanceof Error ? err : new Error(String(err));
@@ -55,11 +56,9 @@ export class PixiBackend implements RenderBackend {
     const container = this.track(new Container());
     const template = this.templates.get(symbolId);
     if (template === undefined) return container;
-    // Shallow clone shares the GraphicsContext; the SVG origin sits at (-origin) so
-    // the shape's own origin lands on the container origin (FINDINGS.md, task 2.3).
-    const drawing = template.graphics.clone();
-    drawing.position.set(-template.origin.x, -template.origin.y);
-    container.addChild(drawing);
+    // Shallow clone shares the GraphicsContext. Paths are already in shape-origin space,
+    // so the shape's own origin is the container origin: no offset.
+    container.addChild(template.graphics.clone());
     return container;
   }
 

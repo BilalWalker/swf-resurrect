@@ -318,8 +318,8 @@ Rules that apply to every task:
     - Extend `test/unit/cli.test.ts` (use `toEqual` as there) for both flags and the exit code 2 cases. In `test/unit/pipelineVerify.test.ts` with a stub stage: not called without the flag, called after the gate with it, summary line, exit code unchanged by a low score, write failure gives exit 1 with the Translation_Report still written.
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.6, 11.7_
 
-- [ ] 15. Floor recording and end-to-end check (Requirements 8.7, 13.5, 13.6)
-  - [-] 15.1 Measure the final clickgoto Trace_Score and record the floor
+- [x] 15. Floor recording and end-to-end check (Requirements 8.7, 13.5, 13.6)
+  - [x] 15.1 Measure the final clickgoto Trace_Score and record the floor
     - With all Shim changes in place, run the clickgoto Replay test and measure the Trace_Score and the counts of `missing` and `extra` lines. Set `TRACE_SCORE_FLOOR` in `test/unit/clickgotoReplay.test.ts` to the measured value; never lower it from the value last committed. The design gives no measured ceiling: the old 86 percent estimate assumed G7 out of scope and no longer applies. A higher score is expected with G1 to G7, but it is unmeasured; do not compare against a predicted number.
     - State in the commit message and in the final summary the achieved Trace_Score, the remaining `missing` and `extra` counts, and whether G7 (Task 12.7) was kept or reverted (and, if reverted, that `goto-extra-cycle` is in `KNOWN_BEHAVIOUR_GAPS` and appears in the report).
     - _Requirements: 8.7, 8.8, 13.5, 13.6_
@@ -328,12 +328,47 @@ Rules that apply to every task:
     - In `test/e2e/verify.test.ts` (skipped when Java, `tools/ffdec` or Chromium is missing): run the Pipeline with `--verify` on `samples/clickgoto/test.swf` and `samples/tweendemo/test.swf`; both report files exist; `tweendemo` behaviour is `not-compared` with `no-reference-trace`; a second run gives byte-identical reports; every frame is compared or has a reason.
     - _Requirements: 5.7, 7.8, 9.3, 10.8_
 
-- [~] 16. Checkpoint: browser review of fidelity-report.html
+- [x] 16. Checkpoint: browser review of fidelity-report.html
   - Run `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --verify --force` and `npm run pipeline -- samples/tweendemo/test.swf out/tweendemo --verify --force`.
   - Give the user the two paths of `fidelity-report.html`. For each sample state: the Overall_Match, the Trace_Score or `not-compared`, the number of `missing` and `extra` trace lines, and the list of frames not compared with their reasons.
   - Then stop and wait for the user's answer. Do not continue to any later task.
   - _Requirements: 14.1, 14.2, 14.3, 14.4_
 
+- [x] 17. Convert and backend: shape origin applied twice (design sections 4, 5 and D11)
+  - [x] 17.1 Confirm the double shift with a failing test
+    - FFDec shape SVGs wrap the paths in `<g transform="matrix(1,0,0,1,tx,ty)">`, and the paths inside are already in shape-origin coordinates. Pixi 8.22 `Graphics.svg()` ignores that group transform, and `pixiBackend.ts` `createShape` then shifts by `-origin` again, so every shape is drawn one origin up-left; `loadShape` bounds carry the same error. Write a test that fails today: the `Graphics.svg` local bounds of the clickgoto sample's `1.svg` start near -42, not near 0.5. Keep it as a regression test after the fix (adjust the expectation to the fixed behaviour).
+    - Read `FINDINGS.md` task 2.3 and state in the commit message what it got wrong.
+    - _Requirements: 3.1, 4.1_
+
+  - [x] 17.2 Remove the dependence on the renderer honouring the wrapper
+    - Prefer flattening the wrapper in Convert (strip the transform from the emitted SVG, keep the origin in Scene_JSON for bounds) and stop shifting in `pixiBackend.ts`; `loadShape` bounds must follow. The result must not depend on whether the renderer honours the wrapper. Keep the existing Click_Oracle rows and every other test green; update only an expectation that encodes the double shift, and name it in the commit message.
+    - Report whether any sample SVG has other transforms (nested `g`, `gradientTransform`, `transform` on paths) that Pixi would also ignore, and list them.
+    - Update design.md where it describes shape origin handling.
+    - _Requirements: 3.1, 4.1, 5.6_
+
+  - [x] 17.3 Re-measure and record an Overall_Match floor
+    - Run `--verify --force` on clickgoto and tweendemo, record both Overall_Match values and the per-frame values in the commit message, and add a floor test for Overall_Match like `TRACE_SCORE_FLOOR` (a constant set to the measured value, never lowered). If the value is not about 100 percent, list what differs per frame (read the Diff_Images) and do not tune the tolerance.
+    - _Requirements: 4.1, 13.5_
+
+- [ ] 18. Shim: children advance first (design section 8, G5)
+  - [~] 18.1 Advance order in `MovieClip._step` phase A
+    - Phase A advances clips root-first (pre-order). The Reference_Trace shows children advance first: `output.txt` line 175 has `root1` still on frame 2 when `l_button`'s `removed` bubbles. Change the loop to post-order (children first). The user tried this and measured Trace_Score 100 with all tests passing.
+    - Update design section 8 (G5): children advance first, and note that Ruffle walks siblings in reverse render order and that our samples do not exercise sibling order.
+    - Raise `TRACE_SCORE_FLOOR` in `test/unit/clickgotoReplay.test.ts` to the measured value (never lower). Add a unit test for the frame label of a bubbled `removed` (the parent still reports its old frame while a child's `removed` bubbles).
+    - _Requirements: 8.4, 8.8, 13.6_
+
+- [ ] 19. Emit and report: build output and design alignment
+  - [~] 19.1 Emitted project build includes `assets/`
+    - `vite build` of an emitted project leaves `assets/` out of `dist`. Fix it in the emit template so the user's own `npm run build` works (for example by serving `assets/` as the Vite `publicDir` or moving the files), remove the `assets/` copy workaround in `src/verify/edge/buildProject.ts`, and add a test that builds an emitted fixture project and finds `assets/scene.json` in `dist`. Keep the dev server working.
+    - _Requirements: 3.5, 12.5_
+
+  - [~] 19.2 Align `html.ts` and design.md
+    - `html.ts` must print `none` for an empty known-behaviour-gaps list (as design section 10 says) for compared and not-compared behaviour; add a test for it. Update design.md so `FidelityInputs` lists the `tools` field.
+    - _Requirements: 10.1, 10.3, 9.2_
+
+- [~] 20. Checkpoint: both samples after the fixes
+  - Run `npm run pipeline -- samples/clickgoto/test.swf out/clickgoto --verify --force` and `npm run pipeline -- samples/tweendemo/test.swf out/tweendemo --verify --force`. Report both samples' Overall_Match and Trace_Score (or `not-compared`) and the paths of the two `fidelity-report.html`. Then stop and wait for the user.
+  - _Requirements: 14.1, 14.2, 14.3, 14.4_
 ## Notes
 
 - Tasks marked with `*` are optional. The three required tests are Tasks 2.5, 5.4 and 10.2; their implementation tasks are required.
