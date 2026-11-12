@@ -1,16 +1,21 @@
-// Pure Replay planning (design section 6): Input_Groups, Click pairing, tick count.
+// Pure Replay planning (design section 6): Input_Groups, pointer entries, tick count.
 
 export type PlanProblem =
   | { kind: 'unpaired-mouse-event'; index: number }
   | { kind: 'unsupported-input'; index: number; detail: string }
   | { kind: 'unused-input'; index: number };
 
-export interface PlannedClick {
+export type PointerKind = 'move' | 'down' | 'up';
+
+export interface PlannedPointer {
   tick: number;
+  kind: PointerKind;
   x: number;
   y: number;
-  downIndex: number;
-  upIndex: number;
+  /** Index of the Reference_Input entry. */
+  index: number;
+  /** A MouseUp with the button up, or a MouseDown with the button already down (14.9). */
+  unpaired: boolean;
 }
 
 export type TickSource = 'num_frames' | 'num_ticks' | 'input-groups';
@@ -18,7 +23,9 @@ export type TickSource = 'num_frames' | 'num_ticks' | 'input-groups';
 export interface ReplayPlan {
   tickCount: number;
   tickSource: TickSource;
-  clicks: PlannedClick[];
+  pointers: PlannedPointer[];
+  /** MouseUp entries that followed a MouseDown (report field `clicks`). */
+  pressReleasePairs: number;
   problems: PlanProblem[];
 }
 
@@ -62,7 +69,7 @@ export function parseNumFrames(tomlText: string | null): number | null {
 
 type Entry =
   | { kind: 'wait' }
-  | { kind: 'down' | 'up'; x: number; y: number }
+  | { kind: 'move' | 'down' | 'up'; x: number; y: number }
   | { kind: 'unsupported'; detail: string };
 
 function classify(raw: unknown): Entry {
@@ -71,8 +78,10 @@ function classify(raw: unknown): Entry {
   }
   const e = raw as Record<string, unknown>;
   if (e['type'] === 'Wait') return { kind: 'wait' };
-  if (e['type'] === 'MouseDown' || e['type'] === 'MouseUp') {
-    if (e['btn'] !== 'Left') return { kind: 'unsupported', detail: `button ${String(e['btn'])}` };
+  if (e['type'] === 'MouseDown' || e['type'] === 'MouseUp' || e['type'] === 'MouseMove') {
+    if (e['type'] !== 'MouseMove' && e['btn'] !== 'Left') {
+      return { kind: 'unsupported', detail: `button ${String(e['btn'])}` };
+    }
     const pos = e['pos'];
     if (
       !Array.isArray(pos) ||
@@ -84,7 +93,8 @@ function classify(raw: unknown): Entry {
     ) {
       return { kind: 'unsupported', detail: `${e['type']} without a numeric pos pair` };
     }
-    return { kind: e['type'] === 'MouseDown' ? 'down' : 'up', x: pos[0], y: pos[1] };
+    const kind = e['type'] === 'MouseDown' ? 'down' : e['type'] === 'MouseUp' ? 'up' : 'move';
+    return { kind, x: pos[0], y: pos[1] };
   }
   return { kind: 'unsupported', detail: `type ${String(e['type'])}` };
 }
@@ -107,12 +117,12 @@ export function planReplay(
   if (!Array.isArray(parsed)) return { error: 'invalid-input-json' };
 
   const problems: PlanProblem[] = [];
-  const clicks: PlannedClick[] = [];
+  const pointers: PlannedPointer[] = [];
   // groupFirst[k] is the index of the first entry in group k.
   const groupFirst: number[] = [];
   let group = 0;
   let groupStarted = false;
-  let pending: { index: number; x: number; y: number } | null = null;
+  let buttonDown = false;
 
   for (let i = 0; i < parsed.length; i++) {
     if (!groupStarted) {
@@ -122,36 +132,35 @@ export function planReplay(
     const entry = classify(parsed[i]);
     if (entry.kind === 'unsupported') {
       problems.push({ kind: 'unsupported-input', index: i, detail: entry.detail });
-    } else if (entry.kind === 'down') {
-      if (pending !== null) problems.push({ kind: 'unpaired-mouse-event', index: pending.index });
-      pending = { index: i, x: entry.x, y: entry.y };
-    } else if (entry.kind === 'up') {
-      if (pending !== null && pending.x === entry.x && pending.y === entry.y) {
-        clicks.push({ tick: group, x: entry.x, y: entry.y, downIndex: pending.index, upIndex: i });
-      } else {
-        if (pending !== null) problems.push({ kind: 'unpaired-mouse-event', index: pending.index });
-        problems.push({ kind: 'unpaired-mouse-event', index: i });
+    } else if (entry.kind !== 'wait') {
+      let unpaired = false;
+      if (entry.kind === 'down') {
+        unpaired = buttonDown;
+        buttonDown = true;
+      } else if (entry.kind === 'up') {
+        unpaired = !buttonDown;
+        buttonDown = false;
       }
-      pending = null;
+      if (unpaired) problems.push({ kind: 'unpaired-mouse-event', index: i });
+      pointers.push({ tick: group, kind: entry.kind, x: entry.x, y: entry.y, index: i, unpaired });
     }
-    // Wait and unsupported entries both end the group.
+    // Wait and unsupported entries end the group; a MouseMove never does.
     if (entry.kind === 'wait' || entry.kind === 'unsupported') {
       group++;
       groupStarted = false;
     }
   }
-  if (pending !== null) problems.push({ kind: 'unpaired-mouse-event', index: pending.index });
-
   const groupCount = groupStarted ? group + 1 : group;
   const tickCount = numFrames ?? groupCount;
 
-  let planClicks = clicks;
+  let planPointers = pointers;
   if (groupCount > tickCount) {
     problems.push({ kind: 'unused-input', index: groupFirst[tickCount]! });
-    planClicks = clicks.filter((c) => c.tick < tickCount);
+    planPointers = pointers.filter((p) => p.tick < tickCount);
   }
 
   problems.sort((a, b) => a.index - b.index || (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0));
   const tickSource: TickSource = numFrames === null ? 'input-groups' : source;
-  return { tickCount, tickSource, clicks: planClicks, problems };
+  const pressReleasePairs = planPointers.filter((p) => p.kind === 'up' && !p.unpaired).length;
+  return { tickCount, tickSource, pointers: planPointers, pressReleasePairs, problems };
 }

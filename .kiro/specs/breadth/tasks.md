@@ -232,7 +232,7 @@ Rules that apply to every task:
     - Test: `test/unit/verifyStage.test.ts` (create; `tick-rate` reason, no Replay run) and extend `test/property/fidelityDeterminism.property.test.ts` through `test/property/gen/genReportInputs.ts` for the new reason.
     - _Requirements: 14.14, 14.16_
 
-  - [ ] 7.3 Plan pointer entries
+  - [x] 7.3 Plan pointer entries
     - In `src/verify/core/replayPlan.ts` replace `clicks` by `pointers: PlannedPointer[]` in array order with the tick of the owning Input_Group. A `MouseMove` never ends or changes a group; `MouseDown` and `MouseUp` need `btn: "Left"` and a numeric `pos`, `MouseMove` needs a `pos` pair; any other type, a non-`Left` button or a malformed `pos` is `unsupported-input` and acts as `Wait`. The button-state machine flags a `MouseUp` with the button up and a `MouseDown` with the button already down (decided F4: both cases) as `unpaired: true`, records one `unpaired-mouse-event` naming the index for each, and keeps the entry's own kind so it is still delivered in array order. `pressReleasePairs` replaces the old click count in the report.
     - Test: extend `test/property/replayPlan.property.test.ts` with **Property 14: Input_Groups ignore pointer moves, pointer entries keep their order** and **Property 15: Unpaired presses and releases are flagged and still delivered**, with `test/property/gen/genReferenceInput.ts` (create). Unit tests in `test/unit/replayPlan.test.ts`: a `MouseMove` does not end an Input_Group on inline copies of the `3_joystick` and `slider_component` entries; a repeated `MouseDown` and an unpaired `MouseUp` each record `unpaired-mouse-event`; `unsupported-input` entries act as `Wait`.
     - _Requirements: 14.3, 14.9, 14.11, 14.15, 15.5_

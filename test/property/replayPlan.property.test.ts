@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { parseNumFrames, parseTickOptions, planReplay } from '../../src/verify/core/replayPlan';
 import { fcConfig } from './config';
 import { tickTomlArb } from './gen/genTickToml';
+import { referenceInputArb } from './gen/genReferenceInput';
 
 describe('Replay plan properties', () => {
   // Feature: breadth, Property 16: Tick options follow Ruffle's rule
@@ -37,4 +38,65 @@ describe('Replay plan properties', () => {
       fcConfig,
     );
   });
-});
+
+  function plan(input: unknown[]) {
+    const p = planReplay(JSON.stringify(input), null);
+    if ('error' in p) throw new Error(p.error);
+    return p;
+  }
+
+  // Feature: breadth, Property 14: Input_Groups ignore pointer moves, pointer entries keep their order
+  // **Validates: Requirements 14.3, 14.9, 14.11**
+  it('Input_Groups count Wait and unsupported entries only; valid pointer entries keep array order', () => {
+    fc.assert(
+      fc.property(referenceInputArb, (input) => {
+        const p = plan(input);
+        const breakers = input.filter((e) => e.type === 'Wait' || e.type === 'Unsupported' || e.btn === 'Right').length;
+        const lastBreaks =
+          input.length > 0 &&
+          (input[input.length - 1]!.type === 'Wait' ||
+            input[input.length - 1]!.type === 'Unsupported' ||
+            input[input.length - 1]!.btn === 'Right');
+        expect(p.tickCount).toBe(breakers + (input.length > 0 && !lastBreaks ? 1 : 0));
+        const unsupported = p.problems.filter((q) => q.kind === 'unsupported-input').map((q) => q.index);
+        const expectUnsupported = input.flatMap((e, i) => (e.type === 'Unsupported' || e.btn === 'Right' ? [i] : []));
+        expect(unsupported).toEqual(expectUnsupported);
+        const validIdx = input.flatMap((e, i) => (e.type.startsWith('Mouse') && e.btn !== 'Right' ? [i] : []));
+        expect(p.pointers.map((q) => q.index)).toEqual(validIdx);
+        const ticks = p.pointers.map((q) => q.tick);
+        expect(ticks).toEqual([...ticks].sort((a, b) => a - b));
+      }),
+      fcConfig,
+    );
+  });
+
+  // Feature: breadth, Property 15: Unpaired presses and releases are flagged and still delivered
+  // **Validates: Requirements 14.9, 14.3**
+  it('flags exactly the MouseUp with the button up and the MouseDown with the button down', () => {
+    fc.assert(
+      fc.property(referenceInputArb, (input) => {
+        const p = plan(input);
+        let down = false;
+        const flagged: number[] = [];
+        let pairs = 0;
+        input.forEach((e, i) => {
+          if (e.type === 'MouseDown' && e.btn === 'Left') {
+            if (down) flagged.push(i);
+            down = true;
+          } else if (e.type === 'MouseUp') {
+            if (!down) flagged.push(i);
+            else pairs++;
+            down = false;
+          }
+        });
+        expect(p.problems.filter((q) => q.kind === 'unpaired-mouse-event').map((q) => q.index)).toEqual(flagged);
+        expect(p.pointers.filter((q) => q.unpaired).map((q) => q.index)).toEqual(flagged);
+        for (const q of p.pointers) {
+          const e = input[q.index]!;
+          expect(q.kind).toBe(e.type === 'MouseDown' ? 'down' : e.type === 'MouseUp' ? 'up' : 'move');
+        }
+        expect(p.pressReleasePairs).toBe(pairs);
+      }),
+      fcConfig,
+    );
+  });});

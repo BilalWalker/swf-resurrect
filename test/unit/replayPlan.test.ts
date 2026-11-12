@@ -45,3 +45,60 @@ describe('planReplay tickSource', () => {
     expect(p.problems).toEqual([{ kind: 'unused-input', index: 1 }]);
   });
 });
+
+describe('planReplay pointer entries', () => {
+  const plan = (entries: unknown[]) => {
+    const p = planReplay(JSON.stringify(entries), null);
+    if ('error' in p) throw new Error(p.error);
+    return p;
+  };
+  const move = (x: number, y: number) => ({ type: 'MouseMove', pos: [x, y] });
+  const down = (x: number, y: number) => ({ type: 'MouseDown', btn: 'Left', pos: [x, y] });
+  const up = (x: number, y: number) => ({ type: 'MouseUp', btn: 'Left', pos: [x, y] });
+  const wait = { type: 'Wait' };
+
+  it('a MouseMove does not end an Input_Group (3_joystick and slider_component style)', () => {
+    const p = plan([move(10, 10), move(20, 20), down(20, 20), move(40, 40), up(40, 40), wait, move(5, 5)]);
+    expect(p.tickCount).toBe(2);
+    expect(p.pointers.map((q) => [q.tick, q.kind, q.index])).toEqual([
+      [0, 'move', 0],
+      [0, 'move', 1],
+      [0, 'down', 2],
+      [0, 'move', 3],
+      [0, 'up', 4],
+      [1, 'move', 6],
+    ]);
+    expect(p.pressReleasePairs).toBe(1);
+    expect(p.problems).toEqual([]);
+  });
+
+  it('a repeated MouseDown is flagged and still delivered', () => {
+    const p = plan([down(1, 1), down(2, 2), up(2, 2)]);
+    expect(p.problems).toEqual([{ kind: 'unpaired-mouse-event', index: 1 }]);
+    expect(p.pointers.map((q) => [q.kind, q.unpaired])).toEqual([
+      ['down', false],
+      ['down', true],
+      ['up', false],
+    ]);
+    expect(p.pressReleasePairs).toBe(1);
+  });
+
+  it('an unpaired MouseUp is flagged and still delivered', () => {
+    const p = plan([up(1, 1)]);
+    expect(p.problems).toEqual([{ kind: 'unpaired-mouse-event', index: 0 }]);
+    expect(p.pointers).toEqual([{ tick: 0, kind: 'up', x: 1, y: 1, index: 0, unpaired: true }]);
+    expect(p.pressReleasePairs).toBe(0);
+  });
+
+  it('unsupported entries act as Wait', () => {
+    const p = plan([
+      { type: 'KeyDown' },
+      { type: 'MouseDown', btn: 'Right', pos: [1, 1] },
+      { type: 'MouseMove', pos: [1] },
+      move(3, 3),
+    ]);
+    expect(p.problems.map((q) => q.kind)).toEqual(['unsupported-input', 'unsupported-input', 'unsupported-input']);
+    expect(p.tickCount).toBe(4);
+    expect(p.pointers).toEqual([{ tick: 3, kind: 'move', x: 3, y: 3, index: 3, unpaired: false }]);
+  });
+});

@@ -58,7 +58,8 @@ describe('clickgoto Replay', () => {
   it('plans 32 ticks and five clicks at ticks 3, 7, 12, 14, 20', () => {
     expect(plan.problems).toEqual([]);
     expect(plan.tickCount).toBe(32);
-    expect(plan.clicks.map((c) => c.tick)).toEqual([3, 7, 12, 14, 20]);
+    expect(plan.pointers.filter((x) => x.kind === 'up').map((x) => x.tick)).toEqual([3, 7, 12, 14, 20]);
+    expect(plan.pressReleasePairs).toBe(5);
     expect(groups).toBe(21);
   });
 
