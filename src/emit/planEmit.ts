@@ -2,7 +2,7 @@
 import type { SceneJson } from '../../template/runtime/scene';
 import type { SvgFile } from '../convert/convertModel';
 import type { TranslatedClass } from '../translate/planTranslate';
-import type { QualifiedName } from './classOmissions';
+import type { QualifiedName } from '../convert/qualifiedName';
 import { buildPackageJson } from './packageJson';
 
 export interface TemplateFile {

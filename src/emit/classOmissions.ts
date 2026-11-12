@@ -2,8 +2,8 @@
 // Decides which linked classes cannot load and must fall back to a plain MovieClip (breadth design 19.2).
 import type { GateError } from '../translate/typeCheckGate';
 
-/** Dotted class name; the unnamed package has no dots. */
-export type QualifiedName = string;
+import type { QualifiedName } from '../convert/qualifiedName';
+
 
 export type OmissionReason =
   | { kind: 'missing-source' }

@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   decideClassOmissions,
@@ -9,8 +8,6 @@ import {
 } from "../../src/emit/classOmissions";
 import { gateError } from "../support/gateError";
 
-/** Core files that must stay free of node:*, clock, randomness and locale calls (sub-task 5.1 takes this list over). */
-const CORE_PURITY_FILES = ["src/emit/classOmissions.ts"];
 
 const cls = (name: string, extra: Partial<OmissionClass> = {}): OmissionClass => ({
   className: name,
@@ -116,12 +113,3 @@ describe("isEmittedSpecifier and omissionMessage", () => {
   });
 });
 
-describe("Core purity", () => {
-  const forbidden = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/];
-  for (const file of CORE_PURITY_FILES) {
-    it(`${file} uses no node module, clock, randomness or locale call`, () => {
-      const code = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
-      for (const re of forbidden) expect(re.test(code), `${file} ${re}`).toBe(false);
-    });
-  }
-});
