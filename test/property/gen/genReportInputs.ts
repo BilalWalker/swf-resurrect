@@ -122,6 +122,8 @@ const genTranslation: fc.Arbitrary<TranslationReport> = fc
         className: fc.stringMatching(/^[A-Z][A-Za-z0-9]{0,8}$/),
         status: fc.constantFrom<ClassStatus>('clean', 'loose', 'unsupported'),
         overridden: fc.boolean(),
+        omitted: fc.boolean(),
+        loose: fc.boolean(),
       }),
       { maxLength: 6 },
     ),
@@ -130,6 +132,7 @@ const genTranslation: fc.Arbitrary<TranslationReport> = fc
     formatVersion: 1 as const,
     typeCheck: r.typeCheck,
     classes: r.classes.map((c) => ({ ...c, diagnostics: [], typeErrors: [] })),
+    omittedClasses: [],
     otherErrors: [],
   }));
 

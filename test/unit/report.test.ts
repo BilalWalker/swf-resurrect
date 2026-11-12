@@ -10,6 +10,7 @@ import {
 import type { GateError } from '../../src/translate/typeCheckGate';
 import { gateError } from '../support/gateError';
 import type { Diagnostic } from '../../src/translate/types';
+import type { ClassOmission } from '../../src/emit/classOmissions';
 
 const loose: Diagnostic = { kind: 'loose-type', line: 3, message: 'declaration has no usable type; emitted as any' };
 const unsup: Diagnostic = { kind: 'unsupported-construct', line: 7, message: "statement kind 'try' is not supported" };
@@ -97,5 +98,46 @@ describe('untranslatedCodeEntries', () => {
       { kind: 'untranslated-code', tag: 'A', message: "line 7: statement kind 'try' is not supported" },
       { kind: 'untranslated-code', tag: 'A', message: "line 9: statement kind 'try' is not supported" },
     ]);
+  });
+});
+
+describe('buildReport: omitted and loose classes (spec task 4.5)', () => {
+  const omission: ClassOmission = {
+    className: 'B',
+    reason: { kind: 'unresolved-import', specifier: './Nope', line: 3 },
+    symbolIds: [2],
+  };
+  const classes: ReportClassInput[] = [
+    { className: 'B', overridden: false, diagnostics: [] },
+    { className: 'A', overridden: false, diagnostics: [] },
+  ];
+
+  it('lists omittedClasses and marks classes[].omitted with a class-omitted Diagnostic', () => {
+    const r = buildReport(classes, { errors: [] }, { omissions: [omission] });
+    expect(r.omittedClasses).toEqual([omission]);
+    expect(r.classes.map((c) => [c.className, c.omitted])).toEqual([
+      ['A', false],
+      ['B', true],
+    ]);
+    const d = r.classes[1]!.diagnostics;
+    expect(d).toHaveLength(1);
+    expect(d[0]).toMatchObject({ kind: 'class-omitted', line: 3 });
+    expect(d[0]!.message).toContain('./Nope');
+  });
+
+  it('sets loose for a class with only type errors and leaves status alone', () => {
+    const gate = { errors: [err('src/A.ts', 5)] };
+    const r = buildReport(
+      classes,
+      gate,
+      { loose: [{ className: 'A', count: 1, firstLine: 5, firstMessage: 'm' }] },
+    );
+    const a = r.classes.find((c) => c.className === 'A')!;
+    expect(a.loose).toBe(true);
+    expect(a.omitted).toBe(false);
+    expect(a.status).toBe('unsupported'); // classStatus is unchanged: one type error
+    expect(a.typeErrors).toHaveLength(1);
+    expect(r.classes.find((c) => c.className === 'B')!.loose).toBe(false);
+    expect(r.omittedClasses).toEqual([]);
   });
 });

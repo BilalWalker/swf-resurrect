@@ -8,6 +8,9 @@ import type { PipelineArgs, PipelineStages } from '../../src/pipeline/pipeline';
 import { PipelineError } from '../../src/pipeline/errors';
 import { EmitWriteError, OutputDirNotEmptyError, UnsafeForceTargetError } from '../../src/emit/errors';
 import { InvalidSwfError } from '../../src/unpack/errors';
+import type { ClassOmission, LooseClass } from '../../src/emit/classOmissions';
+import type { GateResult } from '../../src/translate/typeCheckGate';
+import { gateError } from '../support/gateError';
 
 class FakeConvertFailure extends PipelineError {
   readonly stage = 'convert' as const;
@@ -272,5 +275,116 @@ describe('runPipeline', () => {
     await runPipeline(args({ keepWork: true }), makeStages(), io);
     expect(await exists(workDirs[0]!)).toBe(true);
     await rm(workDirs[0]!, { recursive: true, force: true });
+  });
+});
+
+describe('runPipeline: omitted classes (spec task 4.5)', () => {
+  const broken: ClassOmission = {
+    className: 'pkg.Broken',
+    reason: { kind: 'syntax-error', count: 2, firstLine: 4, firstMessage: "';' expected." },
+    symbolIds: [3, 5],
+  };
+  const noSource: ClassOmission = { className: 'MainTimeline', reason: { kind: 'missing-source' }, symbolIds: [0] };
+  const looseA: LooseClass = { className: 'A', count: 1, firstLine: 2, firstMessage: 'x' };
+  const gateWith = (file: string): GateResult => ({ errors: [gateError({ file, line: 2, code: 2322 })] });
+
+  function translatedClass(className: string) {
+    return { className, fileName: `${className}.ts`, text: '', diagnostics: [], spans: [], extendsName: null };
+  }
+
+  async function run(stages: PipelineStages): Promise<{
+    unsupported: Array<{ kind: string; tag?: string; id?: number; message: string }>;
+    report: any;
+  }> {
+    expect(await runPipeline(args(), stages, io)).toBe(0);
+    const unsupported = JSON.parse(await readFile(join(outDir, 'unsupported-features.json'), 'utf8')).entries;
+    const report = JSON.parse(await readFile(join(outDir, 'translation-report.json'), 'utf8'));
+    return { unsupported, report };
+  }
+
+  it('writes one class-omitted entry per omitted class, never with a type-errors reason', async () => {
+    const { unsupported } = await run(
+      makeStages({
+        async translate() {
+          return { classes: [translatedClass('pkg.Broken')] } as never;
+        },
+        async emit(_a, o) {
+          return { outputDir: o.outputDir, files: [], omissions: [broken], loose: [], gate: { errors: [] } };
+        },
+      }),
+    );
+    const entries = unsupported.filter((e) => e.kind === 'class-omitted');
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ tag: 'pkg.Broken' });
+    expect(entries[0]!.message).toContain('2 syntax errors, first at line 4');
+    expect(entries[0]!.message).toContain('symbols 3, 5 become plain MovieClip');
+    expect(entries.map((e) => e.message).join('\n')).not.toContain('type-errors');
+  });
+
+  it('keeps untranslated-class next to class-omitted for a linked class without a source', async () => {
+    const { unsupported } = await run(
+      makeStages({
+        async emit(_a, o) {
+          return { outputDir: o.outputDir, files: [], omissions: [noSource], loose: [], gate: { errors: [] } };
+        },
+      }),
+    );
+    expect(unsupported.filter((e) => e.id === 0 && e.kind === 'untranslated-class')).toHaveLength(1);
+    expect(unsupported.filter((e) => e.tag === 'MainTimeline' && e.kind === 'class-omitted')).toHaveLength(1);
+  });
+
+  it('reuses the gate result Emit returned and does not run the separate typeCheck stage', async () => {
+    const result = gateWith('src/A.ts');
+    const { report } = await run(
+      makeStages({
+        async translate() {
+          return { classes: [translatedClass('A')] } as never;
+        },
+        async emit(_a, o) {
+          return { outputDir: o.outputDir, files: [], omissions: [], loose: [looseA], gate: result };
+        },
+      }),
+    );
+    expect(calls).not.toContain('typeCheck');
+    expect(report.typeCheck).toBe('ran');
+    expect(report.classes[0].typeErrors).toHaveLength(1);
+    expect(report.classes[0].loose).toBe(true);
+    expect(report.classes[0].omitted).toBe(false);
+  });
+
+  it('reports the gate of the written project, not the first one', async () => {
+    // Emit's second run (after the omission) is the one it returns; the report must show that one.
+    const written: GateResult = { errors: [] };
+    const { report } = await run(
+      makeStages({
+        async translate() {
+          return { classes: [translatedClass('pkg.Broken')] } as never;
+        },
+        async emit(_a, o) {
+          return { outputDir: o.outputDir, files: [], omissions: [broken], loose: [], gate: written };
+        },
+      }),
+    );
+    expect(report.otherErrors).toEqual([]);
+    expect(report.omittedClasses.map((c: ClassOmission) => c.className)).toEqual(['pkg.Broken']);
+    expect(report.classes[0].omitted).toBe(true);
+    expect(report.classes[0].diagnostics.map((d: { kind: string; line: number }) => [d.kind, d.line])).toEqual([
+      ['class-omitted', 4],
+    ]);
+  });
+
+  it('injects the stage gate into Emit and falls back to typeCheck when Emit returns none', async () => {
+    let injected = false;
+    await run(
+      makeStages({
+        gate: () => ({ errors: [] }),
+        async emit(_a, o) {
+          injected = typeof o.gate === 'function';
+          return { outputDir: o.outputDir, files: [], omissions: [], loose: [], gate: null };
+        },
+      }),
+    );
+    expect(injected).toBe(true);
+    expect(calls).toContain('typeCheck');
   });
 });

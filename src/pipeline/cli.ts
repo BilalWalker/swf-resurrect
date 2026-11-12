@@ -108,6 +108,7 @@ const realStages: PipelineStages = {
   convert: convertStage,
   translate: translateStage,
   emit,
+  gate: (files) => typeCheckProject({ files, repoRoot: REPO_ROOT }),
   async typeCheck(outputDir, files) {
     const map = new Map<string, string>();
     for (const f of files) map.set(f, await readFile(join(outputDir, ...f.split('/')), 'utf8'));

@@ -54,7 +54,7 @@ export interface FidelityInputs {
   behaviour: BehaviourInput;
   knownBehaviourGaps: readonly string[]; // KNOWN_BEHAVIOUR_GAPS
   problems: readonly Problem[];
-  translation: TranslationReport; // copied: typeCheck + class names/status/overridden
+  translation: TranslationReport; // copied: typeCheck + class names/status/overridden/omitted
 }
 
 export interface FrameImages {
@@ -110,7 +110,7 @@ export interface FidelityReport {
   };
   behaviour: BehaviourReport;
   problems: Problem[];
-  translation: { typeCheck: 'ran' | 'skipped'; classes: Array<{ className: string; status: ClassStatus; overridden: boolean }> };
+  translation: { typeCheck: 'ran' | 'skipped'; classes: Array<{ className: string; status: ClassStatus; overridden: boolean; omitted: boolean }> };
 }
 
 function cmpStr(a: string, b: string): number {
@@ -232,7 +232,7 @@ export function buildFidelityReport(i: FidelityInputs): FidelityReport {
     translation: {
       typeCheck: i.translation.typeCheck,
       classes: i.translation.classes
-        .map((c) => ({ className: c.className, status: c.status, overridden: c.overridden }))
+        .map((c) => ({ className: c.className, status: c.status, overridden: c.overridden, omitted: c.omitted }))
         .sort((a, b) => cmpStr(a.className, b.className)),
     },
   };

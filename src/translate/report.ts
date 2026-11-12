@@ -1,5 +1,7 @@
 // Translation_Report (design section 6). Pure: no I/O, no clock, no randomness.
 import { canonicalJson } from '../pipeline/canonicalJson';
+import type { ClassOmission, LooseClass } from '../emit/classOmissions';
+import { omissionMessage } from '../emit/classOmissions';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
 import type { TranslatedClass } from './planTranslate';
 import type { GateError, GateResult } from './typeCheckGate';
@@ -20,6 +22,10 @@ export interface ClassReportEntry {
   className: string;
   status: ClassStatus;
   overridden: boolean;
+  /** Left out of the registry (a `class-omitted` Diagnostic explains why). */
+  omitted: boolean;
+  /** Loose_Class: registered, translated, with gate errors in its own file. Not `status: 'loose'`. */
+  loose: boolean;
   diagnostics: Diagnostic[]; // sorted (line, kind); empty when overridden
   typeErrors: TypeErrorEntry[]; // sorted (line, column, code)
 }
@@ -28,6 +34,7 @@ export interface TranslationReport {
   formatVersion: 1;
   typeCheck: 'ran' | 'skipped';
   classes: ClassReportEntry[]; // sorted by className
+  omittedClasses: ClassOmission[]; // sorted by className
   otherErrors: GateError[]; // errors in non-class files
 }
 
@@ -49,7 +56,25 @@ export function classStatus(diags: readonly Diagnostic[], typeErrorCount: number
   return 'clean';
 }
 
-export function buildReport(classes: readonly ReportClassInput[], gate: GateResult | null): TranslationReport {
+export interface ReportExtras {
+  omissions?: readonly ClassOmission[];
+  loose?: readonly LooseClass[];
+}
+
+/** Line of the class-omitted Diagnostic: the first error line for a syntax error or an unresolved import, else 1. */
+function omissionLine(o: ClassOmission): number {
+  const r = o.reason;
+  return r.kind === 'syntax-error' ? r.firstLine : r.kind === 'unresolved-import' ? r.line : 1;
+}
+
+export function buildReport(
+  classes: readonly ReportClassInput[],
+  gate: GateResult | null,
+  extras: ReportExtras = {},
+): TranslationReport {
+  const omissions = [...(extras.omissions ?? [])].sort((a, b) => cmp(a.className, b.className));
+  const omittedBy = new Map(omissions.map((o) => [o.className, o]));
+  const looseNames = new Set((extras.loose ?? []).map((l) => l.className));
   const byFile = new Map<string, ReportClassInput>();
   for (const c of classes) byFile.set(`src/${c.className}.ts`, c);
 
@@ -67,9 +92,14 @@ export function buildReport(classes: readonly ReportClassInput[], gate: GateResu
   }
 
   const entries: ClassReportEntry[] = classes.map((c) => {
+    const omission = omittedBy.get(c.className);
+    const own: Diagnostic[] = [...c.diagnostics];
+    if (omission !== undefined && !c.overridden) {
+      own.push({ kind: 'class-omitted', line: omissionLine(omission), message: omissionMessage(omission) });
+    }
     const diagnostics = c.overridden
       ? []
-      : [...c.diagnostics].sort((a, b) => a.line - b.line || cmp(a.kind, b.kind) || cmp(a.message, b.message));
+      : own.sort((a, b) => a.line - b.line || cmp(a.kind, b.kind) || cmp(a.message, b.message));
     const typeErrors: TypeErrorEntry[] = (perClass.get(c.className) ?? [])
       .map((e) => ({
         line: e.line,
@@ -83,6 +113,8 @@ export function buildReport(classes: readonly ReportClassInput[], gate: GateResu
       className: c.className,
       status: classStatus(diagnostics, typeErrors.length),
       overridden: c.overridden,
+      omitted: omission !== undefined,
+      loose: looseNames.has(c.className),
       diagnostics,
       typeErrors,
     };
@@ -94,7 +126,7 @@ export function buildReport(classes: readonly ReportClassInput[], gate: GateResu
       cmp(a.file, b.file) || a.line - b.line || a.column - b.column || a.code - b.code || cmp(a.message, b.message),
   );
 
-  return { formatVersion: 1, typeCheck: gate === null ? 'skipped' : 'ran', classes: entries, otherErrors };
+  return { formatVersion: 1, typeCheck: gate === null ? 'skipped' : 'ran', classes: entries, omittedClasses: omissions, otherErrors };
 }
 
 export function serialiseReport(r: TranslationReport): string {

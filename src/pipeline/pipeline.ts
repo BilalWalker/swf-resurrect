@@ -5,6 +5,8 @@ import { access, mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
+import { omissionMessage } from '../emit/classOmissions';
+import type { ClassOmission, LooseClass } from '../emit/classOmissions';
 import type { EmitOptions, EmitResult } from '../emit/emit';
 import type { UnpackInput, UnpackResult } from '../unpack/unpack';
 import type { TranslateArtifact } from '../translate/planTranslate';
@@ -25,6 +27,8 @@ export interface PipelineStages {
   translate(u: UnpackResult, a: ConvertedArtifact): Promise<TranslateArtifact>;
   emit(a: ConvertedArtifact, o: EmitOptions): Promise<EmitResult>;
   typeCheck(outputDir: string, files: readonly string[]): Promise<GateResult>;
+  /** In-memory gate injected into Emit (design 19.4). When set and Emit returns its result, 	ypeCheck does not run. */
+  gate?(files: ReadonlyMap<string, string>): GateResult;
   verify?(req: VerifyRequest): Promise<VerifySummary>;
 }
 
@@ -116,6 +120,8 @@ function reportOf(
   translated: TranslateArtifact | null,
   overridden: ReadonlySet<string>,
   gate: GateResult | null,
+  omissions: readonly ClassOmission[] = [],
+  loose: readonly LooseClass[] = [],
 ): TranslationReport {
   return buildReport(
     (translated?.classes ?? []).map((c) => ({
@@ -124,7 +130,13 @@ function reportOf(
       diagnostics: c.diagnostics,
     })),
     gate,
+    { omissions, loose },
   );
+}
+
+/** One class-omitted entry per omitted class, next to any untranslated-class entry (decision O7). */
+function omissionEntries(omissions: readonly ClassOmission[]): UnsupportedFeatureEntry[] {
+  return omissions.map((o) => ({ kind: 'class-omitted', tag: o.className, message: omissionMessage(o) }));
 }
 
 /** `src/Foo.ts (2), runtime/x.ts (1)`: error counts per file, sorted by file. */
@@ -167,6 +179,8 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let failure: unknown = null;
   let translated: TranslateArtifact | null = null;
   let gate: GateResult | null = null;
+  let omissions: ClassOmission[] = [];
+  let loose: LooseClass[] = [];
   const overridden = new Set(args.handwrittenClasses);
 
   try {
@@ -206,12 +220,17 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       templateDir: args.templateDir,
       handwrittenDir: args.handwrittenDir,
       translated: translated.classes,
+      ...(stages.gate === undefined ? {} : { gate: stages.gate }),
     });
     outputDir = result.outputDir;
     io.out('[emit] ok\n');
+    omissions = result.omissions;
+    loose = result.loose;
+    unsupported = [...unsupported, ...omissionEntries(omissions)];
 
     stage = 'pipeline';
-    gate = await stages.typeCheck(result.outputDir, result.files);
+    // The gate Emit ran describes the project on disk; run the separate stage only when Emit had none.
+    gate = result.gate ?? (await stages.typeCheck(result.outputDir, result.files));
     if (gate.errors.length === 0) {
       io.out('[typecheck] ok (0 errors)\n');
     } else {
@@ -229,7 +248,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
         projectDir: result.outputDir,
         scene: artifact.scene,
         unsupported,
-        translationReport: reportOf(translated, overridden, gate),
+        translationReport: reportOf(translated, overridden, gate, omissions, loose),
         sampleName: basename(swfDir),
         referenceDir: existsSync(referenceDir) ? referenceDir : null,
       };
@@ -254,7 +273,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       {
         name: 'translation-report.json',
         label: 'translation report',
-        text: serialiseReport(reportOf(translated, overridden, gate)),
+        text: serialiseReport(reportOf(translated, overridden, gate, omissions, loose)),
       },
     ];
     for (const f of files) {
