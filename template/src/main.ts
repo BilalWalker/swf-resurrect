@@ -4,6 +4,7 @@ import { Player } from '../runtime/player';
 import { PixiBackend } from '../runtime/pixi/pixiBackend';
 import type { SceneJson } from '../runtime/scene';
 import { classRegistry } from './classes';
+import { parseTimelineOnly, runTimelineOnly } from './timelineOnly';
 
 /** True when any placement in the scene has a non-zero colour offset. */
 function hasColorOffsets(scene: SceneJson): boolean {
@@ -31,6 +32,11 @@ async function boot(): Promise<void> {
   // Req 6.6 and 6.7: on failure an error is shown and no frame is rendered.
   const loaded = await loadScene(fetchText, backend);
   if (loaded === null) return;
+  const only = parseTimelineOnly(window.location.search);
+  if (only !== null) {
+    await runTimelineOnly(loaded, backend, only);
+    return;
+  }
   const { scene, shapeBounds } = loaded;
 
   if (hasColorOffsets(scene)) backend.warnColorOffsetsUnsupported();
@@ -76,5 +82,8 @@ async function boot(): Promise<void> {
 boot().catch((err: unknown) => {
   const message = err instanceof Error ? err.message : String(err);
   console.error(err);
+  if (parseTimelineOnly(window.location.search) !== null) {
+    window.__swfResurrect = { ready: false, error: message };
+  }
   new PixiBackend().showError(`Startup failed: ${message}`);
 });

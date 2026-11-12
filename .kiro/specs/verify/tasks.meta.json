@@ -191,6 +191,11 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794409991026
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410141499
       }
     ],
     "6.1 Move `FakeBackend` to `src/verify/edge/fakeBackend.ts`": [
@@ -198,6 +203,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408847979
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410141913
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410188356
       }
     ],
     "6.2 Add `test/support/emitFixtureProject.ts`": [
@@ -205,6 +220,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848051
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410189021
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410349469
       }
     ],
     "7.1 Implement `png.ts`": [
@@ -212,6 +237,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848129
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410349810
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410549557
       }
     ],
     "7.2 Implement `ffdecFrames.ts` and check the \"to verify\" items against the real jar": [
@@ -219,6 +254,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848203
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410550117
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411034839
       }
     ],
     "8.1 Add `template/src/timelineOnly.ts` and the `main.ts` branch": [
@@ -226,6 +271,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848285
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411035557
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411195903
       }
     ],
     "9.1 Implement `buildProject.ts`": [
@@ -233,6 +288,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848365
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411199718
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411406014
       }
     ],
     "9.2 Implement `renderFrames.ts` and check headless WebGL": [
@@ -240,6 +305,11 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848438
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411406457
       }
     ],
     "10.1 Implement `replay.ts` and `replayRunner.ts`": [
@@ -247,6 +317,16 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848516
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411715566
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411818741
       }
     ],
     "10.2 Write the required clickgoto Replay test": [
@@ -254,6 +334,11 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794408848602
+      },
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411819133
       }
     ],
     "11.1 Add `bubbles`, `cancelable`, `eventPhase`, `Event.toString()` and `root1`": [
@@ -366,6 +451,34 @@
         "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
         "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
         "timestamp": 1794409764390
+      }
+    ],
+    "5. Core: known limits, report, HTML (design sections 9, 10 and Data Models)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410141595
+      }
+    ],
+    "6. Test support: FakeBackend move and fixture project emitter (design D9, section 13)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794410349594
+      }
+    ],
+    "7. Edge: PNG codec and FFDec reference frames (design section 3, D10)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411034974
+      }
+    ],
+    "8. Template: Timeline_Only_Mode (design section 4, D11)": [
+      {
+        "executionId": "b611b0bb-d203-4def-90f5-850d66c70f3d",
+        "chatSessionId": "sess_cf355ce3-222e-46f3-8406-577695875c94",
+        "timestamp": 1794411195990
       }
     ]
   }

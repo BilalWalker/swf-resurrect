@@ -117,7 +117,7 @@ Rules that apply to every task:
     - In `test/unit/replayPlan.test.ts`: `samples/clickgoto/reference/input.json` with `num_frames = 32` gives 21 groups, 32 ticks, no problems, clicks at ticks 3, 7, 12, 14, 20 at the positions in the design table. Also `svgBounds` on a fixture SVG.
     - _Requirements: 6.7, 6.10_
 
-- [ ] 5. Core: known limits, report, HTML (design sections 9, 10 and Data Models)
+- [x] 5. Core: known limits, report, HTML (design sections 9, 10 and Data Models)
   - [x] 5.1 Implement `limits.ts`
     - Create `src/verify/core/limits.ts` with `knownVisualLimits(scene, unsupported)`: `colour-offset`, `skewed-matrix` (using `decomposeMatrix` from `template/runtime/stageTree.ts`) and `unsupported-feature` entries, de-duplicated by `(kind, id, message)` and sorted.
     - _Requirements: 5.6_
@@ -130,7 +130,7 @@ Rules that apply to every task:
     - Create `src/verify/core/html.ts`: `escapeHtml` and `renderFidelityHtml(report)` with the sections and the pass or fail text of design section 10. No script, no external resource, relative image paths, `alt` text `Frame N reference | rendered | pixel difference`, numbers via `toFixed(2)`. When `knownBehaviourGaps` is not empty, the behaviour section lists each gap code (escaped); when empty, it prints nothing for it.
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8_
 
-  - [-] 5.4 Write the required report determinism property test
+  - [x] 5.4 Write the required report determinism property test
     - Create `test/property/gen/genReportInputs.ts` (frame outcomes in any order with compared, `reference-unavailable`, `size-mismatch` and `render-failed`; limits; compared and not-compared behaviour with random missing and extra lists; problems of every kind; random class statuses).
     - Create `test/property/fidelityDeterminism.property.test.ts`: build the report twice from the same inputs, serialise both, compare the text byte for byte. This test is required.
     - **Property 14: Report serialisation is deterministic**
@@ -165,13 +165,13 @@ Rules that apply to every task:
     - In `test/unit/verifyCorePurity.test.ts`: grep every `src/verify/core/*.ts` for `node:`, `Date`, `Math.random`, `localeCompare`, `toLocale`, `playwright`, `pngjs` and expect no hit. In `test/unit/limits.test.ts`: colour offset, skewed matrix and unsupported-feature entries on a small scene.
     - _Requirements: 5.6, 11.8_
 
-- [ ] 6. Test support: FakeBackend move and fixture project emitter (design D9, section 13)
-  - [~] 6.1 Move `FakeBackend` to `src/verify/edge/fakeBackend.ts`
+- [x] 6. Test support: FakeBackend move and fixture project emitter (design D9, section 13)
+  - [x] 6.1 Move `FakeBackend` to `src/verify/edge/fakeBackend.ts`
     - Use `smart_relocate` (or `git mv` plus import fix) to move the class. Replace `test/support/fakeBackend.ts` with `export * from '../../src/verify/edge/fakeBackend';` so every existing test import still works.
     - Run `npm run typecheck` and the existing tests that use `FakeBackend`.
     - _Requirements: 6.2_
 
-  - [~] 6.2 Add `test/support/emitFixtureProject.ts`
+  - [x] 6.2 Add `test/support/emitFixtureProject.ts`
     - Read `test/fixtures/<sample>/` as `test/support/fixtureClasses.ts` does, run `convertModel` and `planTranslate`, write the SVGs, and call the real `emit()` with `templateDir = <repo>/template` into a temp directory under `.work/`. Return `{ projectDir, scene, dispose }`. No Java.
     - _Requirements: 6.2, 6.11_
 
@@ -179,12 +179,12 @@ Rules that apply to every task:
     - In `test/unit/emitFixtureProject.test.ts`: for `clickgoto` the project has `src/classes.ts`, `runtime/player.ts`, `shim/index.ts` and `assets/` SVGs; `dispose` removes the directory.
     - _Requirements: 6.2_
 
-- [ ] 7. Edge: PNG codec and FFDec reference frames (design section 3, D10)
-  - [~] 7.1 Implement `png.ts`
+- [x] 7. Edge: PNG codec and FFDec reference frames (design section 3, D10)
+  - [x] 7.1 Implement `png.ts`
     - Create `src/verify/edge/png.ts`: `decodePng(buffer): RgbaImage` and `encodePng(image): Buffer` over `pngjs` sync API.
     - _Requirements: 2.2, 5.2_
 
-  - [~] 7.2 Implement `ffdecFrames.ts` and check the "to verify" items against the real jar
+  - [x] 7.2 Implement `ffdecFrames.ts` and check the "to verify" items against the real jar
     - Create `exportReferenceFrames({ swfPath, jarPath, frames, workDir, spawner? })` as in design section 3: `-format frame:png -select <comma list> -export frame <workDir> <swf>` through `spawnFfdec`, timeout 120 s, per-frame `reference-unavailable` for a non-zero exit or a missing PNG, `size-mismatch` against the stage size.
     - Verify by hand with `tools/ffdec` on `samples/clickgoto/test.swf` into a directory under `.work/`: the comma-separated `-select` syntax works and the files are named `<n>.png` for 1-based frame numbers. **If either differs from the design, stop and ask the user before continuing.**
     - Check whether the FFDec PNG has transparent pixels. Flattening onto the stage background handles both cases, so this does not change the code, but state the finding in the commit message. If the PNG is not stage size, stop and ask.
@@ -194,8 +194,8 @@ Rules that apply to every task:
     - In `test/unit/ffdecFrames.test.ts`: argument vector, ANSI stripped output, non-zero exit gives `reference-unavailable` for every frame, one missing PNG affects only that frame, size mismatch.
     - _Requirements: 2.1, 2.3, 2.4, 2.5_
 
-- [ ] 8. Template: Timeline_Only_Mode (design section 4, D11)
-  - [~] 8.1 Add `template/src/timelineOnly.ts` and the `main.ts` branch
+- [x] 8. Template: Timeline_Only_Mode (design section 4, D11)
+  - [x] 8.1 Add `template/src/timelineOnly.ts` and the `main.ts` branch
     - Create `parseTimelineOnly(search)` (pure) and `runTimelineOnly(loaded, backend, frame)` with the `window.__swfResurrect` outcome as in design section 4: `Application` at resolution 1 with `preserveDrawingBuffer`, `Player` with an empty `classRegistry` and a `ManualClock`, `frame - 1` calls of `clock.advance` and `update()`, check `player.root.currentFrame`, render once, store `toDataURL('image/png')`.
     - In `template/src/main.ts` add the single branch after `loadScene` and make the existing `boot().catch` set `window.__swfResurrect = { ready: false, error }` when the parameter was present. A page without the parameter must boot exactly as before.
     - Run `npm run typecheck:template` and `npm run typecheck`.
@@ -205,12 +205,12 @@ Rules that apply to every task:
     - In `test/unit/timelineOnly.test.ts`: `parseTimelineOnly` for absent, valid, zero, negative and non-numeric values; a Player with an empty registry and `FakeBackend` stepped N-1 times on the clickgoto scene shows the expected root frame (1, 2, 3) and produces no trace output.
     - _Requirements: 3.2, 3.3_
 
-- [ ] 9. Edge: build the project and render frames in headless Chromium (design section 5, D3 to D5)
-  - [~] 9.1 Implement `buildProject.ts`
+- [x] 9. Edge: build the project and render frames in headless Chromium (design section 5, D3 to D5)
+  - [x] 9.1 Implement `buildProject.ts`
     - Create `buildProject(projectDir)`: copy the project (no `node_modules`, no `dist`) into `mkdtemp(<repo>/.work/verify-)`, run `build` from the repo's `vite` with `configFile: false`, `base: './'`, `logLevel: 'silent'`, return `{ distDir, dispose }`. Cleanup with `rm` and `force`, also on failure.
     - _Requirements: 3.5, 12.5_
 
-  - [~] 9.2 Implement `renderFrames.ts` and check headless WebGL
+  - [x] 9.2 Implement `renderFrames.ts` and check headless WebGL
     - Create `renderFrames(distDir, frames, stage)` as in design section 5: one Chromium launch with `closing` in `finally`, a context at the stage size with `deviceScaleFactor: 1`, one page per frame, `page.route('http://verify.local/**')` serving files from `distDir` with a path check and a small MIME map, wait up to 10 s for `window.__swfResurrect`, decode the PNG data URL, `render-failed` with `sanitizeDetail` on error or timeout, launch failure gives `render-failed` for every frame.
     - Check by hand on a staging build of the clickgoto fixture project that headless Chromium provides WebGL for PixiJS and that the captured canvas has stage size. **If WebGL is not available or the size differs, stop and ask the user before changing launch arguments or anything else.**
     - _Requirements: 3.5, 3.6, 11.5_
@@ -219,13 +219,13 @@ Rules that apply to every task:
     - In `test/e2e/renderFrames.test.ts` (skipped when Chromium is not installed): emit the clickgoto fixture project, build it, render frames 1 to 3, expect three stage-size images and no `render-failed`.
     - _Requirements: 3.5_
 
-- [ ] 10. Edge: Replay and the required clickgoto Replay test (design section 6)
-  - [~] 10.1 Implement `replay.ts` and `replayRunner.ts`
+- [x] 10. Edge: Replay and the required clickgoto Replay test (design section 6)
+  - [x] 10.1 Implement `replay.ts` and `replayRunner.ts`
     - Create `src/verify/edge/replayRunner.ts` (entry point for `node --import tsx`, arguments `<projectDir> <planJson> <resultJson>`) and `replay.ts` (spawns it with `process.execPath`, `shell: false`, cwd = repo root, 60 s timeout, reads the result file). The runner imports the project's `runtime/player.ts`, `runtime/clock.ts`, `runtime/loader.ts`, `shim/trace.ts`, `shim/internal.ts`, `src/classes.ts`; fills `shapeBounds` with `svgBounds`; installs the trace sink before `new Player`; runs tick 0 as construction plus one `exitFrame(root)` (no clock advance, no `update()`), then applies Input_Group 0; ticks 1 and up are `clock.advance` by one frame interval plus one `update()`, then that tick's Input_Group; for clickgoto that is 32 ticks (0 to 31) and 31 frame steps; dispatches clicks of the tick; `setTraceSink(null)` in `finally`; writes `{ lines, ticksRun, error }`.
     - Verify that `tsx` resolves the emitted `'../shim'` imports. If it does not, use the fallback in the design (`vite` `createServer` with `ssrLoadModule`, no new dependency) and mention it in the commit message.
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.11, 6.12, 6.13, 6.15_
 
-  - [~] 10.2 Write the required clickgoto Replay test
+  - [x] 10.2 Write the required clickgoto Replay test
     - Create `test/unit/clickgotoReplay.test.ts`. Use `emitFixtureProject` for `clickgoto` and the real `replay.ts` with `samples/clickgoto/reference/{output.txt,input.json,test.toml}`. Assert: 21 groups, 32 ticks (tick 0 is construction with `exitFrame(root)`, 31 frame steps), clicks planned at ticks 3, 7, 12, 14, 20; the captured `///(LeftButton clicked` lines are in ticks 3, 12, 20 and `///(RightButton clicked` in ticks 7, 14; two Replays give equal lines; the `reference/` files are byte-unchanged (hash before and after); `traceScore >= TRACE_SCORE_FLOOR`.
     - Measure the current score, then set `TRACE_SCORE_FLOOR` in the test to that measured value (not a guess). This test is required.
     - If a click lands on the wrong button or tick, stop and ask: the design predicted the ticks from `output.txt`.
