@@ -41,6 +41,8 @@ export class MovieClip extends Sprite {
     super();
     // Read once, at construction. Outside a context this is a one-frame empty clip.
     this.ctx = currentConstructionContext();
+    // The root is built with the Stage_Object as parent, so `stage` works inside its constructor.
+    if (this.ctx?.rootParent) this._parent = this.ctx.rootParent;
   }
 
   play(): void {

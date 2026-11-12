@@ -39,3 +39,6 @@ Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handl
 | `mouseDown`, `mouseUp`, `mouseMove` bubble by default | Same lines as the three constants: a listener on a parent hears a child's pointer event, like `click` |
 | `DisplayObject.mouseX`, `mouseY` (local pointer position through the parent chain; 0 when a scale is 0) | `Interactivity3.as:62`, `:68`; `Slider.as:318`, `:342`; `MainTimeline.as:42` (`click_block`) |
 | `internal.setPointerPosition`, `internal.globalToLocal` | Support for `mouseX` / `mouseY` (same lines) |
+| `Stage` (class with `addEventListener`, `removeEventListener`, `hasEventListener`, `dispatchEvent` only) | `Interactivity3.as:39` (decompiled copy line 38), `MainTimeline.as:47` |
+| `DisplayObject.stage` | `Interactivity3.as:39` (bare `stage` in the root constructor), `MainTimeline.as:47` (`click_mc.stage`) |
+| `ConstructionContext.rootParent`, `internal.attachRoot` | Support `DisplayObject.stage` inside the root constructor (`Interactivity3.as:39`) |

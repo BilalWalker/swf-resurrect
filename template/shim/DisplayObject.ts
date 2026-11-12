@@ -1,6 +1,7 @@
 import { EventDispatcher, type Event } from './events';
 import { getPointerPosition, globalToLocal } from './internal';
 import type { DisplayObjectContainer } from './Sprite';
+import { isStage, type ParentNode, type Stage } from './Stage';
 
 export class DisplayObject extends EventDispatcher {
   x = 0;
@@ -16,7 +17,7 @@ export class DisplayObject extends EventDispatcher {
   _intrinsicWidth = 0;
   _intrinsicHeight = 0;
   /** Maintained by DisplayObjectContainer only. */
-  _parent: DisplayObjectContainer | null = null;
+  _parent: ParentNode | null = null;
 
   /** Set by the Player on the root clip only. A clip is on the stage when its parent chain ends at such a root. */
   _isStageRoot = false;
@@ -54,7 +55,7 @@ export class DisplayObject extends EventDispatcher {
     e.target = this;
     e.eventPhase = 2;
     e.currentTarget = this;
-    const ancestors: DisplayObject[] = [];
+    const ancestors: ParentNode[] = [];
     if (e.bubbles) for (let p = this._parent; p !== null; p = p._parent) ancestors.push(p);
     this._deliver(e);
     for (const p of ancestors) {
@@ -65,7 +66,9 @@ export class DisplayObject extends EventDispatcher {
   }
   /** True when the parent chain (this object included) ends at a root marked by the Player. */
   _onStage(): boolean {
-    for (let p: DisplayObject | null = this; p !== null; p = p._parent) if (p._isStageRoot) return true;
+    for (let p: DisplayObject | ParentNode | null = this; p !== null; p = p._parent) {
+      if (!isStage(p) && p._isStageRoot) return true;
+    }
     return false;
   }
   /** Pointer x in this object's coordinate space; 0 when a scale on the parent chain is 0. */
@@ -78,7 +81,12 @@ export class DisplayObject extends EventDispatcher {
     const p = getPointerPosition();
     return globalToLocal(this, p.x, p.y).y;
   }
-  get parent(): DisplayObjectContainer | null {
+  /** The Stage_Object when this object is on the stage (itself excluded unless it is the Stage), else null. */
+  get stage(): Stage | null {
+    for (let p: DisplayObject | ParentNode | null = this; p !== null; p = p._parent) if (isStage(p)) return p;
+    return null;
+  }
+  get parent(): ParentNode | null {
     return this._parent;
   }
 }

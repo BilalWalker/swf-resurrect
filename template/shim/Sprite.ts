@@ -1,5 +1,6 @@
 import { DisplayObject } from './DisplayObject';
 import { Event } from './events';
+import type { ParentNode } from './Stage';
 
 export class DisplayObjectContainer extends DisplayObject {
   _children: DisplayObject[] = [];
@@ -10,10 +11,11 @@ export class DisplayObjectContainer extends DisplayObject {
 
   /** Appends at the highest index; a child already on another list is moved. */
   addChild<T extends DisplayObject>(child: T): T {
-    for (let p: DisplayObject | null = this; p !== null; p = p._parent) {
+    for (let p: DisplayObject | ParentNode | null = this; p !== null; p = p._parent) {
       if (p === child) throw new Error('addChild: a display object cannot contain itself or an ancestor');
     }
-    child._parent?.removeChild(child);
+    const old = child._parent;
+    if (old !== null && 'removeChild' in old) old.removeChild(child);
     this._children.push(child);
     child._parent = this;
     announceAdded(child);

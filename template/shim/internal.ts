@@ -4,6 +4,7 @@ import type { DisplayObject } from './DisplayObject';
 import { Event } from './events';
 import type { MovieClip } from './MovieClip';
 import type { DisplayObjectContainer } from './Sprite';
+import { isStage, type ParentNode, type Stage } from './Stage';
 
 /** What a clip needs from the runtime to build and update its timeline children. */
 export interface ClipHooks {
@@ -40,6 +41,8 @@ export interface ConstructionContext {
   scripts: ClipScripts;
   hooks: ClipHooks;
   cycle?: ClipCycle;
+  /** The Stage_Object, set by the Player for the root clip only; MovieClip adopts it as its parent. */
+  rootParent?: Stage;
 }
 
 let current: ConstructionContext | null = null;
@@ -62,10 +65,11 @@ export function withConstructionContext<T>(ctx: ConstructionContext, fn: () => T
 
 /** Inserts `child` at `index` (clamped) in `parent`'s child list, detaching it from any other parent first. */
 export function attachChild(parent: DisplayObjectContainer, child: DisplayObject, index?: number): void {
-  for (let p: DisplayObject | null = parent; p !== null; p = p._parent) {
+  for (let p: DisplayObject | ParentNode | null = parent; p !== null; p = p._parent) {
     if (p === child) throw new Error('attachChild: a display object cannot contain itself or an ancestor');
   }
-  child._parent?.removeChild(child);
+  const old = child._parent;
+  if (old !== null && 'removeChild' in old) old.removeChild(child);
   const i = index === undefined ? parent._children.length : Math.max(0, Math.min(index, parent._children.length));
   parent._children.splice(i, 0, child);
   child._parent = parent;
@@ -102,7 +106,7 @@ export function getPointerPosition(): { x: number; y: number } {
  */
 export function globalToLocal(obj: DisplayObject, x: number, y: number): { x: number; y: number } {
   const chain: DisplayObject[] = [];
-  for (let p: DisplayObject | null = obj; p !== null; p = p._parent) chain.push(p);
+  for (let p: DisplayObject | ParentNode | null = obj; p !== null && !isStage(p); p = p._parent) chain.push(p);
   let px = x;
   let py = y;
   for (let i = chain.length - 1; i >= 0; i--) {
@@ -117,6 +121,15 @@ export function globalToLocal(obj: DisplayObject, x: number, y: number): { x: nu
     py = (-sin * dx + cos * dy) / n.scaleY;
   }
   return { x: px, y: py };
+}
+
+/**
+ * Makes stage the parent of oot and its only child. Used by the Player and by tests; the root must not
+ * already have another parent.
+ */
+export function attachRoot(stage: Stage, root: MovieClip): void {
+  root._parent = stage;
+  stage._children = [root];
 }
 
 /** Renders the clip's current frame into its children. */
@@ -154,7 +167,7 @@ export function clipsPostOrder(root: MovieClip): MovieClip[] {
 
 /** True when `o` is `root` or still a descendant of it. */
 export function isAttachedTo(o: DisplayObject, root: DisplayObject): boolean {
-  for (let p: DisplayObject | null = o; p !== null; p = p._parent) if (p === root) return true;
+  for (let p: DisplayObject | ParentNode | null = o; p !== null; p = p._parent) if (p === root) return true;
   return false;
 }
 
