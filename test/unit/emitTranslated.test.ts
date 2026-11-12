@@ -62,6 +62,21 @@ describe('buildClassesTs', () => {
     expect(keys).toEqual(['LeftButton', 'MainTimeline', 'RightButton']);
     expect(text).not.toContain('EventWatcher');
   });
+
+  it('imports from the chosen path with a binding and keys the registry by the dotted name', () => {
+    const s = structuredClone(scene);
+    s.symbols['90'] = { type: 'sprite', className: 'fl.controls.Slider', frameCount: 1, labels: [], frames: [[]] } as never;
+    s.symbols['91'] = { type: 'sprite', className: 'Main', frameCount: 1, labels: [], frames: [[]] } as never;
+    const text = buildClassesTs(
+      s,
+      ['fl.controls.Slider', 'Main'],
+      new Set(),
+      new Map([['fl.controls.Slider', 'src/fl/controls/Slider.ts'], ['Main', 'src/Main.class.ts']]),
+    );
+    expect(text).toContain("import { Slider as fl_controls_Slider } from './fl/controls/Slider';");
+    expect(text).toContain("import { Main } from './Main.class';");
+    expect(text).toContain('"fl.controls.Slider": fl_controls_Slider,');
+  });
 });
 
 describe('planEmit with translated classes', () => {

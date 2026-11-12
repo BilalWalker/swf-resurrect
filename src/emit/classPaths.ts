@@ -1,5 +1,6 @@
 // Core: no node:* import. Paths are strings joined with '/'.
-import { parseQualifiedName } from '../convert/qualifiedName';
+import { parseQualifiedName, relativeSpecifier, shimSpecifier } from '../convert/qualifiedName';
+import type { ImportRecord } from '../translate/types';
 
 export interface ClassPathChoice {
   /** Qualified_Name. */
@@ -88,4 +89,57 @@ export function planClassPaths(classNames: readonly string[], reserved: readonly
   }
   for (const c of out) c.renamed = c.path !== c.originalPath;
   return out.sort((a, b) => byCodeUnit(a.className, b.className));
+}
+
+/**
+ * Replaces exactly the recorded import lines of one translated class (by 1-based line number, never by
+ * matching text) with lines whose specifiers resolve to the chosen paths. A class record whose target has
+ * no chosen path keeps its line unchanged.
+ */
+export function resolveImportLines(
+  text: string,
+  records: readonly ImportRecord[],
+  fromPath: string,
+  chosen: ReadonlyMap<string, string>,
+): string {
+  const lines = text.split('\n');
+  for (const r of records) {
+    const idx = r.line - 1;
+    if (idx < 0 || idx >= lines.length) continue;
+    let spec: string;
+    if (r.kind === 'shim') spec = shimSpecifier(fromPath);
+    else {
+      const to = r.target === undefined ? undefined : chosen.get(r.target);
+      if (to === undefined) continue;
+      spec = relativeSpecifier(fromPath, to);
+    }
+    const names = r.names.map((n) => (n.alias === undefined ? n.name : `${n.name} as ${n.alias}`)).join(', ');
+    lines[idx] = `import { ${names} } from '${spec}';`;
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Binding names for src/classes.ts: unnamed-package classes keep the simple name; dotted names get
+ * `pkg_segments_Simple`; a clash with an earlier binding or with `classRegistry` appends `_2`, `_3`, ...
+ */
+export function buildBindings(classNames: readonly string[]): ReadonlyMap<string, string> {
+  const names = [...new Set(classNames)].sort(byCodeUnit);
+  const parts = names.map((n) => ({ name: n, ...parseQualifiedName(n) }));
+  const out = new Map<string, string>();
+  const used = new Set<string>(['classRegistry']);
+  for (const p of parts) {
+    if (p.pkg.length > 0) continue;
+    out.set(p.name, p.simple);
+    used.add(p.simple);
+  }
+  for (const p of parts) {
+    if (p.pkg.length === 0) continue;
+    const base = [...p.pkg, p.simple].join('_');
+    let b = base;
+    for (let i = 2; used.has(b); i++) b = `${base}_${i}`;
+    used.add(b);
+    out.set(p.name, b);
+  }
+  return out;
 }

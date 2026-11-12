@@ -1,7 +1,8 @@
-// Spec task 5.6.
+// Spec tasks 5.6 and 5.7.
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { planClassPaths } from "../../src/emit/classPaths";
+import { buildBindings, planClassPaths, resolveImportLines } from "../../src/emit/classPaths";
+import type { ImportRecord } from "../../src/translate/types";
 import { fcConfig } from "./config";
 import { P11_RESERVED, genClassNameSet } from "./gen/genClassNames";
 
@@ -83,5 +84,108 @@ describe("planClassPaths examples", () => {
   it("numbers repeated file collisions", () => {
     const plan = planClassPaths(["Main", "main", "MAIN"], ["src/main.ts"]);
     expect(plan.map((p) => p.path).sort()).toEqual(["src/MAIN.class.ts", "src/Main.class2.ts", "src/main.class3.ts"]);
+  });
+});
+
+/** Pure path normaliser: resolves `spec` against the directory of `from` and drops '.' and '..'. */
+function resolveSpec(from: string, spec: string): string {
+  const out = from.split("/").slice(0, -1);
+  for (const s of spec.split("/")) {
+    if (s === ".") continue;
+    if (s === "..") out.pop();
+    else out.push(s);
+  }
+  return out.join("/");
+}
+
+/** Every class imports every other class (one record each) and the Shim; line 1 is the Shim. */
+function resolveAll(names: readonly string[]): Map<string, string[]> {
+  const plan = planClassPaths(names, P11_RESERVED);
+  const chosen = new Map(plan.map((p) => [p.className, p.path]));
+  const result = new Map<string, string[]>();
+  for (const p of plan) {
+    const records: ImportRecord[] = [{ line: 1, kind: "shim", names: [{ name: "Sprite" }] }];
+    const lines = ["import { Sprite } from 'x';"];
+    for (const other of [...names].sort()) {
+      if (other === p.className) continue;
+      records.push({ line: lines.length + 1, kind: "class", names: [{ name: "X" }], target: other });
+      lines.push("import { X } from 'y';");
+    }
+    const text = [...lines, "const s = \"import { Z } from 'z';\";"].join("\n");
+    result.set(p.className, resolveImportLines(text, records, p.path, chosen).split("\n"));
+  }
+  return result;
+}
+
+describe("Property 21: Package-tree paths and import specifiers resolve", () => {
+  it("**Validates: Requirements 18.4, 18.6, 18.7, 18.10, 15.5** every import resolves to exactly the chosen path, the Shim to shim", () => {
+    fc.assert(
+      fc.property(genClassNameSet, (names) => {
+        const plan = planClassPaths(names, P11_RESERVED);
+        const chosen = new Map(plan.map((p) => [p.className, p.path]));
+        const out = resolveAll(names);
+        for (const p of plan) {
+          const lines = out.get(p.className) as string[];
+          const specs = lines.slice(0, -1).map((l) => /from '([^']+)';$/.exec(l)?.[1] as string);
+          expect(resolveSpec(p.path, specs[0])).toBe("shim");
+          const others = [...names].sort().filter((n) => n !== p.className);
+          others.forEach((o, i) => expect(resolveSpec(p.path, specs[i + 1]) + ".ts").toBe(chosen.get(o)));
+          // Text that merely looks like an import is untouched.
+          expect(lines[lines.length - 1]).toBe("const s = \"import { Z } from 'z';\";");
+        }
+      }),
+      fcConfig,
+    );
+  });
+
+  it("gives the same result for any order of classes", () => {
+    fc.assert(
+      fc.property(genClassNameSet, fc.nat(), (names, seed) => {
+        const k = names.length === 0 ? 0 : seed % names.length;
+        const rotated = [...names.slice(k), ...names.slice(0, k)].reverse();
+        expect([...resolveAll(rotated)]).toEqual([...resolveAll(names)]);
+      }),
+      fcConfig,
+    );
+  });
+
+  it("keeps aliases and leaves a record without a chosen target unchanged", () => {
+    const text = "import { S } from '../shim';\nimport { Slider } from './Slider';\nx";
+    const records: ImportRecord[] = [
+      { line: 1, kind: "shim", names: [{ name: "S" }] },
+      { line: 2, kind: "class", names: [{ name: "Slider", alias: "b_Slider" }], target: "fl.Slider" },
+    ];
+    expect(resolveImportLines(text, records, "src/a/X.ts", new Map([["fl.Slider", "src/fl_class/Slider.ts"]]))).toBe(
+      "import { S } from '../../shim';\nimport { Slider as b_Slider } from '../fl_class/Slider';\nx",
+    );
+    expect(resolveImportLines(text, records, "src/X.ts", new Map())).toBe("import { S } from '../shim';\nimport { Slider } from './Slider';\nx");
+  });
+});
+
+describe("Property 23: Registry bindings are unique and keep unnamed names", () => {
+  it("**Validates: Requirements 18.8, 15.5** unique bindings, unnamed names kept, order independent", () => {
+    fc.assert(
+      fc.property(genClassNameSet, fc.nat(), (names, seed) => {
+        const b = buildBindings(names);
+        expect(new Set(b.values()).size).toBe(names.length);
+        expect([...b.keys()].sort()).toEqual([...names].sort());
+        for (const n of names) {
+          if (!n.includes(".")) expect(b.get(n)).toBe(n);
+          else expect(b.get(n)).not.toBe("classRegistry");
+          expect(b.get(n)).toMatch(/^[A-Za-z_$][\w$]*$/);
+        }
+        const k = names.length === 0 ? 0 : seed % names.length;
+        const rotated = [...names.slice(k), ...names.slice(0, k)].reverse();
+        expect([...buildBindings(rotated)]).toEqual([...b]);
+      }),
+      fcConfig,
+    );
+  });
+
+  it("numbers clashes in order", () => {
+    const b = buildBindings(["fl.controls.Slider", "fl_controls_Slider", "fl_controls_Slider_2", "x.classRegistry"]);
+    expect(b.get("fl_controls_Slider")).toBe("fl_controls_Slider");
+    expect(b.get("fl.controls.Slider")).toBe("fl_controls_Slider_3");
+    expect(b.get("x.classRegistry")).toBe("x_classRegistry");
   });
 });
