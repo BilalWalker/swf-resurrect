@@ -434,6 +434,7 @@ export interface FidelityInputs {
   sample: string;
   stage: { width: number; height: number };
   background: string;                       // '#rrggbb'
+  tools: { ffdec: string; playwright: string; pngjs: string };   // pinned versions, copied in by the edge from edge/versions.ts
   frameSample: readonly number[];
   frames: ReadonlyArray<FrameOutcome>;      // any order; the builder sorts
   limits: readonly VisualLimit[];
@@ -523,10 +524,14 @@ JSON shape (`formatVersion` 1), with keys written sorted by `canonicalJson`:
 
 ```ts
 // pipeline.ts
+// defined in src/verify/edge/verifyStage.ts, re-exported by pipeline.ts
 export interface VerifyRequest {
-  swfPath: string; outputDir: string; sampleName: string; referenceDir: string;
-  ffdecJarPath: string; scene: SceneJson; unsupported: UnsupportedFeatureEntry[];
-  translationReport: TranslationReport; frames?: number;
+  swfPath: string; jarPath: string; outputDir: string; projectDir: string;
+  scene: SceneJson; unsupported: readonly UnsupportedFeatureEntry[];
+  translationReport: TranslationReport; sampleName: string;
+  referenceDir: string | null;              // null when the sample has no reference directory
+  frames?: number;
+  deps?: Partial<VerifyDeps>;               // test seam: stubs for the edges
 }
 export interface VerifySummary { overallMatch: number | null; traceScore: number | null; jsonPath: string; htmlPath: string }
 export interface PipelineStages { /* existing */ verify?(req: VerifyRequest): Promise<VerifySummary> }

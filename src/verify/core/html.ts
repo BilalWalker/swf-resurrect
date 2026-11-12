@@ -156,11 +156,11 @@ function behaviourSection(r: FidelityReport): string {
     list('Missing lines', b.missing);
     list('Extra lines', b.extra);
   }
-  if (b.knownBehaviourGaps.length > 0) {
-    parts.push(
-      '<h3>Known behaviour gaps</h3>',
-      `<ul>\n${b.knownBehaviourGaps.map((g) => `<li>${e(g)}</li>`).join('\n')}\n</ul>`,
-    );
+  parts.push('<h3>Known behaviour gaps</h3>');
+  if (b.knownBehaviourGaps.length === 0) {
+    parts.push('<p>none</p>');
+  } else {
+    parts.push(`<ul>\n${b.knownBehaviourGaps.map((g) => `<li>${e(g)}</li>`).join('\n')}\n</ul>`);
   }
   parts.push('</section>');
   return parts.join('\n');

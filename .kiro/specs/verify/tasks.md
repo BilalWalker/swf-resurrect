@@ -357,12 +357,12 @@ Rules that apply to every task:
     - Raise `TRACE_SCORE_FLOOR` in `test/unit/clickgotoReplay.test.ts` to the measured value (never lower). Add a unit test for the frame label of a bubbled `removed` (the parent still reports its old frame while a child's `removed` bubbles).
     - _Requirements: 8.4, 8.8, 13.6_
 
-- [ ] 19. Emit and report: build output and design alignment
-  - [~] 19.1 Emitted project build includes `assets/`
+- [x] 19. Emit and report: build output and design alignment
+  - [x] 19.1 Emitted project build includes `assets/`
     - `vite build` of an emitted project leaves `assets/` out of `dist`. Fix it in the emit template so the user's own `npm run build` works (for example by serving `assets/` as the Vite `publicDir` or moving the files), remove the `assets/` copy workaround in `src/verify/edge/buildProject.ts`, and add a test that builds an emitted fixture project and finds `assets/scene.json` in `dist`. Keep the dev server working.
     - _Requirements: 3.5, 12.5_
 
-  - [~] 19.2 Align `html.ts` and design.md
+  - [x] 19.2 Align `html.ts` and design.md
     - `html.ts` must print `none` for an empty known-behaviour-gaps list (as design section 10 says) for compared and not-compared behaviour; add a test for it. Update design.md so `FidelityInputs` lists the `tools` field.
     - _Requirements: 10.1, 10.3, 9.2_
 
