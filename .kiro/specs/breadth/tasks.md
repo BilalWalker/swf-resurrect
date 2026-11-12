@@ -77,18 +77,18 @@ Rules that apply to every task:
     - Test: `test/unit/parseStructure.test.ts` (text, edit text and button ids, `DefineBits*` as non-placed definitions, font tags ignored) and `test/unit/ffdecXmlVerifiedNames.test.ts` (observed names no longer `UNVERIFIED`, the six unobserved names still are), using dump excerpts taken under `.work/` from the approved samples.
     - _Requirements: 5.1, 5.2, 5.5, 5.7, 11.1_
 
-  - [-] 3.4 Drop placements of unsupported characters with a Named_Limit
+  - [x] 3.4 Drop placements of unsupported characters with a Named_Limit
     - In `src/convert/convertModel.ts` a placement of a character of kind `text`, `sound`, `button` or `video` is dropped and recorded with the kind, sprite id, frame and depth; a placement of a `bitmapIds` character is dropped with kind `bitmap-fill` and message `DefineBits character placed directly`; `UnknownSymbolError` stays for an id nobody defines. Static text is dropped as kind `text` in this task (Task 12 draws it).
     - Test: `test/property/convertAccounting.property.test.ts` (create), **Property 10: Convert never aborts on a defined character and counts every drop**, with `test/property/gen/genTagsModel.ts` extended (text, button, sound, video ids, `staticTextIds`, `bitmapIds`): no throw when every placed id is defined, the drop count equals the number of dropped placements, `UnknownSymbolError` for an undefined id. Add example rows to `test/unit/convertModel.test.ts`.
     - _Requirements: 5.3, 5.4, 5.6, 9.6, 11.1, 11.4, 15.5_
 
-  - [ ] 3.5 Smoke runs of the candidates
+  - [x] 3.5 Smoke runs of the candidates
     - Under `.work/` run `npm run pipeline -- <swf> <out> --force` for the eight approved SWFs and the smoke files `acid-color-0`, `acid-gradient` and `bitmapbuttons` (never committed). Record the stage reached and any error for each in the commit message. None may stop at Unpack for a missing `symbols.csv` or at Convert with `Unknown symbol`. Dotted-class issues (Task 5) and the `Main` collision (Task 5) may still appear; record them, do not fix them here. If `acid-gradient` cannot be downloaded, report that the check was not run. Delete the copies.
     - `from_shumway/timeline/nav/clipDepth`, `from_shumway/acid/acid-color-0`, `from_shumway/bitmapbuttons` and `avm2/edit_text_linkage` are local smoke tests only: they live under `.work/`, are deleted when the task ends and are never committed (Requirement 3.2).
     - Evidence is the recorded run output in the commit message; it is guarded by the unit tests of 3.1, 3.2 and the Property 10 test of 3.4 (no new test file, no new code).
     - _Requirements: 3.2, 4.5, 5.3, 14.1_
 
-  - [ ] 3.6 Record the baseline for Checkpoint 9 and create the SC copy
+  - [-] 3.6 Record the baseline for Checkpoint 9 and create the SC copy
     - Under `.work/` download `3_joystick` and `click_block` with their `output.txt`, `input.json` and `test.toml`; create the kept SC copy `.work/local/slider_component/` (Requirement 23.6; SHA-256 checked). Run `npm run pipeline -- <swf> <out> --force --verify --work-dir <dir>` with the references next to the SWF under `reference/`, and write into the commit message of this task, for each of the three samples: stage result, Overall_Match, Trace_Score, `missing` and `extra` counts, replay `ticks` and `inputGroups`, and the type-check gate diagnostics (error count per class, `untranslated-class` entries). This is the "before Requirements 14, 18, 19, 22 and 23" column of Requirement 16.2 and is read back from `git log` at Task 9. State that `slider_component` measures 99.93 (Requirement 23.5). Delete the `3_joystick` and `click_block` downloads. Commit nothing from `.work/`.
     - Evidence is a recorded measurement in the commit message; the later `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts` floors of Tasks 16 and 17 guard the after values.
     - _Requirements: 14.1, 14.2, 16.2, 23.5, 23.6_
