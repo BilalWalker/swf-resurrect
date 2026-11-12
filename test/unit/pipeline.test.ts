@@ -59,7 +59,7 @@ function makeStages(over: Partial<PipelineStages> = {}): PipelineStages {
     },
     async translate() {
       calls.push('translate');
-      return { classes: [] };
+      return { classes: [], skippedScripts: [] };
     },
     async emit(_a, o) {
       calls.push('emit');

@@ -10,6 +10,7 @@ import { genProgram, genSoup } from "./gen/genAs3";
 const options: TranslateOptions = {
   shimNames: SHIM_AS3_NAMES,
   shimMembers: SHIM_MOVIECLIP_MEMBERS,
+  selfQualified: 'MainTimeline',
   siblingClasses: new Set(["EventWatcher", "LeftButton", "RightButton", "MainTimeline"]),
   syntaxCheck: tsSyntaxCheck,
 };

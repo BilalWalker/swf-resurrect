@@ -1,12 +1,14 @@
 // Pure planning step of the Translate stage (design 3). No node:* imports.
 
 import type { SceneJson } from '../../template/runtime/scene';
+import { qualifiedFromScriptPath } from '../convert/qualifiedName';
+import { DuplicateClassError } from './errors';
 import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from './shimNames';
 import { translate } from './translate';
 import type { Diagnostic, LineSpan, SyntaxCheck } from './types';
 
 export interface ScriptSource {
-  className: string; // file stem
+  className: string; // Qualified_Name
   source: string;
 }
 
@@ -21,10 +23,32 @@ export interface TranslatedClass {
 
 export interface TranslateArtifact {
   classes: TranslatedClass[]; // emitted set only, sorted by className
+  /** Script paths (relative, posix) that give no Qualified_Name; sorted. */
+  skippedScripts: string[];
 }
 
 function compareCodeUnits(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
+ * Keys script paths (relative to the scripts directory, posix separators) by Qualified_Name.
+ * A path that gives no Qualified_Name is skipped. Two paths with the same Qualified_Name throw.
+ */
+export function keyScriptPaths(relPaths: readonly string[]): { keyed: Array<{ qualified: string; path: string }>; skipped: string[] } {
+  const byName = new Map<string, string[]>();
+  const skipped: string[] = [];
+  for (const p of relPaths) {
+    const q = qualifiedFromScriptPath(p);
+    if (q === null) skipped.push(p);
+    else byName.set(q, [...(byName.get(q) ?? []), p]);
+  }
+  const keyed: Array<{ qualified: string; path: string }> = [];
+  for (const [q, ps] of byName) {
+    if (ps.length > 1) throw new DuplicateClassError(q, ps);
+    keyed.push({ qualified: q, path: ps[0] });
+  }
+  return { keyed, skipped: skipped.sort(compareCodeUnits) };
 }
 
 /** Transpiles every source, then keeps the emit closure (Req 4.3). */
@@ -32,25 +56,41 @@ export function planTranslate(
   sources: readonly ScriptSource[],
   scene: SceneJson,
   syntaxCheck: SyntaxCheck,
+  skippedScripts: readonly string[] = [],
 ): TranslateArtifact {
   const sorted = [...sources].sort((a, b) => compareCodeUnits(a.className, b.className));
   const siblingClasses: ReadonlySet<string> = new Set(sorted.map((s) => s.className));
 
   const translated = new Map<string, TranslatedClass>();
   for (const s of sorted) {
+    const dot = s.className.lastIndexOf('.');
+    const pathPackage = dot < 0 ? '' : s.className.slice(0, dot);
+    const simple = s.className.slice(dot + 1);
     const r = translate(s.source, {
       shimNames: SHIM_AS3_NAMES,
       shimMembers: SHIM_MOVIECLIP_MEMBERS,
+      selfQualified: s.className,
       siblingClasses,
       syntaxCheck,
     });
+    const info = r.classes.find((c) => c.name === simple) ?? r.classes[0];
+    const diagnostics = r.diagnostics;
+    if (info !== undefined && (r.packageName !== pathPackage || info.name !== simple)) {
+      const declared = r.packageName === '' ? info.name : `${r.packageName}.${info.name}`;
+      diagnostics.push({
+        kind: 'unsupported-construct',
+        line: 1,
+        message: `package declaration "${declared}" does not match the path; the path name "${s.className}" is used`,
+      });
+      diagnostics.sort((a, b) => a.line - b.line || compareCodeUnits(a.kind, b.kind) || compareCodeUnits(a.message, b.message));
+    }
     translated.set(s.className, {
       className: s.className,
       fileName: `${s.className}.ts`,
       text: r.text,
-      diagnostics: r.diagnostics,
+      diagnostics,
       spans: r.spans,
-      extendsName: r.classes.find((c) => c.name === s.className)?.extendsName ?? r.classes[0]?.extendsName ?? null,
+      extendsName: info?.extendsName ?? null,
     });
   }
 
@@ -73,5 +113,6 @@ export function planTranslate(
 
   return {
     classes: [...emitted].sort(compareCodeUnits).map((n) => translated.get(n) as TranslatedClass),
+    skippedScripts: [...skippedScripts].sort(compareCodeUnits),
   };
 }

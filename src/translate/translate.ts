@@ -56,6 +56,11 @@ function constructorHook(tokens: readonly Token[]): NonNullable<EmitHooks['const
   };
 }
 
+function findPackageName(nodes: readonly Node[]): string {
+  for (const n of nodes) if (n.kind === 'package') return n.name;
+  return '';
+}
+
 function collectClasses(nodes: readonly Node[], out: ClassInfo[]): void {
   for (const n of nodes) {
     if (n.kind === 'package') collectClasses(n.body, out);
@@ -79,6 +84,7 @@ function fallback(source: string, firstMessage: string): TranslateResult {
     ],
     spans: [{ startLine: 1, endLine: lines.length, kind: 'unsupported' }],
     classes: [],
+    packageName: '',
   };
 }
 
@@ -102,7 +108,8 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   const rwOptions = {
     shimNames: options.shimNames,
     shimMembers: options.shimMembers,
-    siblingClasses: options.siblingClasses,
+    // Until the import plan (spec task 5.5), sibling references match by simple name.
+    siblingClasses: new Set([...options.siblingClasses].map((q) => q.slice(q.lastIndexOf('.') + 1))),
   };
   const out = emitTs(nodes, {
     source: src,
@@ -115,5 +122,5 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   });
   const classes: ClassInfo[] = [];
   collectClasses(nodes, classes);
-  return { text: out.text, diagnostics: out.diagnostics, spans: out.spans, classes };
+  return { text: out.text, diagnostics: out.diagnostics, spans: out.spans, classes, packageName: findPackageName(nodes) };
 }

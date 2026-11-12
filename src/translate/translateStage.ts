@@ -1,11 +1,11 @@
 // IO part of the Translate stage (design 3). Reads only unpacked.scriptsDir.
 
 import { readdir, readFile } from 'node:fs/promises';
-import { basename, join, relative } from 'node:path';
+import { join, relative } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
 import type { UnpackResult } from '../unpack/unpack';
-import { DuplicateClassError, ScriptsDirError } from './errors';
-import { planTranslate } from './planTranslate';
+import { ScriptsDirError } from './errors';
+import { keyScriptPaths, planTranslate } from './planTranslate';
 import type { ScriptSource, TranslateArtifact } from './planTranslate';
 import { tsSyntaxCheck } from './tsSyntaxCheck';
 
@@ -34,18 +34,15 @@ export async function translateStage(unpacked: UnpackResult, artifact: Converted
     return ra < rb ? -1 : ra > rb ? 1 : 0;
   });
 
-  const byName = new Map<string, string[]>();
-  for (const p of paths) {
-    const name = basename(p, '.as');
-    byName.set(name, [...(byName.get(name) ?? []), p]);
-  }
-  for (const [name, ps] of byName) {
-    if (ps.length > 1) throw new DuplicateClassError(name, ps.map((p) => relative(dir, p).split('\\').join('/')));
-  }
+  const rels = new Map(paths.map((p) => [relative(dir, p).split('\\').join('/'), p]));
+  const { keyed, skipped } = keyScriptPaths([...rels.keys()]);
 
   const sources: ScriptSource[] = [];
-  for (const p of paths) {
-    sources.push({ className: basename(p, '.as'), source: await readFile(p, 'utf8') });
+  for (const k of keyed) {
+    sources.push({ className: k.qualified, source: await readFile(rels.get(k.path) as string, 'utf8') });
   }
-  return planTranslate(sources, artifact.scene, tsSyntaxCheck);
+  if (skipped.length > 0) {
+    console.warn(`translate: skipped ${skipped.length} script(s) with no valid class name: ${skipped.join(', ')}`);
+  }
+  return planTranslate(sources, artifact.scene, tsSyntaxCheck, skipped);
 }

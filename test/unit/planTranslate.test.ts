@@ -82,16 +82,28 @@ describe('translateStage errors', () => {
     expect(err.stage).toBe('translate');
   });
 
-  it('throws DuplicateClassError for the same class in two directories', async () => {
+  it('does not throw for the same simple name in the unnamed package and in a package', async () => {
     const root = await mkdtemp(join(tmpdir(), 'translate-dup-'));
     try {
       await mkdir(join(root, 'p'), { recursive: true });
       await writeFile(join(root, 'A.as'), cls('A'));
-      await writeFile(join(root, 'p', 'A.as'), cls('A'));
-      const err = await translateStage(unpackedAt(root), artifact).catch((e) => e);
-      expect(err).toBeInstanceOf(DuplicateClassError);
-      expect(err.stage).toBe('translate');
-      expect(err.className).toBe('A');
+      await writeFile(join(root, 'p', 'A.as'), 'package p {\n  public class A {\n  }\n}\n');
+      const r = await translateStage(unpackedAt(root), { scene: sceneWith(['A', 'p.A']) } as unknown as ConvertedArtifact);
+      expect(r.classes.map((c) => c.className)).toEqual(['A', 'p.A']);
+      expect(r.skippedScripts).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('skips a script whose path gives no Qualified_Name', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'translate-skip-'));
+    try {
+      await writeFile(join(root, 'A.as'), cls('A'));
+      await writeFile(join(root, 'B.C.as'), cls('B'));
+      const r = await translateStage(unpackedAt(root), { scene: sceneWith(['A']) } as unknown as ConvertedArtifact);
+      expect(r.classes.map((c) => c.className)).toEqual(['A']);
+      expect(r.skippedScripts).toEqual(['B.C.as']);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

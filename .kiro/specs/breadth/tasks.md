@@ -142,7 +142,7 @@ Rules that apply to every task:
     - Test: `test/unit/readUnpackedPackages.test.ts` (create; temp directory with `scripts/code/Interactivity3.as`, `scripts/fl/controls/Slider.as`; a hostile name reads no file), and extend `test/unit/unpack.test.ts` (invalid name fails at stage `unpack`) and `test/unit/readUnpacked.test.ts`.
     - _Requirements: 18.1, 18.2_
 
-  - [ ] 5.3 Key classes by Qualified_Name in Translate
+  - [x] 5.3 Key classes by Qualified_Name in Translate
     - `src/translate/translateStage.ts` computes `qualifiedFromScriptPath` for each `.as` file; a file that returns `null` is skipped and listed in a new `TranslateArtifact.skippedScripts` (sorted; the Pipeline prints one warning line). `DuplicateClassError` is raised only for two files with the same Qualified_Name. `TranslateResult` gets `packageName`; `planTranslate` compares it and `ClassInfo.name` with the path-derived name; a mismatch keeps the path name and adds the Diagnostic `package declaration "x" does not match the path; the path name "y" is used` at line 1 (kind `unsupported-construct`). `ScriptSource.className`, `siblingClasses` and `TranslateOptions.selfQualified` hold Qualified_Names.
     - Test: `test/unit/translatePackages.test.ts` (create): same simple name in two packages is not a duplicate, equal Qualified_Names are, skipped scripts, the path/declaration mismatch Diagnostic. Update `test/unit/planTranslate.test.ts`.
     - _Requirements: 18.3_

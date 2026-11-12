@@ -16,7 +16,9 @@ export interface TranslateOptions {
   shimNames: ReadonlySet<string>;
   /** MovieClip instance members callable unqualified. */
   shimMembers: ReadonlySet<string>;
-  /** Other classes exported next to this file. */
+  /** Qualified_Name of the class this file declares (path-derived). */
+  selfQualified: string;
+  /** Qualified_Names of the other classes exported next to this file. */
   siblingClasses: ReadonlySet<string>;
   /** Injected parser (decision D4). */
   syntaxCheck: SyntaxCheck;
@@ -35,6 +37,8 @@ export interface ClassInfo {
 }
 
 export interface TranslateResult {
+  /** Name in the package declaration, '' for the unnamed package or no package. */
+  packageName: string;
   /** LF line endings, one trailing newline, '' for blank input. */
   text: string;
   /** Sorted by (line, kind, message), UTF-16 code unit order. */
