@@ -2,6 +2,22 @@
 
 Applies whenever a spec task is executed, including "Run all tasks".
 
+## Branch: never commit on `main`
+
+Spec work happens on a local `wip/<spec>` branch (for example
+`wip/verify`). Before the first commit of a run, check `git branch
+--show-current`. If it prints `main`, stop and ask the user; do not
+create or switch branches yourself.
+
+Commits on the `wip/` branch are save points. The user later regroups
+them into a few larger commits on `main`, one per coherent piece of work,
+spread over several days. So:
+
+- keep committing after every top-level task as described below, so each
+  save point builds and passes;
+- never merge, cherry-pick or push the `wip/` branch;
+- keep each commit's files limited to its task, so regrouping stays easy.
+
 ## Commit after every top-level task
 
 When all sub-tasks of a top-level task (for example 5.1 to 5.4) are done:
