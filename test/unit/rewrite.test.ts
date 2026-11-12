@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { emitTs } from '../../src/translate/emitTs';
-import { createImportLines, createRewriter, findValueReferencedMethods } from '../../src/translate/rewrite';
+import { canonicalClassPath } from '../../src/convert/qualifiedName';
+import { planFileImports } from '../../src/translate/importPlan';
+import { collectReferences, createImportLines, createRewriter, findValueReferencedMethods } from '../../src/translate/rewrite';
 import { scan } from '../../src/translate/scanner';
 import type { ClassNode } from '../../src/translate/scanner';
 import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from '../../src/translate/shimNames';
@@ -9,22 +11,33 @@ import { normalizeNewlines, tokenize } from '../../src/translate/tokenizer';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 
 const SIBLINGS = new Set(['EventWatcher', 'LeftButton', 'RightButton', 'MainTimeline']);
-const options = { shimNames: SHIM_AS3_NAMES, shimMembers: SHIM_MOVIECLIP_MEMBERS, siblingClasses: SIBLINGS };
-
-function run(source: string) {
+function run(source: string, known: ReadonlySet<string> = SIBLINGS, self = 'A') {
   const src = normalizeNewlines(source);
   const tokens = tokenize(src);
   const { nodes } = scan(tokens);
+  const refs = collectReferences(tokens, nodes, known);
+  const plan = planFileImports({
+    selfQualified: self,
+    declared: refs.declared,
+    shimNames: SHIM_AS3_NAMES,
+    known,
+    imports: refs.imports,
+    bare: refs.bare,
+    chains: refs.chains,
+  });
+  const shimUsed = [...refs.bare.keys()].filter(
+    (n) => !refs.declared.has(n) && SHIM_AS3_NAMES.has(n) && !plan.bindingOfBare.has(n),
+  );
+  const imports = createImportLines(plan, canonicalClassPath(self), shimUsed);
+  const options = { shimNames: SHIM_AS3_NAMES, shimMembers: SHIM_MOVIECLIP_MEMBERS, plan };
   const out = emitTs(nodes, {
     source: src,
     tokens,
     rewriter: createRewriter(nodes, options),
-    hooks: { importLines: createImportLines(tokens, options) },
+    hooks: { importLines: () => imports.lines },
   });
-  return { out, nodes, tokens };
-}
-
-const cls = (members: string, head = 'public class A'): string =>
+  return { out, nodes, tokens, plan, imports };
+}const cls = (members: string, head = 'public class A'): string =>
   `package\n{\n  ${head}\n  {\n${members}\n  }\n}\n`;
 const fn = (body: string, sig = 'public function f() : *'): string =>
   cls(`    ${sig}\n    {\n${body}\n    }`);

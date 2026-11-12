@@ -87,6 +87,8 @@ describe('untranslatedCodeEntries', () => {
     diagnostics,
     spans: [],
     extendsName: null,
+  extendsQualified: null,
+  importRecords: [],
   });
 
   it('emits one entry per unsupported-construct Diagnostic and skips overridden classes', () => {

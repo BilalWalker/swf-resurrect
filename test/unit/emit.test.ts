@@ -116,7 +116,7 @@ describe('planEmit', () => {
   });
 
   it('4.3 an omitted class has no import and no entry, and its file is still written', () => {
-    const omittedInput: EmitInput = { ...input, translated: [{ className: 'LeftButton', fileName: 'LeftButton.ts', text: 'x\n', diagnostics: [], spans: [], extendsName: null }], handwritten: [] };
+    const omittedInput: EmitInput = { ...input, translated: [{ className: 'LeftButton', fileName: 'LeftButton.ts', text: 'x\n', diagnostics: [], spans: [], extendsName: null, extendsQualified: null, importRecords: [] }], handwritten: [] };
     const files = planEmitDetailed(omittedInput, svgs, new Set(['LeftButton'])).files;
     const classes = files.find((f) => f.path === 'src/classes.ts');
     expect(files.some((f) => f.path === 'src/LeftButton.ts')).toBe(true);

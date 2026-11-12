@@ -41,6 +41,8 @@ export interface TranslationReport {
 export interface ReportClassInput {
   className: string;
   overridden: boolean;
+  /** Emitted file of the class; default src/<className>.ts. */
+  path?: string;
   diagnostics: readonly Diagnostic[];
   /** Maps an emitted line to its AS3 line, or null when generated. Absent means always null. */
   as3LineOf?: (emittedLine: number) => number | null;
@@ -76,7 +78,7 @@ export function buildReport(
   const omittedBy = new Map(omissions.map((o) => [o.className, o]));
   const looseNames = new Set((extras.loose ?? []).map((l) => l.className));
   const byFile = new Map<string, ReportClassInput>();
-  for (const c of classes) byFile.set(`src/${c.className}.ts`, c);
+  for (const c of classes) byFile.set(c.path ?? `src/${c.className}.ts`, c);
 
   const perClass = new Map<string, GateError[]>();
   const otherErrors: GateError[] = [];

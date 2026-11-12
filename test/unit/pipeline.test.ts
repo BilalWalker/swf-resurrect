@@ -289,7 +289,7 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
   const gateWith = (file: string): GateResult => ({ errors: [gateError({ file, line: 2, code: 2322 })] });
 
   function translatedClass(className: string) {
-    return { className, fileName: `${className}.ts`, text: '', diagnostics: [], spans: [], extendsName: null };
+    return { className, fileName: `${className}.ts`, text: '', diagnostics: [], spans: [], extendsName: null, extendsQualified: null, importRecords: [] };
   }
 
   async function run(stages: PipelineStages): Promise<{

@@ -58,6 +58,8 @@ const tc = (className: string, text: string): TranslatedClass => ({
   diagnostics: [],
   spans: [],
   extendsName: null,
+  extendsQualified: null,
+  importRecords: [],
 });
 
 describe.skipIf(reason !== null)(`emitted project with a non-loading or loose class${reason === null ? '' : ` (skipped: ${reason})`}`, () => {

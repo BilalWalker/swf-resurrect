@@ -1,0 +1,78 @@
+import { DisplayObject, DisplayObjectContainer, Event, Shape, trace } from '../shim';
+import { EventWatcher } from './EventWatcher';
+import { LeftButton } from './LeftButton';
+import { RightButton } from './RightButton';
+
+export class MainTimeline extends EventWatcher {
+  public declare l_button: LeftButton;
+  public declare r_button: RightButton;
+  invocation: any = 0;
+  destroy_me: any = false;
+
+  public constructor() {
+    super();
+    this.enter_frame_controller = this.enter_frame_controller.bind(this);
+    this.exit_frame_controller = this.exit_frame_controller.bind(this);
+    this.frame1 = this.frame1.bind(this);
+    this.frame2 = this.frame2.bind(this);
+    this.frame3 = this.frame3.bind(this);
+    this.addFrameScript(0,this.frame1,1,this.frame2,2,this.frame3);
+    this.addEventListener(Event.ENTER_FRAME,this.enter_frame_controller);
+    this.addEventListener(Event.EXIT_FRAME,this.exit_frame_controller);
+  }
+
+  inspect(from: DisplayObject): void {
+    var child: any = undefined;
+    var num_children: any = undefined;
+    var i: any = undefined;
+    if (from instanceof DisplayObjectContainer) {
+      num_children = 0;
+      for (i = 0; i < from.numChildren; i += 1) {
+        if (from.getChildAt(i)) {
+          num_children += 1;
+        }
+      }
+      trace("/// (Container:",from.name,"with",num_children,"children)");
+      for (i = 0; i < from.numChildren; i += 1) {
+        child = from.getChildAt(i);
+        if (child) {
+          this.inspect(child);
+        }
+      }
+    } else if (!(from instanceof Shape)) {
+      trace("/// (Unknown:",from.name,")");
+    }
+  }
+
+  enter_frame_controller(evt: Event): void {
+    ++this.invocation;
+    if (this.invocation == 30) {
+      this.destroy_me = true;
+    }
+    this.inspect(this);
+  }
+
+  exit_frame_controller(evt: Event): void {
+    this.inspect(this);
+    if (this.destroy_me) {
+      this.destroy();
+      this.l_button.destroy();
+      this.r_button.destroy();
+      this.removeEventListener(Event.ENTER_FRAME,this.enter_frame_controller);
+      this.removeEventListener(Event.EXIT_FRAME,this.exit_frame_controller);
+      this.stop();
+    }
+  }
+
+  frame1(): void {
+    trace("//MainTimeline frame 1");
+  }
+
+  frame2(): void {
+    trace("//MainTimeline frame 2");
+  }
+
+  frame3(): void {
+    trace("//MainTimeline frame 3");
+  }
+}

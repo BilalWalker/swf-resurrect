@@ -5,9 +5,12 @@
 // constructor hook (design 1.6) and method binding (design 1.7). `translate` adds
 // the injected syntax check and the D5 fallback.
 
+import { canonicalClassPath } from '../convert/qualifiedName';
 import { emitTs, escapeComment } from './emitTs';
 import type { BodyItem, EmitHooks } from './emitTs';
-import { createImportLines, createRewriter, findValueReferencedMethods } from './rewrite';
+import { planFileImports } from './importPlan';
+import type { ImportPlan } from './importPlan';
+import { collectReferences, createImportLines, createRewriter, findValueReferencedMethods } from './rewrite';
 import { scan } from './scanner';
 import type { ClassNode, MethodNode, Node } from './scanner';
 import { normalizeNewlines, tokenize } from './tokenizer';
@@ -61,10 +64,38 @@ function findPackageName(nodes: readonly Node[]): string {
   return '';
 }
 
-function collectClasses(nodes: readonly Node[], out: ClassInfo[]): void {
+function cmp(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/** Qualified_Name that 
+ame (as written in extends) stands for, or null when it has no source. */
+function resolveHeritage(name: string, plan: ImportPlan): string | null {
+  if (name.indexOf('.') >= 0) return plan.bindingOfChain.has(name) ? name : null;
+  return plan.bindingOfBare.get(name) ?? null;
+}
+
+function collectClasses(nodes: readonly Node[], out: ClassInfo[], plan: ImportPlan): void {
   for (const n of nodes) {
-    if (n.kind === 'package') collectClasses(n.body, out);
-    else if (n.kind === 'class') out.push({ name: n.name, extendsName: n.extendsName });
+    if (n.kind === 'package') collectClasses(n.body, out, plan);
+    else if (n.kind === 'class') {
+      out.push({
+        name: n.name,
+        extendsName: n.extendsName,
+        extendsQualified: n.extendsName === null ? null : resolveHeritage(n.extendsName, plan),
+      });
+    }
+  }
+}
+
+/** Rewrites dotted extends and implements names that the plan binds to their binding. */
+function bindHeritage(nodes: readonly Node[], plan: ImportPlan): void {
+  for (const n of nodes) {
+    if (n.kind === 'package') bindHeritage(n.body, plan);
+    else if (n.kind === 'class') {
+      if (n.extendsName !== null) n.extendsName = plan.bindingOfChain.get(n.extendsName) ?? n.extendsName;
+      n.implementsNames = n.implementsNames.map((x) => plan.bindingOfChain.get(x) ?? x);
+    }
   }
 }
 
@@ -85,6 +116,7 @@ function fallback(source: string, firstMessage: string): TranslateResult {
     spans: [{ startLine: 1, endLine: lines.length, kind: 'unsupported' }],
     classes: [],
     packageName: '',
+    importRecords: [],
   };
 }
 
@@ -105,22 +137,52 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   const src = normalizeNewlines(source);
   const tokens = tokenize(src);
   const { nodes } = scan(tokens);
-  const rwOptions = {
+
+  // The import plan is built once and shared by the rewriter and the import lines.
+  const refs = collectReferences(tokens, nodes, options.siblingClasses);
+  const plan = planFileImports({
+    selfQualified: options.selfQualified,
+    declared: refs.declared,
     shimNames: options.shimNames,
-    shimMembers: options.shimMembers,
-    // Until the import plan (spec task 5.5), sibling references match by simple name.
-    siblingClasses: new Set([...options.siblingClasses].map((q) => q.slice(q.lastIndexOf('.') + 1))),
-  };
+    known: options.siblingClasses,
+    imports: refs.imports,
+    bare: refs.bare,
+    chains: refs.chains,
+  });
+  const selfPath = canonicalClassPath(options.selfQualified);
+  // A name a class binds is never imported from the Shim.
+  const shimUsed = [...refs.bare.keys()].filter(
+    (n) => !refs.declared.has(n) && options.shimNames.has(n) && !plan.bindingOfBare.has(n),
+  );
+  const imports = createImportLines(plan, selfPath, shimUsed);
+
+  // Class info is read before the heritage names are rewritten to their bindings.
+  const classes: ClassInfo[] = [];
+  collectClasses(nodes, classes, plan);
+  bindHeritage(nodes, plan);
+
+  const rwOptions = { shimNames: options.shimNames, shimMembers: options.shimMembers, plan };
   const out = emitTs(nodes, {
     source: src,
     tokens,
     rewriter: createRewriter(nodes, rwOptions),
     hooks: {
-      importLines: createImportLines(tokens, rwOptions),
+      importLines: () => imports.lines,
       constructorBody: constructorHook(tokens),
     },
   });
-  const classes: ClassInfo[] = [];
-  collectClasses(nodes, classes);
-  return { text: out.text, diagnostics: out.diagnostics, spans: out.spans, classes, packageName: findPackageName(nodes) };
+  const diagnostics =
+    plan.diagnostics.length === 0
+      ? out.diagnostics
+      : [...out.diagnostics, ...plan.diagnostics].sort(
+          (a, b) => a.line - b.line || cmp(a.kind, b.kind) || cmp(a.message, b.message),
+        );
+  return {
+    text: out.text,
+    diagnostics,
+    spans: out.spans,
+    classes,
+    packageName: findPackageName(nodes),
+    importRecords: imports.records,
+  };
 }

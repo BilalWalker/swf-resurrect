@@ -217,16 +217,6 @@ function linkedSymbols(scene: SceneJson): LinkedSymbol[] {
   return out;
 }
 
-/** Sibling classes named by `import { ... } from './Name'` lines (flat layout, until Task 5 adds import records). */
-function siblingImports(text: string, self: string, known: ReadonlySet<string>): string[] {
-  const found = new Set<string>();
-  for (const m of text.matchAll(/^\s*import\s*\{([^}]*)\}\s*from\s*['"]\.\/([^'"]+)['"]/gm)) {
-    const target = m[2];
-    if (target !== self && known.has(target)) found.add(target);
-  }
-  return [...found].sort(byCodeUnit);
-}
-
 function describeClasses(
   classes: readonly PlannedClass[],
   translated: readonly TranslatedClass[],
@@ -234,14 +224,18 @@ function describeClasses(
 ): OmissionClass[] {
   const known = new Set(classes.map((c) => c.className));
   const text = new Map(files.map((f) => [f.path, f.content]));
-  const bases = new Map(translated.map((t) => [t.className, t.extendsName]));
+  const byName = new Map(translated.map((t) => [t.className, t]));
   return classes.map((c) => {
-    const base = c.handwritten ? null : (bases.get(c.className) ?? null);
+    const t = c.handwritten ? undefined : byName.get(c.className);
+    const imported = new Set<string>();
+    for (const r of t?.importRecords ?? []) {
+      if (r.kind === 'class' && r.target !== undefined && r.target !== c.className && known.has(r.target)) imported.add(r.target);
+    }
     return {
       className: c.className,
       path: c.path,
-      extendsQualified: base,
-      importsQualified: siblingImports(text.get(c.path) ?? '', c.className, known),
+      extendsQualified: t?.extendsQualified ?? null,
+      importsQualified: [...imported].sort(byCodeUnit),
       handwritten: c.handwritten,
       produced: text.has(c.path),
     };

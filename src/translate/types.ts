@@ -33,7 +33,10 @@ export interface LineSpan {
 
 export interface ClassInfo {
   name: string;
+  /** As written in the source. */
   extendsName: string | null;
+  /** Resolved through the import plan; null when the base has no source. */
+  extendsQualified: string | null;
 }
 
 export interface TranslateResult {
@@ -47,4 +50,16 @@ export interface TranslateResult {
   spans: LineSpan[];
   /** Classes declared in the file (0 or 1 in practice). */
   classes: ClassInfo[];
+  /** The generated import lines of 	ext: the Shim line first, then one per planned import. */
+  importRecords: ImportRecord[];
+}
+
+/** One generated import line (design 14.1). */
+export interface ImportRecord {
+  /** 1-based line of the import in 	ext. */
+  line: number;
+  kind: 'shim' | 'class';
+  names: Array<{ name: string; alias?: string }>;
+  /** Qualified_Name of the imported class, for kind class. */
+  target?: string;
 }

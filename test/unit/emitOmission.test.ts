@@ -34,23 +34,36 @@ const scene: SceneJson = {
     '5': sprite('Hand'),
     '6': sprite('Child'),
     '7': sprite('NoSource'),
+    '8': sprite('other.Importer'),
   },
 };
 
-const tc = (className: string, text: string, extendsName: string | null = null): TranslatedClass => ({
+const tc = (
+  className: string,
+  text: string,
+  extendsName: string | null = null,
+  imports: string[] = [],
+): TranslatedClass => ({
   className,
   fileName: `${className}.ts`,
   text,
   diagnostics: [],
   spans: [],
   extendsName,
+  extendsQualified: extendsName,
+  importRecords: imports.map((target, i) => ({
+    line: i + 1,
+    kind: 'class' as const,
+    names: [{ name: target.slice(target.lastIndexOf('.') + 1) }],
+    target,
+  })),
 });
 const classes = [
   tc('Broken', 'export class Broken { x = ; }\n'),
   tc('Loose', 'export class Loose { x: number = "s"; }\n'),
   tc('Thrower', "export class Thrower { constructor() { throw new Error('boom'); } }\n"),
   tc('Hand', 'export class Hand {}\n'),
-  tc('Child', "import { Broken } from './Broken';\nexport class Child extends Broken {}\n", 'Broken'),
+  tc('Child', "import { Broken } from './Broken';\nexport class Child extends Broken {}\n", 'Broken', ['Broken']),
 ];
 
 let root: string;
@@ -122,12 +135,35 @@ describe('emit: gate first, plan again only when needed, write once', () => {
       ['Broken', 'syntax-error'],
       ['Child', 'extends-omitted'],
       ['NoSource', 'missing-source'],
+      ['other.Importer', 'missing-source'],
     ]);
     expect(writes).toBe(result.files.length);
     const registry = await readFile(join(out, 'src', 'classes.ts'), 'utf8');
     expect(registryKeys(registry)).toEqual(['Hand', 'Loose', 'Thrower']);
     expect(result.files).toContain('src/Broken.ts'); // the omitted class file is still written
     expect(result.gate?.errors.some((e) => e.file === 'src/Broken.ts' && e.syntactic)).toBe(true);
+  });
+
+  it('omits a class of another package that imports an omitted class, from its import records', async () => {
+    const out = join(root, 'out');
+    const importer = tc(
+      'other.Importer',
+      "import { Broken } from './Broken';\nexport class Importer { b: Broken | null = null; }\n",
+      null,
+      ['Broken'],
+    );
+    const only = [classes[0], importer];
+    const { result } = await run(out, { translated: only });
+    expect(result.omissions.map((o) => [o.className, o.reason.kind])).toEqual([
+      ['Broken', 'syntax-error'],
+      ['Child', 'missing-source'],
+      ['Hand', 'missing-source'],
+      ['Loose', 'missing-source'],
+      ['NoSource', 'missing-source'],
+      ['Thrower', 'missing-source'],
+      ['other.Importer', 'imports-omitted'],
+    ]);
+    expect(result.omissions.find((o) => o.className === 'other.Importer')?.reason).toMatchObject({ imported: 'Broken' });
   });
 
   it('keeps a class with only semantic errors registered and loose, with one gate run', async () => {

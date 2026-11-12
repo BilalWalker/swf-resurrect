@@ -3,23 +3,26 @@
 //
 // `createRewriter` returns the `Rewriter` that emitTs.ts calls for every expression
 // and type annotation. It copies the source text between tokens unchanged and edits
-// only the token patterns listed in the design. `createImportLines` returns the
-// `EmitHooks.importLines` hook. The helpers at the bottom (`visitRanges`,
+// only the token patterns listed in the design. `createImportLines` writes the
+// generated import lines. The helpers at the bottom (`visitRanges`,
 // `collectOwnMethods`, `findValueReferencedMethods`) are reused by task 8.1.
 
+import { canonicalClassPath, relativeSpecifier, shimSpecifier } from '../convert/qualifiedName';
+import type { QualifiedName } from '../convert/qualifiedName';
+import type { ImportDecl, ImportPlan } from './importPlan';
 import { splitAngleTokens } from './scanner';
 import type { ClassNode, MethodNode, Node, TokRange } from './scanner';
 import type { Token } from './tokenizer';
-import type { EmitHooks, RewriteContext, RewriteResult, Rewriter, TokenSlice } from './emitTs';
-import type { Diagnostic } from './types';
+import type { RewriteContext, RewriteResult, Rewriter, TokenSlice } from './emitTs';
+import type { Diagnostic, ImportRecord } from './types';
 
 export interface RewriteOptions {
   /** AS3-visible names the Shim exports. */
   shimNames: ReadonlySet<string>;
   /** MovieClip instance members callable unqualified. */
   shimMembers: ReadonlySet<string>;
-  /** Other classes exported next to this file. */
-  siblingClasses: ReadonlySet<string>;
+  /** Import plan of this file: dotted chains are rewritten to their binding. */
+  plan: ImportPlan;
 }
 
 /** Right-hand sides of `is` / `instanceof` that JS `instanceof` gets wrong. */
@@ -86,46 +89,104 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
   };
 }
 
-/**
- * `EmitHooks.importLines`: one `../shim` import listing the Shim names the file
- * references (sorted by code unit), then one `./Sibling` import per referenced
- * sibling class (sorted). Names of classes declared in the file are never imported.
- */
-export function createImportLines(
-  tokens: readonly Token[], options: RewriteOptions,
-): NonNullable<EmitHooks['importLines']> {
-  return (nodes) => {
-    const declared = new Set<string>();
-    const used = new Set<string>();
-    visitClasses(nodes, (c) => {
-      declared.add(c.name);
-      for (const n of c.implementsNames) used.add(n);
-    });
-    visitRanges(nodes, (r) => {
-      let prevDot = false;
-      for (let i = r.from; i < r.to; i++) {
-        const t = tokens[i];
-        if (t.kind === 'comment') continue;
-        if (t.kind === 'id' && !prevDot) used.add(t.text);
-        prevDot = t.kind === 'punct' && t.text === '.';
-      }
-    });
-    const shim: string[] = [];
-    const sibs: string[] = [];
-    for (const name of used) {
-      if (declared.has(name)) continue;
-      if (options.shimNames.has(name)) shim.push(name);
-      else if (options.siblingClasses.has(name)) sibs.push(name);
-    }
-    shim.sort(cmp);
-    sibs.sort(cmp);
-    const lines: string[] = [];
-    if (shim.length > 0) lines.push(`import { ${shim.join(', ')} } from '../shim';`);
-    for (const s of sibs) lines.push(`import { ${s} } from './${s}';`);
-    return lines;
-  };
+/** What a file names: the input of `planFileImports` (design 14.3, step 2). */
+export interface FileReferences {
+  declared: Set<string>;
+  imports: ImportDecl[];
+  bare: Map<string, number>;
+  chains: Array<{ text: string; qn: QualifiedName; line: number }>;
 }
 
+/**
+ * Collects the declared class names, the import declarations, the bare identifiers
+ * (not preceded by `.`, plus `implements` names) and the dotted chains that equal a
+ * known Qualified_Name. The first identifier of a matched chain is not a bare name.
+ */
+export function collectReferences(
+  tokens: readonly Token[], nodes: readonly Node[], known: ReadonlySet<QualifiedName>,
+): FileReferences {
+  const declared = new Set<string>();
+  const imports: ImportDecl[] = [];
+  const bare = new Map<string, number>();
+  const chains: FileReferences['chains'] = [];
+  const addBare = (name: string, line: number): void => {
+    const prev = bare.get(name);
+    if (prev === undefined || line < prev) bare.set(name, line);
+  };
+  const walkImports = (list: readonly Node[]): void => {
+    for (const n of list) {
+      if (n.kind === 'package') walkImports(n.body);
+      else if (n.kind === 'import') imports.push({ path: n.path, wildcard: n.wildcard });
+    }
+  };
+  walkImports(nodes);
+  visitClasses(nodes, (c) => {
+    declared.add(c.name);
+    for (const n of c.implementsNames) {
+      if (n.indexOf('.') >= 0) {
+        if (known.has(n)) chains.push({ text: n, qn: n, line: c.startLine });
+        else addBare(n.slice(0, n.indexOf('.')), c.startLine);
+      } else {
+        addBare(n, c.startLine);
+      }
+    }
+  });
+  visitRanges(nodes, (r) => {
+    const sig: Token[] = [];
+    for (let i = r.from; i < r.to; i++) if (tokens[i].kind !== 'comment') sig.push(tokens[i]);
+    let i = 0;
+    while (i < sig.length) {
+      const t = sig[i];
+      const prev = sig[i - 1];
+      if (t.kind !== 'id' || (prev !== undefined && prev.kind === 'punct' && prev.text === '.')) {
+        i++;
+        continue;
+      }
+      let j = i;
+      while (isP(sig, j + 1, '.') && sig[j + 2] !== undefined && sig[j + 2].kind === 'id') j += 2;
+      let matched = false;
+      for (let k = j; k > i; k -= 2) {
+        const text = sig.slice(i, k + 1).map((x) => x.text).join('');
+        if (known.has(text)) {
+          chains.push({ text, qn: text, line: t.line });
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) addBare(t.text, t.line);
+      i = j + 1;
+    }
+  });
+  return { declared, imports, bare, chains };
+}
+
+/** The lines of the generated imports and their records (design 14.3, step 5). */
+export function createImportLines(
+  plan: ImportPlan, selfPath: string, shimUsed: readonly string[],
+): { lines: string[]; records: ImportRecord[] } {
+  const lines: string[] = [];
+  const records: ImportRecord[] = [];
+  const shim = [...shimUsed].sort(cmp);
+  if (shim.length > 0) {
+    lines.push(`import { ${shim.join(', ')} } from '${shimSpecifier(selfPath)}';`);
+    records.push({ line: lines.length, kind: 'shim', names: shim.map((name) => ({ name })) });
+  }
+  const classes = plan.imports
+    .map((p) => ({ p, spec: relativeSpecifier(selfPath, canonicalClassPath(p.target)) }))
+    .sort((a, b) => cmp(a.spec, b.spec) || cmp(a.p.binding, b.p.binding));
+  for (const { p, spec } of classes) {
+    const simple = p.target.slice(p.target.lastIndexOf('.') + 1);
+    const text = p.aliased ? `${simple} as ${p.binding}` : simple;
+    lines.push(`import { ${text} } from '${spec}';`);
+    records.push({
+      line: lines.length,
+      kind: 'class',
+      names: [p.aliased ? { name: simple, alias: p.binding } : { name: simple }],
+      target: p.target,
+    });
+  }
+  return { lines, records };
+}
 // ---------------------------------------------------------------------------
 // Structure helpers (also used by task 8.1)
 
@@ -376,6 +437,8 @@ class ExprRewriter {
     const t = this.toks[i];
     if (t.kind !== 'id') return this.raw(i);
     if (i > 0 && (this.isP(i - 1, '.') || this.isP(i - 1, '::'))) return this.raw(i);
+    const bound = this.chainBinding(i);
+    if (bound !== null) return bound;
     switch (t.text) {
       case 'int':
       case 'uint':
@@ -395,6 +458,19 @@ class ExprRewriter {
     if (chain !== null) return chain;
     if (this.isP(i + 1, '(') && this.qualifies(i)) return { text: 'this.' + t.text, next: i + 1 };
     return this.raw(i);
+  }
+
+  /** A dotted chain that the import plan binds, unless its first identifier is a local. */
+  private chainBinding(i: number): Parsed | null {
+    if (this.opts.plan.bindingOfChain.size === 0 || this.locals.has(this.toks[i].text)) return null;
+    let j = i;
+    while (this.isP(j + 1, '.') && this.toks[j + 2] !== undefined && this.toks[j + 2].kind === 'id') j += 2;
+    for (let k = j; k > i; k -= 2) {
+      const text = this.toks.slice(i, k + 1).map((x) => x.text).join('');
+      const binding = this.opts.plan.bindingOfChain.get(text);
+      if (binding !== undefined) return { text: binding, next: k + 1 };
+    }
+    return null;
   }
 
   private qualifies(i: number): boolean {

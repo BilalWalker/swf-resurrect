@@ -5,7 +5,9 @@ import { qualifiedFromScriptPath } from '../convert/qualifiedName';
 import { DuplicateClassError } from './errors';
 import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from './shimNames';
 import { translate } from './translate';
-import type { Diagnostic, LineSpan, SyntaxCheck } from './types';
+import type { Diagnostic, ImportRecord, LineSpan, SyntaxCheck } from './types';
+
+export type { ImportRecord } from './types';
 
 export interface ScriptSource {
   className: string; // Qualified_Name
@@ -18,7 +20,11 @@ export interface TranslatedClass {
   text: string;
   diagnostics: Diagnostic[];
   spans: LineSpan[];
+  /** As written in the source. */
   extendsName: string | null;
+  /** Resolved through the import plan; null when the base has no source. */
+  extendsQualified: string | null;
+  importRecords: ImportRecord[];
 }
 
 export interface TranslateArtifact {
@@ -91,6 +97,8 @@ export function planTranslate(
       diagnostics,
       spans: r.spans,
       extendsName: info?.extendsName ?? null,
+      extendsQualified: info?.extendsQualified ?? null,
+      importRecords: r.importRecords,
     });
   }
 
@@ -104,10 +112,14 @@ export function planTranslate(
     }
   }
   while (queue.length > 0) {
-    const base = translated.get(queue.pop() as string)?.extendsName;
-    if (base != null && translated.has(base) && !emitted.has(base)) {
-      emitted.add(base);
-      queue.push(base);
+    const cls = translated.get(queue.pop() as string);
+    if (cls === undefined) continue;
+    const next = [cls.extendsQualified, ...cls.importRecords.map((r) => (r.kind === 'class' ? (r.target ?? null) : null))];
+    for (const n of next) {
+      if (n != null && translated.has(n) && !emitted.has(n)) {
+        emitted.add(n);
+        queue.push(n);
+      }
     }
   }
 
