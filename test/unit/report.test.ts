@@ -8,11 +8,12 @@ import {
   type ReportClassInput,
 } from '../../src/translate/report';
 import type { GateError } from '../../src/translate/typeCheckGate';
+import { gateError } from '../support/gateError';
 import type { Diagnostic } from '../../src/translate/types';
 
 const loose: Diagnostic = { kind: 'loose-type', line: 3, message: 'declaration has no usable type; emitted as any' };
 const unsup: Diagnostic = { kind: 'unsupported-construct', line: 7, message: "statement kind 'try' is not supported" };
-const err = (file: string, line: number): GateError => ({ file, line, column: 1, code: 2322, message: 'bad' });
+const err = (file: string, line: number): GateError => gateError({ file, line });
 
 describe('classStatus', () => {
   it('follows the truth table', () => {
@@ -42,6 +43,20 @@ describe('buildReport', () => {
     ]);
     expect(r.classes[2]?.diagnostics).toEqual([]);
     expect(r.classes[0]?.typeErrors[0]?.as3Line).toBeNull();
+  });
+
+  it('carries syntactic and specifier on otherErrors entries only', () => {
+    const e = gateError({ file: 'src/Other.ts', code: 2307, specifier: './Nope', syntactic: false });
+    const s = gateError({ file: 'src/Other.ts', line: 2, code: 1005, syntactic: true });
+    const r = buildReport(classes, { errors: [e, s, err('src/A.ts', 5)] });
+    expect(r.otherErrors).toEqual([e, s]);
+    expect(Object.keys(r.classes.find((c) => c.className === 'A')!.typeErrors[0]).sort()).toEqual([
+      'as3Line',
+      'code',
+      'column',
+      'line',
+      'message',
+    ]);
   });
 
   it('puts errors in non-class files in otherErrors', () => {

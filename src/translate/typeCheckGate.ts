@@ -13,6 +13,10 @@ export interface GateError {
   column: number;
   code: number;
   message: string;
+  /** true when the diagnostic is one of program.getSyntacticDiagnostics() (parser and scanner). Never derived from the code. */
+  syntactic: boolean;
+  /** For code 2307 or 2792: the module specifier as written, quotes removed, read from the source text at the span. Else null. */
+  specifier: string | null;
 }
 export interface GateResult {
   errors: GateError[];
@@ -126,9 +130,12 @@ export function typeCheckProject(input: GateInput): GateResult {
   };
 
   let diagnostics: readonly ts.Diagnostic[];
+  const syntacticKeys = new Set<string>();
+  const keyOf = (d: ts.Diagnostic): string => `${d.file?.fileName ?? ''}:${d.start ?? -1}:${d.code}`;
   try {
     const program = ts.createProgram({ rootNames, options, host });
     diagnostics = ts.getPreEmitDiagnostics(program);
+    for (const d of program.getSyntacticDiagnostics()) syntacticKeys.add(keyOf(d));
   } catch (e) {
     throw new TypeCheckGateError(e instanceof Error ? e.message : String(e));
   }
@@ -155,6 +162,11 @@ export function typeCheckProject(input: GateInput): GateResult {
       column,
       code: d.code,
       message: scrub(ts.flattenDiagnosticMessageText(d.messageText, '\n')),
+      syntactic: syntacticKeys.has(keyOf(d)),
+      specifier:
+        (d.code === 2307 || d.code === 2792) && d.file !== undefined && d.start !== undefined && d.length !== undefined
+          ? d.file.text.slice(d.start, d.start + d.length).replace(/^['"]|['"]$/g, '')
+          : null,
     });
   }
   errors.sort(
