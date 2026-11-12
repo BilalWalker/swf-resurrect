@@ -350,8 +350,8 @@ Rules that apply to every task:
     - Run `--verify --force` on clickgoto and tweendemo, record both Overall_Match values and the per-frame values in the commit message, and add a floor test for Overall_Match like `TRACE_SCORE_FLOOR` (a constant set to the measured value, never lowered). If the value is not about 100 percent, list what differs per frame (read the Diff_Images) and do not tune the tolerance.
     - _Requirements: 4.1, 13.5_
 
-- [ ] 18. Shim: children advance first (design section 8, G5)
-  - [~] 18.1 Advance order in `MovieClip._step` phase A
+- [x] 18. Shim: children advance first (design section 8, G5)
+  - [x] 18.1 Advance order in `MovieClip._step` phase A
     - Phase A advances clips root-first (pre-order). The Reference_Trace shows children advance first: `output.txt` line 175 has `root1` still on frame 2 when `l_button`'s `removed` bubbles. Change the loop to post-order (children first). The user tried this and measured Trace_Score 100 with all tests passing.
     - Update design section 8 (G5): children advance first, and note that Ruffle walks siblings in reverse render order and that our samples do not exercise sibling order.
     - Raise `TRACE_SCORE_FLOOR` in `test/unit/clickgotoReplay.test.ts` to the measured value (never lower). Add a unit test for the frame label of a bubbled `removed` (the parent still reports its old frame while a child's `removed` bubbles).

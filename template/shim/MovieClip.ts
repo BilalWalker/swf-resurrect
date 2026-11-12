@@ -162,7 +162,7 @@ export class MovieClip extends Sprite {
   }
   /**
    * One tick over this clip and the clips below it, in the phases of design section 8 (G5):
-   * A advance, B enterFrame (children first), C frameConstructed (children first),
+   * A advance (children first), B enterFrame (children first), C frameConstructed (children first),
    * D frame scripts (root first, only clips whose frame changed). exitFrame (E) is a separate
    * children-first pass run by the Player (internal.exitFrame).
    * The clips are a snapshot taken before the tick, so clips created during it are not stepped.
@@ -174,8 +174,8 @@ export class MovieClip extends Sprite {
     const alive = (c: MovieClip): boolean => isAttachedTo(c, this);
     const changed = new Set<MovieClip>();
 
-    // A. advance
-    for (const clip of pre) {
+    // A. advance, children first (a child's `removed` bubbles while the parent is still on its old frame)
+    for (const clip of post) {
       if (!alive(clip)) continue;
       if (clip.isPlaying && clip.totalFrames > 1) {
         const previous = clip.frame;

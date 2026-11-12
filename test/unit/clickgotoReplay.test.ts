@@ -12,8 +12,8 @@ import { splitTraceLines } from '../../src/verify/core/traceFormat';
 import { replay, type ReplayResult } from '../../src/verify/edge/replay';
 import { emitFixtureProject, type EmittedFixtureProject } from '../support/emitFixtureProject';
 
-/** Measured Trace_Score (task 12.7: 665 matched, 11 missing, 11 extra); raised by later tasks when the score rises. */
-const TRACE_SCORE_FLOOR = 98.37;
+/** Measured Trace_Score (task 18.1: 676 matched, 0 missing, 0 extra; was 98.37 at task 12.7); never lowered. */
+const TRACE_SCORE_FLOOR = 100;
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const refDir = resolve(repoRoot, 'samples/clickgoto/reference');
