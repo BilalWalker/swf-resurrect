@@ -109,6 +109,23 @@ describe('Replay pointer events', () => {
     expect(texts(r)).toEqual(['ev b mouseDown', 'ev b mouseUp', 'ev b click']);
   }, 60_000);
 
+  it('down on a, up on b gives one release-outside note and no click', async () => {
+    const r = await replay(tempDir, planOf([down(20, 15), wait, up(120, 15), wait], 4));
+    expect(r.error).toBeNull();
+    expect(texts(r)).toEqual(['ev a mouseDown', 'ev b mouseUp']);
+    expect(r.releaseOutside).toEqual([{ upIndex: 2, downIndex: 0, pressed: 'root1.a', hit: 'root1.b', tick: 1 }]);
+  }, 60_000);
+
+  it('down on a, up over empty space names the stage', async () => {
+    const r = await replay(tempDir, planOf([down(20, 15), up(70, 80), wait], 3));
+    expect(r.releaseOutside).toEqual([{ upIndex: 1, downIndex: 0, pressed: 'root1.a', hit: 'stage', tick: 0 }]);
+  }, 60_000);
+
+  it('a release on the press target gives no note', async () => {
+    const r = await replay(tempDir, planOf([down(20, 15), up(20, 15), wait], 3));
+    expect(r.releaseOutside).toEqual([]);
+  }, 60_000);
+
   it('delivers entries in array order, down and up in separate ticks', async () => {
     const r = await replay(tempDir, planOf([down(20, 15), wait, up(20, 15), wait], 4));
     expect(texts(r)).toEqual(['ev a mouseDown', 'ev a mouseUp', 'ev a click']);

@@ -12,10 +12,24 @@ import { svgShapeBounds } from '../core/svgBounds';
 import { formatTraceCall, splitTraceLines } from '../core/traceFormat';
 import { FakeBackend } from './fakeBackend';
 
+/** A release over another target than the press: explains a missing `click` (Requirement 14.20). */
+export interface ReleaseOutsideNote {
+  /** Reference_Input index of the MouseUp. */
+  upIndex: number;
+  /** Reference_Input index of the MouseDown that set the Pressed_Target. */
+  downIndex: number;
+  /** describeTarget(Pressed_Target). */
+  pressed: string;
+  /** describeTarget(Hit_Target at release). */
+  hit: string;
+  tick: number;
+}
+
 export interface ReplayRunnerResult {
   lines: Array<{ tick: number; text: string }>;
   ticksRun: number;
   error: { tick: number; message: string } | null;
+  releaseOutside: ReleaseOutsideNote[];
 }
 
 async function main(): Promise<void> {
@@ -31,16 +45,19 @@ async function main(): Promise<void> {
   let tick = 0;
   let ticksRun = 0;
   let error: ReplayRunnerResult['error'] = null;
+  const releaseOutside: ReleaseOutsideNote[] = [];
+  let downIndex: number | null = null;
   let setTraceSink: ((fn: ((...args: unknown[]) => void) | null) => void) | null = null;
 
   try {
-    const [playerMod, clockMod, loaderMod, traceMod, internalMod, classesMod] = await Promise.all([
+    const [playerMod, clockMod, loaderMod, traceMod, internalMod, classesMod, treeMod] = await Promise.all([
       load('runtime/player.ts'),
       load('runtime/clock.ts'),
       load('runtime/loader.ts'),
       load('shim/trace.ts'),
       load('shim/internal.ts'),
       load('src/classes.ts'),
+      load('runtime/stageTree.ts'),
     ]);
     setTraceSink = traceMod.setTraceSink;
 
@@ -83,8 +100,22 @@ async function main(): Promise<void> {
       for (const p of plan.pointers) {
         if (p.tick !== tick) continue;
         if (p.kind === 'move') player.dispatchMouseMove(p.x, p.y);
-        else if (p.kind === 'down') player.dispatchMouseDown(p.x, p.y);
-        else player.dispatchMouseUp(p.x, p.y);
+        else if (p.kind === 'down') {
+          player.dispatchMouseDown(p.x, p.y);
+          // A repeated down is ignored by the Player and does not set a Pressed_Target.
+          if (!p.unpaired) downIndex = p.index;
+        } else {
+          const outcome = player.dispatchMouseUp(p.x, p.y);
+          if (outcome.releaseOutside !== null && downIndex !== null) {
+            releaseOutside.push({
+              upIndex: p.index,
+              downIndex,
+              pressed: treeMod.describeTarget(outcome.releaseOutside.pressed),
+              hit: treeMod.describeTarget(outcome.releaseOutside.hit),
+              tick,
+            });
+          }
+        }
       }
       ticksRun = tick + 1;
     }
@@ -93,7 +124,7 @@ async function main(): Promise<void> {
   } finally {
     setTraceSink?.(null);
   }
-  const result: ReplayRunnerResult = { lines, ticksRun, error };
+  const result: ReplayRunnerResult = { lines, ticksRun, error, releaseOutside };
   writeFileSync(resultPath, JSON.stringify(result), 'utf8');
 }
 

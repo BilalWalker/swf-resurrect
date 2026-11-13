@@ -269,7 +269,7 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
   try {
     result = await deps.replay(resolve(req.projectDir), plan);
   } catch (err) {
-    result = { lines: [], ticksRun: 0, error: { tick: 0, message: describe(err) } };
+    result = { lines: [], ticksRun: 0, error: { tick: 0, message: describe(err) }, releaseOutside: [] };
   }
   const failedOutright = result.error !== null && result.lines.length === 0 && result.ticksRun === 0;
   if (result.error !== null) {

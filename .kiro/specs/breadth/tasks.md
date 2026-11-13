@@ -237,12 +237,12 @@ Rules that apply to every task:
     - Test: extend `test/property/replayPlan.property.test.ts` with **Property 14: Input_Groups ignore pointer moves, pointer entries keep their order** and **Property 15: Unpaired presses and releases are flagged and still delivered**, with `test/property/gen/genReferenceInput.ts` (create). Unit tests in `test/unit/replayPlan.test.ts`: a `MouseMove` does not end an Input_Group on inline copies of the `3_joystick` and `slider_component` entries; a repeated `MouseDown` and an unpaired `MouseUp` each record `unpaired-mouse-event`; `unsupported-input` entries act as `Wait`.
     - _Requirements: 14.3, 14.9, 14.11, 14.15, 15.5_
 
-  - [-] 7.4 Apply pointers in the runner and extend the report
+  - [x] 7.4 Apply pointers in the runner and extend the report
     - `src/verify/edge/replayRunner.ts` applies each tick's pointers in order after `update()` through `player.dispatchMouseMove|Down|Up`; shape bounds still come from the SVG until sub-task 10.12 switches them to Scene_JSON `size`. `behaviour.replay` gains `pointerEvents` (additive; `FORMAT_VERSION` stays 1) and keeps `ticks`, `inputGroups` and `clicks` (= `pressReleasePairs`). The `clickgoto` clicks were position-paired at ticks 3, 7, 12, 14, 20; as separate pointer events they arrive as `mouseDown` and `mouseUp` in two consecutive Input_Groups. If the Trace_Score falls below 100 or the tick count changes, STOP and ask (Requirement 1.8).
     - Test: update `test/unit/clickgotoReplay.test.ts` (21 groups, 32 ticks, `LeftButton clicked` and `RightButton clicked` lines at the same ticks, `TRACE_SCORE_FLOOR` unchanged at 100) and create `test/unit/replayPointers.test.ts` with a small synthetic project: down, move away, up gives no `click`; down and up on the same target gives `mouseDown`, `mouseUp`, `click` in that order.
     - _Requirements: 14.3, 14.4, 14.5, 14.6, 14.7, 14.16, 15.5_
 
-  - [ ] 7.5 `describeTarget` and the runner's `release-outside` notes
+  - [x] 7.5 `describeTarget` and the runner's `release-outside` notes
     - Add the Core function `describeTarget(obj)` to `template/runtime/stageTree.ts` (`stage` for the Stage_Object, otherwise the `name` chain from the root down such as `root1.beetle`, `#<child index>` for an empty name). `src/verify/edge/replayRunner.ts` keeps the `downIndex` of the last applied valid `down` entry, uses the `PointerOutcome` returned by `player.dispatchMouseUp`, and returns `releaseOutside: ReleaseOutsideNote[]` (up index, down index, pressed, hit, tick) in `ReplayRunnerResult`.
     - Test: `test/unit/stageTree.test.ts` (create): `describeTarget` for the Stage_Object, a named chain and an unnamed child; extend `test/unit/replayPointers.test.ts`: down on shape A, up on shape B gives one note and no `click`.
     - _Requirements: 14.20, 14.7_

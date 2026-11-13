@@ -1,6 +1,7 @@
 import type { DisplayObject } from '../shim/DisplayObject';
 import { Shape } from '../shim/Shape';
 import type { DisplayObjectContainer } from '../shim/Sprite';
+import { isStage, type Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { HitNode } from './hitTest';
 import type { Matrix6 } from './scene';
@@ -122,6 +123,21 @@ export class NodeRegistry {
       backend.setVisible(r.node, r.visible);
     }
   }
+}
+
+/**
+ * Deterministic name of a pointer target for reports: `stage` for the Stage_Object, otherwise the `name`
+ * chain from the root down (`root1.beetle`), with `#<child index>` for an empty name.
+ */
+export function describeTarget(obj: DisplayObject | Stage): string {
+  if (isStage(obj)) return 'stage';
+  const parts: string[] = [];
+  for (let o: DisplayObject | Stage | null = obj; o !== null && !isStage(o); o = o._parent) {
+    const parent: DisplayObject['_parent'] = o._parent;
+    if (o.name !== '') parts.push(o.name);
+    else parts.push(`#${parent === null ? 0 : parent._children.indexOf(o)}`);
+  }
+  return parts.reverse().join('.');
 }
 
 /** Snapshot of a display subtree in the shape hitTest expects. */

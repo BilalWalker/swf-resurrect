@@ -17,7 +17,7 @@ const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const runnerPath = fileURLToPath(new URL('./replayRunner.ts', import.meta.url));
 
 function failure(message: string): ReplayResult {
-  return { lines: [], ticksRun: 0, error: { tick: 0, message: sanitizeDetail(message) } };
+  return { lines: [], ticksRun: 0, error: { tick: 0, message: sanitizeDetail(message) }, releaseOutside: [] };
 }
 
 /** Never rejects: failures come back as `error`. */
