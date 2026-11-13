@@ -1,7 +1,10 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
+import { main } from '../../src/pipeline/cli';
 import { serialiseScene } from '../../src/convert/sceneJson';
 import { planEmitDetailed } from '../../src/emit/planEmit';
 import type { TemplateFile } from '../../src/emit/planEmit';
@@ -361,4 +364,38 @@ describe('implements registration through translate() (Requirement 27.2, 27.3, 2
     });
     expect(r.text).toContain('var y: I = x as I;');
   });
+});
+// The local copy of slider_component (Requirement 23.6, 27.5); skipped with a reason when Java, FFDec or the copy is absent.
+const sliderSwf = resolve(repoRoot, '.work/local/slider_component/test.swf');
+const sliderSkip: string | null = !existsSync(sliderSwf)
+  ? '.work/local/slider_component/test.swf is absent'
+  : spawnSync('java', ['-version'], { windowsHide: true }).status !== 0
+    ? 'Java is not available on PATH'
+    : !existsSync(resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar'))
+      ? 'tools/ffdec is absent'
+      : null;
+const sliderTmp: string[] = [];
+afterAll(() => {
+  for (const d of sliderTmp) rmSync(d, { recursive: true, force: true });
+});
+
+describe('slider_component interfaces (Requirement 27.5, Task 24.4)', () => {
+  it.skipIf(sliderSkip !== null)(
+    `no class-omitted entry has reason missing-export for an interface${sliderSkip === null ? '' : ` (skipped: ${sliderSkip})`}`,
+    async () => {
+      const out = mkdtempSync(join(tmpdir(), 'swf-resurrect-iface-'));
+      sliderTmp.push(out);
+      expect(await main([sliderSwf, join(out, 'p'), '--force'])).toBe(0);
+      const report = JSON.parse(readFileSync(join(out, 'p', 'translation-report.json'), 'utf8')) as {
+        omittedClasses: { className: string; reason: { kind: string } }[];
+        classes: { className: string; omitted: boolean }[];
+      };
+      const interfaces = ['fl.managers.IFocusManager', 'fl.managers.IFocusManagerComponent', 'fl.managers.IFocusManagerGroup'];
+      expect(report.omittedClasses.filter((o) => o.reason.kind === 'missing-export')).toEqual([]);
+      for (const n of interfaces) expect(report.classes.find((c) => c.className === n)).toMatchObject({ omitted: false });
+      const registry = readFileSync(join(out, 'p', 'src', 'classes.ts'), 'utf8');
+      for (const n of interfaces) expect(registry).not.toContain(`"${n}"`); // interfaces are not linked classes
+    },
+    10 * 60 * 1000,
+  );
 });
