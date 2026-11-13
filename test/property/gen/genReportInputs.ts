@@ -92,6 +92,7 @@ const genBehaviour: fc.Arbitrary<BehaviourInput> = fc.oneof(
       pointerEvents: fc.integer({ min: 0, max: 40 }),
       ticksRun: fc.integer({ min: 0, max: 100 }),
       inputNotes: fc.constant([] as never[]),
+      inputSource: fc.constantFrom('reference-input' as const, 'empty' as const),
     }),
   }),
 );

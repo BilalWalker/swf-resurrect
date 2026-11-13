@@ -1,6 +1,8 @@
 import * as fc from 'fast-check';
 import { describe, it, expect } from 'vitest';
 import { parseNumFrames, parseTickOptions, planReplay } from '../../src/verify/core/replayPlan';
+import { decideBehaviour } from '../../src/verify/core/replayOutcome';
+import { splitTraceLines } from '../../src/verify/core/traceFormat';
 import { fcConfig } from './config';
 import { tickTomlArb } from './gen/genTickToml';
 import { referenceInputArb } from './gen/genReferenceInput';
@@ -100,3 +102,64 @@ describe('Replay plan properties', () => {
       fcConfig,
     );
   });});
+
+
+// Feature: breadth, Property 40: Empty-input Replay and an empty Reference_Trace
+describe('Property 40: Empty-input Replay and an empty Reference_Trace', () => {
+  // **Validates: Requirements 14.12, 14.23, 14.24, 1.9, 1.10, 1.11**
+  it('the empty input plans num_frames else num_ticks ticks with no pointers, groups or problems', () => {
+    fc.assert(
+      fc.property(fc.option(fc.nat(500), { nil: null }), fc.nat(500), (frames, ticks) => {
+        const toml = (frames === null ? '' : `num_frames = ${frames}\n`) + `num_ticks = ${ticks}\n`;
+        const n = parseNumFrames(toml);
+        expect(n).toBe(frames ?? ticks);
+        const p = planReplay('[]', n, frames !== null ? 'num_frames' : 'num_ticks');
+        if ('error' in p) throw new Error(p.error);
+        expect(p.tickCount).toBe(frames ?? ticks);
+        expect(p.pointers).toEqual([]);
+        expect(p.pressReleasePairs).toBe(0);
+        expect(p.problems).toEqual([]);
+        const groups = planReplay('[]', null);
+        if ('error' in groups) throw new Error(groups.error);
+        expect(groups.tickCount).toBe(0);
+      }),
+      fcConfig,
+    );
+  });
+
+  const obsArb = fc.record({
+    lines: fc.array(fc.string(), { maxLength: 5 }),
+    ticksRun: fc.nat(50),
+    error: fc.option(fc.record({ tick: fc.nat(50), message: fc.string() }), { nil: null }),
+    childFailure: fc.boolean(),
+  });
+  // splitTraceLines gives zero lines only for the empty text; see the 7.9 note on line-break-only files.
+  const emptyTextArb = fc.string({ maxLength: 3 }).filter((s) => splitTraceLines(s).length === 0);
+  const lineBreakArb = fc.array(fc.constantFrom('\n', '\r\n', '\r'), { maxLength: 6 }).map((a) => a.join(''));
+
+  it('a trace with no lines is empty-reference-trace, unscored, with a replay-error exactly when the observation has an error', () => {
+    fc.assert(
+      fc.property(emptyTextArb, fc.option(obsArb, { nil: null }), (text, obs) => {
+        expect(splitTraceLines(text)).toHaveLength(0);
+        const d = decideBehaviour(splitTraceLines(text), obs);
+        expect(d).toMatchObject({ status: 'not-compared', reason: 'empty-reference-trace' });
+        expect('comparison' in d).toBe(false);
+        const hasError = obs !== null && obs.error !== null;
+        expect(d.problem !== null && d.problem.kind === 'replay-error').toBe(hasError);
+      }),
+      fcConfig,
+    );
+  });
+
+  it('a trace with at least one line is never empty-reference-trace', () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 1 }).filter((s) => /[^\r\n]/.test(s)), lineBreakArb, obsArb, (s, tail, obs) => {
+        const lines = splitTraceLines(s + tail);
+        fc.pre(lines.length > 0);
+        const d = decideBehaviour(lines, obs);
+        expect(d.status === 'not-compared' && d.reason === 'empty-reference-trace').toBe(false);
+      }),
+      fcConfig,
+    );
+  });
+});

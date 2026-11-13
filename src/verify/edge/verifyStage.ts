@@ -15,7 +15,7 @@ import type { Rgb, RgbaImage } from '../core/pixelDiff';
 import { planReplay, parseNumFrames, parseTickOptions } from '../core/replayPlan';
 import type { ReplayPlan } from '../core/replayPlan';
 import { buildFidelityReport, serialiseFidelityReport } from '../core/report';
-import type { BehaviourInput, FrameOutcome, Problem } from '../core/report';
+import type { BehaviourInput, FrameOutcome, Problem, ReplayInputSource } from '../core/report';
 import { renderFidelityHtml } from '../core/html';
 import { sanitizeDetail } from '../core/sanitize';
 import { decideBehaviour } from '../core/replayOutcome';
@@ -256,22 +256,34 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
   const tickOptions = parseTickOptions(tomlText);
   // A custom tick_rate changes how many ticks Ruffle runs per frame; no Replay is run (Requirement 14.14).
   if (tickOptions.tickRate !== null) return { status: 'not-compared', reason: 'tick-rate' };
+  const referenceLines = splitTraceLines(traceText);
+  const emptyReference = referenceLines.length === 0;
+  const numFrames = parseNumFrames(tomlText);
+  const numFramesSource = tickOptions.numFrames !== null ? 'num_frames' : 'num_ticks';
   const inputText = await readOptional(dir === null ? null : join(dir, 'input.json'));
-  if (inputText === null) return { status: 'not-compared', reason: 'no-reference-input' };
-  const plan = planReplay(
-    inputText,
-    parseNumFrames(tomlText),
-    tickOptions.numFrames !== null ? 'num_frames' : 'num_ticks',
-  );
-  if ('error' in plan) return { status: 'not-compared', reason: 'invalid-input-json' };
-
+  let inputSource: ReplayInputSource = 'reference-input';
+  let plan: ReplayPlan | { error: string };
+  if (inputText === null) {
+    // No input.json: the input is [] when a tick count is known (Requirement 14.23). A tick count is
+    // only needed to run a Replay, so an Empty_Reference_Trace without one runs none (F20).
+    if (numFrames === null) {
+      return { status: 'not-compared', reason: emptyReference ? 'empty-reference-trace' : 'no-reference-input' };
+    }
+    inputSource = 'empty';
+    plan = planReplay('[]', numFrames, numFramesSource);
+  } else {
+    plan = planReplay(inputText, numFrames, numFramesSource);
+  }
+  if ('error' in plan) {
+    return { status: 'not-compared', reason: emptyReference ? 'empty-reference-trace' : 'invalid-input-json' };
+  }
   for (const p of plan.problems) {
     const problem: Problem = { kind: p.kind, index: p.index };
     if (p.kind === 'unsupported-input') problem.detail = p.detail;
     problems.push(problem);
   }
-  const groups = planReplay(inputText, null);
-  const inputGroups = 'error' in groups ? plan.tickCount : groups.tickCount;
+  const groups = inputText === null ? null : planReplay(inputText, null);
+  const inputGroups = groups === null || 'error' in groups ? plan.tickCount : groups.tickCount;
 
   let result: ReplayResult;
   try {
@@ -279,7 +291,7 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
   } catch (err) {
     result = { lines: [], ticksRun: 0, error: { tick: 0, message: describe(err) }, releaseOutside: [], childFailure: true };
   }
-  const decision = decideBehaviour(splitTraceLines(traceText), {
+  const decision = decideBehaviour(referenceLines, {
     lines: result.lines.map((l) => l.text),
     ticksRun: result.ticksRun,
     error: result.error,
@@ -297,6 +309,7 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
       pointerEvents: plan.pointers.filter((p) => p.tick < plan.tickCount).length,
       ticksRun: decision.ticksRun,
       inputNotes,
+      inputSource,
     },
   };
 }

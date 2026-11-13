@@ -40,8 +40,11 @@ export type BehaviourInput =
   | {
       status: 'compared';
       comparison: Extract<TraceComparison, { kind: 'compared' }>;
-      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[] };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[]; inputSource: ReplayInputSource };
     };
+
+/** Where the Replay input came from: the sample's input.json, or the empty input (design 20.4). */
+export type ReplayInputSource = 'reference-input' | 'empty';
 
 export interface FidelityInputs {
   sample: string;
@@ -90,7 +93,7 @@ export type BehaviourReport =
       extra: TraceLine[];
       traceScore: number;
       firstDivergence: Divergence | null;
-      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[] };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[]; inputSource: ReplayInputSource };
       knownBehaviourGaps: string[];
     };
 
@@ -172,6 +175,7 @@ function buildBehaviour(b: BehaviourInput, gaps: string[]): BehaviourReport {
       clicks: b.replay.clicks,
       pointerEvents: b.replay.pointerEvents,
       ticksRun: b.replay.ticksRun,
+      inputSource: b.replay.inputSource,
       inputNotes: b.replay.inputNotes.map((n) => ({ ...n })),
     },
     knownBehaviourGaps: gaps,
