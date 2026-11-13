@@ -19,7 +19,7 @@ import type { Token } from './tokenizer';
 import { scan } from './scanner';
 import { collectFunctionLocals } from './implicitThis';
 import type {
-  AccessorNode, Body, ClassNode, Declarator, FieldNode, MethodNode, Node, Param,
+  AccessorNode, Body, ClassNode, Declarator, FieldNode, InterfaceNode, MethodNode, Node, Param,
   StatementNode, TokRange, UnsupportedNode, VarDecl,
 } from './scanner';
 import type { Diagnostic, LineSpan } from './types';
@@ -116,6 +116,8 @@ export interface EmitHooks {
   firstInstanceMember?(cls: ClassNode): string | null;
   /** Names of the frame-1 children of the class's linked symbol; fields so named are not initialised. */
   childFieldNames?(cls: ClassNode): ReadonlySet<string> | null;
+  /** Qualified_Name written into the token of an interface (design 21.5). Default: the simple name. */
+  interfaceQualifiedName?(simple: string): string;
 }
 
 export interface EmitInput {
@@ -331,6 +333,7 @@ class Emitter {
   private supported(n: Exclude<Node, UnsupportedNode>, d: number, cls: ClassNode | null, prefix: string): void {
     switch (n.kind) {
       case 'class': return this.classNode(n, d);
+      case 'interface': return this.interfaceNode(n, d);
       case 'field': return this.fieldNode(n, d);
       case 'method':
       case 'accessor':
@@ -374,6 +377,85 @@ class Emitter {
     } finally {
       this.curClass = savedClass;
     }
+  }
+
+  /**
+   * An exported TypeScript interface plus a token of the same name (design 21.5, D31). An accessor pair is
+   * one property (`readonly` for a getter alone); a parameter with a default value is optional.
+   */
+  private interfaceNode(n: InterfaceNode, d: number): void {
+    this.push(d, `export interface ${n.name}${n.extendsNames.length > 0 ? ` extends ${n.extendsNames.join(', ')}` : ''} {`);
+    this.span(n.startLine, n.body.openLine, 'structural');
+    const savedMember = this.member;
+    this.member = null;
+    try {
+      const groups = new Map<string, Array<MethodNode | AccessorNode>>();
+      for (const m of n.members) {
+        if (m.kind !== 'accessor') continue;
+        groups.set(m.name, [...(groups.get(m.name) ?? []), m]);
+      }
+      const done = new Set<string>();
+      for (const m of n.members) {
+        if (m.kind === 'comment') {
+          this.node(m, d + 1, null, '');
+          continue;
+        }
+        if (m.kind !== 'method' && m.kind !== 'accessor') continue;
+        this.span(m.startLine, m.endLine, 'translated');
+        if (m.kind === 'method') {
+          this.push(d + 1, `${this.signature(m)};${this.trailingText(m)}`);
+        } else if (!done.has(m.name)) {
+          done.add(m.name);
+          const group = groups.get(m.name) as AccessorNode[];
+          this.push(d + 1, this.propertyText(group) + group.map((g) => this.trailingText(g)).join(''));
+        }
+      }
+    } finally {
+      this.member = savedMember;
+    }
+    this.push(d, '}');
+    this.span(n.body.closeLine, n.body.closeLine, 'structural');
+    const q = this.hooks.interfaceQualifiedName?.(n.name) ?? n.name;
+    this.push(d, `export const ${n.name}: AS3InterfaceToken<${n.name}> =`);
+    this.push(d + 1, `defineInterface<${n.name}>('${q}', [${n.parentTokens.join(', ')}]);`);
+  }
+
+  private trailingText(m: Node): string {
+    return m.trailing === undefined ? '' : ' ' + this.tokens[m.trailing].text;
+  }
+
+  private signature(m: MethodNode): string {
+    const params = m.params.map((p) => {
+      const t = this.type(p.type, p.line, p.rest ? 'rest' : 'param');
+      return `${p.rest ? '...' : ''}${p.name}${p.init !== null ? '?' : ''}${t === '' ? '' : ': ' + t}`;
+    });
+    const ret = this.type(m.returnType, m.startLine, 'return');
+    return `${m.name}(${params.join(', ')})${ret === '' ? '' : ': ' + ret}`;
+  }
+
+  /** One property for the getter and/or setter of a name. The getter's type wins when both exist. */
+  private propertyText(group: readonly AccessorNode[]): string {
+    const getter = group.find((g) => g.accessor === 'get');
+    const setter = group.find((g) => g.accessor === 'set');
+    const m = getter ?? (setter as AccessorNode);
+    let t: string;
+    if (getter !== undefined) {
+      t = this.type(getter.returnType, getter.startLine, 'accessor');
+      if (setter !== undefined && setter.params.length === 1) {
+        const st = this.typeQuiet(setter.params[0].type, setter.params[0].line, 'param');
+        if (st !== t) {
+          this.diags.push({
+            kind: 'loose-type',
+            line: setter.startLine,
+            message: `setter "${setter.name}" takes ${st} but its getter returns ${t}; using ${t}`,
+          });
+        }
+      }
+    } else {
+      const p = (setter as AccessorNode).params[0];
+      t = p === undefined ? 'any' : this.type(p.type, p.line, 'param');
+    }
+    return `${getter !== undefined && setter === undefined ? 'readonly ' : ''}${m.name}: ${t};`;
   }
 
   private classBody(n: ClassNode, d: number): void {

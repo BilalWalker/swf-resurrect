@@ -30,7 +30,7 @@ export interface TranslatedClass {
   /** Resolved through the import plan; null when the base has no source. */
   extendsQualified: string | null;
   importRecords: ImportRecord[];
-  /** The source declares an AS3 interface: nothing is emitted for it but comments. */
+  /** The source declares an AS3 interface that could not be translated: nothing is emitted for it but comments. */
   as3Interface?: boolean;
 }
 
@@ -129,7 +129,7 @@ export function planTranslate(
       extendsName: info?.extendsName ?? null,
       extendsQualified: info?.extendsQualified ?? null,
       importRecords: r.importRecords,
-      as3Interface: as3InterfaceName(s.source) !== null,
+      as3Interface: as3InterfaceName(s.source) !== null && r.interfaceTranslated !== true,
     });
   }
 

@@ -1,6 +1,10 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { declareImplements, defineInterface, type AS3InterfaceToken } from "../../template/shim/interfaces";
+import { exportedNames } from "../../src/emit/exportedNames";
+import { SHIM_AS3_NAMES } from "../../src/translate/shimNames";
+import { translate } from "../../src/translate/translate";
+import { tsSyntaxCheck } from "../../src/translate/tsSyntaxCheck";
 import { fcConfig } from "./config";
 
 // Model: interface i has parents < i (acyclic). Classes form chains; a class implements a set.
@@ -127,5 +131,47 @@ describe("interfaces examples", () => {
     const Never = defineInterface("a.Never");
     expect(new Z() instanceof P).toBe(true);
     expect(new Z() instanceof Never).toBe(false);
+  });
+});
+describe("interfaces property, translator part", () => {
+  const types = ["int", "uint", "Number", "String", "Boolean", "Object", "void"];
+  const genMember = fc.record({
+    kind: fc.constantFrom("method", "getter", "pair"),
+    type: fc.constantFrom(...types.filter((x) => x !== "void")),
+    ret: fc.constantFrom(...types),
+    params: fc.array(fc.record({ type: fc.constantFrom("int", "String", "Boolean"), dflt: fc.boolean() }), { maxLength: 3 }),
+  });
+  const genSource = fc.record({ members: fc.array(genMember, { minLength: 0, maxLength: 6 }), parents: fc.uniqueArray(fc.constantFrom("IA", "IB", "IC"), { maxLength: 3 }) });
+
+  /**
+   * **Feature: breadth, Property 50: `instanceof` against an interface follows the declared closure**
+   * **Validates: Requirements 27.1, 27.7, 27.10**
+   */
+  it("a generated interface exports the interface and its token, with no diagnostic", () => {
+    fc.assert(
+      fc.property(genSource, ({ members, parents }) => {
+        const lines = members.map((m, i) => {
+          if (m.kind === "getter") return `function get g${i}() : ${m.type};`;
+          if (m.kind === "pair") return `function get p${i}() : ${m.type};\n      function set p${i}(v:${m.type}) : void;`;
+          // an optional parameter cannot be followed by a required one in AS3: defaults only from the first default on
+          let seenDefault = false;
+          const ps = m.params.map((p, k) => {
+            seenDefault = seenDefault || p.dflt;
+            return `a${k}:${p.type}${seenDefault ? (p.type === "String" ? ' = "x"' : p.type === "Boolean" ? " = false" : " = 0") : ""}`;
+          });
+          return `function m${i}(${ps.join(", ")}) : ${m.ret};`;
+        });
+        const ext = parents.length === 0 ? "" : ` extends ${parents.join(", ")}`;
+        const source = `package p\n{\n   public interface IThing${ext}\n   {\n      ${lines.join("\n      ")}\n   }\n}\n`;
+        const known = new Set(["p.IThing", ...parents.map((x) => `p.${x}`)]);
+        const r = translate(source, { shimNames: SHIM_AS3_NAMES, selfQualified: "p.IThing", siblingClasses: known, syntaxCheck: tsSyntaxCheck });
+        expect(r.diagnostics).toEqual([]);
+        expect(r.interfaceTranslated).toBe(true);
+        expect(exportedNames(r.text)).toEqual(new Set(["IThing"]));
+        expect(r.text).toContain(`defineInterface<IThing>('p.IThing', [${parents.join(", ")}]);`);
+        members.forEach((m, i) => expect(r.text).toContain(m.kind === "method" ? `m${i}(` : m.kind === "getter" ? `readonly g${i}: ` : `  p${i}: `));
+      }),
+      fcConfig,
+    );
   });
 });

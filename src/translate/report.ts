@@ -166,7 +166,7 @@ export function serialiseReport(r: TranslationReport): string {
   return canonicalJson(r, 'translationReport');
 }
 
-/** One entry per `unsupported-construct` Diagnostic, and one `as3-interface` Named_Limit per AS3 interface, of every emitted, non-overridden class. */
+/** One entry per `unsupported-construct` Diagnostic, and one `as3-interface` Named_Limit per AS3 interface that was not translated, of every emitted, non-overridden class. */
 export function untranslatedCodeEntries(
   classes: readonly TranslatedClass[],
   overridden: ReadonlySet<string>,
@@ -178,7 +178,7 @@ export function untranslatedCodeEntries(
       out.push({
         kind: 'as3-interface',
         tag: c.className,
-        message: `AS3 interface ${c.className} is not translated to TypeScript; classes that import it are left out of the registry`,
+        message: `AS3 interface ${c.className} is not translated to TypeScript (a member cannot be expressed); classes that use it as a value are left out of the registry`,
       });
     }
     for (const d of c.diagnostics) {

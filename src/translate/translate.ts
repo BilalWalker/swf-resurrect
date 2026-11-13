@@ -15,7 +15,7 @@ import { SHIM_MEMBER_TABLE } from './shimMembers.generated';
 import type { ImportPlan } from './importPlan';
 import { collectReferences, createImportLines, createRewriter } from './rewrite';
 import { scan } from './scanner';
-import type { ClassNode, MethodNode, Node } from './scanner';
+import type { ClassNode, InterfaceNode, MethodNode, Node } from './scanner';
 import { normalizeNewlines, tokenize } from './tokenizer';
 import type { Token } from './tokenizer';
 import type { ClassInfo, TranslateOptions, TranslateResult } from './types';
@@ -121,8 +121,20 @@ function bindHeritage(nodes: readonly Node[], plan: ImportPlan): void {
     else if (n.kind === 'class') {
       if (n.extendsName !== null) n.extendsName = plan.bindingOfChain.get(n.extendsName) ?? n.extendsName;
       n.implementsNames = n.implementsNames.map((x) => plan.bindingOfChain.get(x) ?? x);
+    } else if (n.kind === 'interface') {
+      // A parent with a source file has a token; one without is a type-only name (no run-time reference).
+      n.parentTokens = n.extendsNames.filter((x) => resolveHeritage(x, plan) !== null).map((x) => plan.bindingOfChain.get(x) ?? x);
+      n.extendsNames = n.extendsNames.map((x) => plan.bindingOfChain.get(x) ?? x);
     }
   }
+}
+
+function findInterfaces(nodes: readonly Node[], out: InterfaceNode[] = []): InterfaceNode[] {
+  for (const n of nodes) {
+    if (n.kind === 'package') findInterfaces(n.body, out);
+    else if (n.kind === 'interface') out.push(n);
+  }
+  return out;
 }
 
 /** Decision D5: the whole file as `// AS3:` comments plus one line-1 Diagnostic. */
@@ -218,6 +230,10 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   const shimUsed = [...refs.bare.keys()].filter(
     (n) => !refs.declared.has(n) && options.shimNames.has(n) && !plan.bindingOfBare.has(n),
   );
+  // A translated interface file names the token factory and the token type (design 21.5).
+  if (findInterfaces(nodes).length > 0) {
+    for (const n of ['AS3InterfaceToken', 'defineInterface']) if (!shimUsed.includes(n)) shimUsed.push(n);
+  }
   const imports = createImportLines(plan, selfPath, shimUsed);
 
   // Class info is read before the heritage names are rewritten to their bindings.
@@ -236,8 +252,14 @@ export function translateCore(source: string, options: TranslateOptions): Transl
       syntheticConstructorHead: forwardingHead,
       firstInstanceMember: (cls: ClassNode) => bindsField(cls.name, fieldBinds.get(cls.name) ?? []),
       childFieldNames: () => options.childNames ?? null,
+      interfaceQualifiedName: () => options.selfQualified,
     },
   });
+  // The interface is translated when its node survived the emit (a rolled-back node is an unsupported span).
+  const interfaces = findInterfaces(nodes);
+  const interfaceTranslated =
+    interfaces.length > 0 &&
+    interfaces.every((i) => !out.spans.some((s) => s.kind === 'unsupported' && s.startLine <= i.startLine && s.endLine >= i.endLine));
   const diagnostics =
     plan.diagnostics.length === 0
       ? out.diagnostics
@@ -251,5 +273,6 @@ export function translateCore(source: string, options: TranslateOptions): Transl
     classes,
     packageName: findPackageName(nodes),
     importRecords: imports.records,
+    ...(interfaceTranslated ? { interfaceTranslated } : {}),
   };
 }

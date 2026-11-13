@@ -11,7 +11,7 @@ import { canonicalClassPath, relativeSpecifier, shimSpecifier } from '../convert
 import type { QualifiedName } from '../convert/qualifiedName';
 import type { ImportDecl, ImportPlan } from './importPlan';
 import { splitAngleTokens } from './scanner';
-import type { ClassNode, Node, TokRange } from './scanner';
+import type { ClassNode, InterfaceNode, Node, TokRange } from './scanner';
 import type { Token } from './tokenizer';
 import type { MemberContext, RewriteContext, RewriteResult, Rewriter, TokenSlice } from './emitTs';
 import { isReference, resolveIdentifier } from './implicitThis';
@@ -152,16 +152,23 @@ export function collectReferences(
     }
   };
   walkImports(nodes);
-  visitClasses(nodes, (c) => {
-    declared.add(c.name);
-    for (const n of c.implementsNames) {
+  const addNamed = (names: readonly string[], line: number): void => {
+    for (const n of names) {
       if (n.indexOf('.') >= 0) {
-        if (known.has(n)) chains.push({ text: n, qn: n, line: c.startLine });
-        else addBare(n.slice(0, n.indexOf('.')), c.startLine);
+        if (known.has(n)) chains.push({ text: n, qn: n, line });
+        else addBare(n.slice(0, n.indexOf('.')), line);
       } else {
-        addBare(n, c.startLine);
+        addBare(n, line);
       }
     }
+  };
+  visitClasses(nodes, (c) => {
+    declared.add(c.name);
+    addNamed(c.implementsNames, c.startLine);
+  });
+  visitInterfaces(nodes, (i) => {
+    declared.add(i.name);
+    addNamed(i.extendsNames, i.startLine);
   });
   visitRanges(nodes, (r) => {
     const sig: Token[] = [];
@@ -233,6 +240,9 @@ export function visitRanges(nodes: readonly Node[], fn: (r: TokRange) => void): 
         if (n.extendsRange !== null) fn(n.extendsRange);
         visitRanges(n.body.nodes, fn);
         break;
+      case 'interface':
+        visitRanges(n.members, fn);
+        break;
       case 'field':
         for (const d of n.decl.declarators) {
           if (d.type !== null) fn(d.type);
@@ -270,6 +280,13 @@ function visitClasses(nodes: readonly Node[], fn: (c: ClassNode) => void): void 
   for (const n of nodes) {
     if (n.kind === 'package') visitClasses(n.body, fn);
     else if (n.kind === 'class') fn(n);
+  }
+}
+
+export function visitInterfaces(nodes: readonly Node[], fn: (i: InterfaceNode) => void): void {
+  for (const n of nodes) {
+    if (n.kind === 'package') visitInterfaces(n.body, fn);
+    else if (n.kind === 'interface') fn(n);
   }
 }
 

@@ -58,6 +58,8 @@ export interface TranslateResult {
   classes: ClassInfo[];
   /** The generated import lines of 	ext: the Shim line first, then one per planned import. */
   importRecords: ImportRecord[];
+  /** The file declares AS3 interfaces and all of them were emitted as a TypeScript interface and a token. */
+  interfaceTranslated?: boolean;
 }
 
 /** One generated import line (design 14.1). */

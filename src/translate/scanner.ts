@@ -92,6 +92,22 @@ export interface ClassNode extends NodeBase {
   body: Body;
 }
 
+/**
+ * An AS3 interface (design 21.5). `members` holds comments and signature-only method and accessor nodes
+ * (their `body` is empty). A member the scanner cannot read makes the whole interface an UnsupportedNode.
+ */
+export interface InterfaceNode extends NodeBase {
+  kind: 'interface';
+  modifiers: string[];
+  name: string;
+  /** Names after `extends`, as written (rewritten to bindings before emit). */
+  extendsNames: string[];
+  /** The subset of `extendsNames` that has a source file, so its token exists at run time. */
+  parentTokens: string[];
+  members: Node[];
+  body: { openLine: number; closeLine: number };
+}
+
 export interface FieldNode extends NodeBase {
   kind: 'field';
   modifiers: string[];
@@ -153,7 +169,7 @@ export interface UnsupportedNode extends NodeBase {
 }
 
 export type Node =
-  | PackageNode | ImportNode | MetadataNode | CommentNode | ClassNode | FieldNode
+  | PackageNode | ImportNode | MetadataNode | CommentNode | ClassNode | InterfaceNode | FieldNode
   | MethodNode | AccessorNode | StatementNode | UnsupportedNode;
 
 export type NodeKind = Node['kind'];
@@ -488,6 +504,7 @@ class Scanner {
     if (this.isP(t, '[')) return this.metadataNode();
     const modifiers = this.takeModifiers();
     if (this.isId(this.peek(), 'class')) return this.classNode(startP, modifiers);
+    if (this.isId(this.peek(), 'interface') && this.peek(1)?.kind === 'id') return this.interfaceNode(startP, modifiers);
     throw new Bail(this.describe(startP));
   }
 
@@ -610,6 +627,62 @@ class Scanner {
       body: { nodes, braced: true, openLine, closeLine },
       ...this.mkBase(startP, this.p),
     };
+  }
+
+  private interfaceNode(startP: number, modifiers: string[]): Node {
+    this.p++; // interface
+    const nameTok = this.peek() as Token;
+    this.p++;
+    const extendsNames: string[] = [];
+    if (this.isId(this.peek(), 'extends')) {
+      this.p++;
+      for (;;) {
+        const a = this.p;
+        const e = this.typeEnd(a);
+        if (e < 0) throw new Bail('bad interface extends list');
+        extendsNames.push(this.joinText(a, e));
+        this.p = e;
+        if (!this.isP(this.peek(), ',')) break;
+        this.p++;
+      }
+    }
+    if (!this.isP(this.peek(), '{')) throw new Bail('interface header not followed by "{"');
+    const openLine = (this.peek() as Token).line;
+    this.p++;
+    const members: Node[] = [];
+    for (;;) {
+      this.gatherComments(members, true);
+      if (this.atEnd) throw new Bail('unclosed brace');
+      if (this.isP(this.peek(), '}')) break;
+      members.push(this.interfaceMember());
+    }
+    const closeLine = (this.peek() as Token).line;
+    this.p++; // }
+    return {
+      kind: 'interface',
+      modifiers,
+      name: nameTok.text,
+      extendsNames,
+      parentTokens: [],
+      members,
+      body: { openLine, closeLine },
+      ...this.mkBase(startP, this.p),
+    };
+  }
+
+  /** `function [get|set] name(params) : Type;` A Bail here makes the whole interface unsupported. */
+  private interfaceMember(): Node {
+    const startP = this.p;
+    if (!this.isId(this.peek(), 'function')) throw new Bail(this.describe(startP));
+    const head = this.functionHead();
+    if (this.isP(this.peek(), ';')) this.p++;
+    else if (!this.isP(this.peek(), '}')) throw new Bail('interface member with a body');
+    const base = this.mkBase(startP, this.p);
+    const body: Body = { nodes: [], braced: false, openLine: base.startLine, closeLine: base.endLine };
+    if (head.accessor !== null) {
+      return { kind: 'accessor', accessor: head.accessor, modifiers: [], name: head.name, params: head.params, returnType: head.returnType, body, ...base };
+    }
+    return { kind: 'method', isConstructor: false, modifiers: [], name: head.name, params: head.params, returnType: head.returnType, body, ...base };
   }
 
   private joinText(a: number, b: number): string {
@@ -738,6 +811,20 @@ class Scanner {
   }
 
   private functionNode(startP: number, modifiers: string[]): Node {
+    const { accessor, name, params, returnType } = this.functionHead();
+    if (!this.isP(this.peek(), '{')) throw new Bail('function without a body');
+    const body = this.block();
+    const base = this.mkBase(startP, this.p);
+    if (accessor !== null) {
+      return { kind: 'accessor', accessor, modifiers, name, params, returnType, body, ...base };
+    }
+    return {
+      kind: 'method', isConstructor: false, modifiers, name, params, returnType, body, ...base,
+    };
+  }
+
+  /** From `function` to the end of the return type. */
+  private functionHead(): { accessor: 'get' | 'set' | null; name: string; params: Param[]; returnType: TokRange | null } {
     this.p++; // function
     let accessor: 'get' | 'set' | null = null;
     const first = this.peek();
@@ -764,15 +851,7 @@ class Scanner {
       returnType = this.rangeOf(this.p + 1, te);
       this.p = te;
     }
-    if (!this.isP(this.peek(), '{')) throw new Bail('function without a body');
-    const body = this.block();
-    const base = this.mkBase(startP, this.p);
-    if (accessor !== null) {
-      return { kind: 'accessor', accessor, modifiers, name: nameTok.text, params, returnType, body, ...base };
-    }
-    return {
-      kind: 'method', isConstructor: false, modifiers, name: nameTok.text, params, returnType, body, ...base,
-    };
+    return { accessor, name: nameTok.text, params, returnType };
   }
 
   private params(a: number, b: number): Param[] {
