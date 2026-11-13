@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
  */
 const CORE_FILES = [
   "src/emit/classOmissions.ts", // taken over from sub-task 4.2
+  "src/emit/exportedNames.ts", // 23.1
   "src/convert/qualifiedName.ts",
   "src/translate/importPlan.ts",
   "src/emit/classPaths.ts",

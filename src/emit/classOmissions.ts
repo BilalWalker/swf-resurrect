@@ -5,13 +5,31 @@ import type { GateError } from '../translate/typeCheckGate';
 import type { QualifiedName } from '../convert/qualifiedName';
 
 
+/** What the Bundler_Guard said about one class file (design 21.4). Phase `parse`: position in the transformed text. */
+export type BundlerVerdict =
+  | { ok: true }
+  | { ok: false; phase: 'transform' | 'parse'; message: string; line: number; column: number };
+
+/** An import or re-export that is still in the file after the TypeScript transform. `names` is sorted; [] for a side-effect import. */
+export interface SurvivingImport {
+  specifier: string;
+  names: readonly string[];
+}
+
+export interface BundlerCheckData {
+  verdict: BundlerVerdict;
+  imports: readonly SurvivingImport[];
+}
+
 export type OmissionReason =
   | { kind: 'missing-source' }
   | { kind: 'emit-failed' }
+  /** The bundler's parser or the TypeScript transform rejects the file (Requirement 26.2). */
+  | { kind: 'bundler-parse'; phase: 'transform' | 'parse'; message: string; line: number; column: number }
+  /** Only when the guard could not run: a syntactic TypeScript diagnostic (Requirement 26.7). */
   | { kind: 'syntax-error'; count: number; firstLine: number; firstMessage: string }
   | { kind: 'unresolved-import'; specifier: string; line: number }
-  /** The class imports 
-ame from 	arget, whose planned file exports no such binding. */
+  /** The class imports `name` from `target`, whose planned file exports no such binding. */
   | { kind: 'missing-export'; name: string; target: QualifiedName; line: number }
   | { kind: 'extends-omitted'; base: QualifiedName }
   | { kind: 'imports-omitted'; imported: QualifiedName };
@@ -28,6 +46,8 @@ export interface ImportedName {
   name: string;
   /** 1-based line of the import. */
   line: number;
+  /** Specifier text of the import in the emitted file; absent: the import counts as surviving. */
+  specifier?: string;
 }
 
 export interface OmissionClass {
@@ -44,6 +64,10 @@ export interface OmissionClass {
   handwritten: boolean;
   /** false when Emit failed to produce the file. */
   produced: boolean;
+  /** The guard's check of the planned final text; absent: the guard did not run and the Requirement 23 rules apply. */
+  bundler?: BundlerCheckData;
+  /** Edges of the class imports with the specifier text of the emitted file; absent: every edge counts. */
+  importEdges?: readonly { target: QualifiedName; specifier: string }[];
 }
 
 export interface LinkedSymbol {
@@ -89,6 +113,25 @@ function errorsByFile(gateErrors: readonly GateError[]): Map<string, GateError[]
   return byFile;
 }
 
+function survivingSpecifiers(check: BundlerCheckData): ReadonlySet<string> {
+  return new Set(check.imports.map((i) => i.specifier));
+}
+
+/** An imported binding survives when the file still imports it by that name or by `*`; no specifier on the record: it counts. */
+function importSurvives(check: BundlerCheckData, i: ImportedName): boolean {
+  if (i.specifier === undefined) return true;
+  return check.imports.some((s) => s.specifier === i.specifier && (s.names.includes(i.name) || s.names.includes('*')));
+}
+
+/** Sorted classes this class imports along edges that the transform kept. */
+function survivingImports(c: OmissionClass): QualifiedName[] {
+  const all = [...c.importsQualified].sort(cmp);
+  if (c.bundler === undefined || c.importEdges === undefined) return all;
+  const kept = survivingSpecifiers(c.bundler);
+  const targets = new Set(c.importEdges.filter((e) => kept.has(e.specifier)).map((e) => e.target));
+  return all.filter((n) => targets.has(n));
+}
+
 export function decideClassOmissions(
   gateErrors: readonly GateError[],
   classes: readonly OmissionClass[],
@@ -105,13 +148,22 @@ export function decideClassOmissions(
 
   // Rule 2: classes that cannot load.
   for (const c of classes) {
+    const check = c.bundler;
+    // A failing check omits a class, a handwritten one included (Requirement 26.10).
+    if (check !== undefined && !check.verdict.ok && (c.handwritten || c.produced)) {
+      const v = check.verdict;
+      reasons.set(c.className, { kind: 'bundler-parse', phase: v.phase, message: v.message, line: v.line, column: v.column });
+      continue;
+    }
     if (c.handwritten) continue;
     if (!c.produced) {
       reasons.set(c.className, { kind: 'emit-failed' });
       continue;
     }
+    const surviving = check === undefined ? undefined : survivingSpecifiers(check);
     const errs = byFile.get(c.path) ?? [];
-    const syntactic = errs.filter((e) => e.syntactic);
+    // While the guard ran it is the only authority on parsing: a syntactic diagnostic never omits.
+    const syntactic = check === undefined ? errs.filter((e) => e.syntactic) : [];
     if (syntactic.length > 0) {
       reasons.set(c.className, {
         kind: 'syntax-error',
@@ -126,7 +178,8 @@ export function decideClassOmissions(
         (e.code === 2307 || e.code === 2792) &&
         e.specifier !== null &&
         e.specifier.startsWith('.') &&
-        isEmittedSpecifier(c.path, e.specifier),
+        isEmittedSpecifier(c.path, e.specifier) &&
+        (surviving === undefined || surviving.has(e.specifier)),
     );
     if (unresolved && unresolved.specifier !== null) {
       reasons.set(c.className, { kind: 'unresolved-import', specifier: unresolved.specifier, line: unresolved.line });
@@ -138,7 +191,13 @@ export function decideClassOmissions(
     const missing = [...(c.importedNames ?? [])]
       .filter((i) => {
         const exp = exportsOf.get(i.target);
-        return i.target !== c.className && exp !== undefined && exp !== null && !exp.has(i.name);
+        return (
+          i.target !== c.className &&
+          exp !== undefined &&
+          exp !== null &&
+          !exp.has(i.name) &&
+          (check === undefined || importSurvives(check, i))
+        );
       })
       .sort((a, b) => cmp(a.target, b.target) || cmp(a.name, b.name))[0];
     if (missing !== undefined) {
@@ -156,7 +215,7 @@ export function decideClassOmissions(
         added.set(c.className, { kind: 'extends-omitted', base: c.extendsQualified });
         continue;
       }
-      const imported = [...c.importsQualified].sort(cmp).find((n) => reasons.has(n));
+      const imported = survivingImports(c).find((n) => reasons.has(n));
       if (imported !== undefined) added.set(c.className, { kind: 'imports-omitted', imported });
     }
     if (added.size === 0) break;
@@ -205,6 +264,9 @@ export function omissionMessage(o: ClassOmission): string {
       break;
     case 'emit-failed':
       why = 'the class file was not produced';
+      break;
+    case 'bundler-parse':
+      why = `Vite cannot ${r.phase === 'transform' ? 'transform' : 'parse'} the file: ${r.message} (line ${r.line}, column ${r.column}${r.phase === 'parse' ? ', in the transformed text' : ''})`;
       break;
     case 'syntax-error':
       why = `${r.count} syntax error${r.count === 1 ? '' : 's'}, first at line ${r.firstLine}: ${r.firstMessage}`;

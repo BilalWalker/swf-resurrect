@@ -4,6 +4,7 @@ import {
   isEmittedSpecifier,
   looseClasses,
   omissionMessage,
+  type BundlerCheckData,
   type OmissionClass,
 } from "../../src/emit/classOmissions";
 import { gateError } from "../support/gateError";
@@ -132,6 +133,88 @@ describe("decideClassOmissions", () => {
       ["Btn", [5]],
       ["UIComponent", []],
     ]);
+  });
+});
+
+describe("decideClassOmissions with Bundler_Checks", () => {
+  const OK: BundlerCheckData = { verdict: { ok: true }, imports: [] };
+  const bad = (message = "Unexpected token", phase: "transform" | "parse" = "parse"): BundlerCheckData => ({
+    verdict: { ok: false, phase, message, line: 3, column: 7 },
+    imports: [],
+  });
+  const iface = cls("p.IThing", { exports: [] });
+  const imp = (name: string, target: string, specifier: string, line = 2) => ({ target, name, line, specifier });
+
+  it("omits a class whose check fails, with phase, message, line and column", () => {
+    const [o] = decideClassOmissions([], [cls("A", { bundler: bad("The keyword 'yield' is reserved") })], [{ symbolId: 2, className: "A" }]);
+    expect(o).toEqual({
+      className: "A",
+      reason: { kind: "bundler-parse", phase: "parse", message: "The keyword 'yield' is reserved", line: 3, column: 7 },
+      symbolIds: [2],
+    });
+    expect(omissionMessage(o)).toContain("The keyword 'yield' is reserved");
+    expect(omissionMessage(o)).toContain("line 3, column 7");
+  });
+
+  it("omits a handwritten class whose check fails and by propagation only otherwise", () => {
+    const hw = cls("H", { handwritten: true, bundler: bad("with") });
+    expect(decideClassOmissions([], [hw], []).map((o) => o.reason.kind)).toEqual(["bundler-parse"]);
+    const okHw = cls("H", { handwritten: true, bundler: OK, extendsQualified: "Base" });
+    expect(decideClassOmissions([gateError({ file: "src/H.ts", code: 1005, syntactic: true })], [okHw, cls("Base", { produced: false })], [])
+      .map((o) => o.className)).toEqual(["Base"]);
+  });
+
+  it("keeps a class with a syntactic diagnostic of any code while the check is ok, and lists it as loose", () => {
+    for (const code of [1005, 1155, 1109, 2304, 9999]) {
+      const errs = [gateError({ file: "src/A.ts", code, syntactic: true })];
+      const a = cls("A", { bundler: OK });
+      expect(decideClassOmissions(errs, [a], [])).toEqual([]);
+      expect(looseClasses(errs, [a], []).map((l) => l.className)).toEqual(["A"]);
+    }
+  });
+
+  it("omits the same diagnostic with syntax-error when the guard could not run (no check)", () => {
+    const errs = [gateError({ file: "src/A.ts", line: 4, code: 1005, message: "bad", syntactic: true })];
+    expect(decideClassOmissions(errs, [cls("A")], [])[0].reason).toEqual({ kind: "syntax-error", count: 1, firstLine: 4, firstMessage: "bad" });
+  });
+
+  it("does not omit for an unresolved import the transform removed, and omits for one that survives", () => {
+    const err = gateError({ file: "src/A.ts", line: 3, code: 2307, specifier: "./Nope" });
+    const removed = cls("A", { bundler: { verdict: { ok: true }, imports: [] } });
+    expect(decideClassOmissions([err], [removed], [])).toEqual([]);
+    const kept = cls("A", { bundler: { verdict: { ok: true }, imports: [{ specifier: "./Nope", names: ["X"] }] } });
+    expect(decideClassOmissions([err], [kept], [])[0].reason).toEqual({ kind: "unresolved-import", specifier: "./Nope", line: 3 });
+  });
+
+  it("omits for a missing export only when the import survives (unused and type-only imports omit nothing)", () => {
+    const names = [imp("IThing", "p.IThing", "./IThing", 4)];
+    const mk = (bundler: BundlerCheckData) => cls("p.User", { importsQualified: ["p.IThing"], importedNames: names, bundler });
+    // Unused or type-only: the transform dropped the whole import.
+    expect(decideClassOmissions([], [iface, mk({ verdict: { ok: true }, imports: [] })], [])).toEqual([]);
+    // The import stays but without this name.
+    expect(decideClassOmissions([], [iface, mk({ verdict: { ok: true }, imports: [{ specifier: "./IThing", names: ["Other"] }] })], [])).toEqual([]);
+    // The import stays with the name, or as a namespace import.
+    for (const n of ["IThing", "*"]) {
+      const r = decideClassOmissions([], [iface, mk({ verdict: { ok: true }, imports: [{ specifier: "./IThing", names: [n] }] })], []);
+      expect(r.map((o) => o.reason)).toEqual([{ kind: "missing-export", name: "IThing", target: "p.IThing", line: 4 }]);
+    }
+  });
+
+  it("propagates along a surviving import of an omitted class and not along a removed one", () => {
+    const base = cls("Gone", { produced: false });
+    const edges = [{ target: "Gone", specifier: "./Gone" }];
+    const user = (imports: BundlerCheckData["imports"]) =>
+      cls("U", { importsQualified: ["Gone"], importEdges: edges, bundler: { verdict: { ok: true }, imports } });
+    expect(decideClassOmissions([], [base, user([{ specifier: "./Gone", names: ["Gone"] }])], []).map((o) => [o.className, o.reason.kind])).toEqual([
+      ["Gone", "emit-failed"],
+      ["U", "imports-omitted"],
+    ]);
+    expect(decideClassOmissions([], [base, user([])], []).map((o) => o.className)).toEqual(["Gone"]);
+  });
+
+  it("extends still propagates when the check is ok", () => {
+    const r = decideClassOmissions([], [cls("Gone", { produced: false }), cls("U", { extendsQualified: "Gone", bundler: OK })], []);
+    expect(r.map((o) => o.reason.kind)).toEqual(["emit-failed", "extends-omitted"]);
   });
 });
 

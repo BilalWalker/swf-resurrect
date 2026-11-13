@@ -70,6 +70,7 @@ export interface ReportExtras {
 /** Line of the class-omitted Diagnostic: the first error line for a syntax error or an unresolved import, else 1. */
 function omissionLine(o: ClassOmission): number {
   const r = o.reason;
+  if (r.kind === 'bundler-parse') return r.line;
   return r.kind === 'syntax-error' ? r.firstLine : r.kind === 'unresolved-import' || r.kind === 'missing-export' ? r.line : 1;
 }
 

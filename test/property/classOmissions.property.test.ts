@@ -1,9 +1,11 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { decideClassOmissions, isEmittedSpecifier, looseClasses } from "../../src/emit/classOmissions";
+import { decideClassOmissions, isEmittedSpecifier, looseClasses, type OmissionClass } from "../../src/emit/classOmissions";
+import type { GateError } from "../../src/translate/typeCheckGate";
+import { gateError } from "../support/gateError";
 import { buildClassesTs } from "../../src/emit/planEmit";
 import type { SceneJson } from "../../template/runtime/scene";
-import { projectArb } from "./gen/genOmissions";
+import { bundledProjectArb, projectArb } from "./gen/genOmissions";
 import { fcConfig } from "./config";
 
 /** **Validates: Requirements 23.1, 23.2, 23.3** */
@@ -71,6 +73,134 @@ describe("Property 38: The omitted set", () => {
           .sort();
         expect(loose.map((l) => l.className)).toEqual(wantLoose);
         for (const l of loose) expect(l.count).toBe(gateErrors.filter((e) => e.file === classes.find((c) => c.className === l.className)!.path).length);
+      }),
+      fcConfig,
+    );
+  });
+});
+
+/** **Validates: Requirements 26.2, 26.4, 26.5, 26.6, 26.10, 26.12, 23.1, 23.3** */
+describe("Property 49: The omitted set depends on load failures and Surviving_Imports only", () => {
+  /** The least fixed point of the rules of design 21.4, written without reading decideClassOmissions. */
+  function expectedSet(gateErrors: GateError[], classes: OmissionClass[], linked: { className: string }[]): Set<string> {
+    const names = new Set(classes.map((c) => c.className));
+    const out = new Set<string>();
+    for (const s of linked) if (!names.has(s.className)) out.add(s.className);
+    for (const c of classes) {
+      const b = c.bundler;
+      if (b !== undefined && !b.verdict.ok && (c.handwritten || c.produced)) {
+        out.add(c.className);
+        continue;
+      }
+      if (c.handwritten) continue;
+      if (!c.produced) {
+        out.add(c.className);
+        continue;
+      }
+      const own = gateErrors.filter((e) => e.file === c.path);
+      const specs = new Set((b?.imports ?? []).map((i) => i.specifier));
+      const syntactic = b === undefined && own.some((e) => e.syntactic);
+      const unresolved = own.some(
+        (e) =>
+          (e.code === 2307 || e.code === 2792) &&
+          e.specifier !== null &&
+          e.specifier.startsWith(".") &&
+          isEmittedSpecifier(c.path, e.specifier) &&
+          (b === undefined || specs.has(e.specifier)),
+      );
+      const missing = (c.importedNames ?? []).some((i) => {
+        const t = classes.find((k) => k.className === i.target);
+        if (i.target === c.className || t === undefined || t.exports == null || t.exports.includes(i.name)) return false;
+        if (b === undefined || i.specifier === undefined) return true;
+        return b.imports.some((s) => s.specifier === i.specifier && (s.names.includes(i.name) || s.names.includes("*")));
+      });
+      if (syntactic || unresolved || missing) out.add(c.className);
+    }
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (const c of classes) {
+        if (c.handwritten || out.has(c.className)) continue;
+        const kept = new Set((c.bundler?.imports ?? []).map((i) => i.specifier));
+        const edgeTargets =
+          c.bundler === undefined || c.importEdges === undefined
+            ? c.importsQualified
+            : c.importEdges.filter((e) => kept.has(e.specifier)).map((e) => e.target);
+        const reached = c.importsQualified.filter((n) => edgeTargets.includes(n));
+        if ((c.extendsQualified !== null && out.has(c.extendsQualified)) || reached.some((n) => out.has(n))) {
+          out.add(c.className);
+          changed = true;
+        }
+      }
+    }
+    return out;
+  }
+
+  it("is the least fixed point of the rules, independent of input order", () => {
+    fc.assert(
+      fc.property(bundledProjectArb, ({ gateErrors, classes, linked }) => {
+        const expected = expectedSet(gateErrors, classes, linked);
+        const result = decideClassOmissions(gateErrors, classes, linked);
+        expect(result.map((o) => o.className)).toEqual([...expected].sort());
+        expect(new Set(result.map((o) => o.className)).size).toBe(result.length);
+        expect(decideClassOmissions([...gateErrors].reverse(), [...classes].reverse(), [...linked].reverse())).toEqual(result);
+        for (const o of result) {
+          if (o.reason.kind === "bundler-parse") {
+            const c = classes.find((k) => k.className === o.className)!;
+            expect(c.bundler !== undefined && !c.bundler.verdict.ok).toBe(true);
+          }
+          // A syntax-error reason needs a class with no check.
+          if (o.reason.kind === "syntax-error") expect(classes.find((k) => k.className === o.className)!.bundler).toBeUndefined();
+        }
+        // The registry holds no class that extends an omitted class or has a surviving import of one.
+        const omitted = new Set(result.map((o) => o.className));
+        for (const c of classes) {
+          if (c.handwritten || omitted.has(c.className)) continue;
+          if (c.extendsQualified !== null) expect(omitted.has(c.extendsQualified)).toBe(false);
+          if (c.bundler === undefined || c.importEdges === undefined) {
+            for (const n of c.importsQualified) expect(omitted.has(n)).toBe(false);
+          } else {
+            const kept = new Set(c.bundler.imports.map((i) => i.specifier));
+            for (const e of c.importEdges) if (kept.has(e.specifier)) expect(omitted.has(e.target)).toBe(false);
+          }
+        }
+      }),
+      fcConfig,
+    );
+  });
+
+  it("with checks present, a syntactic diagnostic never omits; with none it does", () => {
+    fc.assert(
+      fc.property(bundledProjectArb, fc.constantFrom(1005, 1155, 2304, 8000), ({ classes, linked, checked }, code) => {
+        // Only syntactic diagnostics, on every class file, and nothing else that could omit.
+        const clean = classes.map((c) => ({ ...c, produced: true, importedNames: [], importsQualified: [], importEdges: [], extendsQualified: null }));
+        const errs = clean.map((c) => gateError({ file: c.path, code, syntactic: true }));
+        const ok = clean.map((c) => (c.bundler === undefined ? c : { ...c, bundler: { verdict: { ok: true as const }, imports: c.bundler.imports } }));
+        const result = decideClassOmissions(errs, ok, linked.filter((s) => classes.some((c) => c.className === s.className)));
+        const dropped = new Set(result.map((o) => o.className));
+        for (const c of ok) {
+          if (c.handwritten) expect(dropped.has(c.className)).toBe(false);
+          else expect(dropped.has(c.className)).toBe(!checked);
+        }
+        if (!checked) for (const o of result) expect(o.reason.kind).toBe("syntax-error");
+      }),
+      fcConfig,
+    );
+  });
+
+  it("removing an import from the Surviving_Imports never adds a class", () => {
+    fc.assert(
+      fc.property(bundledProjectArb, fc.nat({ max: 20 }), fc.nat({ max: 20 }), ({ gateErrors, classes, linked }, ci, ii) => {
+        const withChecks = classes.filter((c) => c.bundler !== undefined);
+        if (withChecks.length === 0) return;
+        const target = withChecks[ci % withChecks.length];
+        if (target.bundler!.imports.length === 0) return;
+        const drop = ii % target.bundler!.imports.length;
+        const fewer = classes.map((c) =>
+          c === target ? { ...c, bundler: { ...c.bundler!, imports: c.bundler!.imports.filter((_, k) => k !== drop) } } : c,
+        );
+        const before = new Set(decideClassOmissions(gateErrors, classes, linked).map((o) => o.className));
+        const after = decideClassOmissions(gateErrors, fewer, linked).map((o) => o.className);
+        for (const n of after) expect(before.has(n)).toBe(true);
       }),
       fcConfig,
     );

@@ -60,3 +60,63 @@ export const projectArb: fc.Arbitrary<OmissionProject> = fc.integer({ min: 0, ma
     ),
   });
 });
+
+const SURVIVING_NAMES = [...BINDINGS, '*'];
+
+/** What a class file's edges look like in the emitted text: `./T` or `../T` for a target T. */
+const edgeSpecifiers = (target: string): string[] => [`./${target}`, `../${target}`];
+
+/**
+ * A project whose classes carry the edge specifiers, the specifier on every imported name and, when `checked`,
+ * a Bundler_Check per class (verdict ok or not, Surviving_Imports a random subset of the candidate specifiers).
+ * When `checked` is false no class has a check: the guard could not run.
+ */
+export const bundledProjectArb: fc.Arbitrary<OmissionProject & { checked: boolean }> = fc
+  .tuple(projectArb, fc.boolean())
+  .chain(([project, checked]) =>
+    fc
+      .tuple(
+        ...project.classes.map((c) =>
+          fc
+            .tuple(
+              fc.array(fc.constantFrom(0, 1), { minLength: c.importsQualified.length, maxLength: c.importsQualified.length }),
+              fc.array(fc.constantFrom(0, 1), { minLength: (c.importedNames ?? []).length, maxLength: (c.importedNames ?? []).length }),
+              fc.oneof(
+                { weight: 4, arbitrary: fc.constant<{ ok: true }>({ ok: true }) },
+                {
+                  weight: 1,
+                  arbitrary: fc.record({
+                    ok: fc.constant<false>(false),
+                    phase: fc.constantFrom<'transform' | 'parse'>('transform', 'parse'),
+                    message: fc.constantFrom('m1', 'm2'),
+                    line: fc.integer({ min: 1, max: 9 }),
+                    column: fc.integer({ min: 1, max: 9 }),
+                  }),
+                },
+              ),
+              fc.uniqueArray(fc.nat({ max: 40 }), { maxLength: 40 }),
+              fc.array(fc.subarray(SURVIVING_NAMES), { minLength: 40, maxLength: 40 }),
+            )
+            .map(([edgePick, namePick, verdict, keep, names]): OmissionClass => {
+              const edges = c.importsQualified.map((target, i) => ({ target, specifier: edgeSpecifiers(target)[edgePick[i]] }));
+              const importedNames = (c.importedNames ?? []).map((n, i) => ({
+                ...n,
+                specifier: edgeSpecifiers(n.target)[namePick[i]],
+              }));
+              // Candidates: every edge specifier of this class plus the specifiers the gate errors use.
+              const candidates = [...new Set([...edges.map((e) => e.specifier), ...importedNames.map((n) => n.specifier), ...SPECIFIERS])].sort();
+              const imports = candidates
+                .map((specifier, i) => ({ specifier, names: [...names[i]].sort(), keep: keep.includes(i) }))
+                .filter((i) => i.keep)
+                .map(({ specifier, names: ns }) => ({ specifier, names: ns }));
+              return {
+                ...c,
+                importedNames,
+                importEdges: edges,
+                ...(checked ? { bundler: { verdict, imports } } : {}),
+              };
+            }),
+        ),
+      )
+      .map((classes) => ({ ...project, classes: classes as OmissionClass[], checked })),
+  );
