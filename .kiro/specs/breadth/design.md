@@ -11,6 +11,7 @@ Second pass (2026-11-12, same day, after the requirements were updated). The req
 Third pass (2026-11-12, after the requirements gained Requirements 22 and 23 and changed 1, 2.8, 2.9, 13.13, 14.12 to 14.23, 15, 16, 18.4, 19.5, 20.8 and Appendix A.6 and A.7). This pass adds sections 18 (implicit this resolution), 19 (class failure fallback) and 20 (empty-input Replay and a Replay that throws), the subsection "Fills before they are drawn" of section 2, and the decisions D16 to D21. It replaces the narrow rule for the bare names `stage`, `mouseX` and `mouseY` (D11, section 14.3 item 7, Property 30) by the general resolution of section 18, marks the findings F11 to F18 as DECIDED (the "needs the user" framing is gone; F18 is confirmed), adds the Properties 31 to 42, and refreshes the traceability table (Requirements 1 to 23), the module map, the repository layout, the error table and the testing strategy. Everything measured in the first two passes is kept. The new measurements are in "Measurements and re-checks, third pass"; they ran under `.work/d3/` and `.work/local/` (downloads from the Candidate_Source at the pinned commit, FFDec exports, a prototype of the resolver and of the omission decision, pipeline output), were deleted afterwards, and nothing was committed. No production file was changed, no LLM call was made, and no secret was read. What the third pass could not decide was listed as open items O1 to O8 (O9 was found in the third pass too); the fourth pass below records the user's decisions on all of them.
 
 Fourth pass (2026-11-12, after the requirements changed 1.11, 3.7, 6.6, 14.2, 14.15, 14.23, 14.24, 15.5, 15.14, 16.2, 22 (22.1, 22.4, 22.7, 22.8, 22.13), 23 (all), the glossary entries Class_Failure, Loose_Class and Empty_Reference_Trace, and Appendix A.6 items 24 to 33). This pass rewrites sections 18 and 19, extends sections 20 and 12, and updates the decisions D16, D18, D19 and D20 (D22 and D23 are new), the properties (P30, P33, P34, P38, P39, P40 changed; P43 and P44 new), the testing strategy, the traceability table, the module map, the repository layout, the error table and the findings. Decisions applied: O1 (inherited statics resolve to `Declaring.x`, one walk of the chain, nearest class wins), O3 (method values are bound, Requirement 22.13), O4 (a class is omitted only when it cannot load; type-error classes are Loose_Classes), O9 (an Empty_Reference_Trace is `not-compared`, no score); O2, O5, O6 and O7 stay as the design defaults and O8 (the Shim_Member_Table drift test joins the floor list, with no steering edit) is applied in the Testing Strategy. The new measurements are in "Measurements and re-checks, fourth pass"; they ran under `.work/d4/` (a download of `slider_component` and `mask_reapply` from the Candidate_Source at the pinned commit, FFDec exports, a prototype of the resolver, a throwaway copy of the type-check gate with the change of section 19.3, pipeline output), were deleted afterwards, and nothing was committed. No production file was changed, no LLM call was made, and no secret was read. Contradictions with the requirements that this pass found are flagged as F19 to F21 in "Findings and decisions" and are not resolved silently.
+Fifth pass (2026-11-13, after Checkpoint 9, requirements 24 to 31 added and 16.5, 22.13, 23 amended). This pass adds section 21 (the robustness group: Construction_Bind, method-value binds as a field, Caught_Errors, the Bundler_Guard and the survival rules, AS3 interfaces, instance printing, the mouse flags and the Hit_Target rule, three translator fixes), the decisions D24 to D37, the properties P45 to P56, rows in the error table, the testing strategy and the traceability table, and the module list of 21.9. It amends in place, each marked "Amended after Checkpoint 9": the Known limit of section 10, the "not added" paragraph of section 11, 19.1, 19.2 (reasons and rules), 19.6 and the findings caution (a registered class that throws no longer stops the movie), and the D18 and P44 wording (binds are a first field). The new measurements are in "Measurements and re-checks, fifth pass": Ruffle sources at the pinned commit read through HTTPS (not stored), a nine-case probe of the pinned Vite and Rolldown, and the `click_block` placement order from an FFDec `-swf2xml` dump; all scratch files were deleted, nothing was committed, no production file was changed, no LLM call was made and no secret was read. Items that rest on something not read are marked **not verified** and collected for the checkpoint of Requirement 31.7: the Flash Player column of 21.3, the order of the slot binding against AS3 field initialisers (21.1), numbering for script-created objects (21.6), the Ruffle propagation target for a disabled object (21.7), and the `as` limit D33.
 ### Facts checked in the repository
 
 - `template/runtime/pixi/pixiBackend.ts` loads a shape with `new Graphics().svg(flattenSvgWrapper(svg))` and sets colour with `tint` and alpha only. `template/runtime/hitTest.ts` uses `ShapeBounds` only (a rectangle in shape-origin space); the browser gets bounds from `Graphics.getLocalBounds()`, the Replay from the SVG `width`/`height` attributes through `src/verify/core/svgBounds.ts`. No render path of this design changes `hitTest.ts`.
@@ -45,12 +46,26 @@ Fourth pass (2026-11-12, after the requirements changed 1.11, 3.7, 6.6, 14.2, 14
 | D15 | A release on another target than the press dispatches no `click`; the Replay records a `release-outside` note, copied into `behaviour.replay.inputNotes` of the Fidelity_Report. | Requirement 14.20, 14.21, decided F4. Sections 9, 10. |
 | D16 | A bare identifier in a class body is resolved by a Core module (`implicitThis.ts` over `memberTables.ts`) with the rules of Requirement 22.1 in order, applied as one walk of the `extends` chain (nearest declaring class wins, instance before static in one class): own instance, own static, inherited static of a translated superclass (`Declaring.x`, import added), inherited instance of a translated superclass, Shim class (generated table). Locals, parameters, globals, class names and import bindings are never members; an unresolved name stays as written with an `unresolved-identifier` Diagnostic. | Requirement 22, decided F11. Prototype over five sample sources (section "Measurements, third pass"): once `stage`, `mouseX` and `mouseY` are in the Shim, every bare member name of `clickgoto`, `tweendemo`, `Interactivity3` and `test_fla.MainTimeline` resolves, and 801 of 821 in `slider_component` (794 against today's Shim). Fourth pass (O1 DECIDED): inherited statics resolve one more name, `LabelButton.as:58` `mergeStyles` to `UIComponent.mergeStyles`, so 802 of 821 and 19 of the 20 that stay unresolved (section "Measurements, fourth pass"). Section 18. |
 | D17 | The Shim_Member_Table is generated from `template/shim/*.ts` by a Core extractor (`shimMembers.ts`, a hand-written declaration scanner, no TypeScript compiler), an Edge script (`npm run gen:shim-members`), a committed `shimMembers.generated.ts` and a drift test. | Requirement 22.5, 15.1. The extractor agreed with the TypeScript compiler on all 38 member slots of the current Shim (0 differences) after one fix (constructor parameter properties). Section 18.6. |
-| D18 | A value reference to an instance method of a translated class (rule 1 or 3, bare or `this.m`; not a call, not static, not a Shim member) makes the constructor of the referencing class bind it once, after `super`, in declaration order (own methods first, then nearest base first) (`this.m = this.m.bind(this);`); a class without a constructor gets a forwarding constructor typed with `ConstructorParameters<typeof Base>`. | A resolved `this.dragPressHandler` passed to `addEventListener` loses `this`; 3 such references in `Interactivity3`, 56 in `slider_component`. O3 DECIDED: Requirement 22.13, no longer an extra. Measured: the forwarding form type-checks, `...args: any[]` gives TS2556. Section 18.5. |
+| D18 | (**Amended after Checkpoint 9 by D25 and Requirement 22.13:** the binds are the first instance field `__binds_<ClassName>` and there is no forwarding constructor; the text below is the version before the amendment.) A value reference to an instance method of a translated class (rule 1 or 3, bare or `this.m`; not a call, not static, not a Shim member) makes the constructor of the referencing class bind it once, after `super`, in declaration order (own methods first, then nearest base first) (`this.m = this.m.bind(this);`); a class without a constructor gets a forwarding constructor typed with `ConstructorParameters<typeof Base>`. | A resolved `this.dragPressHandler` passed to `addEventListener` loses `this`; 3 such references in `Interactivity3`, 56 in `slider_component`. O3 DECIDED: Requirement 22.13, no longer an extra. Measured: the forwarding form type-checks, `...args: any[]` gives TS2556. Section 18.5. |
 | D19 | A class is left out of the registry only when it cannot load (no source and no override, a syntax error or no file, an unresolved relative import), with propagation along `extends` and imports; a class with only type errors stays registered as a Loose_Class. The decision reads the type-check gate on the planned files in memory, using a new `syntactic` mark and `specifier` on `GateError`; the final `src/classes.ts` is planned again only when something other than a missing source was omitted; the project is written once; the reported gate runs on that project (the first gate result is reused when nothing was omitted). | Requirements 23.1 to 23.3, 23.10; O4 DECIDED. The code range of a syntax error is not usable: TS1155 is a checker error (measured). The gate on a full registry that holds a broken class can show a `src/main.ts` error that the final project does not have (measured on `slider_component` in the third pass). One gate run in the common case. Section 19. |
 | D20 | A Reference_Trace with no `input.json` is replayed with the input `[]` for the tick count of `test.toml` (`num_frames ?? num_ticks`; neither: `not-compared`, the implementer stops); a Replay that throws is `compared` on the lines it captured and names the failure in `problems`; a child process that crashes or times out stays `not-compared: replay-failed` (O5, design default). | Requirements 14.22, 14.23, 1.7, 1.10; decided F12, F13. Section 20. |
 | D22 | A Reference_Trace that is an Empty_Reference_Trace gives behaviour `not-compared` with the reason `empty-reference-trace`, no Trace_Score and no floor; `decideBehaviour` decides it first; the Replay may still run so that a throw is recorded in `problems`. | Requirement 14.24, 3.7, 1.11; O9 DECIDED. Replaces the vacuous 100 of `radial`, `gradients` and `acid-color-2`. `compareTraces` itself is unchanged. Section 20.4. |
 | D23 | `GateError` gains `syntactic: boolean` (membership in `program.getSyntacticDiagnostics()`) and `specifier` (a string or null: the module specifier of a 2307 or 2792 error); `decideClassOmissions` reads these and no code range. | Requirement 23.2. Measured on a throwaway copy of the gate. Section 19.3. |
 | D21 | The Shape_Function takes the drawn-fill capabilities as a parameter whose default is the single constant `DRAWN_FILLS` that the backend also reads. Every gradient or bitmap fill whose flag is false is left out of the Shape_JSON and returned as exactly one `gradient-fill` / `bitmap-fill` Named_Limit with a per-fill message; the drawing tasks flip their flag. | Requirement 2.8, 2.9. Section 2, "Fills before they are drawn". |
+| D24 | The frame-1 build and the binding of named children move into the Shim `MovieClip` constructor (a Player hook `constructFrameOne`), so they run before every derived field initialiser and constructor statement; `createClip` stops calling `_renderFrame` after `new Cls()`. | Requirement 24. Section 21.1. JavaScript cannot allocate without running the chain; the end of the base constructor is the earliest point after `super()`. |
+| D25 | Method-value binds are emitted as the first instance member, a field `__binds_<ClassName>` with an arrow function that holds the `bind` statements; the forwarding constructor is removed. | Requirement 22.13 amended, 24.6. Section 21.2. A field initialiser runs before the constructor body, so a constructor bind was too late for it. |
+| D26 | A caught error follows Ruffle's behaviour as read at the pinned commit: a frame script or a listener is abandoned alone, a timeline constructor that throws leaves the partially constructed instance on the display list. The Flash Player column is the user's guidance, listed as not verified. | Requirement 25. Section 21.3. Ruffle source is the only readable model. |
+| D27 | `ConstructionContext.instance` is set by the `MovieClip` constructor before the Construction_Bind; `createClip` keeps it after a throw and re-instantiates a plain `MovieClip` only when it is null. | Requirement 25.3. Section 21.3. |
+| D28 | The error sink is module-level state in the Shim's `internal.ts` (like the trace sink); the Replay installs one that records `{ tick, site, message }`; Problems of kind `runtime-error` are built by a Core function, capped at 100. | Requirement 25.5, 25.7. Section 21.3. The dispatcher has no Player reference. |
+| D29 | The Bundler_Guard is `transformWithOxc` followed by `parseAst(code, { lang: 'js', showSemanticErrors: true })`, both exported by the pinned `vite`; it runs in the Edge on the planned final text and returns a Bundler_Check; `rolldown` is not imported directly and no dependency is added. | Requirement 26.1, 26.8. Section 21.4. Reproduces `vite build` on nine measured cases. |
+| D30 | `classOmissions.ts` stays Core and takes the Bundler_Check as an input; unresolved-import, missing-export and imports-omitted apply only to Surviving_Imports; a syntactic TypeScript diagnostic alone omits nothing when the check is ok; reason `bundler-parse` is added; a handwritten class is omitted for a failing check. | Requirement 26.2 to 26.6, 26.10. Section 21.4. |
+| D31 | A translated AS3 interface exports a TypeScript interface and an Interface_Token of the same name; a class gets `declareImplements(Cls, ...)` after its declaration; the registry is a module-level `WeakMap` keyed by the class. | Requirement 27.1, 27.2. Section 21.5. |
+| D32 | The token carries `[Symbol.hasInstance]`, so the existing `x is I` to `x instanceof I` rewrite works for an interface with no rewrite change and no helper call. | Requirement 27.3, 27.4. Section 21.5. |
+| D33 | `x as I` stays a TypeScript cast, as `x as Class` is today; `asInterface` is not added because no fixture line needs it (Requirement 14.17). To confirm with the user. | Requirement 27 (known limit). Section 21.5. |
+| D34 | Display objects print through `toString` using class names from a registration (`registerClassName`, filled by the Shim and by the Player from the registry keys), never `constructor.name`. | Requirement 28.1. Section 21.6. Minification safe. |
+| D35 | Default instance names come from one Player-wide counter starting at 0, taken at the start of the `MovieClip` constructor for an unnamed placement (the root included), so numbering is depth-first; named placements take none. Script-created objects take a number at construction (not verified). | Requirement 28.2, 28.3. Section 21.6. Derived from Ruffle's `set_default_instance_name` and checked on `click_block` (`instance2`). |
+| D36 | The Hit_Target is `resolveHitTarget(hitTestAll(...))`: first direct hit in z-order after the `mouseChildren` collapse; else the topmost propagation to the nearest enabled container; else the Stage_Object. | Requirement 29.2. Section 21.7. Ruffle `Avm2MousePick`. |
+| D37 | Three translator fixes, each its own commit: dotted types through `resolveClassName`, `selfKey` without the stray parenthesis, and a mark on the forced-import list that the statement rollback truncates. | Requirement 30. Section 21.8. |
 
 ## Architecture
 
@@ -563,7 +578,7 @@ One hit test per entry, as Ruffle computes the hovered object once per input eve
 3. `dispatchMouseUp`: if the button is up, stop after step 1 and return `{ releaseOutside: null }`. Else mark it up, dispatch bubbling `mouseUp` at `target`; if `pressed === target` dispatch bubbling `click` at `pressed`, otherwise dispatch nothing more and return `{ releaseOutside: { pressed, hit: target } }`; clear `pressed` (14.6, 14.7, 14.20). The Player dispatches no `releaseOutside` event (Requirement 14.8 (c)); the return value is how the Replay records the case by name. A press and a release on empty stage have `pressed === target === stage`, so a `click` is dispatched at the Stage_Object; Ruffle's rule for a press on the empty stage was not read (A.9), so this follows the text of Requirement 14.7 only.
 4. `syncAll()` after every entry.
 
-Known limit: `mouseEnabled` and `mouseChildren` do not exist in the Shim, so `mouseChildren = false` (the ancestor becomes the target) and `mouseEnabled = false` (the object is skipped) are not honoured. Translated code that sets them is not flagged yet; this goes on the Checkpoint 9 list.
+~~Known limit: `mouseEnabled` and `mouseChildren` do not exist in the Shim~~ (**Amended after Checkpoint 9, Requirement 29:** the limit is removed. The Shim gains both flags and the Hit_Target rule of section 21.7 honours them: `mouseChildren = false` makes the ancestor the target, `mouseEnabled = false` skips the object and propagates to the nearest enabled container. With every flag at its default the rule equals the one above.)
 
 `dispatchClick(x, y)` keeps its signature and calls `dispatchMouseDown(x, y)` then `dispatchMouseUp(x, y)`. Its first-pass behaviour (no event when nothing is hit) changes to the Hit_Target rule above; `clickgoto` is unaffected because the Stage_Object has no listener there (section 15, checked by the Requirement 19.9 condition).
 
@@ -586,7 +601,7 @@ Each addition is needed by a fixture line, read in the original sources on 2026-
 | `DisplayObject.stage` (the Stage_Object while the object is on the stage, else `null`) | the same two lines |
 | Bare `stage`, `mouseX`, `mouseY` and every other bare member name | **No Shim API and no `ADDED_APIS.md` row.** The names `stage`, `mouseX` and `mouseY` reach the Shim members above through the general implicit-this resolution (rule 4, section 18); `Interactivity3.as:39` writes a bare `stage`, `MainTimeline.as:42` a bare `mouseX` and `mouseY` (translated today as bare names: TS error 2552/2304, measured in the second pass). The table of section 18.6 is generated from the Shim, so each member added above is picked up by `npm run gen:shim-members` and a missing regeneration fails the drift test. |
 
-Not added although a line uses it: `MouseEvent.ROLL_OVER`/`ROLL_OUT` (`BaseButton.as:126, 129`), `FocusEvent`, `Timer`, `fl.*` component classes, `toString()` giving `[object MovieClip]` and the Flash auto-names `instanceN` (`click_block` reference output). They lie outside the fixture-line rule or outside this spec's scope. `DisplayObject.mask` is not added (12.7).
+Not added although a line uses it: `MouseEvent.ROLL_OVER`/`ROLL_OUT` (`BaseButton.as:126, 129`), `FocusEvent`, `Timer`, `fl.*` component classes. They lie outside the fixture-line rule or outside this spec's scope. (**Amended after Checkpoint 9:** `toString()` giving `[object MovieClip]` and the Flash auto-names `instanceN` (`click_block` reference output) are now built, section 21.6, Requirement 28; `mouseEnabled`, `mouseChildren`, `buttonMode`, `useHandCursor` and `Event.formatToString` are added with their fixture lines `BaseButton.as:46, 47, 48, 68`, `Slider.as:393`, `ComponentEvent.as:29`, `SliderEvent.as:55`, section 21.7; `defineInterface` and `declareImplements` are added with the `implements` lines `Button.as:9`, `LabelButton.as:16`, `Slider.as:17`, `FocusManager.as:19`, section 21.5.) `DisplayObject.mask` is not added (12.7).
 
 ### 12. Limits, report and Pipeline glue
 'unsupported-feature' | 'gradient-fill' | 'gradient-spread' | 'gradient-focal'
@@ -1074,7 +1089,7 @@ The third-pass version of this section omitted every class with a gate error in 
 
 #### 19.1 What the code does today (read 2026-11-12)
 
-- `Player.createClip` (`player.ts:177-186`) instantiates `MovieClip` for a symbol without `className` and, for a `className` that is not in `classRegistry`, logs `Player: class "X" is not in the registry; using MovieClip` and instantiates `MovieClip`. So Requirement 23.4 needs no Player change. A constructor that throws is not caught (`new Cls()` inside `withConstructionContext`): a registered class that throws stops the Player in the browser. Requirement 23.11 accepts this on purpose (the Replay records the throw; the visual score does not run class code), so it is a consequence, not a defect of this design; it is listed under the remaining risks of 19.6.
+- `Player.createClip` (`player.ts:177-186`) instantiates `MovieClip` for a symbol without `className` and, for a `className` that is not in `classRegistry`, logs `Player: class "X" is not in the registry; using MovieClip` and instantiates `MovieClip`. So Requirement 23.4 needs no Player change. A constructor that throws is not caught (`new Cls()` inside `withConstructionContext`): a registered class that throws stops the Player in the browser. ~~Requirement 23.11 accepts this on purpose~~ (**Amended after Checkpoint 9:** Requirement 23.11 is reversed. The Player now catches the throw as a Caught_Error and keeps the partially constructed instance, section 21.3; the visual score still does not run class code. The text of this bullet describes the code before the amendment.)
 - `runTimelineOnly` builds the Player with `classRegistry: {}`, so the Overall_Match does not depend on the content of `src/classes.ts` at all. The Replay (`replayRunner.ts`) imports `src/classes.ts` of the project: it is the only consumer of the registry.
 - The emitted `package.json` builds with `vite build` (esbuild, no type-check), and `template/tsconfig.json` has `isolatedModules` but no `verbatimModuleSyntax`, so an imported name that is only used as a type is dropped from the output. The file of an omitted class is still written; only `npm run typecheck` of the project sees type errors.
 - `translate()` runs the injected `tsSyntaxCheck` on its own output and falls back to the comment-out path when it finds a syntax error (`translate.ts:86-93`). A translated class therefore reaches Emit with parseable text; a syntax error in an emitted file can come only from Emit's own edits (the specifier rewrite of `resolveImportLines`) or from a future Translate defect. Case (b) is a safety net that the requirement asks for, and it is tested with synthetic input.
@@ -1128,6 +1143,8 @@ Rules, in this order:
 A reason is decided once, by the first rule that matches in the round in which the class enters the set; the result does not depend on the order of the inputs.
 
 **Loose_Class.** `looseClasses` lists every translated, non-handwritten class that is not in `omitted` and has at least one `GateError` in its own file (every code and every category that did not omit it, including TS2305, TS2306 and non-syntactic TS1xxx codes). It produces no `class-omitted` entry. Its diagnostics are the existing `classes[].typeErrors` of the Translation_Report, and the class entry gets the additive boolean `loose: true` (and `omitted: false`).
+
+**Amended after Checkpoint 9 (section 21.4, Requirement 26).** `OmissionClass` gains `bundler` (a Bundler_Check) and `importEdges`; `OmissionReason` gains `bundler-parse` and the existing `missing-export`; rule 2 reads: `emit-failed`, then a failing Bundler_Check (`bundler-parse`, also for a handwritten class), then `syntax-error` only when no check exists, then `unresolved-import` and `missing-export` only for Surviving_Imports; rule 3 propagates `imports-omitted` only along Surviving_Imports. The previous text of this section describes the code before the amendment.
 
 #### 19.3 The `typeCheckGate.ts` change (Requirement 23.2)
 
@@ -1208,7 +1225,7 @@ Also not confirmed: whether `Main` runs. Its constructor reads `maskee1` and `ma
 
 - **TS2305 and TS2306 (and TS2459) on a relative import are not triggers** (the note of Requirement 23.2). The file exists, so TypeScript resolves it, but a named import that the target does not export is, in a browser, an ES module link error, and `vite build` may report it too; esbuild drops the import only when the name is used only as a type. Such a class stays registered and may fail to load at run time. Not measured; the translator imports a class from the file that declares it, so it should not occur, and the Loose_Class diagnostics would show it.
 - **A relative side-effect import** gives TS2882, not 2307, and is not a trigger. The translator never writes one.
-- **A registered Loose_Class that throws in its constructor** stops the Player in the browser (19.1). The visual score is unaffected and the Replay records it. A guard in the Player would change the Shim runtime and is not part of this design.
+- ~~**A registered Loose_Class that throws in its constructor** stops the Player in the browser (19.1).~~ (**Amended after Checkpoint 9:** it no longer does; section 21.3 and Requirement 25 add the guard in the Player and the Shim dispatcher. The visual score is unaffected and the Replay records each throw as a `runtime-error` Problem.)
 - **A handwritten class** is never omitted; if it extends an omitted class it stays registered with a base that cannot load.
 - **Over-omission by imports** (type-only imports), as stated in rule 3.
 
@@ -1285,6 +1302,258 @@ Consequences for the samples: `radial`, `gradients` and `acid-color-2` have **no
 #### 20.5 Tests
 
 `test/property/replayOutcome.property.test.ts` (P41), `test/property/replayPlan.property.test.ts` (P40, extends P16); example tests: `clickgoto` with its input is unchanged at 32 ticks and Trace_Score 100; an absent `input.json` with `num_frames = 1` and a non-empty trace gives `compared`, `inputSource: 'empty'`, one tick; absent `input.json` with neither key and a non-empty trace gives `not-compared: no-reference-input`; **a zero-byte `output.txt` gives `not-compared: empty-reference-trace`; a file of only line breaks (`\n\n`, `\r\n`) is compared as blank lines and a one-line file as one line, each with a Trace_Score**; an empty reference with one captured line gives `empty-reference-trace` and no score; an empty reference with a Replay that threw gives `empty-reference-trace` and one `replay-error`; an empty reference with a `tick_rate` gives `tick-rate`; the Replay throws after two of five reference lines: `compared`, `missing` 3 (lines 3 to 5), Trace_Score 40, one `replay-error`; the Replay throws before any line: `compared`, all lines `missing`, Trace_Score 0; a child failure with a non-empty reference: `not-compared: replay-failed`; `compareTraces([], [])` is still 100 (the function is unchanged and no longer reached for an empty reference); the HTML text of the new reason.
+
+### 21. Robustness group (Requirements 24 to 31, added after Checkpoint 9)
+
+Checkpoint 9 measured that the runtime stops at the first thrown error, that named children are missing in constructors, and that several emitted classes break the bundle or are omitted without need. This section designs the fixes, A to G in the order of the task plan (Tasks 20 to 27). It reads the current code (`template/runtime/player.ts`, `scriptQueue.ts`, `template/shim/events.ts`, `Sprite.ts`, `src/emit/classOmissions.ts`, `src/translate/report.ts`, `planTranslate.ts`, `emitTs.ts`) and Ruffle at the pinned commit; the sources and measurements are in "Measurements and re-checks, fifth pass". Nothing in this section is implemented yet. Every item states its evidence, and every behaviour that rests on something that was not read is marked **not verified** and goes on the list for the checkpoint of Requirement 31.7.
+
+#### 21.1 Construction_Bind (Requirement 24, D24)
+
+What the code does today. `Player.createClip` (`player.ts:259-280`) builds a `ConstructionContext`, runs `withConstructionContext(ctx, () => new Cls())`, then sets the name and the stage root, registers the backend node, and only then calls `mc._renderFrame()`, which creates the frame-1 children and binds the named ones. So `Cls` code sees no child.
+
+Decision D24: the frame-1 build moves into the Shim `MovieClip` constructor. JavaScript runs nothing of a derived class before `super()` returns except the argument list, so a build at the end of the base constructor happens before every derived field initialiser and every derived constructor statement; that is the order of the user's decision (bound before the field initialisers). The base constructor reads the active `ConstructionContext`; the context gains one hook, supplied by the Player:
+
+```ts
+// template/runtime/ (ConstructionContext, internal.ts) - additions
+interface ConstructionContext {
+  /* existing: symbol, symbolId, scripts, hooks, cycle, rootParent */
+  /** The placement had an instance name (Requirement 28.2): the clip then takes no Default_Instance_Name. */
+  named: boolean;
+  /** Set by the MovieClip constructor as soon as the instance exists; read by createClip after a throw (21.3). */
+  instance: MovieClip | null;
+}
+interface ClipHooks {
+  /** Called once by the MovieClip constructor: register the backend node, set root state, then build frame 1. */
+  constructFrameOne(mc: MovieClip): void;
+}
+```
+
+```mermaid
+sequenceDiagram
+  participant P as Player.createClip
+  participant D as Derived class (translated)
+  participant M as MovieClip constructor
+  P->>D: new Cls() inside withConstructionContext(ctx)
+  D->>M: super()
+  M->>M: ctx.instance = this; default name (21.6)
+  M->>P: hooks.constructFrameOne(this)
+  P->>M: register node, root state, _renderFrame() (children created, names bound)
+  M-->>D: returns
+  D->>D: field initialisers (bound methods first, 21.2), then constructor body
+  D-->>P: instance
+  P->>P: initialBuild continues (events and frame-1 scripts after the whole tree exists)
+```
+
+`createClip` no longer calls `_renderFrame()` after `new Cls()`; it keeps `mc.name = instanceName`, `_isStageRoot` and `attachRoot` for the root, moved into `constructFrameOne` for the root case (the root's parent is already set before the constructor through `ctx.rootParent`, Requirement 19.2). The order of events and frame-1 scripts is unchanged: they wait for `initialBuild`, which still runs after the whole tree exists. A frame script that a constructor registers with `addFrameScript` is registered after the Construction_Bind, as in Flash, and runs at its frame.
+
+Alternatives rejected. Defining the child properties from the Player after allocation is impossible, because JavaScript cannot allocate an instance without running the constructor chain. A getter on the prototype that creates the child on demand changes creation order, which Requirement 28 makes observable. Doing nothing about `declare`: the emitted project targets ES2022, where a plain field `maskee1: MovieClip;` is defined as `undefined` after `super()` and would erase the binding; the translator already writes `declare` for an instance field of a class type without an initialiser (`emitTs.ts` `fieldDeclarators`, `fieldDefault` returns null), and a test pins that (Requirement 24.5).
+
+Ruffle. `movie_clip.rs` `construct_frame` allocates the AVM2 object, calls `construct_as_avm2_object` (the class constructor), then `on_construction_complete`; its comment says that the `Sprite` constructor runs `construct_frame` on the children, and that before `super()` `numChildren` is non-zero while `getChildAt(0)` is null. The exact moment at which the named slot is set against the AS3 field initialisers was **not read**; the evidence is the pair of Reference_Traces of Requirement 24. The decision is therefore the user's, supported by the traces.
+
+Tests. Property 45 (generated scene trees and probe classes). Examples in `test/unit/player.test.ts` and `test/unit/constructionBind.test.ts` (create): a probe class whose field initialiser reads `joystick.x` (the shape of `Interactivity3`), one whose constructor assigns `maskee1.mask` (the shape of `Main`), a nested clip, `super` with arguments, a child placed on frame 2 not bound at construction, and the `declare` pin. Measurement: the local Replays of `mask_reapply` and `3_joystick` (their SWFs are not committed; the checkpoint reports them).
+
+#### 21.2 Method values are bound in a first field initialiser (Requirement 22.13 amended, D25)
+
+Problem. The bind statements sit in the constructor after `super`, but a field initialiser runs right after `super` returns, before the constructor body, so `private timer = new Timer(delay, this.onTick)`-style initialisers see the unbound method. Decision D25: the Translate stage emits the binds as the first instance member of the class:
+
+```ts
+export class Interactivity3 extends MovieClip {
+  private readonly __binds_Interactivity3 = (() => {
+    this.dragPressHandler = this.dragPressHandler.bind(this);
+  })();
+  // other fields and the constructor follow, unchanged
+}
+```
+
+The binds run after `super` and before every other field initialiser and the constructor body, in the declaration order of Requirement 22.13. The name is unique per class (`__binds_<ClassName>`), so a subclass does not redeclare a private property of its base (TS2415). The field exists only for classes with at least one method value. The forwarding constructor of the previous version (a class without a constructor got `constructor(...args) { super(...args); binds }` and a TS2556 workaround) is no longer needed and is removed, which also removes a source of TS errors. A base-class field initialiser that reads a method of a subclass still sees it unbound (a virtual call during construction; AS3 has the same ordering issue); not handled. `clickgoto` and `tweendemo` contain no method value (third pass: 0 references), so their translated files are byte-identical. Property 44 is amended (first instance member instead of "after super in the constructor"), Property 46 is new.
+
+#### 21.3 Caught errors (Requirement 25, D26 to D28)
+
+What Flash and Ruffle do, and what we do:
+
+| Site | Flash Player (release) | Ruffle at the pinned commit | Our behaviour |
+|------|------------------------|-----------------------------|---------------|
+| Frame script throws | the script is abandoned, playback continues (user guidance; **not verified** here, no source) | `movie_clip.rs` frame-script runner: `Avm2::uncaught_error(..., "Error running AVM2 frame script")`, executing flag cleared, queued goto still runs | `ScriptQueue.drain` catches per script, reports, goes on with the next entry; the `draining` flag is reset in `finally` as today |
+| Event listener throws | that listener is abandoned, the dispatch continues (user guidance; **not verified**) | `avm2/events.rs`: per handler, `uncaught_error(..., "Error dispatching event \"<type>\"")`, then the next handler; the caller continues with the other targets | the Shim's internal listener loop catches per listener, reports, continues; `dispatchEvent` returns as without the error |
+| Constructor of a timeline-instantiated clip throws | instance partially constructed or absent, the rest continues (user guidance; **not verified**) | `construct_as_avm2_object`: `set_avm2_constructor_failed()` and `uncaught_error(..., "Error running AVM2 construction for movie clip")`; the object stays allocated on the display list; the flag only suppresses the `LoaderInfo` `init` and `complete` events | the partially constructed instance stays (children bound, timeline running, frame scripts registered before the throw kept); no `LoaderInfo` in the Shim, so the flag has no counterpart |
+| `new Cls()` by script throws | propagates to the caller | an ordinary AS error in the calling script | propagates; handled at the enclosing site above |
+| Trace echo | not verified | `uncaught_error` also writes the stringified error to the trace when `player_mode == Debug` (`avm2.rs`) | not echoed; recorded as a Caught_Error. **Not verified:** whether the Reference_Traces were made in debug mode; `click_block` has no error text |
+
+Decision D26: the model is Ruffle's behaviour as read; the Flash column is the user's guidance and is listed for confirmation. Decision D27 (partial instance): `createClip` keeps the instance, using `ctx.instance` that the `MovieClip` constructor set before the Construction_Bind, so that a throw in the derived constructor or in a field initialiser leaves a usable object; a throw before the base constructor completes (an exception in the argument list of `super`) leaves `ctx.instance` null and the symbol is instantiated again as a plain `MovieClip` under a fresh context.
+
+```ts
+// template/runtime/errorReport.ts (core, browser-safe, new)
+export interface CaughtError {
+  /** Error_Site: 'constructor X', 'frame script X frame n', 'listener <type> on <target>'. */
+  site: string;
+  message: string;
+  /** Unqualified AS3 class name when the site has one. */
+  className: string | null;
+}
+export type ErrorSink = (e: CaughtError) => void;
+export function messageOf(thrown: unknown): string;               // Error.message, else String(thrown); no stack, no colour codes
+export function constructorSite(className: string): string;
+export function frameScriptSite(owner: string, frame: number): string;
+export function listenerSite(type: string, target: string): string;
+// template/shim/internal.ts additions
+export function setCaughtErrorSink(sink: ErrorSink | null): void;  // null restores the default (console.error)
+export function reportCaughtError(e: CaughtError): void;           // used by the dispatcher and the script queue
+```
+
+The Shim's dispatcher has no Player reference, so the sink is a module-level setting in `internal.ts`, as `setPointerPosition` and the trace sink already are; the Player installs `options.onCaughtError` (or nothing) in its constructor. The Replay runner installs a sink that appends `{ tick, ...CaughtError }` to a list, with `tick` read from its own tick loop, and does not stop. `ReplayResult` gains `caughtErrors: { tick: number; site: string; message: string }[]` (the runner's result file; absent in an old file means empty). `src/verify/core/replayOutcome.ts` gains the pure `runtimeErrorProblems(caught, cap)`: sorted by `(tick, index)`, one Problem `{ kind: 'runtime-error', tick, detail: '<site>: <message>' }` each, the first 100 only, with a final Problem `runtime-error-overflow` naming the count that was left out. `behaviour.replay.caughtErrors` is `{ count, first: <first 20> }`, the HTML report prints the count and the first 20, and `decideBehaviour` is unchanged: an error that escapes the Player is still the `replay-error` of Requirement 14.22. In the browser, `main.ts` installs no sink, so the default prints `console.error('[SWF Resurrect] <site>: <message>')`; `boot().catch` keeps `Startup failed` for a loader error and nothing else reaches it.
+
+Scope limits (listed, not hidden). An error while a module is evaluated (a static initialiser in a class file) stops the import of `src/classes.ts` and so the startup; neither Requirement 25 nor Requirement 26 covers it, and the Bundler_Guard cannot see it. It goes on the list of Requirement 31.8. An error thrown by `Player.update()` itself (a defect of the runtime) still escapes.
+
+Tests. Property 47 (generated scenes with a chosen throwing subset), Property 48 (Replay records every throw with its tick and keeps ticking). Examples: one test per site; a listener that throws followed by a listener that runs; a throw in a nested dispatch; the plain-`MovieClip` fallback; `clickgoto` with its 32 ticks unchanged; `Startup failed` kept for a missing scene.
+
+#### 21.4 Bundler_Guard and the omission rules (Requirement 26, D29 to D30)
+
+Which parser. `vite` 8.3.8 (pinned, `package.json`) uses Rolldown 1.2.18. The measurement (Measurements, fifth pass) shows that Vite's own TypeScript transform (`transformWithOxc`) plus `parseAst(output, { lang: 'js', showSemanticErrors: true })` reproduces the verdict of a real `vite build` on all nine probe cases, including the octal literal that builds. Neither call alone is enough: the transform alone accepts `yield`, `await`, `package`, `delete x`, `with` and a stray `break`; `parseAst` without `showSemanticErrors` accepts them too. Both functions are exported by `vite`, so the guard adds no dependency (Requirement 26.8). `rolldown` is a dependency of `vite` and is not imported directly.
+
+```ts
+// src/emit/bundlerGuard.ts (Edge: imports 'vite' lazily)
+export type BundlerVerdict =
+  | { ok: true }
+  | { ok: false; phase: 'transform' | 'parse'; message: string; line: number; column: number };   // phase 'parse': position in the transformed text
+export interface SurvivingImport { specifier: string; names: readonly string[] }   // 'default', '*' and named; [] for a side-effect import; sorted
+export interface BundlerCheck { verdict: BundlerVerdict; imports: readonly SurvivingImport[] }
+export function checkClassFile(path: string, text: string): Promise<BundlerCheck>;
+export function checkClassFiles(files: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, BundlerCheck>>;
+```
+
+`checkClassFile` calls `transformWithOxc(text, path, {})`; a thrown error is the verdict `{ phase: 'transform' }` (the duplicate-declaration case). Otherwise it calls `parseAst(code, { lang: 'js', showSemanticErrors: true })`; a throw is `{ phase: 'parse' }`. The message is the first line of the error with terminal colour codes removed; for phase `parse` the line and column are positions in the transformed text (the transform changes lines), which the message states. `imports` come from the `ImportDeclaration` nodes and from `ExportNamedDeclaration` and `ExportAllDeclaration` nodes that have a `source` (a re-export is an import for resolution); dynamic `import()` is ignored. Everything is sorted by `(specifier, name)` and uses no clock or locale call. If `import('vite')` or a call throws something that is not a parse error, the Pipeline records the Problem `bundler-guard-unavailable` and continues without checks (Requirement 26.7).
+
+Core changes in `src/emit/classOmissions.ts` (still Core; the check is an input):
+
+```ts
+export interface OmissionClass {
+  /* existing fields */
+  /** Absent: the previous rules apply unchanged. */
+  bundler?: BundlerCheckData;
+  /** Edges of the class imports with the specifier text of the emitted file; absent: every edge counts. */
+  importEdges?: readonly { target: QualifiedName; specifier: string }[];
+}
+export interface BundlerCheckData { verdict: BundlerVerdict; imports: readonly SurvivingImport[] }
+export interface ImportedName { /* existing: target, name, line */ specifier?: string }
+export type OmissionReason = /* existing */ | { kind: 'bundler-parse'; phase: 'transform' | 'parse'; message: string; line: number; column: number };
+```
+
+Rules (19.2 amended; the numbering of 19.2 is kept and the changes are listed against it):
+
+1. Missing source: unchanged.
+2. Cannot load, in this order. (i) `produced` false: `emit-failed`. (ii) *New:* `bundler` present and its verdict is not ok: `bundler-parse`, for a translated class and for a handwritten one (Requirement 26.10). (iii) `syntax-error` (a syntactic `GateError`) applies **only when `bundler` is absent**; with a check that is ok, a syntactic TypeScript diagnostic alone does not omit (the octal literal). (iv) `unresolved-import`: a `GateError` 2307 or 2792 with a relative emitted specifier S, and, when `bundler` is present, S is the specifier of a Surviving_Import. (v) `missing-export`: as today (a name imported from an emitted target whose planned file does not export it), and, when `bundler` is present, only for an `ImportedName` that survives (its `specifier` is a Surviving_Import whose `names` hold the name or `*`).
+3. Propagation: `extends-omitted` unchanged; `imports-omitted` follows an edge only if it survives: with `importEdges` and `bundler` present, the edge's `specifier` must be a Surviving_Import; otherwise as before. The rule that an unlinked omitted base is in the result is unchanged.
+4. Loose_Class: unchanged; a class with a syntactic TypeScript diagnostic and an ok check is a Loose_Class.
+
+A handwritten class is exempt from (iii), (iv) and (v) and not from (ii) (Requirement 26.10, flagged for the user). `omissionMessage` gets the two new reasons. The Translation_Report entry and the `class-omitted` Unsupported entry carry `reason: 'bundler-parse'` with the message, line and column.
+
+Pipeline flow (19.4 amended). After the translated files are planned in memory, the Pipeline calls `checkClassFiles` on the planned text of every class file in the same step that runs the in-memory gate, passes both results to `decideClassOmissions`, plans again with the omitted set, and writes once. Because Emit rewrites import lines before the files are final, the guard runs on the **planned final text** (the text that will be written), not on the translator output. The guard result is not reused after the second plan: omitting a class changes only `src/classes.ts`, which is not a class file; `src/classes.ts` is checked by the whole-bundle test below.
+
+Whole-bundle test (integration, Requirement 26.12). `test/e2e/bundleAll.e2e.test.ts` writes a small Emitted_Project to a temporary directory with one class per confirmed kill case plus two clean classes, runs the Pipeline's Emit with the guard, and then runs `vite.build({ build: { write: false, lib: { entry: 'src/classes.ts' } , rollupOptions: { external: ['pixi.js'] } } })` on it; the build must succeed, the kill classes must be omitted with `bundler-parse` and the clean ones registered. The same test runs on the emitted `slider_component` copy when `.work/local/slider_component/` exists (skipped with a reason otherwise).
+
+Property 49 is the Core property. The Edge guard is covered by the example table of the nine measured cases against the real pinned Vite.
+
+#### 21.5 AS3 interfaces (Requirement 27, D31 to D33)
+
+The marker design. A translated interface file exports a TypeScript interface and a runtime token with the same name (TypeScript allows a type and a value with one name in one module; an import of the name brings both):
+
+```ts
+// fl/managers/IFocusManagerComponent.ts (translated)
+import { defineInterface, type AS3InterfaceToken } from '../../shim';
+export interface IFocusManagerComponent {
+  focusEnabled: boolean;
+  readonly mouseFocusEnabled: boolean;
+  readonly tabEnabled: boolean;
+  readonly tabIndex: number;
+  setFocus(): void;
+  drawFocus(param1: boolean): void;
+}
+export const IFocusManagerComponent: AS3InterfaceToken<IFocusManagerComponent> =
+  defineInterface<IFocusManagerComponent>('fl.managers.IFocusManagerComponent', []);
+// fl/controls/Slider.ts (translated), after the class
+export class Slider extends UIComponent implements IFocusManagerComponent { /* ... */ }
+declareImplements(Slider, IFocusManagerComponent);
+```
+
+```ts
+// template/shim/interfaces.ts (new; exported from index.ts)
+export interface AS3InterfaceToken<T = unknown> {
+  readonly name: string;                         // Qualified_Name, for messages; never a minified name
+  readonly parents: readonly AS3InterfaceToken[];
+  /** `value instanceof I` calls this; the predicate lets TypeScript narrow to T. */
+  [Symbol.hasInstance](value: unknown): value is T;
+}
+export function defineInterface<T>(name: string, parents?: readonly AS3InterfaceToken[]): AS3InterfaceToken<T>;
+export function declareImplements(cls: Function, ...interfaces: readonly AS3InterfaceToken[]): void;
+```
+
+`declareImplements` stores the interfaces in a module-level `WeakMap<Function, AS3InterfaceToken[]>`. `[Symbol.hasInstance](value)` is false for `null`, `undefined` and primitives; otherwise it walks `Object.getPrototypeOf` upwards, takes `proto.constructor` at each step, and is true if the registry holds, for that constructor, a token that is the interface or has it among its ancestors through `parents` (a visited set guards cycles). Identity is by token reference, so one module instance is assumed (the bundle has one). No name is read from `constructor.name`, so minification does not matter.
+
+Why `instanceof` and no helper call. The ECMAScript `instanceof` operator calls the `@@hasInstance` method of its right operand when it exists, and the right operand needs to be an object, not a function; TypeScript accepts an object type with a `Symbol.hasInstance` method as the right operand. The translator already writes `x is I` as `x instanceof I` (`rewrite.ts` `typeOperator`), so **`is` against an interface needs no rewrite at all**: the fixture lines `UIComponent.as:102`, `FocusManager.as:69, 109, 224` work as they are, and no lhs-extent analysis is needed. `isOfInterface` is therefore not added (no fixture line needs a function).
+
+`as` (decision D33, flagged). The translator writes `x as T` as a TypeScript cast for classes (no runtime check) and does the same for an interface. A runtime-checked `as` for interfaces would need a helper (`asInterface`) and the extent of the left operand; no fixture line in the approved sources uses `as` with an interface (searched in `slider_component`: all `as` uses name classes), and the fixture-line rule (Requirement 14.17) forbids a Shim function without one. So `as I` keeps the cast behaviour and Requirement 27 lists it as a known limit shared with classes; the first fixture line that needs a checked `as` adds `asInterface` (about ten lines, using the same registry). The user may want it earlier; this is the one point of D33 to confirm.
+
+Translate changes. `planTranslate.ts` already detects an interface (`as3InterfaceName`) and writes comments. The new path emits the declaration from the scanner's member list of the interface: `function get x() : T` and `function set x(p:T) : void` collapse to one property (`readonly` when there is no setter); a method becomes a method signature with `?` on a parameter that has a default value; `extends` (AS3 `interface I extends A, B`) maps to `extends A, B` and the token's `parents`. Types are translated by the existing type rules, so a type the Shim lacks (`InteractiveObject`) remains an unresolved name and a TS2304 in the interface file, which makes the file a Loose_Class; that costs nothing, because the file now exports the token and loads. A class with an `implements` list gets the TypeScript clause (kept if it is today) and `declareImplements(Cls, ...)` after the class; both names are imported from the Shim by the same `shimSpecifier` mechanism that other generated Shim imports use. The `as3-interface` Named_Limit narrows to an interface that cannot be translated (a member the scanner marks unsupported): that file keeps the comment-only form, and the limit message says that a class that uses it as a value is left out (the `missing-export` rule, with the survival condition, decides which). `clickgoto` and `tweendemo` contain no interface, so their bytes do not change.
+
+Order dependency on Task 23 (Bundler_Guard): until the survival rule exists, a type-only import of a comment-only interface would still omit its importer; after Task 23 only a value use does, which is why Task 24 comes after Task 23. Expected result on `slider_component`: no `missing-export` omission from the three interfaces, so the eight `fl.*` classes that cascaded from them are registered (as Loose_Classes where they have type errors), `Slider` and `MainTimeline` are registered, and the Trace_Score is measured at the checkpoint, not predicted.
+
+Tests. Property 50; examples for the three real interface files through the real gate (the interface files themselves may keep TS2304 for `InteractiveObject`; the test asserts no error that is not a missing Shim type), `x is I` through `instanceof` with a class that `declareImplements` for a parent interface, a class inheriting the declaration from its base class, an interface that cannot be translated and keeps the limit, and a minified-name case.
+
+#### 21.6 Instance printing and default names (Requirement 28, D34 to D35)
+
+`toString`. `DisplayObject` (and `Stage`) gets `toString(): string` returning `[object ${className}]`. The class name comes from a registration, not from `constructor.name`: `internal.ts` holds `WeakMap<Function, string>` with `registerClassName(cls, name)` and `classNameOf(object)` (walks the prototype chain to the first registered constructor, unqualified: the text after the last `.`). The Shim registers `MovieClip`, `Sprite`, `Shape`, `DisplayObjectContainer` and `Stage` under their own names; the Player registers every `classRegistry` entry under its key at construction. A class that is not in the registry (a helper) falls back to the nearest registered ancestor, so `[object MovieClip]` for an unregistered subclass. `trace(e.target)` and string concatenation then print as in Flash. A class that defines its own `toString` wins (JavaScript semantics).
+
+Default instance names. The Instance_Counter is `internal.ts` state with `resetInstanceCounter()` (called by the Player constructor, one movie per Player) and `takeInstanceNumber()`. A clip takes its number at the **start** of the `MovieClip` constructor (before the Construction_Bind creates its children), when `ctx.named` is false, and sets `name` to `instance<N>`; the Player then overwrites the name for the root (`root1`) after the number is consumed, and a named placement gets its PlaceObject name as today and takes no number. A shape (`ShapeObject`) takes its number in `createChild` when its placement has no name. Because the Construction_Bind builds children inside the clip's constructor, the order is the depth-first order of Requirement 28.2 with no extra bookkeeping. A script-created display object takes its number in the `DisplayObject` constructor when no construction context is active (Requirement 28.3, not verified). The rule was derived from `click_block` and the Ruffle source (Measurements, fifth pass): root 0, the unnamed shape inside the named `click_mc` 1, the unnamed sprite 2.
+
+Known limit (Requirement 28.4). Convert drops text, button, sound and video placements; Flash creates them (`EditText.post_instantiation` consumes a number) so later default names can differ. Not fixable without keeping a placeholder per dropped placement; out of scope. The checkpoint reports whether any approved sample prints such a name.
+
+Tests. Property 51 over generated scenes through a `FakeBackend` Player; Property 52 for the string form; the `click_block` example (five target strings of the Reference_Trace).
+
+#### 21.7 Mouse flags, the Hit_Target rule and `formatToString` (Requirement 29, D36)
+
+Shim. `DisplayObjectContainer` gets `mouseEnabled = true` and `mouseChildren = true`; `Sprite` gets `buttonMode = false` and `useHandCursor = true` (stored only). `Event.formatToString(className: string, ...properties: string[]): string` builds `[ClassName a=1 b="x"]` from the event's own properties, string values quoted. The task reads `core/src/avm2/globals/flash/events/event.rs` at the pinned commit before it writes the test and follows Ruffle if the format differs from the AS3 documentation (not read in this pass). `Shape` has none of these, as in AS3. Each addition is logged in `template/shim/ADDED_APIS.md` with its fixture line, and `npm run gen:shim-members` is run; the Task text says so.
+
+Hit_Target rule. `template/runtime/hitTest.ts` keeps `hitTest` and gains `hitTestAll(root, x, y): T[]` (all shapes under the point, topmost first), and a Core function `resolveHitTarget(hits, stage)` over a minimal node view `{ parent, isContainer, mouseEnabled, mouseChildren }`:
+
+```ts
+// per hit h, topmost first:
+//   C = nearest ancestor-or-self of h that isContainer           (undefined: no candidate)
+//   T = outermost ancestor-or-self of C with mouseChildren false (C when none)
+//   if T.mouseEnabled: direct(T)
+//   else: propagate(P) with P = nearest container ancestor of T with mouseEnabled (the stage when none)
+// result: first direct(T) in z-order; else the first propagate(P); else the stage
+```
+
+Ruffle's `mouse_pick_avm2` (read at the pinned commit): a disabled hit gives `PropagateToParent`, kept as lower priority than any `Hit` of a sibling; a `Hit` returns at once combined with its parent through `combine_with_parent` (not read; this is where `mouseChildren` acts). The rule above is the reading of that code; the exact propagation target and the interplay of nested `mouseChildren` are **not verified** and go on the checkpoint list. With every flag at its default the rule returns the nearest container ancestor-or-self of the topmost hit, which is the rule of Requirement 19.4 and 14.4 (Property 53 states the equivalence), so `clickgoto` is unchanged. `Player.pointerEntry` replaces `interactiveTarget(hitTest(...))` by `resolveHitTarget(hitTestAll(...), this.stage)`; the Known limit paragraph of section 10 is removed.
+
+#### 21.8 Three translator fixes (Requirement 30, D37)
+
+- **Dotted type annotations.** `parseType` (`rewrite.ts`) has no access to the import plan, so `var g:lib.util.Helper` stays dotted and the gate reports TS2503. The type rewriter receives the same `resolveClassName` function that the expression rewriter already uses (`resolveClassName`, section 18.2); a dotted type whose Qualified_Name has a source becomes its binding and adds a forced import through the `forced` mechanism of section 18.5; without a source it stays as written. 
+- **`selfKey`.** `selfKey` (`rewrite.ts` ~340) returns `(${pkg}.${className}` for a secondary class in a packaged file; the stray `(` is a template typo. It returns `${pkg}.${className}`, or `className` for the unnamed package.
+- **Forced import after a rollback.** `emitTs.ts` rolls a statement back to `// AS3:` comments by truncating `lines` and `spans` (`mark`), but a forced import that the dry pass (sub-task 8.5) collected from that statement stays in the import plan. The forced list gets the same mark: the rewriter records forced imports in an array, `mark` stores its length, and the rollback truncates it.
+
+Each is its own commit (Task 20). Properties 54 to 56.
+
+#### 21.9 New and changed modules (Requirements 24 to 30)
+
+```
+template/runtime/player.ts             CHANGED  Construction_Bind hook, Caught_Error handling in createClip, sink option, class-name registration, instance counter reset, resolveHitTarget
+template/runtime/scriptQueue.ts        CHANGED  per-script catch and report
+template/runtime/errorReport.ts        NEW core CaughtError, ErrorSink, site helpers, messageOf (browser-safe)
+template/runtime/hitTest.ts            CHANGED  hitTestAll, resolveHitTarget (core)
+template/shim/MovieClip.ts, Sprite.ts, DisplayObject.ts, events.ts, internal.ts, Stage.ts   CHANGED  constructor builds frame 1, mouse flags, toString, formatToString, listener catch, sink, instance counter
+template/shim/interfaces.ts            NEW      AS3InterfaceToken, defineInterface, declareImplements
+template/src/main.ts                   CHANGED  no sink installed; Startup failed only for load errors
+src/emit/bundlerGuard.ts               NEW edge checkClassFile(s) (imports 'vite' lazily)
+src/emit/classOmissions.ts             CHANGED  Bundler_Check input, reasons bundler-parse, survival rules (Core)
+src/emit/exportedNames.ts              CHANGED  export check restricted to surviving names (Core)
+src/translate/emitTs.ts, rewrite.ts, planTranslate.ts, report.ts   CHANGED  interface declarations, declareImplements, binds as a first field, dotted types, selfKey, forced-import mark
+src/verify/core/replayOutcome.ts       CHANGED  runtimeErrorProblems
+src/verify/edge/replayRunner.ts, replay.ts, verifyStage.ts, src/verify/core/report.ts, html.ts   CHANGED  caughtErrors in ReplayResult and the Fidelity_Report
+src/pipeline/pipeline.ts               CHANGED  guard step, bundler-guard-unavailable Problem
+```
+
+Core files among these (`errorReport.ts`, `hitTest.ts`, `classOmissions.ts`, `exportedNames.ts`, `replayOutcome.ts`) are added to the purity test in the sub-task that changes them. `bundlerGuard.ts` is Edge and may import `vite`; it holds no decision.
 
 ## Data Models
 
@@ -1432,7 +1701,7 @@ The third pass listed O1 to O9 as places where the requirements were silent. The
 - **F19. Requirement 6.6, "zero `otherErrors`", against `Main extends Sprite`.** An emulated gate run on `mask_reapply` (section 19.6) shows `Main` registered and loose, as 6.6 and 23 require, and one error outside the class file: `src/main.ts:60` TS2322, because `classRegistry` is typed `Record<string, new () => MovieClip>` in the Boot_File and `Main` extends `Sprite`. The Pipeline's own `typeCheck: ran` run cannot be shown before Requirement 6 is implemented (the `Main`/`main` collision overwrites the Boot_File on this file system). The requirement asks for zero `otherErrors`; the design leaves the Boot_File type alone and needs the user to choose: widen the type of the registry in `template/src/main.ts` (a template change, which also needs `timelineOnly.ts` and the Player's `classRegistry` type to agree) or accept one `otherErrors` entry for `mask_reapply`. The same trace line of 6.6 ("the trace `Masks reapplied` stays reachable") probably does not hold at run time (the constructor reads `maskee1` before the Player binds it), so the Trace_Score of `mask_reapply` is probably 0 with a `replay-error`; not measured.
 - **F20. Requirement 14.23 stop rule and an Empty_Reference_Trace.** 14.23 says the implementer stops when a sample has a Reference_Trace, no input and no tick key; 14.24 says an empty trace is not compared. The design runs no Replay in that case and returns `empty-reference-trace` without stopping (section 20.4), reading the stop rule as needed only when a count is needed. None of the three affected samples is in that case.
 - **F21. Word collision: `loose`.** The Translation_Report already uses `status: 'loose'` for a class that has a `loose-type` Diagnostic. The glossary's Loose_Class is a different thing (registered, with type errors). The design adds the boolean `classes[].loose` for the Loose_Class and leaves `status` alone; renaming the old value would change `translation-report.json` for every sample.
-- **Caution. A registered Loose_Class that throws stops the Player in the browser** (`createClip` does not catch). Requirement 23.11 chooses this on purpose; the Replay records the throw and the visual score does not run class code. See the risk list of section 19.6, which also holds TS2305, TS2306 and TS2459 on relative imports as non-triggers.
+- ~~**Caution. A registered Loose_Class that throws stops the Player in the browser** (`createClip` does not catch). Requirement 23.11 chooses this on purpose.~~ (**Amended after Checkpoint 9:** reversed by Requirement 25, section 21.3.) The Replay records each caught throw and the visual score does not run class code. See the risk list of section 19.6, which also holds TS2305, TS2306 and TS2459 on relative imports as non-triggers (the missing-export check of section 21.4 now covers a name that the target does not export).
 - **Caution. `syntax-error` is a safety net.** `translate()` already falls back when its own output has a syntax error (section 19.1), so the case arises only from Emit's own import rewrite.
 ## Correctness Properties
 
@@ -1700,9 +1969,84 @@ Properties apply to the Core: the Shape_Function, the Shape_JSON codec, contour 
 
 ### Property 44: Method values are bound once, after super, in declaration order
 
+*(Amended after Checkpoint 9: the statements are the body of the first instance field `__binds_<ClassName>` and not constructor statements, and no forwarding constructor is emitted; read "in the constructor after `super`" below as "in that field, which runs right after `super` and before every other initialiser". Property 46 states the amended form.)*
+
 *For any* generated class (with and without a constructor, with and without a base, with own and inherited instance methods, static methods, fields, accessors and Shim members) in which method names are used as values (passed, assigned or returned, as a bare name or as `this.name`), called, or followed by `.`: the constructor of that class holds exactly one `this.m = this.m.bind(this);` for each instance method `m` of the class or of a translated superclass that is used as a value, in declaration order (own methods in declaration order, then methods of translated superclasses, nearest base first and in declaration order within each base), after the `super(...)` call and before every other statement of the constructor; it holds none for a method that is only called, for a static method, for a field, constant or accessor, or for a member of a Shim class; a class without a constructor and with at least one such method gets a constructor that passes its arguments to `super` and then binds (and a class with no such method gets none); and the translated output is the same for the same input.
 
 **Validates: Requirements 22.8, 22.13**
+
+### Property 45: Named children are bound before any derived code runs
+
+*For any* generated scene tree (clips nested to depth 3, each with 0 to 4 children of frame 1 named or unnamed, some children placed only on later frames) and *any* probe class registered for any clip (a field initialiser and a constructor body that each read every name the PlaceObjects of frame 1 give, with and without arguments passed to `super`): every such read returns the child object that the display list holds under that name; a name that only a later frame places reads `undefined` until that frame is rendered; the child's `parent` is the clip; and the bound child is the same object as `getChildByName(name)`.
+
+**Validates: Requirements 24.1, 24.2, 24.3, 24.5**
+
+### Property 46: A field initialiser sees the bound methods
+
+*For any* generated class (with and without a base, with own and inherited translated instance methods, with static methods, fields and Shim members) in which method names are used as values: the translated output holds exactly one `__binds_<ClassName>` field, as the first instance member, that contains one `this.m = this.m.bind(this);` per such method in the declaration order of Requirement 22.13, and none for a method that is only called, a static method or a Shim member; the output holds no forwarding constructor that the class did not declare; and, when the output is transpiled and run, a field initialiser that reads `this.m` observes a function whose `this` is the instance, also for a class without a constructor. The output is the same for the same input.
+
+**Validates: Requirements 22.13, 24.6**
+
+### Property 47: A throw never stops the movie and never changes the other elements
+
+*For any* generated scene whose clips have registered classes with constructors, frame scripts and listeners, and *any* subset `S` of these elements that throw as their first action: running the scene for `n` ticks with pointer events completes without an error leaving the Player; exactly one Caught_Error is reported per throw, with the Error_Site of its kind; the display list holds every instance (a clip whose constructor threw is present and keeps its timeline content); and every element not in `S` has the same observable effects (trace lines, property changes) as in the run where the elements of `S` are replaced by empty ones. A throw before the base constructor completed yields a plain `MovieClip` in that place.
+
+**Validates: Requirements 25.1, 25.2, 25.3, 25.4, 25.11**
+
+### Property 48: The Replay records every caught error with its tick and keeps ticking
+
+*For any* planned tick count `n` and *any* list of throws at ticks `t1 ≤ ... ≤ tk` (each in `0..n-1`) injected through registered classes: the Replay runs exactly `n` ticks; `caughtErrors` holds `k` entries with those ticks in order; `runtimeErrorProblems` returns one Problem of kind `runtime-error` per entry, sorted by `(tick, index)`, capped at 100 with one overflow Problem naming the number left out when `k > 100`; the trace lines captured after the first throw are still compared; and the behaviour is the same for the same inputs.
+
+**Validates: Requirements 25.7, 25.8**
+
+### Property 49: The omitted set depends on load failures and Surviving_Imports only
+
+*For any* generated graph of classes (`extends`, imports with specifiers and imported names), any set of gate errors (syntactic and semantic, 2307 and 2792 with relative, package, `shim` and `runtime` specifiers) and any Bundler_Checks (verdicts ok or not ok, Surviving_Imports a subset of the imports): the omitted set equals the least fixed point of the rules of 21.4 (missing source, `emit-failed`, a failing check, an unresolved or missing-export import that survives, `extends-omitted`, `imports-omitted` along surviving edges); it does not depend on the order of the inputs; removing an import from the Surviving_Imports never adds a class to the set; a class whose check is ok and whose surviving imports resolve and export is never omitted for type errors or syntactic TypeScript diagnostics alone; a handwritten class is omitted only for a failing check or by propagation; every omitted class has exactly one entry; and the registry holds no class that extends an omitted class or has a surviving import of one.
+
+**Validates: Requirements 26.2, 26.4, 26.5, 26.6, 26.12, 23.3**
+
+### Property 50: `instanceof` against an interface follows the declared closure
+
+*For any* generated interface graph (names, `extends` among interfaces, acyclic), class chains of depth 0 to 3 and `declareImplements` calls on any class of a chain: `value instanceof I` is true exactly when some class on the prototype chain of `value` was registered with an interface `J` such that `I` is `J` or an ancestor of `J` through `parents`; it is false for `null`, `undefined`, primitives and an object whose chain has no registration; it does not read `constructor.name` (the result is the same when every constructor's `name` is replaced); and *for any* generated AS3 interface source the translated file exports a TypeScript interface and a token of the same name, passes the real type-check gate with no error other than an unresolved Shim type, and is the same for the same input.
+
+**Validates: Requirements 27.1, 27.2, 27.3, 27.4, 27.5**
+
+### Property 51: Default instance names follow depth-first creation order
+
+*For any* generated scene (clips and shapes nested to depth 3, each placement named or unnamed): the numbers taken by unnamed objects, read as the sequence of `instance<N>` names in depth-first creation order (a clip before its frame-1 children, children before the next sibling), are 1, 2, 3, ... when the root is counted as 0 and named `root1`; a named placement takes none; the names of the unnamed objects are pairwise distinct; and two runs give the same names.
+
+**Validates: Requirements 28.2**
+
+### Property 52: Display objects print as `[object ClassName]`
+
+*For any* generated qualified registry key `a.b.C` and its class, the string of an instance is `[object C]`; the string of an unregistered subclass is that of its nearest registered ancestor; the strings of the Shim classes are `[object MovieClip]`, `[object Sprite]`, `[object Shape]` and `[object Stage]`; the result is the same when the constructor's own `name` is replaced; and a class that defines `toString` prints its own text.
+
+**Validates: Requirements 28.1**
+
+### Property 53: The Hit_Target honours the mouse flags and equals the old rule by default
+
+*For any* generated display tree (containers and shapes, each container with `mouseEnabled` and `mouseChildren` drawn from `{true, false}`) and *any* point: `resolveHitTarget(hitTestAll(root, x, y), stage)` equals the brute-force reference model of the rule of 21.7 (first direct hit in z-order; else the topmost propagation target; else the stage); and *for any* tree and point with every flag true it equals the nearest container ancestor-or-self of the topmost hit, or the stage when nothing is hit (the previous rule). Setting `mouseChildren = false` on a container makes every hit below it resolve to that container or to its propagation target, and `mouseEnabled = false` never makes a disabled object the target.
+
+**Validates: Requirements 29.2, 29.3**
+
+### Property 54: A dotted type annotation resolves through the import plan
+
+*For any* generated package tree and any dotted type annotation `a.b.C` in a variable, parameter, return or field position that names a class with a source: the output uses the binding of the import plan (the simple name or its alias), the file imports the class exactly once, and the output is the same for every ordering of the files; an annotation that names a class without a source is unchanged.
+
+**Validates: Requirements 30.1, 30.5**
+
+### Property 55: `selfKey` is the qualified name
+
+*For any* generated package name (including the unnamed package) and class name, `selfKey` returns `<package>.<ClassName>`, or `<ClassName>` for the unnamed package, and never a string that starts with `(` or contains an unbalanced parenthesis.
+
+**Validates: Requirements 30.2, 30.5**
+
+### Property 56: A rolled-back statement leaves no forced import
+
+*For any* generated class in which some statements are unsupported and some reference an inherited static that needs a forced import: the set of forced imports in the emitted file equals the set that the retained statements need; no forced import remains whose only user was rolled back to `// AS3:` comments; and the output is the same for the same input.
+
+**Validates: Requirements 30.3, 30.5**
+
 ## Error Handling
 
 Principle as in the verify spec: a failure is data, and nothing that is not drawn is dropped without a Named_Limit.
@@ -1756,6 +2100,20 @@ Principle as in the verify spec: a failure is data, and nothing that is not draw
 | Gate error in `src/classes.ts`, `src/main.ts`, `runtime/` or `shim/` | no class omitted | `otherErrors` of the Translation_Report, with the `syntactic` and `specifier` fields (23.2) |
 | A gradient or bitmap fill that the committed drawing code does not draw | left out of the Shape_JSON, one limit per fill | `gradient-fill` / `bitmap-fill` Unsupported entry and Known_Visual_Limit (2.8) |
 | Shape_JSON that holds a fill kind whose `DRAWN_FILLS` flag is false | `loadShape` throws `ShapeJsonError`, no playback | on-page error (section 2) |
+| A frame script throws | that script is abandoned; the queue, the frame step and later ticks continue | Caught_Error `frame script <owner> frame <n>`; Replay: Problem `runtime-error` with the tick (25.1, 25.7, section 21.3) |
+| An event listener throws | that listener is abandoned; the other listeners and targets of the dispatch run | Caught_Error `listener <type> on <target>`; Problem `runtime-error` (25.2) |
+| The constructor of a timeline-instantiated class throws | the partially constructed instance stays; with no instance, a plain `MovieClip` is made | Caught_Error `constructor <Class>`; Problem `runtime-error` (25.3) |
+| More than 100 caught errors in one Replay | the first 100 are Problems, the rest are counted | Problem `runtime-error-overflow` with the count; `behaviour.replay.caughtErrors.count` holds all (25.7) |
+| An error escapes the Player (a runtime defect) | the Replay stops as before | `replay-error` (14.22) |
+| A scene or asset cannot load | startup stops | `Startup failed` on the page (25.6) |
+| A class file the Bundler_Guard cannot parse (`yield`, `package`, `await` as identifiers, a duplicate declaration, `delete x`, `with`, a stray `break`) | left out of `src/classes.ts`, file still written; dependants omitted along Surviving_Imports | `class-omitted` with reason `bundler-parse`, message, line, column (26.2, 26.3) |
+| A missing or unresolved import that the bundler removes (unused or type-only) | nothing is omitted | none (26.4) |
+| A syntactic TypeScript diagnostic only (an octal literal) and an ok Bundler_Check | the class stays registered | Loose_Class with the diagnostic (26.5) |
+| The Bundler_Guard cannot run | the rules of Requirement 23 apply without checks | Problem `bundler-guard-unavailable` in the Translation_Report (26.7) |
+| A handwritten override the bundler cannot parse | omitted, file kept | `class-omitted` `bundler-parse` (26.10, to confirm) |
+| An AS3 interface whose member the translator cannot express | comment-only file as before | `as3-interface` Named_Limit; a value use in an importer then gives `missing-export` (27.6) |
+| `x as I` for an interface | TypeScript cast, no runtime check (as for a class) | none; known limit D33 |
+| A dotted type annotation without a source | left as written | the existing unresolved-name diagnostic (30.1) |
 
 ## Testing Strategy
 
@@ -1806,6 +2164,16 @@ Dual approach as in the verify spec, with one difference demanded by Requirement
 | `compareTraces` with the three `Error #2012` lines | `test/unit/traceCompare.test.ts` (extended): the three literal lines against an empty capture give three `missing` entries in order and a Trace_Score of 0 | example |
 | `--reference-dir` | `test/unit/cli.test.ts` (extended) | example |
 | Residual floor | `test/e2e/residual.e2e.test.ts`: for each admitted sample with an Overall_Match below 100, `visual.residual.unattributed === 0` | integration |
+| Construction_Bind: the `MovieClip` constructor hook, `ConstructionContext` fields, `createClip` | `test/property/constructionBind.property.test.ts` (P45), `test/unit/constructionBind.test.ts` (create: the `joystick.x` initialiser, the `maskee1.mask` constructor, a nested clip, `super` with arguments, a frame-2 child not bound, the `declare` pin), `test/unit/player.test.ts` (extended) | P45, examples |
+| Method-value binds as a first field | `test/property/implicitThis.property.test.ts` (P44 amended, P46), `test/unit/implicitThis.test.ts` (extended: the field form, no forwarding constructor, a field initialiser that reads a bound method run through `typescript-js` transpile), `test/unit/clickgotoEmit.test.ts` (bytes unchanged) | P44, P46, examples |
+| Caught errors: `errorReport.ts`, `ScriptQueue`, the Shim dispatcher, `createClip` | `test/property/caughtErrors.property.test.ts` (P47), `test/unit/errorReport.test.ts`, `test/unit/scriptQueue.test.ts` (extended), `test/unit/shimEvents.test.ts` (extended), `test/unit/player.test.ts` (extended: three sites, plain `MovieClip` fallback, `Startup failed` kept for a load error) | P47, examples |
+| `runtimeErrorProblems`, the Replay runner sink, `caughtErrors` in the report | `test/property/replayOutcome.property.test.ts` (P48), `test/unit/verifyStageBehaviour.test.ts` (extended: caught errors with `clickgoto`-shaped stubs, overflow Problem), `test/unit/htmlKnownGaps.test.ts` (the HTML text of the count), `test/unit/clickgotoReplay.test.ts` (32 ticks, Trace_Score 100) | P48, examples |
+| `decideClassOmissions` with Bundler_Checks, `exportedNames` restricted to surviving names | `test/property/classOmissions.property.test.ts` (P38, P39, P49), `test/unit/classOmissions.test.ts` (extended: `bundler-parse`, a type-only and an unused missing import that omit nothing, an octal literal with an ok check, a handwritten class with a failing check) | P38, P39, P49, examples |
+| `bundlerGuard.ts` | `test/unit/bundlerGuard.test.ts` (create: the nine measured cases against the real pinned Vite, colour codes removed, imports sorted, re-exports counted, the unavailable fallback), `test/e2e/bundleAll.e2e.test.ts` (create: the kill classes omitted and the real `vite build` of `src/classes.ts` succeeds) | examples, integration |
+| `defineInterface`, `declareImplements`, interface translation | `test/property/interfaces.property.test.ts` (P50), `test/unit/interfaces.test.ts` (create: the three `slider_component` interfaces through the real gate, a class inheriting the declaration, an untranslatable interface, minified names), `test/unit/shimMembersDrift.test.ts` | P50, examples |
+| Instance names and `toString` | `test/property/instanceNames.property.test.ts` (P51, P52), `test/unit/instanceNames.test.ts` (create: the `click_block` shape of root, named clip with a shape, unnamed sprite gives `instance2`; the five target strings) | P51, P52, examples |
+| `resolveHitTarget`, `hitTestAll`, the mouse flags | `test/property/hitTarget.property.test.ts` (P53), `test/unit/hitTest.test.ts` (extended), `test/unit/shimDisplay.test.ts` (defaults, `formatToString`), `test/unit/player.test.ts` (`dispatchClick` on `clickgoto` unchanged) | P53, examples |
+| Dotted types, `selfKey`, forced-import mark | `test/property/translateFixes.property.test.ts` (P54, P55, P56), `test/unit/translatePackages.test.ts` and `test/unit/implicitThis.test.ts` (one example per bug) | P54, P55, P56, examples |
 
 ### Score floors (Requirements 1, 3, 14, 15, 16)
 
@@ -1821,13 +2189,14 @@ Dual approach as in the verify spec, with one difference demanded by Requirement
 - Every commit that changes `src/translate/` uses the commit area `Translate` (Requirement 15.10, 22.12); the task of Requirement 22 comes after the tasks of Requirement 18 that give classes their Qualified_Names (22.12), the task of Requirement 23 before the first task that lets a package-qualified class with a translated source reach `src/classes.ts` (23.8, 18.8), and all of them before any task that commits a Breadth_Sample (18.12), followed by the checkpoint of Requirement 16.2.
 - Determinism: two pipeline runs on `radial` and `static_text` give byte-identical `*.shape.json`, `images/*` and `scene.json`.
 - Existing tests that change with v2 or with the pointer API are updated in the task that causes the change (never in a later task): the `sceneJson`, `loader`, `writeConverted`, `convertModel`, `emit`, `pixiShapeOrigin`, `clickOracle`, `player`, `stepping` and `matrixAlphaPath` tests, `genScene`, `genTagsModel`, `emitFixtureProject`, and the clickgoto fixture `expected-scene.json`.
+- The robustness group (Tasks 20 to 27) adds no floor and changes none. Its conditions are tested by the existing floor files: `test/unit/clickgotoReplay.test.ts` (Trace_Score 100, 32 ticks), `test/e2e/overallMatch.e2e.test.ts` (`clickgoto` and `tweendemo` 100), `test/unit/clickgotoEmit.test.ts` (translated bytes) and the `src/classes.ts` byte test of Requirement 23.9. Trace_Score floors for the samples it moves are set at their admission (Tasks 15 to 17), from the values that Task 27 reports.
 - `npm run typecheck`, `npm run typecheck:template` and `npm test -- --run` pass before each commit; end-to-end tests that need Java, Chromium or `tools/ffdec` skip with a reason when missing, as today.
 
 PBT applies because the Core is pure functions with universal invariants. It does not apply to rendering (scored against the Reference_Frame), FFDec, the browser, the licence and PROVENANCE work, or the Pixi behaviours measured above; those use example and integration tests.
 
 ## Requirements traceability
 
-Every requirement 1 to 23, the design sections that implement it, and the properties and tests that cover it. Section numbers are those of "Components and Interfaces" (1 to 20); P is a property of "Correctness Properties".
+Every requirement 1 to 31, the design sections that implement it, and the properties and tests that cover it. Section numbers are those of "Components and Interfaces" (1 to 20); P is a property of "Correctness Properties".
 
 | Requirement | Design sections | Properties | Tests (file) |
 |-------------|-----------------|------------|--------------|
@@ -1852,8 +2221,16 @@ Every requirement 1 to 23, the design sections that implement it, and the proper
 | 19 Stage object | 15, 10, 11, 18 (`stage` through rule 4) | P17, P24, P34 | `stage.test.ts`, `stageBubbling.property`, `playerPointer.property`, `implicitThis.test.ts` |
 | 20 Fetched sample | 16, 20 | P28, P29, P41 | `fetchedSample.property`, `fetchedSample.test.ts`, `fetchStaticText.test.ts`, `staticText.e2e`, `traceCompare.test.ts`, `verifyStageBehaviour.test.ts` |
 | 21 Residual attribution | 17; Data Models | P26, P27 | `regions.property`, `residual.property`, `residual.test.ts`, `residual.e2e` |
-| 22 Implicit this resolution | 18 (18.5: inherited statics, import of `Declaring`, method-value binding, forwarding constructor); 13 (module map); 11 (the translator row); Data Models; Findings F11; O1, O3, O8 DECIDED | P30 to P37, P43, P44 | `implicitThis.property`, `shimMembers.property`, `implicitThis.test.ts`, `memberTables.test.ts`, `shimMembers.test.ts`, `shimMembersDrift.test.ts`, `clickgotoEmit.test.ts` |
-| 23 A class that cannot load never costs the visual score | 19 (19.2 decision, 19.3 gate change, 19.4 flow, 19.6 `mask_reapply` and risks); 8 (omitted set in the registry); 12 (report fields); Findings F14, F19, F21; O4, O7 DECIDED | P38, P39 | `classOmissions.property`, `classOmissions.test.ts`, `typeCheckGate.test.ts`, `emit.test.ts`, `omittedClass.e2e`, `player.test.ts`, the local `slider_component` run of section 19.5 |
+| 22 Implicit this resolution | 18 (18.5: inherited statics, import of `Declaring`, method-value binding; 22.13 amended by 21.2: binds are a first field, no forwarding constructor); 13 (module map); 11 (the translator row); Data Models; Findings F11; O1, O3, O8 DECIDED | P30 to P37, P43, P44, P46 | `implicitThis.property`, `shimMembers.property`, `implicitThis.test.ts`, `memberTables.test.ts`, `shimMembers.test.ts`, `shimMembersDrift.test.ts`, `clickgotoEmit.test.ts` |
+| 23 A class that cannot load never costs the visual score | 19 (19.2 decision, 19.3 gate change, 19.4 flow, 19.6 `mask_reapply` and risks); 8 (omitted set in the registry); 12 (report fields); Findings F14, F19, F21; O4, O7 DECIDED | P38, P39, P49 | `classOmissions.property`, `classOmissions.test.ts`, `typeCheckGate.test.ts`, `emit.test.ts`, `omittedClass.e2e`, `player.test.ts`, the local `slider_component` run of section 19.5; 23.1 (d), (e), 23.2, 23.3, 23.7 and 23.11 amended by sections 21.3 and 21.4 |
+| 24 Named children before the constructor | 21.1, 21.2; D24, D25 | P45, P46 | `constructionBind.property`, `constructionBind.test.ts`, `implicitThis.property`, `player.test.ts` |
+| 25 A throw does not stop the movie | 21.3; D26 to D28; Appendix A.12 | P47, P48 | `caughtErrors.property`, `replayOutcome.property`, `errorReport.test.ts`, `scriptQueue.test.ts`, `shimEvents.test.ts`, `player.test.ts`, `verifyStageBehaviour.test.ts` |
+| 26 Bundler guard and survival rules | 21.4; 19.2 and 19.4 (amended); D29, D30 | P49 | `classOmissions.property`, `bundlerGuard.test.ts`, `bundleAll.e2e`, `classOmissions.test.ts` |
+| 27 AS3 interfaces | 21.5; D31 to D33 | P50 | `interfaces.property`, `interfaces.test.ts`, `shimMembersDrift.test.ts` |
+| 28 Instance printing and names | 21.6; D34, D35 | P51, P52 | `instanceNames.property`, `instanceNames.test.ts` |
+| 29 Mouse flags and Shim additions | 21.7; 10 (Known limit removed), 11; D36 | P53 | `hitTarget.property`, `hitTest.test.ts`, `shimDisplay.test.ts` |
+| 30 Three translator fixes | 21.8; D37 | P54, P55, P56 | `translateFixes.property`, `translatePackages.test.ts`, `implicitThis.test.ts` |
+| 31 The robustness group | 21 (all); Testing Strategy (floors); Findings (fifth pass) | none | the existing floor files, `clickgotoEmit.test.ts`; user checkpoint |
 
 ### Correctness properties and the test that implements each
 
@@ -1905,6 +2282,18 @@ Tag format in every file: `// Feature: breadth, Property <n>: <title>`. All use 
 | 42 | Every gradient and bitmap fill drawn or named exactly once | `svgToShapeJson draws or names every gradient and bitmap fill` | `test/property/shapeFunction.property.test.ts` |
 | 43 | Inherited statics resolve to the declaring class and import it | `inherited statics give Declaring.x and the import` | `test/property/implicitThis.property.test.ts` |
 | 44 | Method values are bound once, after super, in declaration order | `method values are bound in the constructor` | same |
+| 45 | Named children are bound before any derived code runs | `named children are bound before derived code` | `test/property/constructionBind.property.test.ts` |
+| 46 | A field initialiser sees the bound methods | `binds are the first field and are visible to initialisers` | `test/property/implicitThis.property.test.ts` |
+| 47 | A throw never stops the movie and never changes the other elements | `a throw is caught and isolated` | `test/property/caughtErrors.property.test.ts` |
+| 48 | The Replay records every caught error with its tick and keeps ticking | `the Replay records caught errors and keeps ticking` | `test/property/replayOutcome.property.test.ts` |
+| 49 | The omitted set depends on load failures and Surviving_Imports only | `omission follows load failures and surviving imports` | `test/property/classOmissions.property.test.ts` |
+| 50 | `instanceof` against an interface follows the declared closure | `interface tokens follow the declared closure` | `test/property/interfaces.property.test.ts` |
+| 51 | Default instance names follow depth-first creation order | `default names follow creation order` | `test/property/instanceNames.property.test.ts` |
+| 52 | Display objects print as `[object ClassName]` | `display objects print their class name` | same |
+| 53 | The Hit_Target honours the mouse flags and equals the old rule by default | `resolveHitTarget matches the model and the old rule` | `test/property/hitTarget.property.test.ts` |
+| 54 | A dotted type annotation resolves through the import plan | `dotted types use the import plan` | `test/property/translateFixes.property.test.ts` |
+| 55 | `selfKey` is the qualified name | `selfKey is package dot class` | same |
+| 56 | A rolled-back statement leaves no forced import | `no forced import survives a rollback` | same |
 
 ## Measurements and re-checks
 
@@ -2093,3 +2482,33 @@ Current Pipeline on the downloaded SWF: `[unpack] ok`, `[convert] ok`, `[transla
 ### Cleanup
 
 `.work/d4/` (downloads, FFDec exports, prototype, gate copy, pipeline output) was deleted; `git status` shows no change outside `.kiro/specs/breadth/design.md`.
+
+## Measurements and re-checks, fifth pass
+
+Date 2026-11-13. Ruffle files: raw files of `ruffle-rs/ruffle` at `4a8d39661ed8aec97afee1504a4e33080da2efd0`, fetched over HTTPS and not stored (`core/src/display_object/movie_clip.rs`, `interactive.rs`, `graphic.rs`, `edit_text.rs`, `core/src/display_object.rs`, `core/src/avm2.rs`, `core/src/avm2/events.rs`, `core/src/player.rs`, `tests/tests/swfs/avm2/click_block/output.txt`). Local: `vite` 8.3.8, `rolldown` 1.2.18 in `node_modules`; FFDec 26.4.0 `-swf2xml` on `click_block` (SHA-256 prefix `4023640b`, as A.2). Throwaway scripts and the `click_block` download were deleted; nothing was committed; no production file was changed; no LLM call; no secret was read.
+
+**Caught errors (Requirement 25).** The frame-script runner in `movie_clip.rs` passes a failed call to `Avm2::uncaught_error(activation, Some(clip), error, "Error running AVM2 frame script")`, clears `EXECUTING_AVM2_FRAME_SCRIPT` and goes on; the queued goto runs after it. `construct_as_avm2_object` calls `call_init`; on `Err` it calls `set_avm2_constructor_failed()` and `uncaught_error(..., "Error running AVM2 construction for movie clip")`; `construct_frame` calls `on_construction_complete` afterwards in both cases; `try_fire_loaderinfo_events` returns false for a clip with the flag. `events.rs`: the handlers of one dispatch are collected, and each `Err` goes to `uncaught_error(..., "Error dispatching event ...")` before the next handler. `avm2.rs` `uncaught_error`: in `PlayerMode::Debug` the stringified error is also written with `avm_trace`; the `tracing::error!` line is written in every mode; pushing onto `uncaughtErrorEvents` is a TODO. Not read: Flash Player (closed source); `combine_with_parent`; whether the Reference_Traces were made in debug mode.
+
+**Bundler probe (Requirement 26).** Script run from the repository root with `NODE_NO_WARNINGS=1`:
+
+| Case (source text, in a class body) | `transformWithOxc` | + `parseAst(code, { lang: 'js', showSemanticErrors: true })` | `vite build` of the file |
+|-------------------------------------|--------------------|---------------------------------------------------------------|---------------------------|
+| `var yield = 1; return yield;` | ok | error: keyword `yield` is reserved | fails |
+| `var await = 1; return await;` | ok | error: keyword `await` is reserved | fails |
+| `var package = 1; return package;` | ok | error: keyword `package` is reserved | fails |
+| `var a = 1; let a = 2;` | error: identifier already declared | not reached | fails |
+| `var x = 1; delete x;` | ok | error: delete of an unqualified identifier in strict mode | fails |
+| `with ({}) { }` | ok | error: `with` statements are not allowed | fails |
+| `break;` | ok | error: illegal break statement | fails |
+| `return 010;` | ok | ok | builds |
+| `return 1;` | ok | ok | builds |
+
+`parseAst` without `showSemanticErrors` returned no error for any of the eight non-duplicate cases, on the TypeScript text and on the transformed text. A Rolldown build of the same octal text as a TypeScript module fails; a Vite build builds it, because the Vite transform runs first and rewrites the literal. For `import { A, B } from './nope'` (B unused, A used as a type), `import { C } from './nope2'` (C used as a value) and `import type { D } from './nope3'`, the transform output keeps only `import { C } from "./nope2"`, and the class field `a: A` becomes `a;`.
+
+**Instance numbering (Requirement 28).** `set_default_instance_name` (`display_object.rs`): `instance{N}` from `context.instance_counter` if the object has no name, then the counter is increased (wrapping); the counter starts at 0 (`player.rs`). Callers: `MovieClip::post_instantiation`, `Graphic::post_instantiation` (AS3 movies), `EditText::post_instantiation`. `movie_clip.rs` `instantiate_child` sets the PlaceObject name before `child.post_instantiation(...)` and then `child.enter_frame(...)`, which places the clip's own frame-1 children. `click_block` dump, root frame 1: `PlaceObject2` of sprite 2 with `name="click_mc"` at depth 1 (sprite 2 holds shape 1 at depth 1), sprite 4 unnamed at depth 3 (holds shape 3), shape 6 at depth 5, shape 7 at depth 6, a morph shape at depth 7, a `DefineEditText` at depth 8. Count: root takes 0; `click_mc` is named and takes none; the shape in `click_mc` takes 1; sprite 4 takes 2 (`instance2`, the first Reference_Trace line); the later placements do not matter for the five lines. The Reference_Trace holds `Clicked at 21, 24 target: [object MovieClip] instance2` and four lines with `click_mc`. The alternatives (root not consuming; `click_mc`'s children created after sprite 4) give 1 and do not agree. Marked inferred (one data point).
+
+**Hit target (Requirement 29).** `movie_clip.rs` `mouse_pick_avm2`: for each child, a hit gives `Hit(...)` combined with the parent by `combine_with_parent`, or, when `mouse_enabled()` is false for the clip that owns the shape or drawing, `PropagateToParent`; a propagated result is remembered and used only if no later child returns `Hit` ("lower priority"). `interactive.rs` default `mouse_pick_avm2` is `Miss`. Not read: `combine_with_parent`, `Avm2MousePick`'s definition file.
+
+**Interfaces (Requirement 27).** The three interface sources of `slider_component` (local copy) are 17, 7 and 4 members of the forms `function get x() : T`, `function set x(p:T) : void` and `function f(p:T = false) : T`; `package` and `import` lines only; no constants. `as` with an interface name: none in `slider_component` (searched `\bas I[A-Z]`); `is IFocusManagerComponent` and `is IFocusManagerGroup` occur at `UIComponent.as:102`, `FocusManager.as:69, 109, 224`.
+
+**Not measured.** The effect of each fix on `slider_component`, `click_block`, `3_joystick` and `mask_reapply` (the Checkpoint 9 values are the "before"); it is measured at Task 27. The TS errors that `implements` adds to `Slider`; the cost of the guard per file (about a millisecond for small files by wall clock in the probe, not recorded).

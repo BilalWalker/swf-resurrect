@@ -801,6 +801,11 @@
         "executionId": "ea9a2649-38fb-4f15-8ca4-5e4fa44adede",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794509427690
+      },
+      {
+        "executionId": "ea9a2649-38fb-4f15-8ca4-5e4fa44adede",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794509617113
       }
     ],
     "9. Checkpoint: crashes and package-qualified classes fixed": [
@@ -808,6 +813,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485462430
+      },
+      {
+        "executionId": "ea9a2649-38fb-4f15-8ca4-5e4fa44adede",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794509647353
       }
     ],
     "10.1 Add `template/runtime/shapeJson.ts` with `DRAWN_FILLS`": [
@@ -1277,6 +1287,13 @@
         "executionId": "7a9e7c4f-8c22-4e1d-a086-37979b1da66d",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794496829672
+      }
+    ],
+    "8. Translate: implicit `this` resolution (Requirement 22)": [
+      {
+        "executionId": "ea9a2649-38fb-4f15-8ca4-5e4fa44adede",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794509617260
       }
     ]
   }

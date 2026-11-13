@@ -2,9 +2,9 @@
 
 ## Overview
 
-Language: TypeScript (strict), as in the design. The plan has 19 top-level tasks, one per component, each one commit, with its tests as sub-tasks. Four of the 19 are checkpoints (Requirement 16.5) and commit nothing.
+Language: TypeScript (strict), as in the design. The plan has 27 top-level tasks, one per component, with its tests as sub-tasks; Tasks 1 to 19 are one commit each and the robustness group (Tasks 20 to 27, added after Checkpoint 9) is one commit per sub-task. Five of the 27 are checkpoints (Requirement 16.5) and commit nothing. The group is placed in the file between Task 9 and Task 10 and runs before Task 10; Tasks 10 to 19 keep their numbers.
 
-Order, in one paragraph. Task 1 adds the licence texts and Task 2 is "Checkpoint: confirm approved samples". Task 3 fixes the crashes (SymbolClass-less Unpack, ids of unsupported characters) and records the baseline. Task 4 adds the class-failure fallback (Requirement 23) before any package-qualified class can reach `src/classes.ts` (Requirement 23.8). Task 5 adds package-qualified classes end to end (Requirement 18). Task 6 adds the Stage_Object, the pointer constants and the Player pointer entry points. Task 7 changes the Replay (tick options, pointer events, `release-outside` notes, empty input, a Replay that throws). Task 8 adds implicit `this` resolution (Requirement 22) after the Stage_Object exists, so that the generated Shim_Member_Table holds `stage`, `mouseX` and `mouseY`. Task 9 is "Checkpoint: crashes and package-qualified classes fixed". Tasks 10 to 13 build the render path (Shape_JSON, drawing of strokes, gradients, bitmap fills and colour offsets, text, filters and masks, residual attribution). Task 14 is "Checkpoint: rendering done". Tasks 15 to 17 admit the eight approved samples in three groups, Task 18 is "Checkpoint: browser review of fidelity-report.html", and Task 19 updates the steering status and gives the final summary.
+Order, in one paragraph. Task 1 adds the licence texts and Task 2 is "Checkpoint: confirm approved samples". Task 3 fixes the crashes (SymbolClass-less Unpack, ids of unsupported characters) and records the baseline. Task 4 adds the class-failure fallback (Requirement 23) before any package-qualified class can reach `src/classes.ts` (Requirement 23.8). Task 5 adds package-qualified classes end to end (Requirement 18). Task 6 adds the Stage_Object, the pointer constants and the Player pointer entry points. Task 7 changes the Replay (tick options, pointer events, `release-outside` notes, empty input, a Replay that throws). Task 8 adds implicit `this` resolution (Requirement 22) after the Stage_Object exists, so that the generated Shim_Member_Table holds `stage`, `mouseX` and `mouseY`. Task 9 is "Checkpoint: crashes and package-qualified classes fixed". Tasks 20 to 27, the robustness group added after Checkpoint 9, follow it in the file and run before Task 10: Task 20 three small translator fixes (Requirement 30), Task 21 the Construction_Bind and the method-value binds as a first field (Requirement 24), Task 22 Caught_Errors in the browser and the Replay (Requirement 25), Task 23 the Bundler_Guard and the survival rules (Requirement 26), Task 24 AS3 interfaces (Requirement 27, after Task 23 because the interface export removes missing-export omissions only once unused imports no longer count), Task 25 instance printing and default names (Requirement 28), Task 26 the mouse flags, the Hit_Target rule and `formatToString` (Requirement 29), and Task 27 "Checkpoint: robustness group" (Requirement 31). Tasks 10 to 13 build the render path (Shape_JSON, drawing of strokes, gradients, bitmap fills and colour offsets, text, filters and masks, residual attribution). Task 14 is "Checkpoint: rendering done". Tasks 15 to 17 admit the eight approved samples in three groups, Task 18 is "Checkpoint: browser review of fidelity-report.html", and Task 19 updates the steering status and gives the final summary.
 
 Where sample admission sits. No Breadth_Sample is committed before Task 15. Tasks 4 (class fallback), 5 (packages), 8 (implicit `this`) and the checkpoint of Task 9 all come before Task 15, and Task 14 (rendering done) comes before it too. Task 15 admits `radial`, `gradients` and `acid-color-2`; Task 16 admits `mask_reapply` and `click_block`; Task 17 admits `3_joystick`, `slider_component` and the fetched `static_text` (Fetch_Script, measurement, final floors). Every admission keeps its own sub-tasks for PROVENANCE, fixture, residual attribution and floors.
 
@@ -18,10 +18,11 @@ Rules that apply to every task:
 
 - Follow `.kiro/steering/git-workflow.md`. Work on the local branch `wip/breadth`. Before the first commit run `git branch --show-current`; if it prints `main`, stop and ask, and do not create or switch branches. One top-level task is one commit; checkpoint tasks commit nothing. Never `git push`, merge, cherry-pick, amend, rebase, reset or force. Never use `git add -A`, `git add .` or `git commit -a`: stage by path only the files the task created or changed, plus `.kiro/specs/breadth/tasks.md` and `tasks.meta.json`. Never commit `tools/`, `node_modules/`, `out/`, `.work/` or `dist/`, generated Reference_Frames, Rendered_Frames or Diff_Images, or a SWF that is not named in an approved `PROVENANCE.md` under `samples/`.
 - Verification before each commit. V1: `npm run typecheck` and `npx vitest related --run <changed source files>` plus every test file the task added or edited; both must pass. V2: V1 plus `npm run typecheck:template`, and the score floor tests `test/unit/clickgotoReplay.test.ts` and `test/e2e/overallMatch.e2e.test.ts` (required for any task that changes a file under `template/`). From sub-task 8.2 on, the V2 floor list also contains `test/unit/shimMembersDrift.test.ts`, which reads `template/shim/` through `fs` and so cannot be found by `vitest related` (Requirement 15.14: the list is extended here in the plan, not by editing the steering file). The full suite `npm test -- --run` (about two minutes) runs only at every Checkpoint task, before stopping; a failure it finds is fixed in a new commit that names the task that caused it. Never commit a failing state. Each task names V1 or V2.
-- SC, the `slider_component` check (Requirements 23.5, 23.6). The local copy lives at `.work/local/slider_component/` (`test.swf` and `reference/` with `output.txt`, `input.json`, `test.toml`, downloaded from the Candidate_Source at the pinned commit, SHA-256 of `test.swf` checked against `bf6dbcb7...93e9`), is created in sub-task 3.6, is committed never, and stays until Task 17 has committed `slider_component`. A task marked SC runs `node --import tsx src/pipeline/cli.ts .work/local/slider_component/test.swf .work/local/slider_component/out --force --verify` and states the Overall_Match before and after in its commit message. Below 99.93 the change is fixed or reverted; no floor is lowered. Tasks marked SC: 4, 5, 8.
+- SC, the `slider_component` check (Requirements 23.5, 23.6). The local copy lives at `.work/local/slider_component/` (`test.swf` and `reference/` with `output.txt`, `input.json`, `test.toml`, downloaded from the Candidate_Source at the pinned commit, SHA-256 of `test.swf` checked against `bf6dbcb7...93e9`), is created in sub-task 3.6, is committed never, and stays until Task 17 has committed `slider_component`. A task marked SC runs `node --import tsx src/pipeline/cli.ts .work/local/slider_component/test.swf .work/local/slider_component/out --force --verify` and states the Overall_Match before and after in its commit message. Below 99.93 the change is fixed or reverted; no floor is lowered. Tasks marked SC: 4, 5, 8 and, in the robustness group, 20, 21 (21.2), 23, 24 and 26 (26.3).
+- Commit rule of the robustness group (Tasks 20 to 26, Requirement 31.3): commit after each sub-task that leaves `npm run typecheck` and the tests related to it passing, stage by path only the files of that sub-task plus `tasks.md` and `tasks.meta.json`, and name the sub-task number in the message (for example `(21.2)` at the end of the first line); a Checkpoint task commits nothing.
 - Commit message: first line `Area: what changed, imperative`, at most 72 characters; then a blank line; then why, what, how it was verified, what is not verified, and the task number. Areas: `Unpack`, `Convert`, `Translate`, `Emit`, `Runtime`, `Shim`, `Pipeline`, `Test`, `Spec`, `Steering`, `Build`, `Repo`, `Samples`. A task whose commit changes anything under `src/translate/` (Task 4 does, through `typeCheckGate.ts`) uses the area `Translate` (Requirements 15.10, 22.12) and says in the body which other stages it touches. No `Co-Authored-By`, no "Generated with", no emoji.
 - Stop and ask the user instead of continuing when: a checkpoint is reached; tests or typecheck cannot pass within the task's scope; a finding contradicts `requirements.md`, `design.md` or `.kiro/steering/tech.md`; a task would need an FFDec XML name marked `UNVERIFIED` in `src/convert/ffdecXml.ts` to be trusted; a `test.toml` sets `tick_rate` (Requirement 14.14); a Reference_Trace has no Reference_Input and its `test.toml` holds neither `num_frames` nor `num_ticks` (Requirement 14.23); a NOTICE file is found (Requirement 3.13); an embedded font licence is not established (Requirement 3.22); the cause of a differing region cannot be determined (Requirement 21.3); a New_Dependency seems needed (Requirement 15.8: name, exact version, licence, reason).
-- CC, the clickgoto condition (Requirements 1.7, 1.8, 14.16, 19.9). A task marked CC measures `clickgoto` and `tweendemo` before and after and states: Trace_Score of `clickgoto` (100), tick count of its Replay (32), Overall_Match of both at their floors (100), and `tweendemo` behaviour `not-compared`. If any condition fails, STOP and ask; never change a floor, a reference file or the Verify_Tolerance to make it hold. Tasks marked CC: 6, 7, 10, 11, 12.
+- CC, the clickgoto condition (Requirements 1.7, 1.8, 14.16, 19.9). A task marked CC measures `clickgoto` and `tweendemo` before and after and states: Trace_Score of `clickgoto` (100), tick count of its Replay (32), Overall_Match of both at their floors (100), and `tweendemo` behaviour `not-compared`. If any condition fails, STOP and ask; never change a floor, a reference file or the Verify_Tolerance to make it hold. Tasks marked CC: 6, 7, 10, 11, 12 and, in the robustness group, 21 (21.1 and 21.3), 22, 25 and 26.
 - Score integrity (Requirement 1): never change the Verify_Tolerance, the Frame_Sample rule, the frame count K, the comparison rules, or any file under `samples/*/reference/`. Floors follow the Ratchet_Rule: raised in the same commit that raises the score, never lowered. The commit message and the final summary of each task state, for each affected sample, the Overall_Match and the Trace_Score before and after (Requirement 1.6).
 - Residual rule (Requirement 21). Every admission sub-task whose measured Overall_Match is below 100 contains an explicit step that opens the Diff_Image of every compared frame, clusters the differing pixels into 8-connected regions, and attributes every region to a Residual_Cause, fixed (sample measured again) or recorded as a Known_Visual_Limit in `samples/<name>/residual-causes.json`. "Cause not examined" is never accepted; when a cause cannot be determined, STOP and ask and set no floor. The floor is set only after the step is complete. The step covers explicitly the 1,241 differing pixels measured on `3_joystick` and the 1,302 measured on `gradients`.
 - No silent-wrong window (Requirements 2.8, 2.9, D21). From the task that introduces the Shape_Function (Task 10) the Shape_Function returns a Named_Limit for every gradient and bitmap fill whose `DRAWN_FILLS` flag is false, and the backend throws on such a fill. The flags start false in Task 10 and the drawing sub-tasks of Task 11 flip exactly their flag (`gradientLinear` in 11.2, `gradientRadial` in 11.3, `bitmap` in 11.4) in the same sub-task as the drawing code, its Chromium test and the removal of the limit for the cases it draws. At no commit is a gradient or bitmap fill drawn wrongly or skipped with only a `console.warn`.
@@ -272,7 +273,7 @@ Rules that apply to every task:
     - Evidence is the recorded CC measurement; it is guarded by `test/unit/clickgotoReplay.test.ts` and `test/e2e/overallMatch.e2e.test.ts`.
     - _Requirements: 1.1, 1.2, 1.6, 1.7, 1.8, 1.10, 1.11, 14.16_
 
-- [ ] 8. Translate: implicit `this` resolution (Requirement 22)
+- [x] 8. Translate: implicit `this` resolution (Requirement 22)
   - Commit area: `Translate`. Read design section 18 (all of 18.1 to 18.7) and decisions D16 to D18. Verification V1 plus SC (no file under `template/` changes in this task); from sub-task 8.2 on, `test/unit/shimMembersDrift.test.ts` is also run, and it belongs to the V2 floor list of every later task (Requirement 15.14; it reads `template/shim/` through `fs`, so `vitest related` cannot find it; no `.kiro/steering/` edit). Decided F11 with O1, O2, O3 and O8: bare identifiers resolve by the four-rule order with a generated Shim_Member_Table; it replaces the narrow rule for bare `stage`, `mouseX` and `mouseY` (Requirement 19.5), so no `SHIM_PROPERTIES` rule is built. O1: a static member of a translated superclass resolves to `Declaring.x` with a forced import. O2: a wildcard import of a package without a source (`new Dictionary(true)` after `import flash.utils.*;`) stays unresolved with an `unresolved-identifier` Diagnostic. O3: a method used as a value is bound per Requirement 22.13 (8.6). This task comes after Task 5 (Qualified_Names let rules 2 and 3 follow an `extends` chain across packages) and after Task 6 (the Shim holds `stage`, `mouseX`, `mouseY`, the pointer constants).
   - [x] 8.1 Add `src/translate/shimMembers.ts`
     - Core file with `ShimSource`, `ShimMemberTable`, `ShimDeclarationError`, `extractShimMembers`, `renderShimMembersTs` and `parseShimMembersTs` as in design 18.2 and 18.6: a hand-written declaration scanner (comments, strings and template literals skipped, braces balanced), classes exported by `index.ts` plus the classes their `extends` chains reach, own non-private non-static members whose names do not start with `_`, accessors as `property`, constructor parameter properties (`Event.type`) as properties; an unclassifiable member throws `ShimDeclarationError` with `<path>:<line>`. No regular expression and no `typescript-js`. Add the file to the purity test.
@@ -305,12 +306,12 @@ Rules that apply to every task:
     - Test: extend `test/property/implicitThis.property.test.ts` with **Property 44: Method values are bound once, after super, in declaration order** (generator extension in `test/property/gen/genClassContext.ts`). Examples in `test/unit/implicitThis.test.ts`: `addEventListener(MouseEvent.MOUSE_DOWN, dragPressHandler)` becomes `this.dragPressHandler` with one bind in the constructor after `super`; an explicit `this.m` passed as a value is bound; a method that is only called is not bound; a property, a static method and a Shim member are not bound; an inherited method referenced as a value is bound in the referencing class; a class without a constructor gets the forwarding constructor and the real gate reports no TS2556 for it.
     - _Requirements: 22.1, 22.7, 22.8, 22.13_
 
-  - [-] 8.7 Fixture lines, byte identity and SC
+  - [x] 8.7 Fixture lines, byte identity and SC
     - Example tests in `test/unit/implicitThis.test.ts` for the lines that motivated the requirement (Requirement 22.10): the bare `stage` of `Interactivity3.as:39`, the bare own fields and methods of `Interactivity3` (`initx = joystick.x`, `addEventListener(MouseEvent.MOUSE_DOWN, dragPressHandler)`), and the bare `mouseX` and `mouseY` of `MainTimeline.as:42`, each run through the real type-check gate with no error 2663, 2662, 2552 or 2304; other diagnostics of those classes (`with` at `Interactivity3.as:58`) stay reported. `test/unit/clickgotoEmit.test.ts` (create): the translated text of `clickgoto` and `tweendemo` is byte-identical to the committed fixtures (Requirement 22.9); if a byte differs, list each differing line with its rule before the commit. Run SC and state the Overall_Match before and after in the commit message.
     - Evidence for SC is the recorded measurement, guarded by `test/unit/clickgotoEmit.test.ts` and the floor of sub-task 17.6.
     - _Requirements: 22.9, 22.10, 22.11, 23.5, 1.6_
 
-- [ ] 9. Checkpoint: crashes and package-qualified classes fixed
+- [x] 9. Checkpoint: crashes and package-qualified classes fixed
   - STOP. Commit nothing; add no sample to the Repository.
   - Run `npm run pipeline -- <swf> <out> --force` on every candidate of Appendix A.3 that can be downloaded under `.work/` (the eight approved SWFs and the local smoke files `clipDepth`, `acid-color-0`, `bitmapbuttons`, `edit_text_linkage`; the others of A.3 if downloaded). Give the before and after stage result and error message of each, the state of `typeCheck`, and any candidate that still stops, and why.
   - For `3_joystick`, `click_block` and `slider_component` run `npm run pipeline -- <swf> <out> --force --verify --work-dir <dir>` with the references under `reference/` and give, side by side with the "before" column read from the commit message of sub-task 3.6 (`git log`): stage result, Overall_Match, Trace_Score, `missing` and `extra` counts, replay ticks, the `release-outside`, `unsupported-input` and `unpaired-mouse-event` notes, and the type-check gate diagnostics (error count per class). The after column contains the Requirement 14 measurement changes, the Stage_Object, implicit `this` and the class fallback; say so, as they cannot be separated.
@@ -319,6 +320,143 @@ Rules that apply to every task:
   - Report the measured effect of the decided items, as information (nothing here is open): O1 (names resolved to `Declaring.x` with a forced import, expected 1 in `slider_component`), O2 (wildcard imports left unresolved with a Diagnostic, expected 2), O3 (method-value bindings, expected 3 in `Interactivity3` and 56 in `slider_component`), O4 (classes omitted because they cannot load, by reason, versus Loose_Classes and classes omitted by propagation), O5, O6, O7 (classes with both an `untranslated-class` and a `class-omitted` entry), O8 (`test/unit/shimMembersDrift.test.ts` in the V2 list), and F19 (the registry type widening of sub-task 5.8: for the local `mask_reapply` run, `typeCheck`, the count of `otherErrors` (expected 0, Requirement 6.6) and that `Main` is registered under the key `Main`).
   - Run the full suite `npm test -- --run` before stopping. Wait for the user's answer before Task 10.
   - _Requirements: 16.2, 16.5, 18.12, 18.13, 18.14, 22.11, 23.5, 6.6_
+
+Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decision; it runs after Task 9 and before Task 10, in the order of its numbers (the group sits physically here and is numbered 20 to 27 because Tasks 10 to 19 keep their numbers, which `tasks.meta.json` and the commit messages refer to). It fixes what Checkpoint 9 measured: named children missing in constructors, a thrown error that stops the movie, bundler failures and needless omissions, AS3 interfaces, instance printing, the mouse flags, and three translator bugs. Rules of the group, from Requirement 31: commit after each sub-task that leaves `npm run typecheck` and the tests related to it passing, and name the sub-task number in the commit message (this replaces "one top-level task is one commit" for Tasks 20 to 26 only); every item has tests; no floor, no Verify_Tolerance and no reference file changes; `clickgoto` stays at Trace_Score 100 with 32 ticks, `tweendemo` stays at Overall_Match 100, and the translated files of both stay byte-identical unless a sub-task says why a byte changes and the user approves (no sub-task expects it); Tasks 20, 21 (21.2), 23, 24 and 26 (26.3) are marked SC, and Tasks 21 (21.1 and 21.3), 22, 25 and 26 are marked CC. Read design section 21 (21.1 to 21.9) and decisions D24 to D37 before each task. Nothing in the group adds a sample, a dependency or an LLM call. Items marked "not verified" in the design are reported at Task 27, not asked earlier.
+
+- [ ] 20. Translate: three small fixes (Requirement 30)
+  - Commit area: `Translate`; one commit per sub-task. Read design 21.8. Verification V1 plus SC, and the byte-identity test `test/unit/clickgotoEmit.test.ts`. These come first because they are independent of the runtime work and shrink the false type errors that later tasks read.
+  - [ ] 20.1 Dotted type annotations resolve through the import plan
+    - In `src/translate/rewrite.ts` give `parseType` access to `resolveClassName` (the function the expression rewriter uses). A dotted annotation such as `var g:lib.util.Helper` whose Qualified_Name has a source is written as the binding and adds a forced import through the mechanism of design 18.5; without a source it stays as written. Commit message: `Translate: resolve dotted type annotations (20.1)`.
+    - Test: `test/property/translateFixes.property.test.ts` (create), **Property 54: A dotted type annotation resolves through the import plan** (generator `test/property/gen/genClassContext.ts` extended with dotted annotations in variable, parameter, return and field positions). Example in `test/unit/translatePackages.test.ts`: the `var g:lib.util.Helper` case through `planTranslate` and the real gate gives no TS2503.
+    - _Requirements: 30.1, 30.4, 30.5, 31.3_
+  - [ ] 20.2 `selfKey` without the stray parenthesis
+    - In `src/translate/rewrite.ts` (about line 340) return `${pkg}.${className}` (or `className` for the unnamed package) for a secondary class in a packaged file. Commit message: `Translate: fix selfKey for secondary classes (20.2)`.
+    - Test: **Property 55: `selfKey` is the qualified name** in `test/property/translateFixes.property.test.ts`; example in `test/unit/translatePackages.test.ts`: a packaged file with a secondary class resolves a reference to it with no stray `(`.
+    - _Requirements: 30.2, 30.4, 30.5, 31.3_
+  - [ ] 20.3 A forced import left behind by a rolled-back statement
+    - In `src/translate/emitTs.ts` and `rewrite.ts` record forced imports in an array whose length is saved in the `mark` of the statement rollback (the place that truncates `lines` and `spans`), and truncate it on rollback, so that the dry pass of 8.5 leaves no unused import. Commit message: `Translate: drop forced imports of rolled-back statements (20.3)`.
+    - Test: **Property 56: A rolled-back statement leaves no forced import** in `test/property/translateFixes.property.test.ts`; example in `test/unit/implicitThis.test.ts`: an inherited static used only inside a statement that falls back to `// AS3:` comments adds no import.
+    - Run SC after 20.3 and state the Overall_Match before and after in the commit message; run `test/unit/clickgotoEmit.test.ts`.
+    - _Requirements: 30.3, 30.4, 30.5, 31.3, 31.5_
+
+- [ ] 21. Runtime and Translate: Construction_Bind and method-value binds (Requirement 24)
+  - Commit area: `Runtime` for 21.1 and 21.3 (21.1 changes `template/runtime/` and `template/shim/`), `Translate` for 21.2; one commit per sub-task. Read design 21.1 and 21.2 and the earlier design 18.5 (method values). Verification V2 plus CC for 21.1; V1 plus SC for 21.2; the V2 floor list includes `test/unit/shimMembersDrift.test.ts`. The Shim gets no public member in this task; the `ConstructionContext` and `ClipHooks` additions are internal and are described in the commit message, and any Shim member added anyway goes into `template/shim/ADDED_APIS.md` with its fixture line.
+  - [ ] 21.1 Build frame 1 in the `MovieClip` constructor
+    - Add `named` and `instance` to `ConstructionContext` and `constructFrameOne(mc)` to `ClipHooks` (design 21.1). The `MovieClip` constructor sets `ctx.instance`, then calls the hook; the Player's hook registers the backend node, sets the root state (`name`, `_isStageRoot`, `attachRoot`) and calls `mc._renderFrame()`. `Player.createClip` no longer calls `_renderFrame()` after `new Cls()`. Events and frame-1 scripts still wait for `initialBuild`. Commit message: `Runtime: bind timeline children before the constructor (21.1)`.
+    - Test: `test/property/constructionBind.property.test.ts` (create), **Property 45: Named children are bound before any derived code runs** (generator `test/property/gen/genSymbolGraph.ts` extended with probe classes). `test/unit/constructionBind.test.ts` (create): a probe class whose field initialiser reads `joystick.x` (the shape of `Interactivity3`), one whose constructor body assigns `maskee1.mask` (the shape of `Main`), a nested clip, `super` with arguments, a child placed on frame 2 that is not bound at construction, and the `declare` pin (the translator keeps `declare` for an uninitialised class-typed instance field). Update `test/unit/player.test.ts` and `stepping` tests for the new order.
+    - Measure `clickgoto` and `tweendemo` before and after (CC).
+    - _Requirements: 24.1, 24.2, 24.3, 24.4, 24.5, 24.8, 24.9, 31.3, 31.5_
+  - [ ] 21.2 Method-value binds as the first instance field
+    - In `src/translate/emitTs.ts`, `rewrite.ts` and `planTranslate.ts` emit the binds as the field `private readonly __binds_<ClassName> = (() => { this.m = this.m.bind(this); ... })();` as the first instance member, and remove the forwarding constructor (design 21.2). Commit message: `Translate: bind method values in a first field (21.2)`.
+    - Test: amend **Property 44** in `test/property/implicitThis.property.test.ts` and add **Property 46: A field initialiser sees the bound methods** (generator `genClassContext.ts`; the run uses `typescript-js` transpile of the output). Update the examples of 8.6 and 8.7 in `test/unit/implicitThis.test.ts` (the field form, no forwarding constructor, a class without a constructor still has no TS2556, a field initialiser that reads a bound method). `test/unit/clickgotoEmit.test.ts`: bytes of `clickgoto` and `tweendemo` unchanged (they contain no method value). Run SC and state the Overall_Match before and after.
+    - _Requirements: 22.13, 24.6, 24.8, 24.9, 31.3, 31.5_
+  - [ ] 21.3 Fixture evidence for `Main` and `Interactivity3`
+    - Download `mask_reapply` and `3_joystick` (SWF and references, `.work/`, deleted afterwards, not committed) and run `npm run pipeline -- <swf> <out> --force --verify --work-dir <dir>`. State in the commit message the first line of each Replay that was missing before, whether `Masks reapplied` is printed, and any `runtime-error` or `replay-error` that remains with its cause. No score is committed. Add the two class shapes as fixtures under `test/fixtures/construction/` (hand-written small classes, no third-party text) if 21.1 did not already.
+    - Test: `test/unit/constructionBind.test.ts` (extended) runs the two fixture classes through `translate()` and the real Player with `FakeBackend`: no throw at tick 0.
+    - _Requirements: 24.7, 24.8, 31.3_
+
+- [ ] 22. Runtime and Pipeline: Caught_Errors (Requirement 25)
+  - Commit area: `Runtime` for 22.1 to 22.4, `Pipeline` for 22.5 and 22.6 (the Replay and Verify changes; the message names Runtime where `template/` is touched); one commit per sub-task. Read design 21.3 and Appendix A.12. Verification V2 plus CC for 22.1 to 22.4. Decided D26 to D28; the Flash Player column of the table in 21.3 is not verified and is reported at Task 27.
+  - [ ] 22.1 `errorReport.ts`, the sink and the Player option
+    - Add `template/runtime/errorReport.ts` (Core: `CaughtError`, `ErrorSink`, `messageOf`, `constructorSite`, `frameScriptSite`, `listenerSite`; add it to the purity test), `setCaughtErrorSink` and `reportCaughtError` in `template/shim/internal.ts` (default `console.error('[SWF Resurrect] <site>: <message>')`), and `onCaughtError` in the Player options, installed in the Player constructor. Commit message: `Runtime: add the caught-error sink (22.1)`.
+    - Test: `test/unit/errorReport.test.ts` (create): `messageOf` for an `Error`, a string, an object and `undefined` (no stack, no colour codes); the three site texts; the default sink prints once; `setCaughtErrorSink(null)` restores it.
+    - _Requirements: 25.5, 15.1, 31.3_
+  - [ ] 22.2 Frame scripts and listeners
+    - `ScriptQueue.drain` catches per script and reports `frame script <owner> frame <n>`; the Shim's listener loop in `events.ts` catches per listener and reports `listener <type> on <target>`; both continue. Commit message: `Runtime: isolate frame scripts and listeners (22.2)`.
+    - Test: `test/unit/scriptQueue.test.ts` and `test/unit/shimEvents.test.ts` extended: a throwing script followed by a running one; a throwing listener followed by a running one on the same target and on a parent; a throw inside a nested `dispatchEvent`; `dispatchEvent` returns as without the error; the `draining` flag is reset.
+    - _Requirements: 25.1, 25.2, 25.4, 31.3_
+  - [ ] 22.3 Constructors
+    - `Player.createClip` catches a throw of `new Cls()` (design 21.3): it reports `constructor <Class>`, keeps `ctx.instance` and goes on; when `ctx.instance` is null it instantiates the symbol again as a plain `MovieClip` under a fresh context. Commit message: `Runtime: keep the instance when a constructor throws (22.3)`.
+    - Test: `test/property/caughtErrors.property.test.ts` (create), **Property 47: A throw never stops the movie and never changes the other elements** (generator `genSymbolGraph.ts` extended with throwing constructors, frame scripts and listeners); examples in `test/unit/player.test.ts`: a throwing constructor leaves the partial instance with its children and its timeline; a throw in a field initialiser; a throw before the base constructor gives a plain `MovieClip`; a registered class that throws does not stop its siblings.
+    - _Requirements: 25.3, 25.11, 31.3_
+  - [ ] 22.4 The browser keeps drawing
+    - `template/src/main.ts` installs no sink and keeps `Startup failed` for load errors only. Commit message: `Runtime: show a caught error without a black canvas (22.4)`.
+    - Test: `test/e2e/caughtErrors.e2e.test.ts` (create; skips with a reason when Chromium is absent): an Emitted_Project whose root class throws in its constructor builds, opens in headless Chromium, draws its timeline frame (not the background colour only), and logs one `console.error` with the Error_Site; a missing scene still shows `Startup failed`.
+    - _Requirements: 25.5, 25.6, 31.3_
+  - [ ] 22.5 The Replay records caught errors and keeps ticking
+    - `src/verify/edge/replayRunner.ts` installs a sink that records `{ tick, site, message }`; `ReplayResult` gains `caughtErrors`; add `runtimeErrorProblems` to `src/verify/core/replayOutcome.ts` (cap 100, overflow Problem); the Fidelity_Report and the HTML report get `behaviour.replay.caughtErrors` (`count`, `first` 20). `decideBehaviour` is unchanged. Commit message: `Pipeline: record caught errors in the Replay (22.5)`.
+    - Test: extend `test/property/replayOutcome.property.test.ts` with **Property 48: The Replay records every caught error with its tick and keeps ticking**; `test/unit/verifyStageBehaviour.test.ts` and `test/unit/htmlKnownGaps.test.ts` extended (Problems, overflow, the HTML count); `test/unit/clickgotoReplay.test.ts` unchanged: 32 ticks and Trace_Score 100.
+    - _Requirements: 25.7, 25.8, 25.10, 25.11, 31.3, 31.5_
+  - [ ] 22.6 Evidence: the Replays of `mask_reapply` and `3_joystick`
+    - Run both local Replays as in 21.3 and state in the commit message each Caught_Error that remains (tick, site, message) and the effect on the trace lines. Check the `click_block` and `3_joystick` Reference_Traces for error text (design 21.3, Trace echo row) and record the result. No code unless a fixture test is added: `test/unit/caughtErrors.test.ts` (create) holds one fixture of a class that throws after printing a line and checks that the line is captured and the Replay runs all planned ticks.
+    - _Requirements: 25.7, 25.9, 31.3_
+
+- [ ] 23. Emit and Pipeline: Bundler_Guard and the survival rules (Requirement 26)
+  - Commit area: `Emit` (the commit also changes Pipeline; the message names it); one commit per sub-task. Read design 21.4 and 19.2 to 19.4. Verification V1 plus SC. Decided D29, D30. No new dependency: the guard imports `transformWithOxc` and `parseAst` from the pinned `vite` 8.3.8; IF a dependency seems needed, STOP and ask (Requirement 26.8). This task comes before Task 24 because the interface export removes the missing-export omissions only once an unused import no longer counts.
+  - [ ] 23.1 Core: Bundler_Check input and survival rules
+    - In `src/emit/classOmissions.ts` and `src/emit/exportedNames.ts` add `bundler`, `importEdges`, the specifier on `ImportedName`, the reason `bundler-parse`, and the rules of design 21.4 (a failing check omits, a handwritten class included; `syntax-error` only without a check; `unresolved-import`, `missing-export` and `imports-omitted` only for Surviving_Imports). Update `omissionMessage`. Keep both files in the purity test. Commit message: `Emit: decide omissions from bundler checks (23.1)`.
+    - Test: extend `test/property/classOmissions.property.test.ts` with **Property 49: The omitted set depends on load failures and Surviving_Imports only** (generator extended with checks) and keep P38 and P39 passing; `test/unit/classOmissions.test.ts` extended: `bundler-parse`, an unused and a type-only missing import that omit nothing, an octal literal with an ok check that stays registered, a handwritten class with a failing check, a surviving import of an omitted class that propagates and a removed one that does not.
+    - _Requirements: 26.2, 26.4, 26.5, 26.6, 26.10, 26.12, 23.1, 23.3_
+  - [ ] 23.2 Edge: `src/emit/bundlerGuard.ts`
+    - Add `checkClassFile` and `checkClassFiles` (design 21.4): lazy `import('vite')`, `transformWithOxc`, then `parseAst(code, { lang: 'js', showSemanticErrors: true })`; verdict with phase, message (colour codes removed), line and column; Surviving_Imports from import and re-export declarations, sorted. Commit message: `Emit: add the Vite parse guard (23.2)`.
+    - Test: `test/unit/bundlerGuard.test.ts` (create): the nine cases of Appendix A.12 against the real pinned Vite (`yield`, `await`, `package`, duplicate declaration, `delete x`, `with`, `break`, octal accepted, clean class), the unused and the type-only import removed, a re-export counted, determinism of two runs, and the guard-unavailable case with a stubbed import failure.
+    - _Requirements: 26.1, 26.3, 26.7, 26.8, 26.9, 26.12_
+  - [ ] 23.3 Pipeline wiring and reports
+    - In `src/pipeline/pipeline.ts` run `checkClassFiles` on the planned final text of every class file in the same step as the in-memory gate, pass the checks to `decideClassOmissions`, plan again and write once; on a guard failure fall back to the rules of Requirement 23 and record the Problem `bundler-guard-unavailable`. The `class-omitted` entry and Diagnostic carry `bundler-parse` with message, line and column. Commit message: `Pipeline: run the bundler guard before omissions (23.3)`.
+    - Test: `test/unit/pipelineOmissions.test.ts` (extend or create) with a stub guard: a failing check omits the class and its dependants; no check falls back with the Problem; the Translation_Report entry text; `clickgoto` and `tweendemo` still emit a byte-identical `src/classes.ts`.
+    - _Requirements: 26.2, 26.7, 26.11, 23.7_
+  - [ ] 23.4 Whole-bundle test and SC
+    - Add `test/e2e/bundleAll.e2e.test.ts` (design 21.4): an Emitted_Project with one class per kill case and two clean classes builds with the real `vite.build` after the guard, kill classes omitted with `bundler-parse`, clean ones registered; the same on the `slider_component` copy when `.work/local/slider_component/` exists (skip with a reason otherwise). Run SC and state the Overall_Match before and after in the commit message. Commit message: `Test: build the whole bundle after the guard (23.4)`.
+    - Test: the e2e file is the test.
+    - _Requirements: 26.12, 26.11, 23.5, 31.5_
+
+- [ ] 24. Shim and Translate: AS3 interfaces (Requirement 27)
+  - Commit area: `Shim` for 24.1, `Translate` for 24.2 and 24.3, `Pipeline` for 24.4; one commit per sub-task. Read design 21.5. Verification V2 for 24.1, V1 plus SC for the others. Decided D31 to D33. This task comes after Task 23. Every Shim addition goes into `template/shim/ADDED_APIS.md` with its fixture line: `defineInterface` and `declareImplements` with `Button.as:9`, `LabelButton.as:16`, `Slider.as:17` and `FocusManager.as:19` (the `implements` lines) and the interface files `IFocusManager.as`, `IFocusManagerComponent.as`, `IFocusManagerGroup.as`. `isOfInterface` and `asInterface` are not added (design 21.5, D32, D33).
+  - [ ] 24.1 Shim: `defineInterface`, `declareImplements`, `AS3InterfaceToken`
+    - Add `template/shim/interfaces.ts` (the token with `[Symbol.hasInstance]`, the `WeakMap` registry, parents closure, cycle guard) and export it from `template/shim/index.ts`; log the rows in `ADDED_APIS.md`; run `npm run gen:shim-members` (the token module adds no class member, the drift test must still pass). Commit message: `Shim: add the AS3 interface token (24.1)`.
+    - Test: `test/property/interfaces.property.test.ts` (create), **Property 50: `instanceof` against an interface follows the declared closure** (runtime part); `test/unit/shimMembersDrift.test.ts` passes; an example with replaced `constructor.name`.
+    - _Requirements: 27.4, 27.8, 31.3_
+  - [ ] 24.2 Translate: interface declarations and tokens
+    - In `src/translate/planTranslate.ts`, `emitTs.ts` and `report.ts` emit the TypeScript `interface` and the exported token for an AS3 interface (design 21.5); narrow the `as3-interface` Named_Limit to an interface with a member that cannot be expressed. Commit message: `Translate: emit AS3 interfaces and tokens (24.2)`.
+    - Test: Property 50 (translator part: the file exports interface and token, passes the real gate with no error but an unresolved Shim type); `test/unit/interfaces.test.ts` (create): the three `slider_component` interface sources (hand-written equivalents of the same forms; no decompiled third-party text is copied into the Repository), an interface that extends another, an untranslatable interface that keeps the limit.
+    - _Requirements: 27.1, 27.6, 27.7, 27.9, 27.10_
+  - [ ] 24.3 Translate: `implements` registration
+    - Emit `declareImplements(Cls, ...)` after a class that declares `implements` and import the Shim names by the existing Shim specifier mechanism; confirm that `x is I` still becomes `x instanceof I`. Commit message: `Translate: register implemented interfaces (24.3)`.
+    - Test: extend `test/unit/interfaces.test.ts`: `Button` `implements IFocusManagerComponent`, a class inheriting the declaration, a secondary class, the `UIComponent.as:102` shape (`this is IFocusManagerComponent` in a constructor), `x as I` stays a cast; `test/unit/clickgotoEmit.test.ts` bytes unchanged.
+    - _Requirements: 27.2, 27.3, 27.9, 27.10_
+  - [ ] 24.4 `slider_component`: interface omissions gone
+    - Run SC with the pipeline on `.work/local/slider_component/` and state in the commit message: the `missing-export` omissions before (5) and after, the `fl.*` classes registered, the classes still omitted with their reasons, the Overall_Match (at least 99.93) and the Trace_Score. Add `test/unit/interfaces.test.ts` case on the local copy (skips with a reason when absent): no `class-omitted` entry has reason `missing-export` for a name that is an interface. Commit message: `Test: pin interface exports on slider_component (24.4)`.
+    - _Requirements: 27.5, 23.5, 31.5_
+
+- [ ] 25. Runtime: instance printing and default names (Requirement 28)
+  - Commit area: `Runtime`; one commit per sub-task. Read design 21.6 and Appendix A.12. Verification V2 plus CC. Decided D34, D35. The numbering for script-created objects is "not verified" and is reported at Task 27.
+  - [ ] 25.1 `toString` and class-name registration
+    - Add `registerClassName` and `classNameOf` to `template/shim/internal.ts`, register the Shim classes, register every `classRegistry` key in the Player constructor, and add `toString` to `DisplayObject` and `Stage` (design 21.6). Commit message: `Runtime: print display objects as [object Class] (25.1)`.
+    - Test: `test/property/instanceNames.property.test.ts` (create), **Property 52: Display objects print as `[object ClassName]`**; `test/unit/instanceNames.test.ts` (create): `[object MovieClip]`, a registered `test_fla.MainTimeline` prints `[object MainTimeline]`, a replaced constructor name, a class with its own `toString`.
+    - _Requirements: 28.1, 28.6, 28.7, 31.3_
+  - [ ] 25.2 Default instance names
+    - Add the Instance_Counter to `internal.ts` (`resetInstanceCounter`, `takeInstanceNumber`), reset it in the Player constructor, take the number at the start of the `MovieClip` constructor for an unnamed placement (the root included, then named `root1`), in `createChild` for an unnamed shape, and in the `DisplayObject` constructor for a script-created object. Commit message: `Runtime: give unnamed objects instanceN names (25.2)`.
+    - Test: add **Property 51: Default instance names follow depth-first creation order** to `test/property/instanceNames.property.test.ts`; example in `test/unit/instanceNames.test.ts`: the `click_block` shape (root, named clip with a shape, unnamed sprite) gives `instance2` to the sprite; a named placement takes no number; a script-created `Sprite` takes the next number.
+    - _Requirements: 28.2, 28.3, 28.4, 28.7, 31.3_
+  - [ ] 25.3 `click_block` evidence
+    - Run the local Replay of `click_block` (downloaded under `.work/`, not committed) and state the five target strings against the Reference_Trace, the Overall_Match and the Trace_Score before (90.85 and 0.00) and after, and the cause of any remaining difference. Measure `clickgoto` and `tweendemo` (CC).
+    - Test: `test/unit/instanceNames.test.ts` (extended) holds the five Reference_Trace target strings as a literal expectation built from the placement shape of `click_block`; `test/unit/clickgotoReplay.test.ts` unchanged.
+    - _Requirements: 28.5, 28.6, 31.5_
+
+- [ ] 26. Shim and Runtime: mouse flags, Hit_Target and `formatToString` (Requirement 29)
+  - Commit area: `Shim` for 26.1, `Runtime` for 26.2 and 26.3; one commit per sub-task. Read design 21.7 and section 10. Verification V2 plus CC for all three; SC for 26.3. Decided D36. Every Shim addition is logged in `template/shim/ADDED_APIS.md` with its fixture line, and `npm run gen:shim-members` is run in the same sub-task.
+  - [ ] 26.1 Shim members and `Event.formatToString`
+    - Add `mouseEnabled` and `mouseChildren` to `DisplayObjectContainer`, `buttonMode` and `useHandCursor` to `Sprite`, and `Event.formatToString` to `events.ts`. Before writing the test read `core/src/avm2/globals/flash/events/event.rs` at the pinned commit and follow it if its format differs from the AS3 documentation (state which in the commit message). Log in `ADDED_APIS.md`: `BaseButton.as:46` (`buttonMode`), `:47` (`mouseChildren`), `:48` (`useHandCursor`), `:68` (`mouseEnabled`), `Slider.as:393` (`useHandCursor`), `ComponentEvent.as:29` and `SliderEvent.as:55` (`formatToString`). Regenerate the Shim_Member_Table. Commit message: `Shim: add mouse flags and Event.formatToString (26.1)`.
+    - Test: `test/unit/shimDisplay.test.ts` and `test/unit/shimEvents.test.ts` extended (defaults, a stored value, `formatToString` for a string, a number and a boolean, the order of properties); `test/unit/shimMembersDrift.test.ts` passes.
+    - _Requirements: 29.1, 29.5, 29.7, 31.3_
+  - [ ] 26.2 The Hit_Target rule
+    - Add `hitTestAll` and `resolveHitTarget` to `template/runtime/hitTest.ts` (Core, browser-safe) and use them in `Player.pointerEntry` in place of `interactiveTarget(hitTest(...))`. Commit message: `Runtime: honour mouseEnabled and mouseChildren in hits (26.2)`.
+    - Test: `test/property/hitTarget.property.test.ts` (create), **Property 53: The Hit_Target honours the mouse flags and equals the old rule by default**; `test/unit/hitTest.test.ts` extended: `mouseChildren = false` on a button-like clip, `mouseEnabled = false` and the parent receives the event, a disabled object above a directly hit sibling, the Stage_Object fallback; `test/unit/player.test.ts`: `dispatchClick` on the `clickgoto` shape is unchanged (`clickgotoReplay.test.ts`: Trace_Score 100, 32 ticks).
+    - _Requirements: 29.2, 29.3, 29.4, 29.8, 31.3_
+  - [ ] 26.3 Gate check on `slider_component`
+    - Run SC and the type-check gate on `.work/local/slider_component/`: state the diagnostics of `ComponentEvent`, `SliderEvent`, `BaseButton` and `Slider` before and after, and require no TS4113 and no TS2339 for the five new members. Commit message: `Test: pin the new Shim members on slider_component (26.3)`.
+    - Test: `test/unit/shimDisplay.test.ts` (extended) runs the real gate on the translated `ComponentEvent` and `SliderEvent` shapes (hand-written equivalents if the local copy is absent) and asserts no TS4113.
+    - _Requirements: 29.6, 23.5, 31.5_
+
+- [ ] 27. Checkpoint: robustness group
+  - STOP. Commit nothing.
+  - Run the full suite `npm test -- --run` first. A failure it finds is fixed in a new commit that names the sub-task that caused it, then the suite runs again.
+  - For `slider_component` (`.work/local/slider_component/`), `click_block`, `3_joystick` and `mask_reapply` (downloaded under `.work/`, deleted afterwards, not committed) run `npm run pipeline -- <swf> <out> --force --verify --work-dir <dir>` with the references under `reference/` and give a table of Overall_Match and Trace_Score before (Checkpoint 9: `slider_component` 99.93 and 0.00, `click_block` 90.85 and 0.00, `3_joystick` 15.82 and 25.00, `mask_reapply` 20.00 and 0.00) and after, with the `missing` and `extra` counts, the caught errors (`behaviour.replay.caughtErrors`: count and first entries), the omitted and the Loose_Classes of `slider_component`, and for every value below 100 the remaining cause, line by line for the trace.
+  - Report `clickgoto` and `tweendemo` (Trace_Score 100 at 32 ticks, Overall_Match 100, translated files byte-identical, `src/classes.ts` byte-identical) and that no floor, tolerance or reference file changed.
+  - List every item the group marked not verified or flagged for the user, with the evidence for each, and ask for confirmation: the Flash Player behaviour of a throwing constructor, frame script and listener (Requirement 25.9); the slot-binding order against AS3 field initialisers (Requirement 24); the numbering for script-created objects and the effect of dropped placements on later default names (Requirement 28.3, 28.4); the propagation target of a disabled object and the nesting of `mouseChildren` (Requirement 29.2); a handwritten override that fails the Bundler_Guard is omitted (Requirement 26.10); `as` against an interface stays a cast (D33); and whether any Reference_Trace shows error text from a Caught_Error.
+  - Say which of the Out-of-scope items of Requirement 31.8 a sample touched (a static initialiser that throws, an `EditText` or button placement before a printed `instanceN`).
+  - Wait for the user's answer before Task 10.
+  - _Requirements: 16.6, 31.7, 31.8, 24.7, 25.9, 26.10, 28.4, 29.2_
 
 - [ ] 10. Runtime: Shape_JSON render path (Shape_JSON, Shape_Function, Scene_JSON v2, limit kinds)
   - Commit area: `Runtime` (the commit also changes Convert and the Verify limit builders; the message names them). Read design sections 2, 3 and 12 and the Data Models section (Scene_JSON version 2). Verification V2, plus CC. Decided D1: the Shape_JSON path (render path (b)). This is the task that introduces the Shape_Function, so from its commit every gradient and bitmap fill is returned as a Named_Limit (kinds `gradient-fill` and `bitmap-fill`), recorded in the Unsupported_Feature_List and in `visual.knownVisualLimits`, and the backend throws on a fill whose `DRAWN_FILLS` flag is false; the three flags start false and are flipped only in Task 11 (Requirements 2.8, 2.9, D21). No console.warn-only state exists at this commit. Measure `clickgoto` and `tweendemo` before and after (Requirement 7.11); IF they fall, STOP and ask. Sub-tasks 10.2 to 10.8 are Core and go into the purity test.
@@ -535,7 +673,7 @@ Rules that apply to every task:
     - _Requirements: 3.6, 3.7, 13.5, 13.6, 13.10, 14.24, 21.7_
 
 - [ ] 16. Samples: admit `mask_reapply` and `click_block`
-  - Commit area: `Samples`. Verification V1. Both are `MIT OR Apache-2.0` with MIT chosen. This admission comes after Task 14 and Task 15. Decided O4 (changed) and F19 apply to `mask_reapply`: its root class `Main` assigns `maskee1.mask = mask1` (TS2339, the Shim has no `mask`, Requirement 12.7) and reads `maskee1` before the Player binds it. The TS2339 is a type error, so `Main` is a Loose_Class, stays registered under the key `Main` and has no `class-omitted` entry; the `Main`/`main` collision is repaired by Emit (Requirement 6) and is not a Class_Failure (Requirements 6.6, 23.2). Its constructor probably throws at run time, in which case the Replay keeps the lines captured before the throw and records a `replay-error` Problem, and the Trace_Score is probably 0 with `Masks reapplied` missing (design 19.6; not measured). The Overall_Match is not affected.
+  - Commit area: `Samples`. Verification V1. Both are `MIT OR Apache-2.0` with MIT chosen. This admission comes after Task 14 and Task 15. Decided O4 (changed) and F19 apply to `mask_reapply`: its root class `Main` assigns `maskee1.mask = mask1` (TS2339, the Shim has no `mask`, Requirement 12.7) and, before Task 21, read `maskee1` before the Player bound it (Amended after Checkpoint 9: Task 21 binds the children before the constructor runs). The TS2339 is a type error, so `Main` is a Loose_Class, stays registered under the key `Main` and has no `class-omitted` entry; the `Main`/`main` collision is repaired by Emit (Requirement 6) and is not a Class_Failure (Requirements 6.6, 23.2). Amended after Checkpoint 9: Tasks 21 and 22 make the constructor run past `maskee1` and catch any remaining throw as a Caught_Error (a `runtime-error` Problem, the Replay keeps ticking), so the expectation that the Trace_Score is 0 no longer holds; the value is what Task 27 reports (design 19.6 and 21.3). The Overall_Match is not affected.
   - [ ] 16.1 `mask_reapply`: files, PROVENANCE.md and fixtures
     - Copy `test.swf` unmodified into `samples/mask_reapply/` (SHA-256 `8146cb4de7e39bdb2d4ee418e90d65509d4b3afa246b899ac3260abfa6ac41c7`), the reference files unchanged (no `input.json`; `test.toml` sets `num_ticks = 1`), `PROVENANCE.md` (MIT, pointer, fonts, SHA-256, reason) and `test/fixtures/mask_reapply/` with the structure dump, the symbol list and the original `Main.as` as the fixture class source (as `test/fixtures/clickgoto/` holds its classes).
     - Test: `test/unit/provenance.test.ts` and fixture rows; a row in `test/unit/emit.test.ts` that the real fixture emits `src/Main.class.ts`.
@@ -665,14 +803,15 @@ Rules that apply to every task:
 ## Notes
 
 - All tests in this plan are required. There are no `*` markers and no optional test tasks (Requirement 15.3). Each Core function's test is in the sub-task that adds it. A sub-task whose evidence is a recorded measurement (3.5, 3.6, 4.7, 5.10, 6.7, 7.10, 8.7 for SC, 10.13, 11.9, 12.8, 19.3) names the test or floor that guards it.
-- Top-level tasks (19) and checkpoints: 1 Samples: licence texts; 2 **Checkpoint: confirm approved samples**; 3 Convert: crash fixes and baseline; 4 Translate and Emit: class-failure fallback; 5 Translate: package-qualified classes; 6 Shim: Stage_Object, pointer constants and Player pointer entry points; 7 Pipeline: Replay; 8 Translate: implicit `this`; 9 **Checkpoint: crashes and package-qualified classes fixed**; 10 Runtime: Shape_JSON render path; 11 Runtime: drawing of strokes, gradients, bitmap fills and colour offsets; 12 Convert: text, filters, blend modes and masks; 13 Pipeline: residual attribution; 14 **Checkpoint: rendering done**; 15 Samples: `radial`, `gradients`, `acid-color-2`; 16 Samples: `mask_reapply`, `click_block`; 17 Samples: `3_joystick`, `slider_component`, fetched `static_text`; 18 **Checkpoint: browser review of fidelity-report.html**; 19 Steering and final summary. Exactly four checkpoint tasks, none with a decision question; checkpoint tasks are not in the dependency graph, so the task runner must stop at them in the order above.
+- Top-level tasks (27) and checkpoints: 1 Samples: licence texts; 2 **Checkpoint: confirm approved samples**; 3 Convert: crash fixes and baseline; 4 Translate and Emit: class-failure fallback; 5 Translate: package-qualified classes; 6 Shim: Stage_Object, pointer constants and Player pointer entry points; 7 Pipeline: Replay; 8 Translate: implicit `this`; 9 **Checkpoint: crashes and package-qualified classes fixed**; (robustness group, added after Checkpoint 9, placed here in the file and run before 10:) 20 Translate: three small fixes; 21 Runtime and Translate: Construction_Bind and method-value binds; 22 Runtime and Pipeline: Caught_Errors; 23 Emit and Pipeline: Bundler_Guard and survival rules; 24 Shim and Translate: AS3 interfaces; 25 Runtime: instance printing and default names; 26 Shim and Runtime: mouse flags, Hit_Target and `formatToString`; 27 **Checkpoint: robustness group**; 10 Runtime: Shape_JSON render path; 11 Runtime: drawing of strokes, gradients, bitmap fills and colour offsets; 12 Convert: text, filters, blend modes and masks; 13 Pipeline: residual attribution; 14 **Checkpoint: rendering done**; 15 Samples: `radial`, `gradients`, `acid-color-2`; 16 Samples: `mask_reapply`, `click_block`; 17 Samples: `3_joystick`, `slider_component`, fetched `static_text`; 18 **Checkpoint: browser review of fidelity-report.html**; 19 Steering and final summary. Exactly five checkpoint tasks (2, 9, 27, 14 and 18, in the order of execution), none with a decision question; checkpoint tasks are not in the dependency graph, so the task runner must stop at them in the order above.
 - Order constraints: Task 4 (class fallback) before Task 5 (the first task that lets a package class with a translated source reach `src/classes.ts`; Requirements 23.8, 18.8). Task 6 (Stage_Object, `mouseX`, `mouseY`, pointer constants) before Task 8 (the generated Shim_Member_Table must contain them). Task 5 (Qualified_Names) before Task 8 (rule 3 follows `extends` across packages; Requirement 22.12). Tasks 4, 5 and 8 and the checkpoint of Task 9 before any admission (Requirement 18.12); Task 14 before any admission. Task 7 before Tasks 16 and 17 (empty-input Replay for `mask_reapply` and `static_text`; a throwing Replay is `compared`). Task 10 introduces the Shape_Function with `DRAWN_FILLS` all false, and Task 11 flips the three flags one by one. The Fetch_Script (sub-tasks 17.7 to 17.13) is the last admission group because `static_text` is the only fetched sample.
+- Order constraints of the robustness group: Tasks 20 to 27 run after Task 9 and before Task 10. Task 21.1 before 22.3 (both change `Player.createClip`; the partial instance of 22.3 is `ctx.instance` set in 21.1). Task 21.1 before 25.2 (the counter is taken at the start of the `MovieClip` constructor that 21.1 makes build the children). Task 22.1 before 22.2, 22.3 and 22.5 (the sink). Task 23 before Task 24 (survival rules before the interface export). Task 26.1 before 26.2 and 26.3. Task 27 stops for the user.
 - Forward mentions that are not dependencies: sub-task 5.9 states that Requirement 6.6 (`mask_reapply` real fixture) is verified in 16.2 when the SWF is admitted; sub-task 10.5 leaves cap measurement to 11.1; sub-task 7.4 keeps SVG-based shape bounds until 10.12 switches them to Scene_JSON `size`; floors for `radial`, `gradients` and `acid-color-2` are measured in 11.3 and 11.7 on local copies and committed in 15.3 and 15.6 (Overall_Match floors only; the three samples have an Empty_Reference_Trace and no Trace_Score floor).
 - Decided items (no open item remains; each is built where listed and its measured effect is reported as information at Checkpoints 9, 14 and 18 and in the final summary): O1 Task 8 (8.4, 8.5, 8.7); O2 Task 8 (8.4); O3 Task 8 (8.6, Property 44) and Task 17 (56 references in `slider_component`); O4 Task 4 (4.1 to 4.7), Task 16 (`mask_reapply` `Main` stays registered) and Task 17 (`fl.*` Loose_Classes); O5 Task 7 (7.8); O6 Task 7 (7.8, 7.9); O7 Task 4 (4.5); O8 rules (V2 list, from 8.2); O9 Task 7 (7.8, 7.9) and Task 15 (15.3, 15.6). F19 Task 5 (5.8, 5.9); F20 Task 7 (7.9); F21 Task 4 (4.5).
 - Requirement 15.5 test map: Convert no-abort and drop-count (3.4); unique lower-case paths (5.6); package-tree property and example tests (5.7, 5.9); Stage_Object tests (6.3, 6.4, 6.5); Fetch_Script tests (17.7, 17.8); `release-outside` and `unpaired-mouse-event` tests (7.3, 7.6); Shape_Function determinism (10.4; idempotence does not apply) and Shape_JSON round trip (10.1); Named_Limit order (10.8, 10.9); mask range resolution (12.5, 12.7); pointer-event planning and replay tests (6.5, 7.3, 7.4); `parseNumFrames` tests (7.1); Replay failure tests (7.8); empty-input tests (7.9); Implicit_This_Resolution property tests (8.3 to 8.6); Shim_Member_Table drift test (8.2); registry-omission tests (4.1 to 4.6); Overall_Match and Trace_Score floor tests (15 to 17).
-- Property map (design Correctness Properties): P1, P2 sub-task 10.1; P3 10.4 and 10.8; P4 10.5, extended in 10.6 and 10.7; P5 10.3; P6 10.2; P7 11.2; P8 11.6; P9 10.9, extended in 11.8; P10 3.4, extended in 12.2 and 12.4; P11 5.6; P12 12.5 (layout) and 12.7 (classification); P13 10.10; P14 and P15 7.3; P16 7.1; P17 6.5; P18 6.2; P19 10.7; P20 5.1; P21 and P23 5.7; P22 5.4; P24 6.3 and 6.5; P25 7.6; P26 13.1; P27 13.2; P28 and P29 17.7; P30, P31, P32 and P33 8.4; P34 8.3; P35, P36 and P43 8.5; P37 8.1; P38 4.2; P39 4.3; P40 7.9; P41 7.8; P44 8.6; P42 10.6, extended in 10.7 and re-run in 11.2, 11.3 and 11.4.
-- Requirement map: Req 1 rules (score integrity, CC) and 7.10, 10.13, 17.14; Req 2 10.4 to 10.9, 10.11, 10.12, 11.2 to 11.4; Req 3 Tasks 1, 2, 15, 16, 17; Req 4 3.1, 3.2, 3.5; Req 5 3.3, 3.4; Req 6 5.6 to 5.9, 16.2; Req 7 Task 10 (7.1 to 7.6 and 7.12 are design records, confirmed at Checkpoint 14; 7.8 does not apply, see 10.4); Req 8 10.6, 11.2, 11.3; Req 9 10.7, 11.4, 11.5; Req 10 10.3, 12.1, 12.2, 17.12; Req 11 12.2; Req 12 12.5 to 12.8; Req 13 10.5, 11.1, 11.6 to 11.8, 12.3, 12.4; Req 14 Tasks 6 and 7, 17.9; Req 15 rules and every Core sub-task; Req 16 Tasks 2, 9, 14, 18; Req 17 design only (no code task; confirmed at Checkpoint 14); Req 18 Task 5 and 17.5; Req 19 Task 6; Req 20 17.7 to 17.13; Req 21 Task 13 and the residual steps of Tasks 15 to 17; Req 22 Task 8; Req 23 Task 4, 5.10, 8.7 and the SC measurements.
-- Design coverage (every numbered design section, and where each is implemented):
+- Property map (design Correctness Properties): P1, P2 sub-task 10.1; P3 10.4 and 10.8; P4 10.5, extended in 10.6 and 10.7; P5 10.3; P6 10.2; P7 11.2; P8 11.6; P9 10.9, extended in 11.8; P10 3.4, extended in 12.2 and 12.4; P11 5.6; P12 12.5 (layout) and 12.7 (classification); P13 10.10; P14 and P15 7.3; P16 7.1; P17 6.5; P18 6.2; P19 10.7; P20 5.1; P21 and P23 5.7; P22 5.4; P24 6.3 and 6.5; P25 7.6; P26 13.1; P27 13.2; P28 and P29 17.7; P30, P31, P32 and P33 8.4; P34 8.3; P35, P36 and P43 8.5; P37 8.1; P38 4.2; P39 4.3; P40 7.9; P41 7.8; P44 8.6, amended in 21.2; P42 10.6, extended in 10.7 and re-run in 11.2, 11.3 and 11.4; robustness group: P54 20.1; P55 20.2; P56 20.3; P45 21.1; P46 21.2; P47 22.3; P48 22.5; P49 23.1; P50 24.1 and 24.2; P52 25.1; P51 25.2; P53 26.2.
+- Requirement map: Req 1 rules (score integrity, CC) and 7.10, 10.13, 17.14; Req 2 10.4 to 10.9, 10.11, 10.12, 11.2 to 11.4; Req 3 Tasks 1, 2, 15, 16, 17; Req 4 3.1, 3.2, 3.5; Req 5 3.3, 3.4; Req 6 5.6 to 5.9, 16.2; Req 7 Task 10 (7.1 to 7.6 and 7.12 are design records, confirmed at Checkpoint 14; 7.8 does not apply, see 10.4); Req 8 10.6, 11.2, 11.3; Req 9 10.7, 11.4, 11.5; Req 10 10.3, 12.1, 12.2, 17.12; Req 11 12.2; Req 12 12.5 to 12.8; Req 13 10.5, 11.1, 11.6 to 11.8, 12.3, 12.4; Req 14 Tasks 6 and 7, 17.9; Req 15 rules and every Core sub-task; Req 16 Tasks 2, 9, 14, 18; Req 17 design only (no code task; confirmed at Checkpoint 14); Req 18 Task 5 and 17.5; Req 19 Task 6; Req 20 17.7 to 17.13; Req 21 Task 13 and the residual steps of Tasks 15 to 17; Req 22 Task 8; Req 23 Task 4, 5.10, 8.7 and the SC measurements, amended by Tasks 22 (23.11) and 23 (23.1 to 23.3, 23.7); Req 24 Task 21; Req 25 Task 22; Req 26 Task 23; Req 27 Task 24; Req 28 Task 25; Req 29 Task 26; Req 30 Task 20; Req 31 the group rules and Task 27; Req 16.6 Task 27.
+- Design coverage (every numbered design section, and where each is implemented; section 21 and decisions D24 to D37 are the robustness group: 21.1 in 21.1 and 21.3; 21.2 in 21.2; 21.3 in Task 22; 21.4 in Task 23; 21.5 in Task 24; 21.6 in Task 25; 21.7 in Task 26; 21.8 in Task 20; 21.9 is the list of files that those sub-tasks name; D24 21.1; D25 21.2; D26 to D28 Task 22; D29, D30 Task 23; D31 to D33 Task 24; D34, D35 Task 25; D36 Task 26; D37 Task 20):
   - Section 1 Render path selection: decision D1 is built by Task 10 and its condition (Requirement 7.11) is checked at 10.13; the probe tables and Pixi source facts are records with no code task.
   - Section 2 Shape_JSON and the Shape_Function (with "Fills before they are drawn"): Task 10. Section 3 Drawing in Pixi: 10.12 and Task 11. Section 4 Colour offsets: 11.6 to 11.8 (alpha add term, F16). Section 5 Masks: 10.10 (`clipDepth` field), 12.5 to 12.8.
   - Section 6 Unpack: 3.1 (no SymbolClass) and 12.1 (`texts/`). Section 7 Convert: 3.3, 3.4, 10.11, 12.2, 12.4. Section 8 Emit class paths over packages: 5.5 (import records) and 5.6 to 5.9.
@@ -681,7 +820,7 @@ Rules that apply to every task:
   - Data Models: Scene_JSON v2 10.10; assets 10.11 and 11.5; limit kinds 3.3, 4.1 and 10.9; Replay and report fields Task 7; class and path models Tasks 4 and 5; third-pass models 8.1 to 8.5 and 4.1; the residual register 13.2. Decisions D1 to D21: D1 Task 10; D2 10.10; D3 12.2; D4 Task 12; D5 11.6 to 11.8; D6 Tasks 6 and 7; D7 and D10 Task 5; D8 Task 11; D9 10.3 and 10.12; D11 superseded by D16 to D18 (Task 8); D12 Task 17; D13 Task 13; D14 12.4; D15 6.5 and 7.5; D17 8.1, 8.2; D18 8.6; D19 4.4 and 4.5; D20 7.8, 7.9; D22 7.8, 7.9; D23 4.1; D21 10.1, 10.6, 10.7, Task 11.
   - Error Handling table: each row is covered by the sub-task that builds the behaviour. Testing Strategy: the per-function test table is distributed over the sub-tasks named in the property map; the score floors are Tasks 15 to 17; the static Core grep is 5.1.
   - Findings and decisions: F1 to F18 and O1 to O9 are decided and built where listed in the Overview; F19 is built in 5.8 and tested in 5.9, F20 in 7.9 and F21 in 4.5. No design section is without a task. Sections 1, 14.4, 14.5 and the Measurements sections are records of values and have no code task of their own.
-- The Task Dependency Graph runs one leaf task per wave in the numeric order of this document. One top-level task is one commit and the sub-tasks of a commit share files, so no two leaf tasks run in parallel. Checkpoint tasks and top-level parent tasks are not in the graph.
+- The Task Dependency Graph runs one leaf task per wave in the order of this document (the leaves of the robustness group, Tasks 20 to 26, come between 8.7 and 10.1; wave ids are not task ids and were renumbered to stay contiguous). One top-level task is one commit and the sub-tasks of a commit share files, so no two leaf tasks run in parallel. Checkpoint tasks and top-level parent tasks are not in the graph.
 
 ## Task Dependency Graph
 
@@ -738,68 +877,94 @@ Rules that apply to every task:
     { "id": 47, "tasks": ["8.5"] },
     { "id": 48, "tasks": ["8.6"] },
     { "id": 49, "tasks": ["8.7"] },
-    { "id": 50, "tasks": ["10.1"] },
-    { "id": 51, "tasks": ["10.2"] },
-    { "id": 52, "tasks": ["10.3"] },
-    { "id": 53, "tasks": ["10.4"] },
-    { "id": 54, "tasks": ["10.5"] },
-    { "id": 55, "tasks": ["10.6"] },
-    { "id": 56, "tasks": ["10.7"] },
-    { "id": 57, "tasks": ["10.8"] },
-    { "id": 58, "tasks": ["10.9"] },
-    { "id": 59, "tasks": ["10.10"] },
-    { "id": 60, "tasks": ["10.11"] },
-    { "id": 61, "tasks": ["10.12"] },
-    { "id": 62, "tasks": ["10.13"] },
-    { "id": 63, "tasks": ["11.1"] },
-    { "id": 64, "tasks": ["11.2"] },
-    { "id": 65, "tasks": ["11.3"] },
-    { "id": 66, "tasks": ["11.4"] },
-    { "id": 67, "tasks": ["11.5"] },
-    { "id": 68, "tasks": ["11.6"] },
-    { "id": 69, "tasks": ["11.7"] },
-    { "id": 70, "tasks": ["11.8"] },
-    { "id": 71, "tasks": ["11.9"] },
-    { "id": 72, "tasks": ["12.1"] },
-    { "id": 73, "tasks": ["12.2"] },
-    { "id": 74, "tasks": ["12.3"] },
-    { "id": 75, "tasks": ["12.4"] },
-    { "id": 76, "tasks": ["12.5"] },
-    { "id": 77, "tasks": ["12.6"] },
-    { "id": 78, "tasks": ["12.7"] },
-    { "id": 79, "tasks": ["12.8"] },
-    { "id": 80, "tasks": ["13.1"] },
-    { "id": 81, "tasks": ["13.2"] },
-    { "id": 82, "tasks": ["13.3"] },
-    { "id": 83, "tasks": ["15.1"] },
-    { "id": 84, "tasks": ["15.2"] },
-    { "id": 85, "tasks": ["15.3"] },
-    { "id": 86, "tasks": ["15.4"] },
-    { "id": 87, "tasks": ["15.5"] },
-    { "id": 88, "tasks": ["15.6"] },
-    { "id": 89, "tasks": ["16.1"] },
-    { "id": 90, "tasks": ["16.2"] },
-    { "id": 91, "tasks": ["16.3"] },
-    { "id": 92, "tasks": ["16.4"] },
-    { "id": 93, "tasks": ["16.5"] },
-    { "id": 94, "tasks": ["16.6"] },
-    { "id": 95, "tasks": ["17.1"] },
-    { "id": 96, "tasks": ["17.2"] },
-    { "id": 97, "tasks": ["17.3"] },
-    { "id": 98, "tasks": ["17.4"] },
-    { "id": 99, "tasks": ["17.5"] },
-    { "id": 100, "tasks": ["17.6"] },
-    { "id": 101, "tasks": ["17.7"] },
-    { "id": 102, "tasks": ["17.8"] },
-    { "id": 103, "tasks": ["17.9"] },
-    { "id": 104, "tasks": ["17.10"] },
-    { "id": 105, "tasks": ["17.11"] },
-    { "id": 106, "tasks": ["17.12"] },
-    { "id": 107, "tasks": ["17.13"] },
-    { "id": 108, "tasks": ["17.14"] },
-    { "id": 109, "tasks": ["19.1"] },
-    { "id": 110, "tasks": ["19.2"] },
-    { "id": 111, "tasks": ["19.3"] }
+    { "id": 50, "tasks": ["20.1"] },
+    { "id": 51, "tasks": ["20.2"] },
+    { "id": 52, "tasks": ["20.3"] },
+    { "id": 53, "tasks": ["21.1"] },
+    { "id": 54, "tasks": ["21.2"] },
+    { "id": 55, "tasks": ["21.3"] },
+    { "id": 56, "tasks": ["22.1"] },
+    { "id": 57, "tasks": ["22.2"] },
+    { "id": 58, "tasks": ["22.3"] },
+    { "id": 59, "tasks": ["22.4"] },
+    { "id": 60, "tasks": ["22.5"] },
+    { "id": 61, "tasks": ["22.6"] },
+    { "id": 62, "tasks": ["23.1"] },
+    { "id": 63, "tasks": ["23.2"] },
+    { "id": 64, "tasks": ["23.3"] },
+    { "id": 65, "tasks": ["23.4"] },
+    { "id": 66, "tasks": ["24.1"] },
+    { "id": 67, "tasks": ["24.2"] },
+    { "id": 68, "tasks": ["24.3"] },
+    { "id": 69, "tasks": ["24.4"] },
+    { "id": 70, "tasks": ["25.1"] },
+    { "id": 71, "tasks": ["25.2"] },
+    { "id": 72, "tasks": ["25.3"] },
+    { "id": 73, "tasks": ["26.1"] },
+    { "id": 74, "tasks": ["26.2"] },
+    { "id": 75, "tasks": ["26.3"] },
+    { "id": 76, "tasks": ["10.1"] },
+    { "id": 77, "tasks": ["10.2"] },
+    { "id": 78, "tasks": ["10.3"] },
+    { "id": 79, "tasks": ["10.4"] },
+    { "id": 80, "tasks": ["10.5"] },
+    { "id": 81, "tasks": ["10.6"] },
+    { "id": 82, "tasks": ["10.7"] },
+    { "id": 83, "tasks": ["10.8"] },
+    { "id": 84, "tasks": ["10.9"] },
+    { "id": 85, "tasks": ["10.10"] },
+    { "id": 86, "tasks": ["10.11"] },
+    { "id": 87, "tasks": ["10.12"] },
+    { "id": 88, "tasks": ["10.13"] },
+    { "id": 89, "tasks": ["11.1"] },
+    { "id": 90, "tasks": ["11.2"] },
+    { "id": 91, "tasks": ["11.3"] },
+    { "id": 92, "tasks": ["11.4"] },
+    { "id": 93, "tasks": ["11.5"] },
+    { "id": 94, "tasks": ["11.6"] },
+    { "id": 95, "tasks": ["11.7"] },
+    { "id": 96, "tasks": ["11.8"] },
+    { "id": 97, "tasks": ["11.9"] },
+    { "id": 98, "tasks": ["12.1"] },
+    { "id": 99, "tasks": ["12.2"] },
+    { "id": 100, "tasks": ["12.3"] },
+    { "id": 101, "tasks": ["12.4"] },
+    { "id": 102, "tasks": ["12.5"] },
+    { "id": 103, "tasks": ["12.6"] },
+    { "id": 104, "tasks": ["12.7"] },
+    { "id": 105, "tasks": ["12.8"] },
+    { "id": 106, "tasks": ["13.1"] },
+    { "id": 107, "tasks": ["13.2"] },
+    { "id": 108, "tasks": ["13.3"] },
+    { "id": 109, "tasks": ["15.1"] },
+    { "id": 110, "tasks": ["15.2"] },
+    { "id": 111, "tasks": ["15.3"] },
+    { "id": 112, "tasks": ["15.4"] },
+    { "id": 113, "tasks": ["15.5"] },
+    { "id": 114, "tasks": ["15.6"] },
+    { "id": 115, "tasks": ["16.1"] },
+    { "id": 116, "tasks": ["16.2"] },
+    { "id": 117, "tasks": ["16.3"] },
+    { "id": 118, "tasks": ["16.4"] },
+    { "id": 119, "tasks": ["16.5"] },
+    { "id": 120, "tasks": ["16.6"] },
+    { "id": 121, "tasks": ["17.1"] },
+    { "id": 122, "tasks": ["17.2"] },
+    { "id": 123, "tasks": ["17.3"] },
+    { "id": 124, "tasks": ["17.4"] },
+    { "id": 125, "tasks": ["17.5"] },
+    { "id": 126, "tasks": ["17.6"] },
+    { "id": 127, "tasks": ["17.7"] },
+    { "id": 128, "tasks": ["17.8"] },
+    { "id": 129, "tasks": ["17.9"] },
+    { "id": 130, "tasks": ["17.10"] },
+    { "id": 131, "tasks": ["17.11"] },
+    { "id": 132, "tasks": ["17.12"] },
+    { "id": 133, "tasks": ["17.13"] },
+    { "id": 134, "tasks": ["17.14"] },
+    { "id": 135, "tasks": ["19.1"] },
+    { "id": 136, "tasks": ["19.2"] },
+    { "id": 137, "tasks": ["19.3"] }
   ]
 }
 ```
