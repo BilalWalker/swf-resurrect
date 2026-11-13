@@ -329,11 +329,11 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - In `src/translate/rewrite.ts` give `parseType` access to `resolveClassName` (the function the expression rewriter uses). A dotted annotation such as `var g:lib.util.Helper` whose Qualified_Name has a source is written as the binding and adds a forced import through the mechanism of design 18.5; without a source it stays as written. Commit message: `Translate: resolve dotted type annotations (20.1)`.
     - Test: `test/property/translateFixes.property.test.ts` (create), **Property 54: A dotted type annotation resolves through the import plan** (generator `test/property/gen/genClassContext.ts` extended with dotted annotations in variable, parameter, return and field positions). Example in `test/unit/translatePackages.test.ts`: the `var g:lib.util.Helper` case through `planTranslate` and the real gate gives no TS2503.
     - _Requirements: 30.1, 30.4, 30.5, 31.3_
-  - [-] 20.2 `selfKey` without the stray parenthesis
+  - [x] 20.2 `selfKey` without the stray parenthesis
     - In `src/translate/rewrite.ts` (about line 340) return `${pkg}.${className}` (or `className` for the unnamed package) for a secondary class in a packaged file. Commit message: `Translate: fix selfKey for secondary classes (20.2)`.
     - Test: **Property 55: `selfKey` is the qualified name** in `test/property/translateFixes.property.test.ts`; example in `test/unit/translatePackages.test.ts`: a packaged file with a secondary class resolves a reference to it with no stray `(`.
     - _Requirements: 30.2, 30.4, 30.5, 31.3_
-  - [~] 20.3 A forced import left behind by a rolled-back statement
+  - [-] 20.3 A forced import left behind by a rolled-back statement
     - In `src/translate/emitTs.ts` and `rewrite.ts` record forced imports in an array whose length is saved in the `mark` of the statement rollback (the place that truncates `lines` and `spans`), and truncate it on rollback, so that the dry pass of 8.5 leaves no unused import. Commit message: `Translate: drop forced imports of rolled-back statements (20.3)`.
     - Test: **Property 56: A rolled-back statement leaves no forced import** in `test/property/translateFixes.property.test.ts`; example in `test/unit/implicitThis.test.ts`: an inherited static used only inside a statement that falls back to `// AS3:` comments adds no import.
     - Run SC after 20.3 and state the Overall_Match before and after in the commit message; run `test/unit/clickgotoEmit.test.ts`.

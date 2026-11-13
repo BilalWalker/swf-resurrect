@@ -74,6 +74,12 @@ export interface Rewriter {
    * fields are emitted as written.
    */
   fieldDefault?(type: TokenSlice | null): string | null;
+  /** Length of the forced-import list; saved in a statement's rollback mark. */
+  forcedMark?(): number;
+  /** Truncate the forced-import list to a length from `forcedMark`. */
+  forcedRollback?(mark: number): void;
+  /** Classes that expressions kept so far want imported, in source order. */
+  forcedTargets?(): readonly string[];
 }
 
 /** Copies source text unchanged. Used until rewrite.ts exists, and in tests. */
@@ -296,7 +302,7 @@ class Emitter {
       default:
         break;
     }
-    const mark = { l: this.lines.length, s: this.spans.length, d: this.diags.length };
+    const mark = { l: this.lines.length, s: this.spans.length, d: this.diags.length, f: this.rw.forcedMark?.() ?? 0 };
     try {
       this.supported(n, d, cls, prefix);
     } catch (e) {
@@ -304,6 +310,7 @@ class Emitter {
       this.lines.length = mark.l;
       this.spans.length = mark.s;
       this.diags.length = mark.d;
+      this.rw.forcedRollback?.(mark.f);
       this.unsupported(n, e.reason, d, prefix);
       return;
     }
@@ -385,7 +392,7 @@ class Emitter {
 
   /** Emit the constructor with a replaced body, with the same rollback rule as `node`. */
   private node2(m: Node, d: number, cls: ClassNode, plan: BodyItem[]): void {
-    const mark = { l: this.lines.length, s: this.spans.length, d: this.diags.length };
+    const mark = { l: this.lines.length, s: this.spans.length, d: this.diags.length, f: this.rw.forcedMark?.() ?? 0 };
     try {
       this.functionNode(m as MethodNode, d, cls, plan);
     } catch (e) {
@@ -393,6 +400,7 @@ class Emitter {
       this.lines.length = mark.l;
       this.spans.length = mark.s;
       this.diags.length = mark.d;
+      this.rw.forcedRollback?.(mark.f);
       this.unsupported(m, e.reason, d, '');
     }
   }

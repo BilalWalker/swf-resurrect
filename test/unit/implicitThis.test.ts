@@ -264,3 +264,32 @@ describe("fixture lines through the real gate (Requirement 22.10)", () => {
     expect(errors.filter((e) => FORBIDDEN.has(e.code))).toEqual([]);
   });
 });
+
+// ---- Requirement 30.3: a rolled-back statement leaves no forced import (20.3) ----------------
+describe("forced imports and statement rollback", () => {
+  const base = { className: "fl.core.UIComponent", source: UI[1] };
+  const mid = {
+    className: "fl.core.Mid",
+    source: "package fl.core { public class Mid extends UIComponent {} }",
+  };
+  const leaf = (body: string) => ({
+    className: "fl.controls.Leaf",
+    source: `package fl.controls { import fl.core.Mid; public class Leaf extends Mid { public function go():void { ${body} } } }`,
+  });
+  const text = (body: string): string =>
+    planTranslate([base, mid, leaf(body)], scene(["fl.controls.Leaf"]), tsSyntaxCheck).classes.find(
+      (c) => c.className === "fl.controls.Leaf",
+    )!.text;
+
+  it("imports the declaring class when the inherited static is used in a kept statement", () => {
+    const t = text("mergeStyles();");
+    expect(t).toContain("UIComponent.mergeStyles()");
+    expect(t).toMatch(/^import \{ UIComponent \}/m);
+  });
+
+  it("adds no import when the only user falls back to // AS3: comments", () => {
+    const t = text("for (var i:int = mergeStyles(); int(); i++) {}");
+    expect(t).toContain("// AS3:");
+    expect(t).not.toMatch(/^import .*UIComponent/m);
+  });
+});

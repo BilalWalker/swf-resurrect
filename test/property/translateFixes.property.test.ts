@@ -2,7 +2,9 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { SHIM_AS3_NAMES } from "../../src/translate/shimNames";
 import { selfKey } from "../../src/translate/rewrite";
+import { planTranslate } from "../../src/translate/planTranslate";
 import { translateCore } from "../../src/translate/translate";
+import { tsSyntaxCheck } from "../../src/translate/tsSyntaxCheck";
 import { fcConfig } from "./config";
 import { genDottedAnnotationCase } from "./gen/genClassContext";
 
@@ -70,6 +72,49 @@ describe("Property 55: selfKey is the qualified name", () => {
         expect(key.startsWith("(")).toBe(false);
         expect(selfKey(`${p}.${main}`, main)).toBe(`${p}.${main}`);
         expect(selfKey(main, other)).toBe(other);
+      }),
+      fcConfig,
+    );
+  });
+});
+
+describe("Property 56: A rolled-back statement leaves no forced import", () => {
+  const klass = fc.stringMatching(/^[A-Z][a-z]{2,6}$/);
+  const member = fc.stringMatching(/^[a-z][a-z]{2,6}$/);
+  /** Statements that fall back to // AS3: comments after their first expression was rewritten. */
+  const unsupported = (m: string): readonly string[] => [
+    `for (var i:int = ${m}(); int(); i++) {}`,
+    `for (var i:int = ${m}(); i < int(); i++) {}`,
+    `${m}(int());`,
+  ];
+  const genCase = fc
+    .record({ a: klass, c: klass, m: member, which: fc.nat({ max: 2 }), kept: fc.boolean() })
+    .filter((x) => new Set([x.a, x.c, "Leaf"]).size === 3);
+
+  /** **Validates: Requirements 30.3, 30.5** */
+  it("imports the declaring class only when a kept statement uses the inherited static", () => {
+    fc.assert(
+      fc.property(genCase, (x) => {
+        const body = (x.kept ? `${x.m}(); ` : "") + unsupported(x.m)[x.which];
+        const sources = [
+          {
+            className: `p.${x.a}`,
+            source: `package p { import flash.display.Sprite; public class ${x.a} extends Sprite { public static function ${x.m}():int { return 1; } } }`,
+          },
+          { className: `p.${x.c}`, source: `package p { public class ${x.c} extends ${x.a} {} }` },
+          {
+            className: "q.Leaf",
+            source: `package q { import p.${x.c}; public class Leaf extends ${x.c} { public function go():void { ${body} } } }`,
+          },
+        ];
+        const scene = {
+          formatVersion: 1,
+          rootSymbolId: 0,
+          symbols: { "0": { type: "sprite", frames: [], labels: {}, className: "q.Leaf" } },
+        } as never;
+        const text = planTranslate(sources, scene, tsSyntaxCheck).classes.find((c) => c.className === "q.Leaf")!.text;
+        expect(text).toContain("// AS3:");
+        expect(new RegExp(`^import \{ ${x.a} \}`, "m").test(text)).toBe(x.kept);
       }),
       fcConfig,
     );

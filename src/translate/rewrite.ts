@@ -72,13 +72,24 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
   const bindingOfTarget = new Map<QualifiedName, string>();
   for (const p of options.plan.imports) bindingOfTarget.set(p.target, p.binding);
   const env: ExprEnv = { options, classNames, bindingOf: (q) => bindingOfTarget.get(q) ?? null };
+  // Forced imports in source order; the statement rollback of emitTs truncates it (design 21.8).
+  const forced: QualifiedName[] = [];
   return {
+    forcedMark: () => forced.length,
+    forcedRollback: (n: number) => {
+      forced.length = Math.min(forced.length, n);
+    },
+    forcedTargets: () => forced,
     expression(slice: TokenSlice, ctx: RewriteContext): RewriteResult {
       const toks = sigTokens(slice);
       if (toks.length === 0) return { text: '' };
       const rw = new ExprRewriter(slice.source, toks, env, ctx.locals ?? EMPTY_SET, ctx.member ?? null);
       try {
         const text = rw.run();
+        for (const target of rw.importTargets) {
+          forced.push(target);
+          options.onImportTarget?.(target);
+        }
         if (ctx.member !== undefined && options.onMethodValue !== undefined) {
           for (const name of rw.methodValues) options.onMethodValue(ctx.member.className, name);
         }
@@ -394,6 +405,8 @@ class ExprRewriter {
   readonly diags: Diagnostic[] = [];
   /** Methods this expression uses as values, in source order (Requirement 22.13). */
   readonly methodValues: string[] = [];
+  /** Classes this expression wants imported; kept only when the expression is not unsupported. */
+  readonly importTargets: string[] = [];
 
   constructor(
     private readonly src: string,
@@ -496,7 +509,7 @@ class ExprRewriter {
         this.diags.push(r.diagnostic);
         return t.text;
       default:
-        if (r.importTarget !== null) this.opts.onImportTarget?.(r.importTarget);
+        if (r.importTarget !== null) this.importTargets.push(r.importTarget);
         if (isBindableMethod(r.found) && this.isValuePosition(i + 1)) this.methodValues.push(t.text);
         return r.text;
     }

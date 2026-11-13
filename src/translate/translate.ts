@@ -173,21 +173,18 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   // Forced imports (design 18.5): a dry resolution pass collects the classes the rules want
   // imported (the declaring class of an inherited static); when one is not bound yet the plan
   // is made again with those targets forced, and the rewriting pass uses the final plan.
-  const wanted = new Set<string>();
   const values = new Map<string, string[]>();
-  emitTs(nodes, {
-    source: src,
-    tokens,
-    rewriter: createRewriter(nodes, {
-      shimNames: options.shimNames, plan, tables, self: options.selfQualified,
-      onImportTarget: (t) => wanted.add(t),
-      onMethodValue: (cls, name) => {
-        const list = values.get(cls) ?? [];
-        if (!list.includes(name)) list.push(name);
-        values.set(cls, list);
-      },
-    }),
+  const dryRewriter = createRewriter(nodes, {
+    shimNames: options.shimNames, plan, tables, self: options.selfQualified,
+    onMethodValue: (cls, name) => {
+      const list = values.get(cls) ?? [];
+      if (!list.includes(name)) list.push(name);
+      values.set(cls, list);
+    },
   });
+  emitTs(nodes, { source: src, tokens, rewriter: dryRewriter });
+  // Only imports of statements the dry pass kept count; a rolled-back statement left none (design 21.8).
+  const wanted = new Set<string>(dryRewriter.forcedTargets?.() ?? []);
   // The dry pass found which methods are used as values; the binds follow declaration order.
   const dot = options.selfQualified.lastIndexOf('.');
   const selfSimple = options.selfQualified.slice(dot + 1);
