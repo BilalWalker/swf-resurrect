@@ -3,7 +3,7 @@ import type { DisplayListEntry, SpriteSymbol } from '../runtime/scene';
 import type { DisplayObject } from './DisplayObject';
 import { Event } from './events';
 import type { MovieClip } from './MovieClip';
-import type { DisplayObjectContainer } from './Sprite';
+import type { DisplayObjectContainer, Sprite } from './Sprite';
 import { isStage, type ParentNode, type Stage } from './Stage';
 
 /** What a clip needs from the runtime to build and update its timeline children. */
@@ -17,11 +17,11 @@ export interface ClipHooks {
   applyMatrix(child: DisplayObject, matrix: DisplayListEntry['matrix']): void;
   applyColorTransform(child: DisplayObject, ct: DisplayListEntry['colorTransform']): void;
   /**
-   * Called once by the MovieClip constructor, as soon as the instance exists (Requirement 24, D24): register the
-   * backend node, set the root state, then build frame 1 so that the named children are bound before any
-   * derived field initialiser or constructor statement runs.
+   * Called once by the Sprite constructor (which MovieClip inherits), as soon as the instance exists (Requirement 24,
+   * D24): register the backend node, set the root state, then call buildFrameOne(sprite) so that the named children
+   * are bound before any derived field initialiser or constructor statement runs.
    */
-  constructFrameOne(mc: MovieClip): void;
+  constructFrameOne(sprite: Sprite): void;
 }
 
 /** Frame-script queue, as seen by a clip. ScriptQueue satisfies it. */
@@ -47,12 +47,12 @@ export interface ConstructionContext {
   scripts: ClipScripts;
   hooks: ClipHooks;
   cycle?: ClipCycle;
-  /** The Stage_Object, set by the Player for the root clip only; MovieClip adopts it as its parent. */
+  /** The Stage_Object, set by the Player for the root clip only; the Sprite constructor adopts it as its parent. */
   rootParent?: Stage;
   /** The placement had an instance name (Requirement 28.2): the clip then takes no Default_Instance_Name. */
   named: boolean;
-  /** Set by the MovieClip constructor as soon as the instance exists; read by the Player after a throw (21.3). */
-  instance: MovieClip | null;
+  /** Set by the Sprite constructor as soon as the instance exists; read by the Player after a throw (21.3). */
+  instance: Sprite | null;
 }
 
 /** Context for a MovieClip built by script (
@@ -163,9 +163,14 @@ export function globalToLocal(obj: DisplayObject, x: number, y: number): { x: nu
  * Makes stage the parent of oot and its only child. Used by the Player and by tests; the root must not
  * already have another parent.
  */
-export function attachRoot(stage: Stage, root: MovieClip): void {
+export function attachRoot(stage: Stage, root: Sprite): void {
   root._parent = stage;
   stage._children = [root];
+}
+
+/** Builds the frame-1 children of sprite: what a constructFrameOne hook calls once the node is registered. */
+export function buildFrameOne(sprite: Sprite): void {
+  sprite._buildFrameOne();
 }
 
 /** Renders the clip's current frame into its children. */
@@ -174,28 +179,28 @@ export function renderFrame(mc: MovieClip): void {
 }
 
 function isClipLike(o: DisplayObject): boolean {
-  return typeof (o as Partial<MovieClip>)._exitFrame === 'function';
+  return typeof (o as Partial<Sprite>)._exitFrame === 'function';
 }
 
-/** Snapshot of every MovieClip under `root` (root included), parents before children, display order. */
-export function clipsPreOrder(root: MovieClip): MovieClip[] {
-  const out: MovieClip[] = [];
+/** Snapshot of every Sprite or MovieClip under `root` (root included), parents before children, display order. */
+export function clipsPreOrder(root: Sprite): Sprite[] {
+  const out: Sprite[] = [];
   const walk = (o: DisplayObject): void => {
     if (!isClipLike(o)) return;
-    out.push(o as MovieClip);
-    for (const c of [...(o as MovieClip)._children]) walk(c);
+    out.push(o as Sprite);
+    for (const c of [...(o as Sprite)._children]) walk(c);
   };
   walk(root);
   return out;
 }
 
-/** Snapshot of every MovieClip under `root` (root included), children first in display order, root last. */
-export function clipsPostOrder(root: MovieClip): MovieClip[] {
-  const out: MovieClip[] = [];
+/** Snapshot of every Sprite or MovieClip under `root` (root included), children first in display order, root last. */
+export function clipsPostOrder(root: Sprite): Sprite[] {
+  const out: Sprite[] = [];
   const walk = (o: DisplayObject): void => {
     if (!isClipLike(o)) return;
-    for (const c of [...(o as MovieClip)._children]) walk(c);
-    out.push(o as MovieClip);
+    for (const c of [...(o as Sprite)._children]) walk(c);
+    out.push(o as Sprite);
   };
   walk(root);
   return out;
@@ -213,7 +218,7 @@ export function isAttachedTo(o: DisplayObject, root: DisplayObject): boolean {
  * User decision (a), verify task 12.1: children-first, because reference/output.txt lines 13-15 and
  * 29-31 show the children's exitFrame before the root's (Requirement 8.9).
  */
-export function exitFrame(root: MovieClip): void {
+export function exitFrame(root: Sprite): void {
   for (const clip of clipsPostOrder(root)) if (isAttachedTo(clip, root)) clip._exitFrame();
 }
 
@@ -221,13 +226,13 @@ export function exitFrame(root: MovieClip): void {
  * FRAME_CONSTRUCTED pass: snapshots every MovieClip under `root`, children first, then dispatches
  * the event once to each one that is still attached to `root` (Goto_Extra_Cycle, design G7).
  */
-export function frameConstructed(root: MovieClip): void {
+export function frameConstructed(root: Sprite): void {
   for (const clip of clipsPostOrder(root)) {
     if (isAttachedTo(clip, root)) clip.dispatchEvent(new Event(Event.FRAME_CONSTRUCTED));
   }
 }
 
 /** Advances one tick for `mc` and every clip below it. */
-export function step(mc: MovieClip): void {
+export function step(mc: Sprite): void {
   mc._step();
 }

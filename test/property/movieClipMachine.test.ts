@@ -4,7 +4,7 @@ import type { DisplayListEntry, SpriteSymbol } from "../../template/runtime/scen
 import { ScriptQueue } from "../../template/runtime/scriptQueue";
 import type { DisplayObject } from "../../template/shim/DisplayObject";
 import {
-  renderFrame,
+  buildFrameOne,
   step,
   withConstructionContext,
   type ConstructionContext,
@@ -74,7 +74,7 @@ function build(specs: [ClipSpec, ClipSpec]): { parent: MovieClip; kids: [MovieCl
     childDetached: () => {},
     applyMatrix: () => {},
     applyColorTransform: () => {},
-    constructFrameOne: (mc) => renderFrame(mc),
+    constructFrameOne: (mc) => buildFrameOne(mc),
   };
   const parentSym: SpriteSymbol = {
     type: "sprite",

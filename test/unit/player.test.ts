@@ -56,15 +56,15 @@ describe('Player stepping', () => {
     const root = sprite([[entry(1, 1)], [entry(1, 1)], [entry(1, 1)]]);
     const { clock, player } = setup(sceneOf(root));
     expect(player.frameIntervalMs).toBe(100);
-    expect(player.root.currentFrame).toBe(1);
+    expect((player.root as MovieClip).currentFrame).toBe(1);
     tick(clock, player, 50);
-    expect(player.root.currentFrame).toBe(1);
+    expect((player.root as MovieClip).currentFrame).toBe(1);
     tick(clock, player, 50);
-    expect(player.root.currentFrame).toBe(2);
+    expect((player.root as MovieClip).currentFrame).toBe(2);
     tick(clock, player, 100);
-    expect(player.root.currentFrame).toBe(3);
+    expect((player.root as MovieClip).currentFrame).toBe(3);
     tick(clock, player, 100);
-    expect(player.root.currentFrame).toBe(1);
+    expect((player.root as MovieClip).currentFrame).toBe(1);
   });
 
   it('does not lose a frame to floating point error at 24 fps', () => {
@@ -72,16 +72,16 @@ describe('Player stepping', () => {
     const { clock, player } = setup(sceneOf(root, {}, 24));
     for (let i = 0; i < 24; i++) tick(clock, player, 1000 / 24);
     // 24 steps over 3 frames: back where it started.
-    expect(player.root.currentFrame).toBe(1);
+    expect((player.root as MovieClip).currentFrame).toBe(1);
   });
 
   it('caps a catch-up burst and drops the rest', () => {
     const root = sprite(Array.from({ length: 50 }, () => []));
     const { clock, player } = setup(sceneOf(root));
     tick(clock, player, 10_000);
-    expect(player.root.currentFrame).toBe(6); // frame 1 + 5 steps
+    expect((player.root as MovieClip).currentFrame).toBe(6); // frame 1 + 5 steps
     tick(clock, player, 100);
-    expect(player.root.currentFrame).toBe(7);
+    expect((player.root as MovieClip).currentFrame).toBe(7);
   });
 
   it('sends ENTER_FRAME to a stopped clip each tick but runs no frame script', () => {

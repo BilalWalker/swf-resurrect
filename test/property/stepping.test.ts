@@ -90,18 +90,18 @@ describe('Player stepping (example)', () => {
     const { scene } = buildScene(spec, 10);
     const { player, clock } = makePlayer(scene, false);
     expect(player.frameIntervalMs).toBe(100);
-    expect(player.root.currentFrame).toBe(1);
+    expect((player.root as MovieClip).currentFrame).toBe(1);
     for (let k = 1; k < n; k++) {
       clock.advance(99);
       player.update();
-      expect(player.root.currentFrame).toBe(k);
+      expect((player.root as MovieClip).currentFrame).toBe(k);
       clock.advance(1);
       player.update();
-      expect(player.root.currentFrame).toBe(k + 1);
+      expect((player.root as MovieClip).currentFrame).toBe(k + 1);
     }
     clock.advance(100);
     player.update();
-    expect(player.root.currentFrame).toBe(1);
+    expect((player.root as MovieClip).currentFrame).toBe(1);
   });
 });
 
@@ -158,7 +158,7 @@ describe('Property 13: Stepping advances exactly one frame per interval and loop
               collect(child!, c);
             });
           };
-          collect(player.root, rootSpec);
+          collect(player.root as MovieClip, rootSpec);
           void specs;
 
           // Model: exact integer accumulator with the catch-up cap.

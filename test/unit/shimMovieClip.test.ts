@@ -4,7 +4,7 @@ import { ScriptQueue } from '../../template/runtime/scriptQueue';
 import { DisplayObject } from '../../template/shim/DisplayObject';
 import { Event } from '../../template/shim/events';
 import {
-  renderFrame,
+  buildFrameOne,
   step,
   withConstructionContext,
   type ConstructionContext,
@@ -51,7 +51,7 @@ function rig(sym: SpriteSymbol, childFactory?: (e: DisplayListEntry) => DisplayO
         c.x = m[4];
       },
       applyColorTransform: () => {},
-      constructFrameOne: (mc) => renderFrame(mc),
+      constructFrameOne: (mc) => buildFrameOne(mc),
     },
   };
   return { ctx, scripts, detached, created };

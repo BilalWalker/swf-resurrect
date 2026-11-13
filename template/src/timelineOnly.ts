@@ -2,6 +2,7 @@ import { Application } from 'pixi.js';
 import { ManualClock } from '../runtime/clock';
 import type { LoadedScene } from '../runtime/loader';
 import { Player } from '../runtime/player';
+import type { MovieClip } from '../shim/MovieClip';
 import type { PixiBackend } from '../runtime/pixi/pixiBackend';
 
 export interface TimelineOnlyOutcome {
@@ -71,8 +72,8 @@ export async function runTimelineOnly(
     clock.advance(player.frameIntervalMs);
     player.update();
   }
-  if (player.root.currentFrame !== frame) {
-    fail(backend, frame, `root is at frame ${player.root.currentFrame}, expected ${frame}`);
+  if ((player.root as MovieClip).currentFrame !== frame) {
+    fail(backend, frame, `root is at frame ${(player.root as MovieClip).currentFrame}, expected ${frame}`);
     return;
   }
 

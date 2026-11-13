@@ -2,6 +2,7 @@ import type { DisplayObject } from '../shim/DisplayObject';
 import { Event, MouseEvent } from '../shim/events';
 import {
   attachRoot,
+  buildFrameOne,
   clipsPostOrder,
   clipsPreOrder,
   exitFrame,
@@ -14,7 +15,7 @@ import {
   type ConstructionContext,
 } from '../shim/internal';
 import { MovieClip } from '../shim/MovieClip';
-import { DisplayObjectContainer } from '../shim/Sprite';
+import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
@@ -27,7 +28,7 @@ export interface PlayerOptions {
   scene: SceneJson;
   backend: RenderBackend;
   clock: Clock;
-  classRegistry: Record<string, new (...args: any[]) => DisplayObject>;
+  classRegistry: Record<string, new (...args: any[]) => Sprite>;
   /** Result of loading all shapes. */
   shapeBounds: ReadonlyMap<number, ShapeBounds>;
   /** Most whole frame steps one update() may run; extra time is dropped. Default 5. */
@@ -64,13 +65,14 @@ function isIdentityColor(ct: Readonly<ColorTransform8>): boolean {
 export class Player {
   /** The Stage_Object: parent of the root, no backend node. Built before the root so root constructors can read stage. */
   readonly stage = new Stage();
-  readonly root: MovieClip;
+  /** The root clip: a MovieClip, or a Sprite when the root symbol's class extends Sprite. */
+  readonly root: Sprite;
   readonly frameIntervalMs: number;
 
   private readonly scene: SceneJson;
   private readonly backend: RenderBackend;
   private readonly clock: Clock;
-  private readonly classRegistry: Record<string, new (...args: any[]) => DisplayObject>;
+  private readonly classRegistry: Record<string, new (...args: any[]) => Sprite>;
   private readonly maxCatchUp: number;
   private readonly scripts = new ScriptQueue();
   private readonly nodes = new NodeRegistry();
@@ -155,7 +157,8 @@ export class Player {
       atTarget(clip, Event.ADDED_TO_STAGE);
     }
     for (const clip of post) clip.dispatchEvent(new Event(Event.FRAME_CONSTRUCTED));
-    for (const clip of clipsPreOrder(this.root)) this.scripts.enqueue(clip, 1);
+    // Only MovieClips have frame scripts; a Sprite has one frame and none.
+    for (const clip of clipsPreOrder(this.root)) if (clip instanceof MovieClip) this.scripts.enqueue(clip, 1);
     this.scripts.drain();
   }
 
@@ -259,7 +262,7 @@ export class Player {
 
   // ---- instance creation ----
 
-  private createClip(symbolId: number, symbol: SpriteSymbol, instanceName?: string, named = instanceName !== undefined): MovieClip {
+  private createClip(symbolId: number, symbol: SpriteSymbol, instanceName?: string, named = instanceName !== undefined): Sprite {
     const ctx: ConstructionContext = {
       symbol,
       symbolId,
@@ -271,36 +274,36 @@ export class Player {
     };
     // Only the root is created with an instance name; its parent is the Stage_Object, set before the constructor runs.
     if (instanceName !== undefined) ctx.rootParent = this.stage;
-    let Cls: new () => MovieClip = MovieClip;
+    let Cls: new () => Sprite = MovieClip;
     if (symbol.className !== undefined) {
       const linked = this.classRegistry[symbol.className];
-      if (linked !== undefined) Cls = linked as new () => MovieClip;
+      if (linked !== undefined) Cls = linked;
       else console.warn(`Player: class "${symbol.className}" is not in the registry; using MovieClip`);
     }
-    // The MovieClip constructor registers the node and builds frame 1 (constructFrameOne), so the children are
+    // The Sprite constructor (MovieClip inherits it) registers the node and builds frame 1 (constructFrameOne), so the children are
     // created and bound before any code of `Cls` runs. Events and frame-1 scripts wait until the whole tree exists
     // (initialBuild, design G5b).
     return withConstructionContext(ctx, () => new Cls());
   }
 
   /**
-   * Called by the MovieClip constructor (D24): registers the backend node, sets the root state for the root clip
+   * Called by the Sprite constructor (D24): registers the backend node, sets the root state for the root clip
    * (its parent is already the Stage_Object), then renders frame 1, which creates the children and exposes the named
    * ones. Nested children are created inside this call, so each child constructor ends before its parent's body.
    */
-  private constructFrameOne(mc: MovieClip): void {
+  private constructFrameOne(mc: Sprite): void {
     if (mc._parent === this.stage) {
       mc.name = ROOT_NAME;
       mc._isStageRoot = true;
       attachRoot(this.stage, mc);
     }
     this.nodes.register(mc, this.backend.createContainer());
-    mc._renderFrame();
+    buildFrameOne(mc);
   }
 
   /**
    * D39: the map from each registered constructor to the id of the symbol whose className is its registry key, and the
-   * provider for a MovieClip constructor that runs with no ConstructionContext (`new Cls()` from script).
+   * provider for a Sprite constructor that runs with no ConstructionContext (`new Cls()` from script).
    */
   private installScriptConstruction(): void {
     const symbolOf = new Map<Function, number>();
