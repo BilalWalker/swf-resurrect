@@ -7,6 +7,7 @@ import {
   clipsPreOrder,
   exitFrame,
   frameConstructed,
+  setCaughtErrorSink,
   setContextForConstructor,
   setPointerPosition,
   withConstructionContext,
@@ -19,6 +20,7 @@ import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
+import type { ErrorSink } from './errorReport';
 import { hitTest } from './hitTest';
 import type { ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
 import { ScriptQueue } from './scriptQueue';
@@ -33,6 +35,8 @@ export interface PlayerOptions {
   shapeBounds: ReadonlyMap<number, ShapeBounds>;
   /** Most whole frame steps one update() may run; extra time is dropped. Default 5. */
   maxCatchUpFrames?: number;
+  /** Receives each Caught_Error once (Requirement 25.5); absent: console.error. */
+  onCaughtError?: ErrorSink;
 }
 
 /** A Hit_Target: a display object, or the Stage_Object when nothing is hit. */
@@ -92,6 +96,7 @@ export class Player {
   private accumulator = 0;
 
   constructor(options: PlayerOptions) {
+    setCaughtErrorSink(options.onCaughtError ?? null);
     this.busyCount++;
     try {
       this.backend = options.backend;

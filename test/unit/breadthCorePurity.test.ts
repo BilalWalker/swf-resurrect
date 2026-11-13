@@ -14,6 +14,7 @@ const CORE_FILES = [
   "src/translate/shimMembers.ts",
   "src/translate/memberTables.ts",
   "src/translate/implicitThis.ts",
+  "template/runtime/errorReport.ts", // 22.1
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];
