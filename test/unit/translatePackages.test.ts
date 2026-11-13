@@ -1,8 +1,8 @@
-﻿import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { SceneJson } from '../../template/runtime/scene';
 import { DuplicateClassError } from '../../src/translate/errors';
 import { keyScriptPaths, planTranslate } from '../../src/translate/planTranslate';
-import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from '../../src/translate/shimNames';
+import { SHIM_AS3_NAMES } from '../../src/translate/shimNames';
 import { translate } from '../../src/translate/translate';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 
@@ -108,7 +108,6 @@ describe('planTranslate with Qualified_Names', () => {
 const tr = (source: string, self: string, known: string[]) =>
   translate(source, {
     shimNames: SHIM_AS3_NAMES,
-    shimMembers: SHIM_MOVIECLIP_MEMBERS,
     selfQualified: self,
     siblingClasses: new Set(known),
     syntaxCheck: tsSyntaxCheck,

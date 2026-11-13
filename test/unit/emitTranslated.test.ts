@@ -9,9 +9,10 @@ import { emit } from '../../src/emit/emit';
 import { buildClassesTs, planEmit, planEmitDetailed } from '../../src/emit/planEmit';
 import type { EmitInput } from '../../src/emit/planEmit';
 import type { TranslatedClass } from '../../src/translate/planTranslate';
-import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from '../../src/translate/shimNames';
+import { SHIM_AS3_NAMES } from '../../src/translate/shimNames';
 import { translate } from '../../src/translate/translate';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
+import { fixtureTables } from '../support/tables';
 
 const m: [number, number, number, number, number, number] = [1, 0, 0, 1, 0, 0];
 const ct: [number, number, number, number, number, number, number, number] = [1, 1, 1, 1, 0, 0, 0, 0];
@@ -171,7 +172,7 @@ describe('translated fixture classes (Requirement 18.15)', () => {
       for (const n of names) {
         const r = translate(readFileSync(`${dir}/scripts/${n}.as`, 'utf8'), {
           shimNames: SHIM_AS3_NAMES,
-          shimMembers: SHIM_MOVIECLIP_MEMBERS,
+          tables: fixtureTables(dir),
           selfQualified: n,
           siblingClasses: new Set(names.filter((x) => x !== n)),
           syntaxCheck: tsSyntaxCheck,
@@ -191,7 +192,7 @@ describe('emitted fixture project (Requirement 18.15)', () => {
         const text = readFileSync(`${dir}/translated/${n}.ts.txt`, 'utf8');
         const r = translate(readFileSync(`${dir}/scripts/${n}.as`, 'utf8'), {
           shimNames: SHIM_AS3_NAMES,
-          shimMembers: SHIM_MOVIECLIP_MEMBERS,
+          tables: fixtureTables(dir),
           selfQualified: n,
           siblingClasses: new Set(names.filter((x) => x !== n)),
           syntaxCheck: tsSyntaxCheck,

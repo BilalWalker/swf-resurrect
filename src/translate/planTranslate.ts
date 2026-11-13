@@ -3,7 +3,11 @@
 import type { SceneJson } from '../../template/runtime/scene';
 import { qualifiedFromScriptPath } from '../convert/qualifiedName';
 import { DuplicateClassError } from './errors';
-import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from './shimNames';
+import { buildMemberTables } from './memberTables';
+import { scan } from './scanner';
+import { SHIM_MEMBER_TABLE } from './shimMembers.generated';
+import { SHIM_AS3_NAMES } from './shimNames';
+import { normalizeNewlines, tokenize } from './tokenizer';
 import { as3InterfaceName } from './interfaceDecl';
 import { translate } from './translate';
 import type { Diagnostic, ImportRecord, LineSpan, SyntaxCheck } from './types';
@@ -70,6 +74,12 @@ export function planTranslate(
   const sorted = [...sources].sort((a, b) => compareCodeUnits(a.className, b.className));
   const siblingClasses: ReadonlySet<string> = new Set(sorted.map((s) => s.className));
 
+  // First pass: scan every source and build the member tables once (design 18.6).
+  const tables = buildMemberTables(
+    sorted.map((s) => ({ qualified: s.className, nodes: scan(tokenize(normalizeNewlines(s.source))).nodes })),
+    SHIM_MEMBER_TABLE,
+  );
+
   const translated = new Map<string, TranslatedClass>();
   for (const s of sorted) {
     const dot = s.className.lastIndexOf('.');
@@ -77,7 +87,7 @@ export function planTranslate(
     const simple = s.className.slice(dot + 1);
     const r = translate(s.source, {
       shimNames: SHIM_AS3_NAMES,
-      shimMembers: SHIM_MOVIECLIP_MEMBERS,
+      tables,
       selfQualified: s.className,
       siblingClasses,
       syntaxCheck,

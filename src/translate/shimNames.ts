@@ -15,20 +15,3 @@ export const SHIM_AS3_NAMES: ReadonlySet<string> = new Set([
   'Shape',
   'trace',
 ]);
-
-/** Members of MovieClip; a bare call to one of these becomes `this.<name>(`. */
-export const SHIM_MOVIECLIP_MEMBERS: ReadonlySet<string> = new Set([
-  'play',
-  'stop',
-  'gotoAndPlay',
-  'gotoAndStop',
-  'addFrameScript',
-  'addEventListener',
-  'removeEventListener',
-  'hasEventListener',
-  'dispatchEvent',
-  'addChild',
-  'removeChild',
-  'getChildByName',
-  'getChildAt',
-]);

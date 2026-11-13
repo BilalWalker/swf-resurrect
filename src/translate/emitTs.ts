@@ -43,6 +43,14 @@ export interface RewriteContext {
   locals?: ReadonlySet<string>;
   /** True when the enclosing function's own body has a `return <expr>` (set for return types). */
   hasValueReturn?: boolean;
+  /** The class member being emitted (method, accessor or field initialiser); absent outside a class. */
+  member?: MemberContext;
+}
+
+export interface MemberContext {
+  isStatic: boolean;
+  /** Simple name of the enclosing class. */
+  className: string;
 }
 
 export interface RewriteResult {
@@ -158,6 +166,9 @@ class Emitter {
   private fn: { locals: ReadonlySet<string>; hasValueReturn: boolean } | null = null;
   /** Getters of the class being emitted, by name (for the accessor type check). */
   private getters: ReadonlyMap<string, AccessorNode> = new Map();
+  /** The member being emitted, for implicit-this resolution. */
+  private member: MemberContext | null = null;
+  private curClass: ClassNode | null = null;
 
   constructor(input: EmitInput) {
     this.source = input.source;
@@ -213,12 +224,14 @@ class Emitter {
 
   private expr(r: TokRange): string {
     const line = this.tokens[r.from].line;
-    return this.take(this.rw.expression(this.slice(r), { line, locals: this.fn?.locals }));
+    return this.take(this.rw.expression(this.slice(r), {
+      line, locals: this.fn?.locals, member: this.member ?? undefined,
+    }));
   }
 
   private type(r: TokRange | null, line: number, role: TypeRole): string {
     const ctx: RewriteContext = {
-      line, role, locals: this.fn?.locals, hasValueReturn: this.fn?.hasValueReturn,
+      line, role, locals: this.fn?.locals, hasValueReturn: this.fn?.hasValueReturn, member: this.member ?? undefined,
     };
     return this.take(this.rw.type(r === null ? null : this.slice(r), ctx));
   }
@@ -336,6 +349,16 @@ class Emitter {
     if (n.implementsNames.length > 0) head += ` implements ${n.implementsNames.join(', ')}`;
     this.push(d, head + ' {');
     this.span(n.startLine, n.body.openLine, 'structural');
+    const savedClass = this.curClass;
+    this.curClass = n;
+    try {
+      this.classBody(n, d);
+    } finally {
+      this.curClass = savedClass;
+    }
+  }
+
+  private classBody(n: ClassNode, d: number): void {
     const members = n.body.nodes;
     const getters = new Map<string, AccessorNode>();
     for (const m of members) if (m.kind === 'accessor' && m.accessor === 'get') getters.set(m.name, m);
@@ -396,6 +419,17 @@ class Emitter {
   private fieldNode(n: FieldNode, d: number): void {
     const mods = this.modifiers(n.modifiers, n.decl.isConst);
     const isStatic = n.modifiers.indexOf('static') >= 0;
+    const savedMember = this.member;
+    this.member = this.curClass === null ? null : { isStatic, className: this.curClass.name };
+    try {
+      this.fieldDeclarators(n, mods, isStatic, d);
+    } finally {
+      this.member = savedMember;
+    }
+    this.span(n.startLine, n.endLine, 'translated');
+  }
+
+  private fieldDeclarators(n: FieldNode, mods: string, isStatic: boolean, d: number): void {
     for (const dc of n.decl.declarators) {
       let dflt: string | null = null;
       let declare = false;
@@ -407,7 +441,6 @@ class Emitter {
       if (declare) text = 'declare ' + text;
       this.push(d, `${mods}${text};`);
     }
-    this.span(n.startLine, n.endLine, 'translated');
   }
 
   private declaratorText(dc: Declarator, role: TypeRole, dflt: string | null = null): string {
@@ -431,7 +464,11 @@ class Emitter {
     const isCtor = n.kind === 'method' && n.isConstructor;
     const locals = collectFunctionLocals(n.params, n.body.nodes);
     const saved = this.fn;
+    const savedMember = this.member;
     this.fn = { locals, hasValueReturn: this.hasValueReturn(n.body.nodes) };
+    this.member = this.curClass === null
+      ? null
+      : { isStatic: n.modifiers.indexOf('static') >= 0, className: this.curClass.name };
     try {
       const isSetter = n.kind === 'accessor' && n.accessor === 'set';
       let override: string | null = null;
@@ -450,6 +487,7 @@ class Emitter {
       this.span(n.body.closeLine, n.body.closeLine, 'structural');
     } finally {
       this.fn = saved;
+      this.member = savedMember;
     }
   }
 

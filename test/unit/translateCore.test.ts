@@ -1,14 +1,15 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from '../../src/translate/shimNames';
+import { SHIM_AS3_NAMES } from '../../src/translate/shimNames';
 import { translate, translateCore } from '../../src/translate/translate';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 import type { TranslateOptions } from '../../src/translate/types';
+import { fixtureTables } from '../support/tables';
 
 const options: TranslateOptions = {
   shimNames: SHIM_AS3_NAMES,
-  shimMembers: SHIM_MOVIECLIP_MEMBERS,
+  tables: fixtureTables('test/fixtures/clickgoto'),
   selfQualified: 'MainTimeline',
   siblingClasses: new Set(['EventWatcher', 'LeftButton', 'RightButton', 'MainTimeline']),
   syntaxCheck: tsSyntaxCheck,

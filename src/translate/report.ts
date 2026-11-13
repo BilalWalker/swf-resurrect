@@ -56,7 +56,7 @@ function cmp(a: string, b: string): number {
 }
 
 export function classStatus(diags: readonly Diagnostic[], typeErrorCount: number): ClassStatus {
-  if (typeErrorCount > 0 || diags.some((d) => d.kind === 'unsupported-construct')) return 'unsupported';
+  if (typeErrorCount > 0 || diags.some((d) => d.kind === 'unsupported-construct' || d.kind === 'unresolved-identifier')) return 'unsupported';
   if (diags.some((d) => d.kind === 'loose-type')) return 'loose';
   return 'clean';
 }

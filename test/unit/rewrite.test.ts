@@ -6,9 +6,10 @@ import { planFileImports } from '../../src/translate/importPlan';
 import { collectReferences, createImportLines, createRewriter, findValueReferencedMethods } from '../../src/translate/rewrite';
 import { scan } from '../../src/translate/scanner';
 import type { ClassNode } from '../../src/translate/scanner';
-import { SHIM_AS3_NAMES, SHIM_MOVIECLIP_MEMBERS } from '../../src/translate/shimNames';
+import { SHIM_AS3_NAMES } from '../../src/translate/shimNames';
 import { normalizeNewlines, tokenize } from '../../src/translate/tokenizer';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
+import { fixtureTables } from '../support/tables';
 
 const SIBLINGS = new Set(['EventWatcher', 'LeftButton', 'RightButton', 'MainTimeline']);
 function run(source: string, known: ReadonlySet<string> = SIBLINGS, self = 'A') {
@@ -29,7 +30,8 @@ function run(source: string, known: ReadonlySet<string> = SIBLINGS, self = 'A') 
     (n) => !refs.declared.has(n) && SHIM_AS3_NAMES.has(n) && !plan.bindingOfBare.has(n),
   );
   const imports = createImportLines(plan, canonicalClassPath(self), shimUsed);
-  const options = { shimNames: SHIM_AS3_NAMES, shimMembers: SHIM_MOVIECLIP_MEMBERS, plan };
+  const tables = fixtureTables('test/fixtures/clickgoto', [[self, src]]);
+  const options = { shimNames: SHIM_AS3_NAMES, plan, tables, self };
   const out = emitTs(nodes, {
     source: src,
     tokens,
@@ -77,7 +79,7 @@ describe('rewrite: expressions', () => {
 
   it('qualifies bare member calls but not locals or member accesses', () => {
     const { out } = run(
-      cls('    public function g(stop:Function) : void\n    {\n      stop();\n      play();\n      h();\n      this.play();\n    }\n    public function h() : void\n    {\n    }'),
+      cls('    public function g(stop:Function) : void\n    {\n      stop();\n      play();\n      h();\n      this.play();\n    }\n    public function h() : void\n    {\n    }', 'public class A extends MovieClip'),
     );
     expect(out.text).toContain('    stop();');
     expect(out.text).toContain('this.play();\n    this.h();\n    this.play();');

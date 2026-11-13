@@ -9,6 +9,9 @@ import { canonicalClassPath } from '../convert/qualifiedName';
 import { emitTs, escapeComment } from './emitTs';
 import type { BodyItem, EmitHooks } from './emitTs';
 import { planFileImports } from './importPlan';
+import type { ImportPlanInput } from './importPlan';
+import { buildMemberTables } from './memberTables';
+import { SHIM_MEMBER_TABLE } from './shimMembers.generated';
 import type { ImportPlan } from './importPlan';
 import { collectReferences, createImportLines, createRewriter, findValueReferencedMethods } from './rewrite';
 import { scan } from './scanner';
@@ -141,7 +144,7 @@ export function translateCore(source: string, options: TranslateOptions): Transl
 
   // The import plan is built once and shared by the rewriter and the import lines.
   const refs = collectReferences(tokens, nodes, options.siblingClasses);
-  const plan = planFileImports({
+  const planInput: ImportPlanInput = {
     selfQualified: options.selfQualified,
     declared: refs.declared,
     shimNames: options.shimNames,
@@ -149,7 +152,27 @@ export function translateCore(source: string, options: TranslateOptions): Transl
     imports: refs.imports,
     bare: refs.bare,
     chains: refs.chains,
+  };
+  // Member tables are built from the unrewritten nodes: base names are read as written.
+  const tables =
+    options.tables ?? buildMemberTables([{ qualified: options.selfQualified, nodes }], SHIM_MEMBER_TABLE);
+  let plan = planFileImports(planInput);
+
+  // Forced imports (design 18.5): a dry resolution pass collects the classes the rules want
+  // imported (the declaring class of an inherited static); when one is not bound yet the plan
+  // is made again with those targets forced, and the rewriting pass uses the final plan.
+  const wanted = new Set<string>();
+  emitTs(nodes, {
+    source: src,
+    tokens,
+    rewriter: createRewriter(nodes, {
+      shimNames: options.shimNames, plan, tables, self: options.selfQualified,
+      onImportTarget: (t) => wanted.add(t),
+    }),
   });
+  if ([...wanted].some((t) => !plan.imports.some((p) => p.target === t))) {
+    plan = planFileImports({ ...planInput, forced: [...wanted].sort(cmp) });
+  }
   const selfPath = canonicalClassPath(options.selfQualified);
   // A name a class binds is never imported from the Shim.
   const shimUsed = [...refs.bare.keys()].filter(
@@ -162,7 +185,7 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   collectClasses(nodes, classes, plan);
   bindHeritage(nodes, plan);
 
-  const rwOptions = { shimNames: options.shimNames, shimMembers: options.shimMembers, plan };
+  const rwOptions = { shimNames: options.shimNames, plan, tables, self: options.selfQualified };
   const out = emitTs(nodes, {
     source: src,
     tokens,

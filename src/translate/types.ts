@@ -1,4 +1,5 @@
-/** Type-only definitions shared by the pure Transpiler files. No imports, no runtime code. */
+/** Type-only definitions shared by the pure Transpiler files. No runtime code. */
+import type { MemberTables } from './memberTables';
 
 export type DiagnosticKind = 'unsupported-construct' | 'loose-type' | 'class-omitted' | 'unresolved-identifier';
 
@@ -14,8 +15,8 @@ export type SyntaxCheck = (tsText: string) => ReadonlyArray<{ line: number; mess
 export interface TranslateOptions {
   /** AS3-visible names the Shim exports. */
   shimNames: ReadonlySet<string>;
-  /** MovieClip instance members callable unqualified. */
-  shimMembers: ReadonlySet<string>;
+  /** Member tables of every class with a source plus the Shim; absent: built from the file itself. */
+  tables?: MemberTables;
   /** Qualified_Name of the class this file declares (path-derived). */
   selfQualified: string;
   /** Qualified_Names of the other classes exported next to this file. */

@@ -13,16 +13,22 @@ import type { ImportDecl, ImportPlan } from './importPlan';
 import { splitAngleTokens } from './scanner';
 import type { ClassNode, MethodNode, Node, TokRange } from './scanner';
 import type { Token } from './tokenizer';
-import type { RewriteContext, RewriteResult, Rewriter, TokenSlice } from './emitTs';
+import type { MemberContext, RewriteContext, RewriteResult, Rewriter, TokenSlice } from './emitTs';
+import { isReference, resolveIdentifier } from './implicitThis';
+import type { MemberTables } from './memberTables';
 import type { Diagnostic, ImportRecord } from './types';
 
 export interface RewriteOptions {
   /** AS3-visible names the Shim exports. */
   shimNames: ReadonlySet<string>;
-  /** MovieClip instance members callable unqualified. */
-  shimMembers: ReadonlySet<string>;
   /** Import plan of this file: dotted chains are rewritten to their binding. */
   plan: ImportPlan;
+  /** Member tables of every class with a source plus the Shim (Requirement 22). */
+  tables: MemberTables;
+  /** Qualified_Name of the file's class. */
+  self: QualifiedName;
+  /** Receives every class a resolution wants imported (inherited statics); used by the dry pass. */
+  onImportTarget?: (target: QualifiedName) => void;
 }
 
 /** Right-hand sides of `is` / `instanceof` that JS `instanceof` gets wrong. */
@@ -53,12 +59,18 @@ function sigTokens(slice: TokenSlice): Token[] {
  * file; they supply the own-method names used for `this.` qualification.
  */
 export function createRewriter(nodes: readonly Node[], options: RewriteOptions): Rewriter {
-  const own = collectOwnMethods(nodes);
+  const declared = new Set<string>();
+  visitClasses(nodes, (c) => declared.add(c.name));
+  const classNames = new Set<string>([...declared, ...options.shimNames, ...options.plan.bindingOfBare.keys()]);
+  for (const p of options.plan.imports) classNames.add(p.binding);
+  const bindingOfTarget = new Map<QualifiedName, string>();
+  for (const p of options.plan.imports) bindingOfTarget.set(p.target, p.binding);
+  const env: ExprEnv = { options, classNames, bindingOf: (q) => bindingOfTarget.get(q) ?? null };
   return {
     expression(slice: TokenSlice, ctx: RewriteContext): RewriteResult {
       const toks = sigTokens(slice);
       if (toks.length === 0) return { text: '' };
-      const rw = new ExprRewriter(slice.source, toks, options, own, ctx.locals ?? EMPTY_SET);
+      const rw = new ExprRewriter(slice.source, toks, env, ctx.locals ?? EMPTY_SET, ctx.member ?? null);
       try {
         const text = rw.run();
         return rw.diags.length > 0 ? { text, diagnostics: rw.diags } : { text };
@@ -315,6 +327,19 @@ function mapName(name: string): string {
   }
 }
 
+interface ExprEnv {
+  options: RewriteOptions;
+  classNames: ReadonlySet<string>;
+  bindingOf(q: QualifiedName): string | null;
+}
+
+/** Key of a class of the file in the member tables (design 18.3): the file's Qualified_Name for the class named like the file. */
+function selfKey(self: QualifiedName, className: string): QualifiedName {
+  const dot = self.lastIndexOf('.');
+  if (self.slice(dot + 1) === className) return self;
+  return dot < 0 ? className : `(${self.slice(0, dot)}.${className}`;
+}
+
 class ExprError extends Error {
   constructor(readonly reason: string) {
     super(reason);
@@ -390,10 +415,14 @@ class ExprRewriter {
   constructor(
     private readonly src: string,
     private readonly toks: readonly Token[],
-    private readonly opts: RewriteOptions,
-    private readonly own: ReadonlySet<string>,
+    private readonly env: ExprEnv,
     private readonly locals: ReadonlySet<string>,
-  ) {}
+    private readonly member: MemberContext | null,
+  ) {
+    this.opts = env.options;
+  }
+
+  private readonly opts: RewriteOptions;
 
   run(): string {
     return this.range(0, this.toks.length);
@@ -454,10 +483,37 @@ class ExprRewriter {
       default:
         break;
     }
-    const chain = this.parentChain(i);
+    const head = this.resolveHead(i);
+    const chain = this.parentChain(i, head);
     if (chain !== null) return chain;
-    if (this.isP(i + 1, '(') && this.qualifies(i)) return { text: 'this.' + t.text, next: i + 1 };
-    return this.raw(i);
+    return { text: head, next: i + 1 };
+  }
+
+  /** The text of the identifier at i after implicit-this resolution (design 18.5). */
+  private resolveHead(i: number): string {
+    const t = this.toks[i];
+    const member = this.member;
+    if (member === null || !isReference(this.toks, i)) return t.text;
+    const self = selfKey(this.opts.self, member.className);
+    const r = resolveIdentifier(t.text, t.line, {
+      tables: this.opts.tables,
+      self,
+      className: member.className,
+      isStatic: member.isStatic,
+      locals: this.locals,
+      classNames: this.env.classNames,
+      bindingOf: this.env.bindingOf,
+    });
+    switch (r.kind) {
+      case 'leave':
+        return t.text;
+      case 'diagnose':
+        this.diags.push(r.diagnostic);
+        return t.text;
+      default:
+        if (r.importTarget !== null) this.opts.onImportTarget?.(r.importTarget);
+        return r.text;
+    }
   }
 
   /** A dotted chain that the import plan binds, unless its first identifier is a local. */
@@ -471,13 +527,6 @@ class ExprRewriter {
       if (binding !== undefined) return { text: binding, next: k + 1 };
     }
     return null;
-  }
-
-  private qualifies(i: number): boolean {
-    const name = this.toks[i].text;
-    if (!this.opts.shimMembers.has(name) && !this.own.has(name)) return false;
-    if (this.locals.has(name)) return false;
-    return !(this.isId(i - 1, 'function') || this.isId(i - 1, 'new'));
   }
 
   private closeOf(open: number, hi: number): number {
@@ -553,7 +602,7 @@ class ExprRewriter {
    * `<chain>.parent.<member>` with `<chain>` an identifier chain: wrap the part up
    * to and including `parent` as `(<chain>.parent as any)` and report one loose-type.
    */
-  private parentChain(i: number): Parsed | null {
+  private parentChain(i: number, head: string): Parsed | null {
     let j = i;
     while (this.isP(j + 1, '.') && this.toks[j + 2] !== undefined && this.toks[j + 2].kind === 'id') j += 2;
     for (let k = i + 2; k < j; k += 2) {
@@ -565,7 +614,7 @@ class ExprRewriter {
         line,
         message: `".parent.${member}" is not statically typed; parent is cast to any`,
       });
-      const text = `(${this.src.slice(this.toks[i].start, this.toks[k].end)} as any)`;
+      const text = `(${head}${this.src.slice(this.toks[i].end, this.toks[k].end)} as any)`;
       return { text, next: k + 1 };
     }
     return null;

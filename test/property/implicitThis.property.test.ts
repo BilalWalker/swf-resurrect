@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import { collectFunctionLocals, resolveIdentifier } from "../../src/translate/implicitThis";
 import type { ResolveEnv } from "../../src/translate/implicitThis";
 import { buildMemberTables, lookupInstance, lookupMember } from "../../src/translate/memberTables";
+import { planTranslate } from "../../src/translate/planTranslate";
 import { scan } from "../../src/translate/scanner";
 import { tokenize } from "../../src/translate/tokenizer";
+import { tsSyntaxCheck } from "../../src/translate/tsSyntaxCheck";
 import { SHIM_MEMBER_TABLE } from "../../src/translate/shimMembers.generated";
 import { fcConfig } from "./config";
 import { fileFromSource, genChainCase } from "./gen/genClassContext";
@@ -151,5 +153,106 @@ describe("Property 33: Static and instance contexts", () => {
       }),
       fcConfig,
     );
+  });
+});
+
+// ---- wiring properties (8.5) ---------------------------------------------------------------
+
+const scene = (names: string[]) =>
+  ({
+    formatVersion: 1,
+    rootSymbolId: 0,
+    symbols: Object.fromEntries(names.map((c, i) => [String(i), { type: "sprite", frames: [], labels: {}, className: c }])),
+  }) as never;
+
+/** Classes p0.K0 extends p1.K1 ... extends Sprite; the class at `declaring` declares `static var zzS`; K0 reads it bare. */
+function staticChain(length: number, declaring: number): Array<{ className: string; source: string }> {
+  return Array.from({ length }, (_, i) => {
+    const last = i + 1 === length;
+    const imp = last ? "import flash.display.Sprite;" : `import p${i + 1}.K${i + 1};`;
+    const base = last ? "Sprite" : `K${i + 1}`;
+    const own = i === declaring ? "public static var zzS:int;" : "";
+    const body = i === 0 ? "public function f():int { return zzS; }" : "";
+    return {
+      className: `p${i}.K${i}`,
+      source: `package p${i} {\n${imp}\npublic class K${i} extends ${base} { ${own} ${body} }\n}\n`,
+    };
+  });
+}
+
+const run = (sources: Array<{ className: string; source: string }>, link = "p0.K0") =>
+  planTranslate(sources, scene([link]), tsSyntaxCheck);
+
+describe("Property 35: The resolution is deterministic and independent of file order", () => {
+  /** **Validates: Requirements 22.8, 22.9** */
+  it("the same sources in any order give the same text, diagnostics and imports", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1, max: 4 }), fc.nat(3), fc.nat(), (length, d, seed) => {
+        const sources = staticChain(length, d % length);
+        const shuffled = [...sources].sort((a, b) => ((a.className.length * 31 + seed) % 7) - ((b.className.length * 17 + seed) % 7) || (a.className < b.className ? 1 : -1));
+        const a = run(sources).classes;
+        const b = run(shuffled).classes;
+        expect(b).toEqual(a);
+        expect(run(sources).classes).toEqual(a);
+      }),
+      fcConfig,
+    );
+  });
+});
+
+describe("Property 36: Agreement with the previous call rule", () => {
+  /** Reference model of the old rule: `name(` is qualified when name is an own non-static method or a MovieClip member, and not a local. */
+  const OLD_SHIM = ["play", "stop", "gotoAndPlay", "gotoAndStop", "addEventListener", "removeEventListener", "addChild", "getChildByName"];
+  const OWN = ["alpha1", "beta2", "gamma3"];
+  /** **Validates: Requirements 22.7** */
+  it("a bare call is `this.name(` exactly when the old rule qualified it", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.constantFrom(...OLD_SHIM, ...OWN, "loc1", "loc2"), { minLength: 1, maxLength: 6 }),
+        fc.subarray(["loc1", "loc2", ...OLD_SHIM.slice(0, 2), ...OWN.slice(0, 1)]),
+        (calls, locals) => {
+          const decls = locals.map((l) => `var ${l}:Function;`).join(" ");
+          const methods = OWN.map((m) => `public function ${m}():void { }`).join("\n");
+          const src = `package {\npublic class A extends MovieClip {\n${methods}\npublic function f():void { ${decls}\n${calls.map((c) => `${c}();`).join("\n")} }\n}\n}\n`;
+          const text = run([{ className: "A", source: `package { import flash.display.MovieClip;\n${src.slice(src.indexOf("public class"))}` }], "A").classes[0]!.text;
+          const lines = text.split("\n").map((l) => l.trim());
+          for (const c of calls) {
+            const qualified = (OLD_SHIM.includes(c) || OWN.includes(c)) && !locals.includes(c);
+            expect(lines.includes(`${qualified ? "this." : ""}${c}();`), c).toBe(true);
+          }
+        },
+      ),
+      fcConfig,
+    );
+  });
+});
+
+describe("Property 43: Inherited statics resolve to the declaring class and import it", () => {
+  /** **Validates: Requirements 22.1, 22.6** */
+  it("Declaring.x with exactly one import of Declaring, whatever the file order", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 2, max: 5 }), fc.nat(4), (length, d) => {
+        const declaring = 1 + (d % (length - 1));
+        const sources = staticChain(length, declaring);
+        const c = run(sources).classes.find((x) => x.className === "p0.K0")!;
+        expect(c.text).toContain(`return K${declaring}.zzS;`);
+        expect(c.importRecords.filter((r) => r.kind === "class" && r.target === `p${declaring}.K${declaring}`)).toHaveLength(1);
+        expect(c.diagnostics.filter((x) => x.kind === "unresolved-identifier")).toEqual([]);
+        expect(run([...sources].reverse()).classes.find((x) => x.className === "p0.K0")).toEqual(c);
+      }),
+      fcConfig,
+    );
+  });
+
+  it("uses the alias of the plan when the simple name is taken", () => {
+    const sources = [
+      { className: "p0.K0", source: "package p0 {\nimport p1.K1;\npublic class K0 extends K1 { public var other:K2; public function f():int { return zzS; } }\n}\n" },
+      { className: "p1.K1", source: "package p1 {\nimport q.K2;\npublic class K1 extends K2 { }\n}\n" },
+      { className: "q.K2", source: "package q {\nimport flash.display.Sprite;\npublic class K2 extends Sprite { public static var zzS:int; }\n}\n" },
+      { className: "p0.K2", source: "package p0 {\npublic class K2 { }\n}\n" },
+    ];
+    const c = run(sources).classes.find((x) => x.className === "p0.K0")!;
+    expect(c.text).toContain("return q_K2.zzS;");
+    expect(c.text).toContain("import { K2 as q_K2 } from");
   });
 });

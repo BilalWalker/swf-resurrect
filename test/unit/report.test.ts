@@ -25,6 +25,12 @@ describe('classStatus', () => {
     expect(classStatus([], 1)).toBe('unsupported');
     expect(classStatus([loose], 2)).toBe('unsupported');
   });
+
+  it('counts unresolved-identifier like unsupported-construct', () => {
+    const unresolved: Diagnostic = { kind: 'unresolved-identifier', line: 4, message: '\"x\" does not resolve' };
+    expect(classStatus([unresolved], 0)).toBe('unsupported');
+    expect(classStatus([loose, unresolved], 0)).toBe('unsupported');
+  });
 });
 
 describe('buildReport', () => {
