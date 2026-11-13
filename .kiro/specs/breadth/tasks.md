@@ -420,7 +420,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Run SC with the pipeline on `.work/local/slider_component/` and state in the commit message: the `missing-export` omissions before (5) and after, the `fl.*` classes registered, the classes still omitted with their reasons, the Overall_Match (at least 99.93) and the Trace_Score. Add `test/unit/interfaces.test.ts` case on the local copy (skips with a reason when absent): no `class-omitted` entry has reason `missing-export` for a name that is an interface. Commit message: `Test: pin interface exports on slider_component (24.4)`.
     - _Requirements: 27.5, 23.5, 31.5_
 
-- [ ] 25. Runtime: instance printing and default names (Requirement 28)
+- [x] 25. Runtime: instance printing and default names (Requirement 28)
   - Commit area: `Runtime`; one commit per sub-task. Read design 21.6 and Appendix A.12. Verification V2 plus CC. Decided D34, D35. The numbering for script-created objects is "not verified" and is reported at Task 27.
   - [x] 25.1 `toString` and class-name registration
     - Add `registerClassName` and `classNameOf` to `template/shim/internal.ts`, register the Shim classes, register every `classRegistry` key in the Player constructor, and add `toString` to `DisplayObject` and `Stage` (design 21.6). Commit message: `Runtime: print display objects as [object Class] (25.1)`.
@@ -430,15 +430,15 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Add the Instance_Counter to `internal.ts` (`resetInstanceCounter`, `takeInstanceNumber`), reset it in the Player constructor, take the number at the start of the `MovieClip` constructor for an unnamed placement (the root included, then named `root1`), in `createChild` for an unnamed shape, and in the `DisplayObject` constructor for a script-created object. Commit message: `Runtime: give unnamed objects instanceN names (25.2)`.
     - Test: add **Property 51: Default instance names follow depth-first creation order** to `test/property/instanceNames.property.test.ts`; example in `test/unit/instanceNames.test.ts`: the `click_block` shape (root, named clip with a shape, unnamed sprite) gives `instance2` to the sprite; a named placement takes no number; a script-created `Sprite` takes the next number.
     - _Requirements: 28.2, 28.3, 28.4, 28.7, 31.3_
-  - [-] 25.3 `click_block` evidence
+  - [x] 25.3 `click_block` evidence
     - Run the local Replay of `click_block` (downloaded under `.work/`, not committed) and state the five target strings against the Reference_Trace, the Overall_Match and the Trace_Score before (90.85 and 0.00) and after, and the cause of any remaining difference. Measure `clickgoto` and `tweendemo` (CC).
     - Test: `test/unit/instanceNames.test.ts` (extended) holds the five Reference_Trace target strings as a literal expectation built from the placement shape of `click_block`; `test/unit/clickgotoReplay.test.ts` unchanged.
     - _Requirements: 28.5, 28.6, 31.5_
 
 - [ ] 26. Shim and Runtime: mouse flags, Hit_Target and `formatToString` (Requirement 29)
   - Commit area: `Shim` for 26.1, `Runtime` for 26.2 and 26.3; one commit per sub-task. Read design 21.7 and section 10. Verification V2 plus CC for all three; SC for 26.3. Decided D36. Every Shim addition is logged in `template/shim/ADDED_APIS.md` with its fixture line, and `npm run gen:shim-members` is run in the same sub-task.
-  - [ ] 26.1 Shim members and `Event.formatToString`
-    - Add `mouseEnabled` and `mouseChildren` to `DisplayObjectContainer`, `buttonMode` and `useHandCursor` to `Sprite`, and `Event.formatToString` to `events.ts`. Before writing the test read `core/src/avm2/globals/flash/events/event.rs` at the pinned commit and follow it if its format differs from the AS3 documentation (state which in the commit message). Log in `ADDED_APIS.md`: `BaseButton.as:46` (`buttonMode`), `:47` (`mouseChildren`), `:48` (`useHandCursor`), `:68` (`mouseEnabled`), `Slider.as:393` (`useHandCursor`), `ComponentEvent.as:29` and `SliderEvent.as:55` (`formatToString`). Regenerate the Shim_Member_Table. Commit message: `Shim: add mouse flags and Event.formatToString (26.1)`.
+  - [-] 26.1 Shim members and `Event.formatToString`
+    - Add `mouseEnabled` and `mouseChildren` to `DisplayObjectContainer`, `buttonMode` and `useHandCursor` to `Sprite`, and `Event.formatToString` to `events.ts`. `formatToString` is an instance method, as in Ruffle's `Event.as` at the pinned commit (Requirement 29.1). Log in `ADDED_APIS.md`: `BaseButton.as:46` (`buttonMode`), `:47` (`mouseChildren`), `:48` (`useHandCursor`), `:68` (`mouseEnabled`), `Slider.as:393` (`useHandCursor`), `ComponentEvent.as:29` and `SliderEvent.as:55` (`formatToString`). Regenerate the Shim_Member_Table. Commit message: `Shim: add mouse flags and Event.formatToString (26.1)`.
     - Test: `test/unit/shimDisplay.test.ts` and `test/unit/shimEvents.test.ts` extended (defaults, a stored value, `formatToString` for a string, a number and a boolean, the order of properties); `test/unit/shimMembersDrift.test.ts` passes.
     - _Requirements: 29.1, 29.5, 29.7, 31.3_
   - [ ] 26.2 The Hit_Target rule

@@ -87,3 +87,32 @@ describe('listener isolation (Requirement 25.2)', () => {
     expect(caught.map((c) => c.site)).toEqual(['listener inner on EventDispatcher']);
   });
 });
+describe('Event.formatToString (instance method, as in Ruffle Event.as)', () => {
+  // Shaped like fl.events.ComponentEvent and fl.events.SliderEvent: a bare call inside an instance toString.
+  // `npm run typecheck` compiles this file, so a missing or static member would give TS2339 or TS4113 here.
+  class ComponentEventLike extends Event {
+    override toString(): string {
+      return this.formatToString('ComponentEvent', 'type', 'bubbles', 'cancelable');
+    }
+  }
+  class SliderEventLike extends Event {
+    value = 3;
+    keyCode = 0;
+    clickTarget = 'thumb';
+    override toString(): string {
+      return this.formatToString('SliderEvent', 'type', 'value', 'bubbles', 'cancelable', 'keyCode', 'clickTarget');
+    }
+  }
+  it('quotes a string, writes a number and a boolean as they are, in the order given', () => {
+    const e = new SliderEventLike('change', true);
+    expect(e.toString()).toBe('[SliderEvent type="change" value=3 bubbles=true cancelable=false keyCode=0 clickTarget="thumb"]');
+    expect(new ComponentEventLike('buttonDown').toString()).toBe('[ComponentEvent type="buttonDown" bubbles=false cancelable=false]');
+  });
+  it('matches Event.toString and handles no properties and an unknown one', () => {
+    const e = new Event('x', true, true);
+    expect(e.toString()).toBe('[Event type="x" bubbles=true cancelable=true eventPhase=2]');
+    expect(e.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase')).toBe(e.toString());
+    expect(e.formatToString('Bare')).toBe('[Bare]');
+    expect(e.formatToString('E', 'nope')).toBe('[E nope=undefined]');
+  });
+});

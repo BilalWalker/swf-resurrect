@@ -47,3 +47,8 @@ Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handl
 | `declareImplements` | `Button.as:9`, `LabelButton.as:16`, `Slider.as:17`, `FocusManager.as:19`: registers the class after its declaration, so `UIComponent.as:102`, `FocusManager.as:69`, `:109` and `:224` (`x is I`, written `x instanceof I`) answer |
 | `AS3InterfaceToken` (type) | Supports `defineInterface`: the type of the token exported by `IFocusManager.as`, `IFocusManagerComponent.as`, `IFocusManagerGroup.as` |
 | `DisplayObject.toString`, `Stage.toString` (`[object ClassName]`), `internal.registerClassName`, `internal.classNameOf` | `MainTimeline.as:42` (`click_block`: `" target: " + e.target`; Reference_Trace `target: [object MovieClip] click_mc`); the Shim registers `DisplayObject`, `DisplayObjectContainer`, `Sprite`, `MovieClip`, `Shape` and `Stage`, the Player registers each `classRegistry` key |
+| `DisplayObjectContainer.mouseEnabled` (boolean, default true) | `BaseButton.as:68` (`mouseEnabled = param1`, local copy of `slider_component`) |
+| `DisplayObjectContainer.mouseChildren` (boolean, default true) | `BaseButton.as:47` (`mouseChildren = false`) |
+| `Sprite.buttonMode` (boolean, default false, stored only) | `BaseButton.as:46` (`buttonMode = true`) |
+| `Sprite.useHandCursor` (boolean, default true, stored only) | `BaseButton.as:48`, `Slider.as:393` (`track.useHandCursor = false`) |
+| `Event.formatToString(className, ...properties)` (instance method, as in Ruffle's `Event.as`; `Event.toString` uses it) | `ComponentEvent.as:29`, `SliderEvent.as:55` (bare call in an instance `toString`) |

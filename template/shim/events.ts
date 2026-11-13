@@ -34,7 +34,19 @@ export class Event {
   }
 
   toString(): string {
-    return `[Event type="${this.type}" bubbles=${this.bubbles} cancelable=${this.cancelable} eventPhase=${this.eventPhase}]`;
+    return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
+  }
+  /**
+   * Instance method, as in Flash and Ruffle's Event.as: `[ClassName k=v ...]`, each value read from `this[key]`,
+   * a string quoted, anything else concatenated.
+   */
+  formatToString(className: string, ...properties: string[]): string {
+    let out = `[${className}`;
+    for (const key of properties) {
+      const value = (this as unknown as Record<string, unknown>)[key];
+      out += typeof value === 'string' ? ` ${key}="${value}"` : ` ${key}=${String(value)}`;
+    }
+    return `${out}]`;
   }
 }
 

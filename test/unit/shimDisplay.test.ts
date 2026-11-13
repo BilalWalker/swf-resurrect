@@ -153,3 +153,21 @@ describe('mouseX / mouseY', () => {
     expect([c.mouseX, c.mouseY]).toEqual([0, 0]);
   });
 });
+
+
+describe('mouse flags and cursor flags', () => {
+  it('defaults: mouseEnabled and mouseChildren true, buttonMode false, useHandCursor true', () => {
+    const s = new Sprite();
+    expect([s.mouseEnabled, s.mouseChildren, s.buttonMode, s.useHandCursor]).toEqual([true, true, false, true]);
+  });
+  it('stores the assigned values per instance', () => {
+    const s = new Sprite();
+    const t = new Sprite();
+    s.mouseEnabled = false;
+    s.mouseChildren = false;
+    s.buttonMode = true;
+    s.useHandCursor = false;
+    expect([s.mouseEnabled, s.mouseChildren, s.buttonMode, s.useHandCursor]).toEqual([false, false, true, false]);
+    expect([t.mouseEnabled, t.mouseChildren, t.buttonMode, t.useHandCursor]).toEqual([true, true, false, true]);
+  });
+});

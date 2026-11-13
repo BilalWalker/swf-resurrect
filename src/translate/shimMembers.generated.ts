@@ -2,12 +2,12 @@
 import type { ShimMemberTable } from './shimMembers';
 export const SHIM_MEMBER_TABLE: ShimMemberTable = {
   "DisplayObject": {"extends":"EventDispatcher","members":[{"name":"alpha","kind":"property"},{"name":"dispatchEvent","kind":"method"},{"name":"height","kind":"property"},{"name":"mouseX","kind":"property"},{"name":"mouseY","kind":"property"},{"name":"name","kind":"property"},{"name":"parent","kind":"property"},{"name":"rotation","kind":"property"},{"name":"scaleX","kind":"property"},{"name":"scaleY","kind":"property"},{"name":"stage","kind":"property"},{"name":"toString","kind":"method"},{"name":"visible","kind":"property"},{"name":"width","kind":"property"},{"name":"x","kind":"property"},{"name":"y","kind":"property"}]},
-  "DisplayObjectContainer": {"extends":"DisplayObject","members":[{"name":"addChild","kind":"method"},{"name":"getChildAt","kind":"method"},{"name":"getChildByName","kind":"method"},{"name":"numChildren","kind":"property"},{"name":"removeChild","kind":"method"}]},
-  "Event": {"extends":null,"members":[{"name":"bubbles","kind":"property"},{"name":"cancelable","kind":"property"},{"name":"currentTarget","kind":"property"},{"name":"eventPhase","kind":"property"},{"name":"target","kind":"property"},{"name":"toString","kind":"method"},{"name":"type","kind":"property"}]},
+  "DisplayObjectContainer": {"extends":"DisplayObject","members":[{"name":"addChild","kind":"method"},{"name":"getChildAt","kind":"method"},{"name":"getChildByName","kind":"method"},{"name":"mouseChildren","kind":"property"},{"name":"mouseEnabled","kind":"property"},{"name":"numChildren","kind":"property"},{"name":"removeChild","kind":"method"}]},
+  "Event": {"extends":null,"members":[{"name":"bubbles","kind":"property"},{"name":"cancelable","kind":"property"},{"name":"currentTarget","kind":"property"},{"name":"eventPhase","kind":"property"},{"name":"formatToString","kind":"method"},{"name":"target","kind":"property"},{"name":"toString","kind":"method"},{"name":"type","kind":"property"}]},
   "EventDispatcher": {"extends":null,"members":[{"name":"addEventListener","kind":"method"},{"name":"dispatchEvent","kind":"method"},{"name":"hasEventListener","kind":"method"},{"name":"removeEventListener","kind":"method"}]},
   "MouseEvent": {"extends":"Event","members":[]},
   "MovieClip": {"extends":"Sprite","members":[{"name":"addFrameScript","kind":"method"},{"name":"currentFrame","kind":"property"},{"name":"currentLabels","kind":"property"},{"name":"frameScripts","kind":"property"},{"name":"gotoAndPlay","kind":"method"},{"name":"gotoAndStop","kind":"method"},{"name":"play","kind":"method"},{"name":"stop","kind":"method"},{"name":"totalFrames","kind":"property"}]},
   "Shape": {"extends":"DisplayObject","members":[{"name":"graphics","kind":"property"}]},
-  "Sprite": {"extends":"DisplayObjectContainer","members":[]},
+  "Sprite": {"extends":"DisplayObjectContainer","members":[{"name":"buttonMode","kind":"property"},{"name":"useHandCursor","kind":"property"}]},
   "Stage": {"extends":"EventDispatcher","members":[{"name":"toString","kind":"method"}]}
 };

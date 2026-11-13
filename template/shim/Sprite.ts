@@ -18,6 +18,9 @@ import type { ParentNode } from './Stage';
 
 export class DisplayObjectContainer extends DisplayObject {
   _children: DisplayObject[] = [];
+  /** Stored only here; the Hit_Target rule that honours the two flags is Task 26.2. */
+  mouseEnabled = true;
+  mouseChildren = true;
 
   get numChildren(): number {
     return this._children.length;
@@ -81,6 +84,9 @@ export interface TimelineChild {
  * run while this constructor is running.
  */
 export class Sprite extends DisplayObjectContainer {
+  /** Stored only: there is no cursor. */
+  buttonMode = false;
+  useHandCursor = true;
   /** The context this instance was built from; null for a Sprite made by plain script. */
   readonly _ctx: ConstructionContext | null;
   /** False until frame 1 has been built or rendered; later renders announce `added` / `removed`. */
