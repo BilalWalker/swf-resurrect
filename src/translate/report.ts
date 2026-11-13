@@ -31,6 +31,16 @@ export interface ClassReportEntry {
   typeErrors: TypeErrorEntry[]; // sorted (line, column, code)
 }
 
+/** A condition of the run that the reader must see (Requirements 26.7 and 26.13). */
+export interface TranslationProblem {
+  kind: 'bundler-guard-unavailable' | 'handwritten-override-unparsable';
+  /** Override path relative to the handwritten directory, for handwritten-override-unparsable. */
+  path?: string;
+  message: string;
+  line?: number;
+  column?: number;
+}
+
 export interface TranslationReport {
   formatVersion: 1;
   typeCheck: 'ran' | 'skipped';
@@ -39,6 +49,8 @@ export interface TranslationReport {
   otherErrors: GateError[]; // errors in non-class files
   /** Chosen emitted path of each class, sorted by className. */
   classPaths: ClassPathEntry[];
+  /** Absent when there is none. Sorted by kind, then path. */
+  problems?: TranslationProblem[];
 }
 
 export interface ReportClassInput {
@@ -65,6 +77,7 @@ export interface ReportExtras {
   omissions?: readonly ClassOmission[];
   loose?: readonly LooseClass[];
   classPaths?: readonly ClassPathEntry[];
+  problems?: readonly TranslationProblem[];
 }
 
 /** Line of the class-omitted Diagnostic: the first error line for a syntax error or an unresolved import, else 1. */
@@ -137,7 +150,16 @@ export function buildReport(
     .map((p) => ({ className: p.className, originalPath: p.originalPath, path: p.path }))
     .sort((a, b) => cmp(a.className, b.className));
 
-  return { formatVersion: 1, typeCheck: gate === null ? 'skipped' : 'ran', classes: entries, omittedClasses: omissions, otherErrors, classPaths };
+  const problems = [...(extras.problems ?? [])].sort((a, b) => cmp(a.kind, b.kind) || cmp(a.path ?? '', b.path ?? '') || cmp(a.message, b.message));
+  return {
+    formatVersion: 1,
+    typeCheck: gate === null ? 'skipped' : 'ran',
+    classes: entries,
+    omittedClasses: omissions,
+    otherErrors,
+    classPaths,
+    ...(problems.length === 0 ? {} : { problems }),
+  };
 }
 
 export function serialiseReport(r: TranslationReport): string {

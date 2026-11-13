@@ -6,14 +6,14 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
 import { omissionMessage } from '../emit/classOmissions';
-import type { ClassOmission, LooseClass } from '../emit/classOmissions';
+import type { BundlerCheckData, ClassOmission, LooseClass } from '../emit/classOmissions';
 import type { ClassPathEntry } from '../emit/classPaths';
 import type { EmitOptions, EmitResult } from '../emit/emit';
 import type { UnpackInput, UnpackResult } from '../unpack/unpack';
 import { childNamesByClass } from '../translate/planTranslate';
 import type { TranslateArtifact } from '../translate/planTranslate';
 import { buildReport, classStatus, serialiseReport, untranslatedCodeEntries } from '../translate/report';
-import type { TranslationReport } from '../translate/report';
+import type { TranslationProblem, TranslationReport } from '../translate/report';
 import type { GateResult } from '../translate/typeCheckGate';
 import type { VerifyRequest, VerifySummary } from '../verify/edge/verifyStage';
 import { PipelineError } from './errors';
@@ -35,6 +35,8 @@ export interface PipelineStages {
   typeCheck(outputDir: string, files: readonly string[]): Promise<GateResult>;
   /** In-memory gate injected into Emit (design 19.4). When set and Emit returns its result, 	ypeCheck does not run. */
   gate?(files: ReadonlyMap<string, string>): GateResult;
+  /** Bundler_Guard injected into Emit (design 21.4); it rejects when Vite cannot run. */
+  guard?(files: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, BundlerCheckData>>;
   verify?(req: VerifyRequest): Promise<VerifySummary>;
 }
 
@@ -129,6 +131,7 @@ function reportOf(
   omissions: readonly ClassOmission[] = [],
   loose: readonly LooseClass[] = [],
   classPaths: readonly ClassPathEntry[] = [],
+  problems: readonly TranslationProblem[] = [],
 ): TranslationReport {
   const pathOf = new Map(classPaths.map((p) => [p.className, p.path]));
   return buildReport(
@@ -139,8 +142,13 @@ function reportOf(
       diagnostics: c.diagnostics,
     })),
     gate,
-    { omissions, loose, classPaths },
+    { omissions, loose, classPaths, problems },
   );
+}
+
+/** The CLI line for an omitted handwritten override (Requirement 26.13, D40). */
+function overrideWarning(p: TranslationProblem): string {
+  return `warn [emit]: handwritten override ${p.path ?? ''} does not parse with Vite and is left out of the registry: ${p.message} (line ${p.line ?? 0}, column ${p.column ?? 0})\n`;
 }
 
 /** One class-omitted entry per omitted class, next to any untranslated-class entry (decision O7). */
@@ -204,6 +212,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let omissions: ClassOmission[] = [];
   let loose: LooseClass[] = [];
   let classPaths: ClassPathEntry[] = [];
+  let problems: TranslationProblem[] = [];
   const overridden = new Set(args.handwrittenClasses);
 
   try {
@@ -244,12 +253,18 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       handwrittenDir: args.handwrittenDir,
       translated: translated.classes,
       ...(stages.gate === undefined ? {} : { gate: stages.gate }),
+      ...(stages.guard === undefined ? {} : { bundlerGuard: stages.guard }),
     });
     outputDir = result.outputDir;
     io.out('[emit] ok\n');
     omissions = result.omissions;
     loose = result.loose;
     classPaths = result.classPaths;
+    problems = result.problems ?? [];
+    for (const p of problems) {
+      if (p.kind === 'handwritten-override-unparsable') io.err(overrideWarning(p));
+      else io.err(`warn [emit]: the bundler guard could not run, class files are not checked with Vite: ${p.message}\n`);
+    }
     unsupported = [...unsupported, ...omissionEntries(omissions)];
 
     stage = 'pipeline';
@@ -272,7 +287,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
         projectDir: result.outputDir,
         scene: artifact.scene,
         unsupported,
-        translationReport: reportOf(translated, overridden, gate, omissions, loose, classPaths),
+        translationReport: reportOf(translated, overridden, gate, omissions, loose, classPaths, problems),
         sampleName: basename(swfDir),
         referenceDir: existsSync(referenceDir) ? referenceDir : null,
       };
@@ -294,7 +309,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       {
         name: 'translation-report.json',
         label: 'translation report',
-        text: serialiseReport(reportOf(translated, overridden, gate, omissions, loose, classPaths)),
+        text: serialiseReport(reportOf(translated, overridden, gate, omissions, loose, classPaths, problems)),
       },
     ];
     for (const f of files) {

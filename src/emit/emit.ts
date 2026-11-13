@@ -10,10 +10,12 @@ import type { TranslatedClass } from '../translate/planTranslate';
 import { planEmitDetailed } from './planEmit';
 import type { EmittedFile, HandwrittenClass, PlannedClass, TemplateFile } from './planEmit';
 import { decideClassOmissions, looseClasses } from './classOmissions';
-import type { ClassOmission, ImportedName, LinkedSymbol, LooseClass, OmissionClass } from './classOmissions';
+import type { BundlerCheckData, ClassOmission, ImportedName, LinkedSymbol, LooseClass, OmissionClass } from './classOmissions';
 import type { ClassPathEntry } from './classPaths';
 import { exportedNames } from './exportedNames';
+import type { TranslationProblem } from '../translate/report';
 import type { GateResult } from '../translate/typeCheckGate';
+import { relativeSpecifier } from '../convert/qualifiedName';
 import type { SceneJson } from '../../template/runtime/scene';
 
 export interface EmitOptions {
@@ -31,6 +33,8 @@ export interface EmitOptions {
   writeFile?: (path: string, content: string) => Promise<void>;
   /** Type-check gate over the planned project (posix path -> text). The Pipeline injects it; absent in most tests. */
   gate?: (files: ReadonlyMap<string, string>) => GateResult;
+  /** Bundler_Guard over the planned class files (design 21.4). It rejects when Vite cannot run; Emit then falls back to the Requirement 23 rules. */
+  bundlerGuard?: (files: ReadonlyMap<string, string>) => Promise<ReadonlyMap<string, BundlerCheckData>>;
 }
 
 export interface EmitResult {
@@ -45,6 +49,8 @@ export interface EmitResult {
   classPaths: ClassPathEntry[];
   /** Gate result for the project on disk; null when no gate was supplied. */
   gate: GateResult | null;
+  /** `bundler-guard-unavailable` and `handwritten-override-unparsable` (Requirements 26.7, 26.13). */
+  problems?: TranslationProblem[];
 }
 
 function byCodeUnit(a: string, b: string): number {
@@ -176,7 +182,23 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
   // Gate first: plan with the full registry, check it, decide, and plan again only if a class cannot load.
   let planned = planEmitDetailed(planInput, svgFiles);
   let gate = runGate(planned.files);
-  const omissionClasses = describeClasses(planned.classes, planInput.translated, planned.files);
+  // The guard reads the planned final text (after the import lines are resolved), the text that is written.
+  const problems: TranslationProblem[] = [];
+  let checks: ReadonlyMap<string, BundlerCheckData> | undefined;
+  if (options.bundlerGuard !== undefined) {
+    const finalText = new Map(planned.files.map((f) => [f.path, f.content]));
+    const classFiles = new Map<string, string>();
+    for (const c of planned.classes) {
+      const text = finalText.get(c.path);
+      if (text !== undefined) classFiles.set(c.path, text);
+    }
+    try {
+      checks = await options.bundlerGuard(classFiles);
+    } catch (err) {
+      problems.push({ kind: 'bundler-guard-unavailable', message: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  const omissionClasses = describeClasses(planned.classes, planInput.translated, planned.files, checks);
   const linked = linkedSymbols(artifact.scene);
   const gateErrors = gate?.errors ?? [];
   const omissions = decideClassOmissions(gateErrors, omissionClasses, linked);
@@ -185,6 +207,14 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     gate = runGate(planned.files);
   }
   const loose = gate === null ? [] : looseClasses(gate.errors, omissionClasses, omissions);
+  const overrideFile = new Map(planInput.handwritten.map((h) => [h.className, h.fileName]));
+  const overrides = new Set(planned.classes.filter((c) => c.handwritten).map((c) => c.className));
+  for (const o of omissions) {
+    const r = o.reason;
+    const fileName = overrideFile.get(o.className);
+    if (r.kind !== 'bundler-parse' || fileName === undefined || !overrides.has(o.className)) continue;
+    problems.push({ kind: 'handwritten-override-unparsable', path: fileName, message: r.message, line: r.line, column: r.column });
+  }
   const plan: EmittedFile[] = planned.files;
 
   if (options.force && existing !== null) {
@@ -212,7 +242,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     await cleanupRun(writtenFiles, createdTops);
     throw new EmitWriteError(failing, err);
   }
-  return { outputDir, files: plan.map((f) => f.path), warnings: planned.warnings, omissions, loose, classPaths: planned.classPaths, gate };
+  return { outputDir, files: plan.map((f) => f.path), warnings: planned.warnings, omissions, loose, classPaths: planned.classPaths, gate, problems };
 }
 
 function linkedSymbols(scene: SceneJson): LinkedSymbol[] {
@@ -230,7 +260,9 @@ function describeClasses(
   classes: readonly PlannedClass[],
   translated: readonly TranslatedClass[],
   files: readonly EmittedFile[],
+  checks?: ReadonlyMap<string, BundlerCheckData>,
 ): OmissionClass[] {
+  const pathOf = new Map(classes.map((c) => [c.className, c.path]));
   const known = new Set(classes.map((c) => c.className));
   const text = new Map(files.map((f) => [f.path, f.content]));
   const byName = new Map(translated.map((t) => [t.className, t]));
@@ -238,13 +270,17 @@ function describeClasses(
     const t = c.handwritten ? undefined : byName.get(c.className);
     const imported = new Set<string>();
     const importedNames: ImportedName[] = [];
+    const edges = new Map<string, string>();
     for (const r of t?.importRecords ?? []) {
       if (r.kind === 'class' && r.target !== undefined && r.target !== c.className && known.has(r.target)) {
         imported.add(r.target);
-        for (const n of r.names) importedNames.push({ target: r.target, name: n.name, line: r.line });
+        const specifier = relativeSpecifier(c.path, pathOf.get(r.target) as string);
+        edges.set(r.target, specifier);
+        for (const n of r.names) importedNames.push({ target: r.target, name: n.name, line: r.line, specifier });
       }
     }
     const own = text.get(c.path);
+    const bundler = checks?.get(c.path);
     const names = own === undefined ? undefined : exportedNames(own);
     return {
       className: c.className,
@@ -255,6 +291,7 @@ function describeClasses(
       ...(names === undefined ? {} : { exports: names === null ? null : [...names].sort(byCodeUnit) }),
       handwritten: c.handwritten,
       produced: text.has(c.path),
+      ...(bundler === undefined ? {} : { bundler, importEdges: [...edges].map(([target, specifier]) => ({ target, specifier })) }),
     };
   });
 }

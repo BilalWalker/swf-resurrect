@@ -5,6 +5,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs as nodeParseArgs } from 'node:util';
 import { convertStage } from '../convert/writeConverted';
+import { checkClassFiles } from '../emit/bundlerGuard';
 import { emit } from '../emit/emit';
 import { translateStage } from '../translate/translateStage';
 import { typeCheckProject } from '../translate/typeCheckGate';
@@ -109,6 +110,7 @@ const realStages: PipelineStages = {
   translate: translateStage,
   emit,
   gate: (files) => typeCheckProject({ files, repoRoot: REPO_ROOT }),
+  guard: checkClassFiles,
   async typeCheck(outputDir, files) {
     const map = new Map<string, string>();
     for (const f of files) map.set(f, await readFile(join(outputDir, ...f.split('/')), 'utf8'));

@@ -28,6 +28,7 @@ const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 export async function emitFixtureProject(
   sample: 'clickgoto' | 'tweendemo',
   gate?: EmitOptions['gate'],
+  bundlerGuard?: EmitOptions['bundlerGuard'],
 ): Promise<EmittedFixtureProject> {
   const fixture = resolve(repoRoot, 'test/fixtures', sample);
   const { xmlVersion, header } = readDumpHeader(await readFile(resolve(fixture, 'structure.xml'), 'utf8'));
@@ -88,6 +89,7 @@ export async function emitFixtureProject(
       translated: artifact.classes,
       handwrittenDir: null,
       ...(gate === undefined ? {} : { gate }),
+      ...(bundlerGuard === undefined ? {} : { bundlerGuard }),
     });
     return { projectDir: result.outputDir, scene: converted.scene, dispose };
   } catch (e) {
