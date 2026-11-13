@@ -5,10 +5,12 @@ import {
   attachChild,
   clipsPostOrder,
   clipsPreOrder,
+  defaultInstanceName,
   detachChild,
   isAttachedTo,
   registerClassName,
   takeConstructionContext,
+  takeInstanceNumber,
   type ClipScripts,
   type ConstructionContext,
 } from './internal';
@@ -92,6 +94,13 @@ export class Sprite extends DisplayObjectContainer {
     // the symbol of `new.target` or of its nearest registered ancestor (D39); otherwise this is an empty Sprite.
     this._ctx = takeConstructionContext(new.target);
     const ctx = this._ctx;
+    // Default_Instance_Name (Requirement 28.2, D35): taken before the Construction_Bind creates the children, so the
+    // numbering is depth-first. The root consumes a number and the Player then names it root1; a named placement takes
+    // none. A script-created object (no context) takes the next number too (Requirement 28.3, NOT VERIFIED).
+    if (ctx === null || ctx.rootParent || !ctx.named) {
+      const name = defaultInstanceName(takeInstanceNumber());
+      if (!ctx?.rootParent) this.name = name;
+    }
     if (ctx !== null) {
       ctx.instance = this;
       // The root is built with the Stage_Object as parent, so `stage` works inside its constructor.
@@ -193,12 +202,13 @@ export class Sprite extends DisplayObjectContainer {
     attachChild(this, child, index);
     this._timelineChildren.set(entry.depth, { child, entry });
     ctx.hooks.childAttached(this, child, index);
-    this._expose(entry.name, child);
+    this._expose(entry.name, child, true);
     if (events) announceAdded(child);
   }
 
-  _expose(name: string, child: DisplayObject): void {
-    child.name = name;
+  _expose(name: string, child: DisplayObject, keepDefault = false): void {
+    // An unnamed placement keeps its Default_Instance_Name (Requirement 28.2); a rename to '' clears the name.
+    if (name !== '' || !keepDefault) child.name = name;
     if (name === '') return;
     try {
       Reflect.set(this, name, child);

@@ -99,6 +99,45 @@ export function withConstructionContext<T>(ctx: ConstructionContext, fn: () => T
   }
 }
 
+/**
+ * The Instance_Counter (Requirement 28.2, D35): one number sequence per movie, starting at 0. Reset by the Player
+ * constructor, taken by a clip, a shape or a script-created display object that has no instance name.
+ */
+let instanceCounter = 0;
+
+export function resetInstanceCounter(): void {
+  instanceCounter = 0;
+}
+
+export function takeInstanceNumber(): number {
+  return instanceCounter++;
+}
+
+/** Default_Instance_Name for a number from takeInstanceNumber. */
+export function defaultInstanceName(n: number): string {
+  return `instance${n}`;
+}
+
+let defaultNamesSuppressed = 0;
+
+/**
+ * Runs `fn` so that a Shape constructed inside it takes no number. The Player uses it for ShapeObject, whose number
+ * it takes itself, and only for a placement without a name.
+ */
+export function withoutDefaultName<T>(fn: () => T): T {
+  defaultNamesSuppressed++;
+  try {
+    return fn();
+  } finally {
+    defaultNamesSuppressed--;
+  }
+}
+
+/** True while withoutDefaultName is on the stack. */
+export function defaultNamesAreSuppressed(): boolean {
+  return defaultNamesSuppressed > 0;
+}
+
 /** Inserts `child` at `index` (clamped) in `parent`'s child list, detaching it from any other parent first. */
 export function attachChild(parent: DisplayObjectContainer, child: DisplayObject, index?: number): void {
   for (let p: DisplayObject | ParentNode | null = parent; p !== null; p = p._parent) {

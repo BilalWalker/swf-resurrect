@@ -13,6 +13,10 @@ import {
   setContextForConstructor,
   setPointerPosition,
   withConstructionContext,
+  defaultInstanceName,
+  resetInstanceCounter,
+  takeInstanceNumber,
+  withoutDefaultName,
   type ClipCycle,
   type ClipHooks,
   type ConstructionContext,
@@ -125,6 +129,7 @@ export class Player {
         throw new Error(`Player: root symbol ${this.scene.rootSymbolId} is not a sprite`);
       }
       this.installScriptConstruction();
+      resetInstanceCounter();
       // The root is named before frame 1 builds its children or runs any script (Requirement 8.3).
       this.root = this.createClip(this.scene.rootSymbolId, rootSymbol, 'root1');
       this.initialBuild();
@@ -359,7 +364,9 @@ export class Player {
     if (symbol.type === 'sprite') return this.createClip(entry.symbolId, symbol, undefined, entry.name !== '');
     const bounds = this.shapeBounds.get(entry.symbolId);
     if (bounds === undefined) throw new Error(`Player: no bounds for shape ${entry.symbolId}`);
-    const shape = new ShapeObject(entry.symbolId, bounds);
+    // An unnamed shape takes the next Default_Instance_Name here (Requirement 28.2); a named one takes none.
+    const shape = withoutDefaultName(() => new ShapeObject(entry.symbolId, bounds));
+    if (entry.name === '') shape.name = defaultInstanceName(takeInstanceNumber());
     this.nodes.register(shape, this.backend.createShape(entry.symbolId));
     return shape;
   }

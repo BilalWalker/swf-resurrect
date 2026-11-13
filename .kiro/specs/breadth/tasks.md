@@ -426,7 +426,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Add `registerClassName` and `classNameOf` to `template/shim/internal.ts`, register the Shim classes, register every `classRegistry` key in the Player constructor, and add `toString` to `DisplayObject` and `Stage` (design 21.6). Commit message: `Runtime: print display objects as [object Class] (25.1)`.
     - Test: `test/property/instanceNames.property.test.ts` (create), **Property 52: Display objects print as `[object ClassName]`**; `test/unit/instanceNames.test.ts` (create): `[object MovieClip]`, a registered `test_fla.MainTimeline` prints `[object MainTimeline]`, a replaced constructor name, a class with its own `toString`.
     - _Requirements: 28.1, 28.6, 28.7, 31.3_
-  - [ ] 25.2 Default instance names
+  - [x] 25.2 Default instance names
     - Add the Instance_Counter to `internal.ts` (`resetInstanceCounter`, `takeInstanceNumber`), reset it in the Player constructor, take the number at the start of the `MovieClip` constructor for an unnamed placement (the root included, then named `root1`), in `createChild` for an unnamed shape, and in the `DisplayObject` constructor for a script-created object. Commit message: `Runtime: give unnamed objects instanceN names (25.2)`.
     - Test: add **Property 51: Default instance names follow depth-first creation order** to `test/property/instanceNames.property.test.ts`; example in `test/unit/instanceNames.test.ts`: the `click_block` shape (root, named clip with a shape, unnamed sprite) gives `instance2` to the sprite; a named placement takes no number; a script-created `Sprite` takes the next number.
     - _Requirements: 28.2, 28.3, 28.4, 28.7, 31.3_

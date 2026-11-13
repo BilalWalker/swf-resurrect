@@ -31,6 +31,8 @@ describe('describeTarget', () => {
     attachRoot(stage, root);
     const a = new MovieClip();
     const b = new MovieClip();
+    a.name = '';
+    b.name = ''; // a script-created clip has a Default_Instance_Name (Requirement 28.3); an empty name needs this reset
     root.addChild(a);
     root.addChild(b);
     expect(describeTarget(b)).toBe('root1.#1');
