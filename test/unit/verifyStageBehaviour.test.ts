@@ -134,6 +134,19 @@ describe('verifyStage behaviour decision', () => {
       const r = await run(trace, { lines: ['x'], ticksRun: 1 });
       expect(r.behaviour).toMatchObject({ status: 'not-compared', reason: 'empty-reference-trace' });
     });
+    it('a reference of one line break against one emitted blank line is compared with Trace_Score 100', async () => {
+      const r = await run('\n', { lines: [''], ticksRun: 1 });
+      expect(r.behaviour).toMatchObject({ status: 'compared', traceScore: 100 });
+    });
+    it('a reference of two line breaks against no emitted lines is compared with Trace_Score 0', async () => {
+      const r = await run('\n\n', { lines: [], ticksRun: 1 });
+      expect(r.behaviour).toMatchObject({ status: 'compared', traceScore: 0 });
+    });
+    it('a zero-byte reference is not-compared: empty-reference-trace', async () => {
+      const r = await run('', { lines: [], ticksRun: 1 });
+      expect(r.behaviour).toMatchObject({ status: 'not-compared', reason: 'empty-reference-trace' });
+      expect(r.behaviour.traceScore).toBeUndefined();
+    });
     it('a one-line trace gets a Trace_Score', async () => {
       const r = await run('a', { lines: ['a'], ticksRun: 3 });
       expect(r.behaviour).toMatchObject({ status: 'compared', traceScore: 100 });
