@@ -33,6 +33,10 @@ export class Event {
     this.eventPhase = eventPhase;
   }
 
+  /** Instance method, as in Ruffle's Event.as: a new Event with the same type, bubbles and cancelable. */
+  clone(): Event {
+    return new Event(this.type, this.bubbles, this.cancelable);
+  }
   toString(): string {
     return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
   }

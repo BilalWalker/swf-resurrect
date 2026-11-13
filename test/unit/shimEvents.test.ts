@@ -116,3 +116,27 @@ describe('Event.formatToString (instance method, as in Ruffle Event.as)', () => 
     expect(e.formatToString('E', 'nope')).toBe('[E nope=undefined]');
   });
 });
+describe('Event.clone (Requirement 29.1)', () => {
+  it('returns a new Event with the same type, bubbles and cancelable', () => {
+    const e = new Event('custom', true, true);
+    const c = e.clone();
+    expect(c).not.toBe(e);
+    expect(c).toBeInstanceOf(Event);
+    expect([c.type, c.bubbles, c.cancelable]).toEqual(['custom', true, true]);
+  });
+
+  it('a ComponentEvent-shaped subclass with `override clone(): Event` type-checks (no TS4113)', () => {
+    class ComponentEventLike extends Event {
+      constructor(type: string, bubbles = false, cancelable = false) {
+        super(type, bubbles, cancelable);
+      }
+      override clone(): Event {
+        return new ComponentEventLike(this.type, this.bubbles, this.cancelable);
+      }
+    }
+    const c = new ComponentEventLike('buttonDown', true).clone();
+    expect(c).toBeInstanceOf(ComponentEventLike);
+    expect(c.type).toBe('buttonDown');
+    expect(c.bubbles).toBe(true);
+  });
+});
