@@ -19,6 +19,7 @@ interface Stub {
   error?: { tick: number; message: string } | null;
   childFailure?: boolean;
   reject?: boolean;
+  caughtErrors?: Array<{ tick: number; site: string; message: string }>;
 }
 
 interface Files {
@@ -47,6 +48,7 @@ async function run(trace: string | null, stub: Stub, files: Files = {}): Promise
         error: stub.error ?? null,
         releaseOutside: [],
         childFailure: stub.childFailure ?? false,
+        caughtErrors: stub.caughtErrors,
       } as never;
     },
   };
@@ -113,6 +115,33 @@ describe('verifyStage behaviour decision', () => {
     expect(r.behaviour).toMatchObject({ status: 'not-compared', reason: 'empty-reference-trace' });
     expect(r.problems.filter((p) => p.kind === 'replay-error')).toHaveLength(1);
   });
+  describe('Caught_Errors (task 22.5)', () => {
+    it('records runtime-error Problems by tick and the count with the first 20, without touching the score', async () => {
+      const caught = Array.from({ length: 25 }, (_, i) => ({ tick: 24 - i, site: `constructor C${i}`, message: 'bad' }));
+      const r = await run('a\n', { lines: ['a'], ticksRun: 3, caughtErrors: caught });
+      expect(r.behaviour).toMatchObject({ status: 'compared', traceScore: 100 });
+      expect(r.behaviour.replay.caughtErrors.count).toBe(25);
+      expect(r.behaviour.replay.caughtErrors.first).toHaveLength(20);
+      expect(r.behaviour.replay.caughtErrors.first[0]).toEqual({ tick: 0, site: 'constructor C24', message: 'bad' });
+      const runtime = r.problems.filter((p) => p.kind === 'runtime-error');
+      expect(runtime.map((p) => p.tick)).toEqual(Array.from({ length: 25 }, (_, i) => i));
+      expect(runtime[0].detail).toBe('constructor C24: bad');
+      expect(r.problems.filter((p) => p.kind === 'replay-error')).toEqual([]);
+    });
+    it('lists 100 Problems and one overflow Problem for 130 errors', async () => {
+      const caught = Array.from({ length: 130 }, (_, i) => ({ tick: i % 3, site: 'listener click on root1', message: `m${i}` }));
+      const r = await run('a\n', { lines: ['a'], ticksRun: 3, caughtErrors: caught });
+      expect(r.problems.filter((p) => p.kind === 'runtime-error')).toHaveLength(100);
+      expect(r.problems.filter((p) => p.kind === 'runtime-error-overflow')).toEqual([{ kind: 'runtime-error-overflow', detail: '30 more Caught_Errors not listed' }]);
+      expect(r.behaviour.replay.caughtErrors.count).toBe(130);
+    });
+    it('an old result without caughtErrors means none', async () => {
+      const r = await run('a\n', { lines: ['a'], ticksRun: 3 });
+      expect(r.behaviour.replay.caughtErrors).toEqual({ count: 0, first: [] });
+      expect(r.problems.filter((p) => p.kind.startsWith('runtime-error'))).toEqual([]);
+    });
+  });
+
   describe('empty-input Replay and Empty_Reference_Trace (task 7.9)', () => {
     it.each([['num_frames = 1\n'], ['num_ticks = 1\n']])('absent input.json with %j and a non-empty trace is compared with the empty input', async (toml) => {
       const r = await run('a\n', { lines: ['a'], ticksRun: 1 }, { input: null, toml });

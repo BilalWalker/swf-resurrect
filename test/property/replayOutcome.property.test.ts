@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { decideBehaviour } from '../../src/verify/core/replayOutcome';
+import { decideBehaviour, runtimeErrorProblems, summariseCaughtErrors } from '../../src/verify/core/replayOutcome';
 
 const line = fc.string({ minLength: 1, maxLength: 6 });
 const lines = fc.array(line, { maxLength: 12 });
@@ -77,6 +77,43 @@ describe('Property 41: A Replay that throws keeps the lines it captured', () => 
         const d = decideBehaviour(ref, { lines: cap, ticksRun: 3, error: null, childFailure: false });
         expect(d.status).toBe('compared');
         expect(d.problem).toBeNull();
+      }),
+    );
+  });
+});
+
+describe('Property 48: The Replay records every caught error with its tick and keeps ticking', () => {
+  const record = fc.record({ tick: fc.integer({ min: 0, max: 40 }), site: fc.string({ minLength: 1, maxLength: 8 }), message: fc.string({ maxLength: 8 }) });
+
+  /** **Validates: Requirements 25.7, 25.11** */
+  it('one runtime-error per throw up to the cap, sorted by tick then occurrence, then one overflow', () => {
+    fc.assert(
+      fc.property(fc.array(record, { maxLength: 150 }), fc.integer({ min: 1, max: 120 }), (caught, cap) => {
+        const ps = runtimeErrorProblems(caught, cap);
+        const listed = ps.filter((p) => p.kind === 'runtime-error');
+        expect(listed.length).toBe(Math.min(caught.length, cap));
+        const ticks = listed.map((p) => p.tick as number);
+        expect(ticks).toEqual([...caught.map((c) => c.tick)].sort((a, b) => a - b).slice(0, cap));
+        expect(listed.map((p) => p.index)).toEqual(listed.map((_, i) => i));
+        const over = ps.filter((p) => p.kind === 'runtime-error-overflow');
+        expect(over.length).toBe(caught.length > cap ? 1 : 0);
+        if (over.length === 1) expect(over[0]?.detail).toBe(`${caught.length - cap} more Caught_Errors not listed`);
+      }),
+    );
+  });
+
+  /** **Validates: Requirements 25.7, 25.8** */
+  it('the summary counts all and keeps the first 20 by tick; no error changes the decision', () => {
+    fc.assert(
+      fc.property(fc.array(record, { maxLength: 60 }), nonEmptyLines, lines, (caught, ref, cap) => {
+        const s = summariseCaughtErrors(caught);
+        expect(s.count).toBe(caught.length);
+        expect(s.first.length).toBe(Math.min(20, caught.length));
+        const ticks = s.first.map((c) => c.tick);
+        expect(ticks).toEqual([...ticks].sort((a, b) => a - b));
+        const d = decideBehaviour(ref, { lines: cap, ticksRun: 7, error: null, childFailure: false });
+        expect(d.problem).toBeNull();
+        expect(d.status).toBe('compared');
       }),
     );
   });

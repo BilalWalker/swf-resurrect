@@ -89,4 +89,26 @@ describe('html known behaviour gaps', () => {
     expect(html).toContain('<td>a&amp;b</td>');
     expect(html).not.toContain('<b>');
   });
+
+  it('renders the Caught_Errors count and the listed errors, escaped', () => {
+    const compared = (caughtErrors?: unknown): FidelityReport =>
+      baseReport({
+        status: 'compared',
+        traceScore: 100,
+        firstDivergence: null,
+        missing: [],
+        extra: [],
+        referenceLineCount: 0,
+        capturedLineCount: 0,
+        matched: 0,
+        replay: { ticks: 0, inputGroups: 0, clicks: 0, pointerEvents: 0, inputNotes: [], caughtErrors },
+        knownBehaviourGaps: [],
+      } as never);
+    const html = renderFidelityHtml(compared({ count: 25, first: [{ tick: 3, site: 'constructor <A>', message: 'a&b' }] }));
+    expect(html).toContain('<h3>Caught errors (25)</h3>');
+    expect(html).toContain('<td>3</td><td>constructor &lt;A&gt;</td><td>a&amp;b</td>');
+    expect(html).not.toContain('<A>');
+    expect(renderFidelityHtml(compared({ count: 0, first: [] }))).toContain('<h3>Caught errors (0)</h3>\n<p>none</p>');
+    expect(renderFidelityHtml(compared(undefined))).toContain('<h3>Caught errors (0)</h3>');
+  });
 });

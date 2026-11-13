@@ -30,6 +30,8 @@ export interface ReplayRunnerResult {
   ticksRun: number;
   error: { tick: number; message: string } | null;
   releaseOutside: ReleaseOutsideNote[];
+  /** Caught_Errors in order of occurrence (Requirement 25.7); absent in an old result file: empty. */
+  caughtErrors?: Array<{ tick: number; site: string; message: string }>;
 }
 
 async function main(): Promise<void> {
@@ -46,6 +48,7 @@ async function main(): Promise<void> {
   let ticksRun = 0;
   let error: ReplayRunnerResult['error'] = null;
   const releaseOutside: ReleaseOutsideNote[] = [];
+  const caughtErrors: NonNullable<ReplayRunnerResult['caughtErrors']> = [];
   let downIndex: number | null = null;
   let setTraceSink: ((fn: ((...args: unknown[]) => void) | null) => void) | null = null;
 
@@ -89,6 +92,10 @@ async function main(): Promise<void> {
       clock,
       classRegistry: classesMod.classRegistry,
       shapeBounds: loaded.shapeBounds,
+      // Recorded with the current tick; the Replay keeps ticking (Requirement 25.7).
+      onCaughtError: (c: { site: string; message: string }) => {
+        caughtErrors.push({ tick, site: c.site, message: c.message });
+      },
     });
 
     for (tick = 0; tick < plan.tickCount; tick++) {
@@ -124,7 +131,7 @@ async function main(): Promise<void> {
   } finally {
     setTraceSink?.(null);
   }
-  const result: ReplayRunnerResult = { lines, ticksRun, error, releaseOutside };
+  const result: ReplayRunnerResult = { lines, ticksRun, error, releaseOutside, caughtErrors };
   writeFileSync(resultPath, JSON.stringify(result), 'utf8');
 }
 

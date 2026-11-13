@@ -18,7 +18,9 @@ export type ProblemKind =
   | 'unsupported-input'
   | 'unpaired-mouse-event'
   | 'unused-input'
-  | 'replay-error';
+  | 'replay-error'
+  | 'runtime-error'
+  | 'runtime-error-overflow';
 
 export interface Problem {
   kind: ProblemKind;
@@ -40,8 +42,14 @@ export type BehaviourInput =
   | {
       status: 'compared';
       comparison: Extract<TraceComparison, { kind: 'compared' }>;
-      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[]; inputSource: ReplayInputSource };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[]; inputSource: ReplayInputSource; caughtErrors?: CaughtErrorsSummary };
     };
+
+/** Caught_Errors of the Replay: the count and the first 20, by tick (Requirement 25.7). */
+export interface CaughtErrorsSummary {
+  count: number;
+  first: Array<{ tick: number; site: string; message: string }>;
+}
 
 /** Where the Replay input came from: the sample's input.json, or the empty input (design 20.4). */
 export type ReplayInputSource = 'reference-input' | 'empty';
@@ -93,7 +101,7 @@ export type BehaviourReport =
       extra: TraceLine[];
       traceScore: number;
       firstDivergence: Divergence | null;
-      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[]; inputSource: ReplayInputSource };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[]; inputSource: ReplayInputSource; caughtErrors: CaughtErrorsSummary };
       knownBehaviourGaps: string[];
     };
 
@@ -177,6 +185,10 @@ function buildBehaviour(b: BehaviourInput, gaps: string[]): BehaviourReport {
       ticksRun: b.replay.ticksRun,
       inputSource: b.replay.inputSource,
       inputNotes: b.replay.inputNotes.map((n) => ({ ...n })),
+      caughtErrors: {
+        count: b.replay.caughtErrors?.count ?? 0,
+        first: (b.replay.caughtErrors?.first ?? []).map((c) => ({ tick: c.tick, site: sanitizeDetail(c.site), message: sanitizeDetail(c.message) })),
+      },
     },
     knownBehaviourGaps: gaps,
   };

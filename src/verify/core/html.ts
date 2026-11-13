@@ -2,7 +2,7 @@
 // Pure: no node:* imports, no clock, no randomness, no locale-dependent calls.
 // No script, no external resource, inline style only, images by relative path.
 import type { InputNote } from './inputNotes';
-import type { FidelityReport, VisualFrame } from './report';
+import type { CaughtErrorsSummary, FidelityReport, VisualFrame } from './report';
 
 /** Escapes & < > " ' (in that order of concern: & first via single pass). */
 export function escapeHtml(text: string): string {
@@ -138,6 +138,17 @@ function inputNotesTable(notes: readonly InputNote[]): string {
   );
 }
 
+function caughtErrorsTable(c: CaughtErrorsSummary | undefined): string {
+  const count = c?.count ?? 0;
+  const first = c?.first ?? [];
+  if (count === 0) return '<h3>Caught errors (0)</h3>\n<p>none</p>';
+  const rows = first.map((x) => `<tr><td>${x.tick}</td><td>${e(x.site)}</td><td>${e(x.message)}</td></tr>`);
+  return (
+    `<h3>Caught errors (${count})</h3>\n<table>\n<caption>First ${first.length} errors the Player caught during the Replay</caption>\n` +
+    `<tr><th scope="col">Tick</th><th scope="col">Site</th><th scope="col">Message</th></tr>\n${rows.join('\n')}\n</table>`
+  );
+}
+
 function behaviourSection(r: FidelityReport): string {
   const b = r.behaviour;
   const parts: string[] = ['<section aria-labelledby="behaviour">', '<h2 id="behaviour">Behaviour comparison</h2>'];
@@ -158,6 +169,7 @@ function behaviourSection(r: FidelityReport): string {
       `<p>Reference lines: ${b.referenceLineCount}, captured lines: ${b.capturedLineCount}, matched: ${b.matched}</p>`,
       `<p>Replay: ${b.replay.ticks} ticks, ${b.replay.inputGroups} input groups, ${b.replay.clicks} clicks, ${b.replay.pointerEvents} pointer events, ${b.replay.ticksRun} ticks run</p>`,
     );
+    parts.push(caughtErrorsTable(b.replay.caughtErrors));
     parts.push(inputNotesTable(b.replay.inputNotes));
     const d = b.firstDivergence;
     if (d !== null) {

@@ -18,7 +18,7 @@ import { buildFidelityReport, serialiseFidelityReport } from '../core/report';
 import type { BehaviourInput, FrameOutcome, Problem, ReplayInputSource } from '../core/report';
 import { renderFidelityHtml } from '../core/html';
 import { sanitizeDetail } from '../core/sanitize';
-import { decideBehaviour } from '../core/replayOutcome';
+import { decideBehaviour, runtimeErrorProblems, summariseCaughtErrors } from '../core/replayOutcome';
 import { splitTraceLines } from '../core/traceFormat';
 import { buildProject as realBuildProject } from './buildProject';
 import type { BuiltProject } from './buildProject';
@@ -298,6 +298,8 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
     childFailure: result.childFailure === true,
   });
   if (decision.problem !== null) problems.push(decision.problem);
+  const caught = result.caughtErrors ?? [];
+  problems.push(...runtimeErrorProblems(caught));
   if (decision.status === 'not-compared') return { status: 'not-compared', reason: decision.reason };
   // release-outside is never a problem (decided F17); it lives in the notes only.
   const inputNotes = buildInputNotes(plan.problems, result.releaseOutside);
@@ -310,6 +312,7 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
       ticksRun: decision.ticksRun,
       inputNotes,
       inputSource,
+      caughtErrors: summariseCaughtErrors(caught),
     },
   };
 }

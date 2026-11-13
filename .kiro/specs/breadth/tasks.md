@@ -370,11 +370,11 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - `Player.createClip` catches a throw of `new Cls()` (design 21.3): it reports `constructor <Class>`, keeps `ctx.instance` and goes on; when `ctx.instance` is null it instantiates the symbol again as a plain `MovieClip` under a fresh context. Commit message: `Runtime: keep the instance when a constructor throws (22.3)`.
     - Test: `test/property/caughtErrors.property.test.ts` (create), **Property 47: A throw never stops the movie and never changes the other elements** (generator `genSymbolGraph.ts` extended with throwing constructors, frame scripts and listeners); examples in `test/unit/player.test.ts`: a throwing constructor leaves the partial instance with its children and its timeline; a throw in a field initialiser; a throw before the base constructor gives a plain `MovieClip`; a registered class that throws does not stop its siblings.
     - _Requirements: 25.3, 25.11, 31.3_
-  - [-] 22.4 The browser keeps drawing
+  - [x] 22.4 The browser keeps drawing
     - `template/src/main.ts` installs no sink and keeps `Startup failed` for load errors only. Commit message: `Runtime: show a caught error without a black canvas (22.4)`.
     - Test: `test/e2e/caughtErrors.e2e.test.ts` (create; skips with a reason when Chromium is absent): an Emitted_Project whose root class throws in its constructor builds, opens in headless Chromium, draws its timeline frame (not the background colour only), and logs one `console.error` with the Error_Site; a missing scene still shows `Startup failed`.
     - _Requirements: 25.5, 25.6, 31.3_
-  - [ ] 22.5 The Replay records caught errors and keeps ticking
+  - [-] 22.5 The Replay records caught errors and keeps ticking
     - `src/verify/edge/replayRunner.ts` installs a sink that records `{ tick, site, message }`; `ReplayResult` gains `caughtErrors`; add `runtimeErrorProblems` to `src/verify/core/replayOutcome.ts` (cap 100, overflow Problem); the Fidelity_Report and the HTML report get `behaviour.replay.caughtErrors` (`count`, `first` 20). `decideBehaviour` is unchanged. Commit message: `Pipeline: record caught errors in the Replay (22.5)`.
     - Test: extend `test/property/replayOutcome.property.test.ts` with **Property 48: The Replay records every caught error with its tick and keeps ticking**; `test/unit/verifyStageBehaviour.test.ts` and `test/unit/htmlKnownGaps.test.ts` extended (Problems, overflow, the HTML count); `test/unit/clickgotoReplay.test.ts` unchanged: 32 ticks and Trace_Score 100.
     - _Requirements: 25.7, 25.8, 25.10, 25.11, 31.3, 31.5_
