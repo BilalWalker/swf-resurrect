@@ -325,11 +325,11 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 20. Translate: three small fixes (Requirement 30)
   - Commit area: `Translate`; one commit per sub-task. Read design 21.8. Verification V1 plus SC, and the byte-identity test `test/unit/clickgotoEmit.test.ts`. These come first because they are independent of the runtime work and shrink the false type errors that later tasks read.
-  - [-] 20.1 Dotted type annotations resolve through the import plan
+  - [x] 20.1 Dotted type annotations resolve through the import plan
     - In `src/translate/rewrite.ts` give `parseType` access to `resolveClassName` (the function the expression rewriter uses). A dotted annotation such as `var g:lib.util.Helper` whose Qualified_Name has a source is written as the binding and adds a forced import through the mechanism of design 18.5; without a source it stays as written. Commit message: `Translate: resolve dotted type annotations (20.1)`.
     - Test: `test/property/translateFixes.property.test.ts` (create), **Property 54: A dotted type annotation resolves through the import plan** (generator `test/property/gen/genClassContext.ts` extended with dotted annotations in variable, parameter, return and field positions). Example in `test/unit/translatePackages.test.ts`: the `var g:lib.util.Helper` case through `planTranslate` and the real gate gives no TS2503.
     - _Requirements: 30.1, 30.4, 30.5, 31.3_
-  - [~] 20.2 `selfKey` without the stray parenthesis
+  - [-] 20.2 `selfKey` without the stray parenthesis
     - In `src/translate/rewrite.ts` (about line 340) return `${pkg}.${className}` (or `className` for the unnamed package) for a secondary class in a packaged file. Commit message: `Translate: fix selfKey for secondary classes (20.2)`.
     - Test: **Property 55: `selfKey` is the qualified name** in `test/property/translateFixes.property.test.ts`; example in `test/unit/translatePackages.test.ts`: a packaged file with a secondary class resolves a reference to it with no stray `(`.
     - _Requirements: 30.2, 30.4, 30.5, 31.3_

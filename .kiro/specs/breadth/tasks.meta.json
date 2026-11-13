@@ -1626,6 +1626,11 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794554997561
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794555311584
       }
     ],
     "20.2 `selfKey` without the stray parenthesis": [
@@ -1633,6 +1638,11 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794554972372
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794555311917
       }
     ],
     "20.3 A forced import left behind by a rolled-back statement": [

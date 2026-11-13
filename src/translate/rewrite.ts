@@ -306,10 +306,10 @@ interface ExprEnv {
 }
 
 /** Key of a class of the file in the member tables (design 18.3): the file's Qualified_Name for the class named like the file. */
-function selfKey(self: QualifiedName, className: string): QualifiedName {
+export function selfKey(self: QualifiedName, className: string): QualifiedName {
   const dot = self.lastIndexOf('.');
   if (self.slice(dot + 1) === className) return self;
-  return dot < 0 ? className : `(${self.slice(0, dot)}.${className}`;
+  return dot < 0 ? className : `${self.slice(0, dot)}.${className}`;
 }
 
 /** An instance method of a translated class, own or inherited: not a static, a field, an accessor or a Shim member. */

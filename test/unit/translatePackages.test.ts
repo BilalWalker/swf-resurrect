@@ -3,7 +3,7 @@ import type { SceneJson } from '../../template/runtime/scene';
 import { DuplicateClassError } from '../../src/translate/errors';
 import { keyScriptPaths, planTranslate } from '../../src/translate/planTranslate';
 import { SHIM_AS3_NAMES } from '../../src/translate/shimNames';
-import { translate } from '../../src/translate/translate';
+import { translate, translateCore } from '../../src/translate/translate';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -299,5 +299,15 @@ describe('two-package fixture through plan, emit and the real gate (Requirement 
     const { errors } = typeCheckProject({ files: new Map(plan.files.map((f) => [f.path, f.content])), repoRoot });
     const own = errors.filter((e) => !['src/main.ts', 'src/timelineOnly.ts'].includes(e.file));
     expect(own).toEqual([]);
+  });
+});
+
+describe('secondary class in a packaged file (Requirement 30.2)', () => {
+  it('resolves implicit-this members of the secondary class with no stray parenthesis', () => {
+    const source = `package app {\n  public class Main {\n    public function f():void { }\n  }\n}\nclass Aux {\n  public var n:int = 0;\n  public function g():void { n = 1; h(); }\n  public function h():void { }\n}\n`;
+    const r = translateCore(source, { shimNames: SHIM_AS3_NAMES, selfQualified: 'app.Main', siblingClasses: new Set(), syntaxCheck: () => [] });
+    expect(r.text).toContain('this.n = 1;');
+    expect(r.text).toContain('this.h();');
+    expect(r.text).not.toContain('(app.');
   });
 });
