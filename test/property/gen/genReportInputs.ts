@@ -70,6 +70,7 @@ const genBehaviour: fc.Arbitrary<BehaviourInput> = fc.oneof(
       'trace-too-large' as const,
       'replay-failed' as const,
       'tick-rate' as const,
+      'empty-reference-trace' as const,
     ),
   }),
   fc.record({
@@ -89,6 +90,7 @@ const genBehaviour: fc.Arbitrary<BehaviourInput> = fc.oneof(
       inputGroups: fc.integer({ min: 0, max: 100 }),
       clicks: fc.integer({ min: 0, max: 20 }),
       pointerEvents: fc.integer({ min: 0, max: 40 }),
+      ticksRun: fc.integer({ min: 0, max: 100 }),
       inputNotes: fc.constant([] as never[]),
     }),
   }),

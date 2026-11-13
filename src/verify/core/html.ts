@@ -142,7 +142,11 @@ function behaviourSection(r: FidelityReport): string {
   const b = r.behaviour;
   const parts: string[] = ['<section aria-labelledby="behaviour">', '<h2 id="behaviour">Behaviour comparison</h2>'];
   if (b.status === 'not-compared') {
-    parts.push(`<p>Not compared (${e(b.reason)})</p>`);
+    parts.push(
+      b.reason === 'empty-reference-trace'
+        ? '<p>Not compared (reference trace is empty; no Trace_Score)</p>'
+        : `<p>Not compared (${e(b.reason)})</p>`,
+    );
   } else {
     const same = b.missing.length === 0 && b.extra.length === 0;
     parts.push(
@@ -152,7 +156,7 @@ function behaviourSection(r: FidelityReport): string {
     );
     parts.push(
       `<p>Reference lines: ${b.referenceLineCount}, captured lines: ${b.capturedLineCount}, matched: ${b.matched}</p>`,
-      `<p>Replay: ${b.replay.ticks} ticks, ${b.replay.inputGroups} input groups, ${b.replay.clicks} clicks, ${b.replay.pointerEvents} pointer events</p>`,
+      `<p>Replay: ${b.replay.ticks} ticks, ${b.replay.inputGroups} input groups, ${b.replay.clicks} clicks, ${b.replay.pointerEvents} pointer events, ${b.replay.ticksRun} ticks run</p>`,
     );
     parts.push(inputNotesTable(b.replay.inputNotes));
     const d = b.firstDivergence;

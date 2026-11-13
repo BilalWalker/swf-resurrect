@@ -35,12 +35,12 @@ export type FrameOutcome =
 export type BehaviourInput =
   | {
       status: 'not-compared';
-      reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate';
+      reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate' | 'empty-reference-trace';
     }
   | {
       status: 'compared';
       comparison: Extract<TraceComparison, { kind: 'compared' }>;
-      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; inputNotes: InputNote[] };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[] };
     };
 
 export interface FidelityInputs {
@@ -78,7 +78,7 @@ export type VisualFrame =
 export type BehaviourReport =
   | {
       status: 'not-compared';
-      reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate';
+      reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate' | 'empty-reference-trace';
       knownBehaviourGaps: string[];
     }
   | {
@@ -90,7 +90,7 @@ export type BehaviourReport =
       extra: TraceLine[];
       traceScore: number;
       firstDivergence: Divergence | null;
-      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; inputNotes: InputNote[] };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[] };
       knownBehaviourGaps: string[];
     };
 
@@ -171,6 +171,7 @@ function buildBehaviour(b: BehaviourInput, gaps: string[]): BehaviourReport {
       inputGroups: b.replay.inputGroups,
       clicks: b.replay.clicks,
       pointerEvents: b.replay.pointerEvents,
+      ticksRun: b.replay.ticksRun,
       inputNotes: b.replay.inputNotes.map((n) => ({ ...n })),
     },
     knownBehaviourGaps: gaps,

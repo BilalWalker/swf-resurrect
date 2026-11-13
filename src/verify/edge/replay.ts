@@ -9,7 +9,10 @@ import type { ReplayPlan } from '../core/replayPlan';
 import { sanitizeDetail } from '../core/sanitize';
 import type { ReplayRunnerResult } from './replayRunner';
 
-export interface ReplayResult extends ReplayRunnerResult {}
+export interface ReplayResult extends ReplayRunnerResult {
+  /** True when the child could not run (start, timeout, no result file); false for a result the runner wrote. */
+  childFailure: boolean;
+}
 
 export const REPLAY_TIMEOUT_MS = 60_000;
 
@@ -17,7 +20,7 @@ const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const runnerPath = fileURLToPath(new URL('./replayRunner.ts', import.meta.url));
 
 function failure(message: string): ReplayResult {
-  return { lines: [], ticksRun: 0, error: { tick: 0, message: sanitizeDetail(message) }, releaseOutside: [] };
+  return { lines: [], ticksRun: 0, error: { tick: 0, message: sanitizeDetail(message) }, releaseOutside: [], childFailure: true };
 }
 
 /** Never rejects: failures come back as `error`. */
@@ -60,7 +63,7 @@ export async function replay(
 
     if (outcome.timedOut) return failure(`timed out after ${Math.round(timeoutMs / 1000)} s`);
     try {
-      return JSON.parse(await readFile(resultPath, 'utf8')) as ReplayResult;
+      return { ...(JSON.parse(await readFile(resultPath, 'utf8')) as ReplayRunnerResult), childFailure: false };
     } catch {
       return failure(outcome.stderr.trim() === '' ? `runner exited with code ${String(outcome.code)}` : outcome.stderr);
     }

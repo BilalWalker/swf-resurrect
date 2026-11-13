@@ -43,6 +43,13 @@ describe('html known behaviour gaps', () => {
     expect(html).toContain(NONE);
   });
 
+  it('prints the text of the empty-reference-trace reason', () => {
+    const html = renderFidelityHtml(
+      baseReport({ status: 'not-compared', reason: 'empty-reference-trace', knownBehaviourGaps: [] } as never),
+    );
+    expect(html).toContain('Not compared (reference trace is empty; no Trace_Score)');
+  });
+
   it('renders escaped codes for a non-empty list', () => {
     const html = renderFidelityHtml(
       baseReport({ status: 'not-compared', reason: 'no-reference-trace', knownBehaviourGaps: ['a<b', 'x&y'] } as never),

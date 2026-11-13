@@ -18,7 +18,7 @@ import { buildFidelityReport, serialiseFidelityReport } from '../core/report';
 import type { BehaviourInput, FrameOutcome, Problem } from '../core/report';
 import { renderFidelityHtml } from '../core/html';
 import { sanitizeDetail } from '../core/sanitize';
-import { compareTraces } from '../core/traceCompare';
+import { decideBehaviour } from '../core/replayOutcome';
 import { splitTraceLines } from '../core/traceFormat';
 import { buildProject as realBuildProject } from './buildProject';
 import type { BuiltProject } from './buildProject';
@@ -277,26 +277,25 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
   try {
     result = await deps.replay(resolve(req.projectDir), plan);
   } catch (err) {
-    result = { lines: [], ticksRun: 0, error: { tick: 0, message: describe(err) }, releaseOutside: [] };
+    result = { lines: [], ticksRun: 0, error: { tick: 0, message: describe(err) }, releaseOutside: [], childFailure: true };
   }
-  const failedOutright = result.error !== null && result.lines.length === 0 && result.ticksRun === 0;
-  if (result.error !== null) {
-    problems.push({ kind: 'replay-error', tick: result.error.tick, detail: result.error.message });
-  }
-  if (failedOutright) return { status: 'not-compared', reason: 'replay-failed' };
+  const decision = decideBehaviour(splitTraceLines(traceText), {
+    lines: result.lines.map((l) => l.text),
+    ticksRun: result.ticksRun,
+    error: result.error,
+    childFailure: result.childFailure === true,
+  });
+  if (decision.problem !== null) problems.push(decision.problem);
+  if (decision.status === 'not-compared') return { status: 'not-compared', reason: decision.reason };
   // release-outside is never a problem (decided F17); it lives in the notes only.
   const inputNotes = buildInputNotes(plan.problems, result.releaseOutside);
-
-  const comparison = compareTraces(
-    splitTraceLines(traceText),
-    result.lines.map((l) => l.text),
-  );
-  if (comparison.kind === 'too-large') return { status: 'not-compared', reason: 'trace-too-large' };
+  const comparison = decision.comparison;
   return {
     status: 'compared',
     comparison,
     replay: { ticks: plan.tickCount, inputGroups, clicks: plan.pressReleasePairs,
       pointerEvents: plan.pointers.filter((p) => p.tick < plan.tickCount).length,
+      ticksRun: decision.ticksRun,
       inputNotes,
     },
   };
