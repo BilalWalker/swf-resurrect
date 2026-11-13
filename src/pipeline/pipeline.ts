@@ -153,6 +153,19 @@ function errorsPerFile(gate: GateResult): string {
     .join(', ');
 }
 
+/** The `[verify]` line, then (Trace_Score below 100) the missing and extra counts and one line per input note. */
+export function verifyLines(summary: VerifySummary): string[] {
+  const pct = (v: number | null): string => (v === null ? 'not-compared' : `${v.toFixed(2)}%`);
+  const lines = [
+    `[verify] overall match ${pct(summary.overallMatch)}, trace score ${pct(summary.traceScore)} -> ${summary.jsonPath}, ${summary.htmlPath}`,
+  ];
+  if (summary.traceScore !== null && summary.traceScore < 100) {
+    lines.push(`  trace: ${summary.missing} missing, ${summary.extra} extra`);
+    for (const n of summary.inputNoteLines) lines.push(`  input note: ${n}`);
+  }
+  return lines;
+}
+
 /** Runs the three stages. Exit codes: 0 success, 1 stage failure, 2 usage or path error. */
 export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io: PipelineIo): Promise<number> {
   const problem = await precheck(args);
@@ -260,10 +273,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       };
       if (args.verify.frames !== undefined) req.frames = args.verify.frames;
       const summary = await stages.verify(req);
-      const pct = (v: number | null): string => (v === null ? 'not-compared' : `${v.toFixed(2)}%`);
-      io.out(
-        `[verify] overall match ${pct(summary.overallMatch)}, trace score ${pct(summary.traceScore)} -> ${summary.jsonPath}, ${summary.htmlPath}\n`,
-      );
+      for (const line of verifyLines(summary)) io.out(`${line}\n`);
     }
   } catch (err) {
     failure = err;

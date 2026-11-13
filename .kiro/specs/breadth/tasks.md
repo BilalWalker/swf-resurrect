@@ -247,12 +247,12 @@ Rules that apply to every task:
     - Test: `test/unit/stageTree.test.ts` (create): `describeTarget` for the Stage_Object, a named chain and an unnamed child; extend `test/unit/replayPointers.test.ts`: down on shape A, up on shape B gives one note and no `click`.
     - _Requirements: 14.20, 14.7_
 
-  - [-] 7.6 Add `src/verify/core/inputNotes.ts`
+  - [x] 7.6 Add `src/verify/core/inputNotes.ts`
     - `InputNote`, `buildInputNotes(problems, released)` (merges the planner's `unsupported-input` and `unpaired-mouse-event` problems with the runner's notes, sorted by `(index, kind)`) and `formatInputNotes(notes)` (for example `release-outside at entry 21 (pressed root1.joystick, released over stage; MouseDown at entry 17)`). Add the file to the purity test.
     - Test: `test/property/releaseOutside.property.test.ts` (create), **Property 25: `release-outside` records follow the pressed and hit targets** (Replay over a fixed scene with at least two shapes and empty space; exactly the releases with a pending press and another Hit_Target; no `click` for them; nothing added or lost by `buildInputNotes`). Examples in `test/unit/inputNotes.test.ts` (create).
     - _Requirements: 14.9, 14.20, 14.21, 15.5_
 
-  - [ ] 7.7 Copy the notes into the report, the HTML and the CLI line
+  - [-] 7.7 Copy the notes into the report, the HTML and the CLI line
     - `verifyStage` copies `buildInputNotes` into `behaviour.replay.inputNotes` (additive; `FORMAT_VERSION` stays 1) and keeps pushing `unsupported-input` and `unpaired-mouse-event` to `problems` as today; `release-outside` is never added to `problems` (decided F17); `src/verify/core/html.ts` prints `inputNotes` as one table in the behaviour section; the CLI prints the `formatInputNotes` lines under its `[verify]` line, with the `missing` and `extra` counts, when the Trace_Score is below 100.
     - Test: extend `test/unit/verifyStage.test.ts` (notes copied, sorted, `release-outside` absent from `problems`), `test/unit/cli.test.ts` (the printed lines) and `test/unit/htmlKnownGaps.test.ts` (the table is rendered and escaped).
     - _Requirements: 14.21_

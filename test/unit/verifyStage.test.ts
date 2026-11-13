@@ -13,18 +13,22 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-async function run(toml: string): Promise<{ behaviour: { status: string; reason?: string }; replayCalls: number }> {
+async function run(
+  toml: string,
+  input = '[]',
+  released: unknown[] = [],
+): Promise<{ behaviour: any; problems: any[]; replayCalls: number }> {
   const ref = join(root, 'reference');
   await mkdir(ref, { recursive: true });
   await writeFile(join(ref, 'output.txt'), 'hello\n');
-  await writeFile(join(ref, 'input.json'), '[]');
+  await writeFile(join(ref, 'input.json'), input);
   await writeFile(join(ref, 'test.toml'), toml);
   let replayCalls = 0;
   const deps: Partial<VerifyDeps> = {
     exportReferenceFrames: async () => new Map(),
     replay: async () => {
       replayCalls++;
-      return { lines: [{ text: 'hello', tick: 1 }], ticksRun: 3, error: null } as never;
+      return { lines: [{ text: 'hello', tick: 1 }], ticksRun: 3, error: null, releaseOutside: released } as never;
     },
   };
   await verifyStage({
@@ -40,7 +44,7 @@ async function run(toml: string): Promise<{ behaviour: { status: string; reason?
     deps,
   });
   const report = JSON.parse(await readFile(join(root, 'out', 'fidelity-report.json'), 'utf8'));
-  return { behaviour: report.behaviour, replayCalls };
+  return { behaviour: report.behaviour, problems: report.problems, replayCalls };
 }
 
 describe('verifyStage behaviour and tick_rate', () => {
@@ -55,5 +59,21 @@ describe('verifyStage behaviour and tick_rate', () => {
     const r = await run('num_frames = 3\n');
     expect(r.behaviour.status).toBe('compared');
     expect(r.replayCalls).toBe(1);
+  });
+
+  it('copies sorted input notes and keeps release-outside out of problems', async () => {
+    const input = JSON.stringify([{ type: 'MouseDown', x: 1, y: 1, btn: 'Left' }, { type: 'MouseUp', x: 5, y: 5, btn: 'Left' }, { type: 'KeyDown', key_code: 65 }]);
+    const r = await run('num_frames = 3\n', input, [
+      { upIndex: 1, downIndex: 0, pressed: 'root1.a', hit: 'stage', tick: 0 },
+    ]);
+    const notes = r.behaviour.replay.inputNotes as Array<{ kind: string; index: number }>;
+    expect(notes.map((n) => n.kind)).toContain('release-outside');
+    expect(notes.map((n) => n.index)).toEqual([...notes.map((n) => n.index)].sort((a, b) => a - b));
+    expect(r.problems.map((p) => p.kind)).not.toContain('release-outside');
+  });
+
+  it('has an empty inputNotes list without notes', async () => {
+    const r = await run('num_frames = 3\n');
+    expect(r.behaviour.replay.inputNotes).toEqual([]);
   });
 });

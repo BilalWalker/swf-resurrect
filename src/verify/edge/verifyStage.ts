@@ -8,6 +8,7 @@ import type { UnsupportedFeatureEntry } from '../../pipeline/unsupported';
 import type { TranslationReport } from '../../translate/report';
 import { KNOWN_BEHAVIOUR_GAPS } from '../core/constants';
 import { selectFrames } from '../core/frameSample';
+import { buildInputNotes, formatInputNotes } from '../core/inputNotes';
 import { knownVisualLimits } from '../core/limits';
 import { buildDiffImage, compareImages, flattenOnto } from '../core/pixelDiff';
 import type { Rgb, RgbaImage } from '../core/pixelDiff';
@@ -64,6 +65,10 @@ export interface VerifyRequest {
 export interface VerifySummary {
   overallMatch: number | null;
   traceScore: number | null;
+  /** Counts and note lines for the CLI; zero and empty when the behaviour was not compared. */
+  missing: number;
+  extra: number;
+  inputNoteLines: string[];
   jsonPath: string;
   htmlPath: string;
 }
@@ -235,6 +240,9 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
   return {
     overallMatch: report.visual.overallMatch,
     traceScore: report.behaviour.status === 'compared' ? report.behaviour.traceScore : null,
+    missing: report.behaviour.status === 'compared' ? report.behaviour.missing.length : 0,
+    extra: report.behaviour.status === 'compared' ? report.behaviour.extra.length : 0,
+    inputNoteLines: report.behaviour.status === 'compared' ? formatInputNotes(report.behaviour.replay.inputNotes) : [],
     jsonPath,
     htmlPath,
   };
@@ -276,6 +284,8 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
     problems.push({ kind: 'replay-error', tick: result.error.tick, detail: result.error.message });
   }
   if (failedOutright) return { status: 'not-compared', reason: 'replay-failed' };
+  // release-outside is never a problem (decided F17); it lives in the notes only.
+  const inputNotes = buildInputNotes(plan.problems, result.releaseOutside);
 
   const comparison = compareTraces(
     splitTraceLines(traceText),
@@ -287,6 +297,7 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
     comparison,
     replay: { ticks: plan.tickCount, inputGroups, clicks: plan.pressReleasePairs,
       pointerEvents: plan.pointers.filter((p) => p.tick < plan.tickCount).length,
+      inputNotes,
     },
   };
 }

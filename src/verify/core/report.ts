@@ -3,6 +3,7 @@
 import { canonicalJson } from '../../pipeline/canonicalJson';
 import type { ClassStatus, TranslationReport } from '../../translate/report';
 import { AA_TOLERANCE, FORMAT_VERSION } from './constants';
+import type { InputNote } from './inputNotes';
 import type { VisualLimit } from './limits';
 import { meanHundredths } from './pixelDiff';
 import { sanitizeDetail } from './sanitize';
@@ -39,7 +40,7 @@ export type BehaviourInput =
   | {
       status: 'compared';
       comparison: Extract<TraceComparison, { kind: 'compared' }>;
-      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; inputNotes: InputNote[] };
     };
 
 export interface FidelityInputs {
@@ -89,7 +90,7 @@ export type BehaviourReport =
       extra: TraceLine[];
       traceScore: number;
       firstDivergence: Divergence | null;
-      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; inputNotes: InputNote[] };
       knownBehaviourGaps: string[];
     };
 
@@ -165,7 +166,13 @@ function buildBehaviour(b: BehaviourInput, gaps: string[]): BehaviourReport {
     extra: c.extra.map((l) => ({ line: l.line, text: l.text })),
     traceScore: c.traceScore,
     firstDivergence: c.firstDivergence === null ? null : { ...c.firstDivergence },
-    replay: { ticks: b.replay.ticks, inputGroups: b.replay.inputGroups, clicks: b.replay.clicks, pointerEvents: b.replay.pointerEvents },
+    replay: {
+      ticks: b.replay.ticks,
+      inputGroups: b.replay.inputGroups,
+      clicks: b.replay.clicks,
+      pointerEvents: b.replay.pointerEvents,
+      inputNotes: b.replay.inputNotes.map((n) => ({ ...n })),
+    },
     knownBehaviourGaps: gaps,
   };
 }

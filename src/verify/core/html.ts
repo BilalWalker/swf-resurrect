@@ -1,6 +1,7 @@
 // Static HTML for the Fidelity_Report (design section 10).
 // Pure: no node:* imports, no clock, no randomness, no locale-dependent calls.
 // No script, no external resource, inline style only, images by relative path.
+import type { InputNote } from './inputNotes';
 import type { FidelityReport, VisualFrame } from './report';
 
 /** Escapes & < > " ' (in that order of concern: & first via single pass). */
@@ -120,6 +121,23 @@ function visualSection(r: FidelityReport): string {
   return parts.join('\n');
 }
 
+function inputNotesTable(notes: readonly InputNote[]): string {
+  if (notes.length === 0) return '<h3>Input notes (0)</h3>\n<p>none</p>';
+  const rows = notes.map((n) => {
+    const detail =
+      n.kind === 'release-outside'
+        ? `pressed ${n.pressed}, released over ${n.hit}; MouseDown at entry ${n.downIndex}`
+        : n.kind === 'unsupported-input'
+          ? n.detail
+          : '';
+    return `<tr><td>${e(n.kind)}</td><td>${n.index}</td><td>${e(detail)}</td></tr>`;
+  });
+  return (
+    `<h3>Input notes (${notes.length})</h3>\n<table>\n<caption>Replay input entries that explain a difference</caption>\n` +
+    `<tr><th scope="col">Kind</th><th scope="col">Entry</th><th scope="col">Detail</th></tr>\n${rows.join('\n')}\n</table>`
+  );
+}
+
 function behaviourSection(r: FidelityReport): string {
   const b = r.behaviour;
   const parts: string[] = ['<section aria-labelledby="behaviour">', '<h2 id="behaviour">Behaviour comparison</h2>'];
@@ -136,6 +154,7 @@ function behaviourSection(r: FidelityReport): string {
       `<p>Reference lines: ${b.referenceLineCount}, captured lines: ${b.capturedLineCount}, matched: ${b.matched}</p>`,
       `<p>Replay: ${b.replay.ticks} ticks, ${b.replay.inputGroups} input groups, ${b.replay.clicks} clicks, ${b.replay.pointerEvents} pointer events</p>`,
     );
+    parts.push(inputNotesTable(b.replay.inputNotes));
     const d = b.firstDivergence;
     if (d !== null) {
       parts.push(

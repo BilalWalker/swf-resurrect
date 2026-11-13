@@ -36,7 +36,7 @@ describe('html known behaviour gaps', () => {
         referenceLineCount: 0,
         capturedLineCount: 0,
         matched: 0,
-        replay: { ticks: 0, inputGroups: 0, clicks: 0, pointerEvents: 0 },
+        replay: { ticks: 0, inputGroups: 0, clicks: 0, pointerEvents: 0, inputNotes: [] },
         knownBehaviourGaps: [],
       } as never),
     );
@@ -49,5 +49,37 @@ describe('html known behaviour gaps', () => {
     );
     expect(html).toContain('<h3>Known behaviour gaps</h3>\n<ul>\n<li>a&lt;b</li>\n<li>x&amp;y</li>\n</ul>');
     expect(html).not.toContain(NONE);
+  });
+
+  it('renders input notes as one escaped table', () => {
+    const html = renderFidelityHtml(
+      baseReport({
+        status: 'compared',
+        traceScore: 50,
+        firstDivergence: null,
+        missing: [],
+        extra: [],
+        referenceLineCount: 0,
+        capturedLineCount: 0,
+        matched: 0,
+        replay: {
+          ticks: 0,
+          inputGroups: 0,
+          clicks: 0,
+          pointerEvents: 0,
+          inputNotes: [
+            { kind: 'release-outside', index: 21, downIndex: 17, pressed: 'root1.<b>', hit: 'stage' },
+            { kind: 'unsupported-input', index: 30, detail: 'a&b' },
+          ],
+        },
+        knownBehaviourGaps: [],
+      } as never),
+    );
+    expect(html.match(/<table>\n<caption>Replay input entries/g)).toHaveLength(1);
+    expect(html).toContain('<h3>Input notes (2)</h3>');
+    expect(html).toContain('<th scope="col">Kind</th><th scope="col">Entry</th>');
+    expect(html).toContain('<td>release-outside</td><td>21</td><td>pressed root1.&lt;b&gt;, released over stage; MouseDown at entry 17</td>');
+    expect(html).toContain('<td>a&amp;b</td>');
+    expect(html).not.toContain('<b>');
   });
 });
