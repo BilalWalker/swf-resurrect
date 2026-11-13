@@ -437,11 +437,11 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 26. Shim and Runtime: mouse flags, Hit_Target and `formatToString` (Requirement 29)
   - Commit area: `Shim` for 26.1, `Runtime` for 26.2 and 26.3; one commit per sub-task. Read design 21.7 and section 10. Verification V2 plus CC for all three; SC for 26.3. Decided D36. Every Shim addition is logged in `template/shim/ADDED_APIS.md` with its fixture line, and `npm run gen:shim-members` is run in the same sub-task.
-  - [-] 26.1 Shim members and `Event.formatToString`
+  - [x] 26.1 Shim members and `Event.formatToString`
     - Add `mouseEnabled` and `mouseChildren` to `DisplayObjectContainer`, `buttonMode` and `useHandCursor` to `Sprite`, and `Event.formatToString` to `events.ts`. `formatToString` is an instance method, as in Ruffle's `Event.as` at the pinned commit (Requirement 29.1). Log in `ADDED_APIS.md`: `BaseButton.as:46` (`buttonMode`), `:47` (`mouseChildren`), `:48` (`useHandCursor`), `:68` (`mouseEnabled`), `Slider.as:393` (`useHandCursor`), `ComponentEvent.as:29` and `SliderEvent.as:55` (`formatToString`). Regenerate the Shim_Member_Table. Commit message: `Shim: add mouse flags and Event.formatToString (26.1)`.
     - Test: `test/unit/shimDisplay.test.ts` and `test/unit/shimEvents.test.ts` extended (defaults, a stored value, `formatToString` for a string, a number and a boolean, the order of properties); `test/unit/shimMembersDrift.test.ts` passes.
     - _Requirements: 29.1, 29.5, 29.7, 31.3_
-  - [ ] 26.2 The Hit_Target rule
+  - [x] 26.2 The Hit_Target rule
     - Add `hitTestAll` and `resolveHitTarget` to `template/runtime/hitTest.ts` (Core, browser-safe) and use them in `Player.pointerEntry` in place of `interactiveTarget(hitTest(...))`. Commit message: `Runtime: honour mouseEnabled and mouseChildren in hits (26.2)`.
     - Test: `test/property/hitTarget.property.test.ts` (create), **Property 53: The Hit_Target honours the mouse flags and equals the old rule by default**; `test/unit/hitTest.test.ts` extended: `mouseChildren = false` on a button-like clip, `mouseEnabled = false` and the parent receives the event, a disabled object above a directly hit sibling, the Stage_Object fallback; `test/unit/player.test.ts`: `dispatchClick` on the `clickgoto` shape is unchanged (`clickgotoReplay.test.ts`: Trace_Score 100, 32 ticks).
     - _Requirements: 29.2, 29.3, 29.4, 29.8, 31.3_

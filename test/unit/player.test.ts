@@ -509,6 +509,56 @@ describe('Player.dispatchClick', () => {
     expect(clicks).toEqual([btn]);
   });
 
+  describe('Hit_Target flags and order (Requirement 29.2)', () => {
+    // Root: click_mc (depth 1, symbol 2 with a shape at 0,0), plus root shapes at depth 5 (10,10) and depth 6 (20,10).
+    function blockScene() {
+      const root = sprite([[entry(1, 2, 0, 0, 'click_mc'), entry(5, 1, 10, 10), entry(6, 1, 20, 10), entry(7, 1, 70, 60)]]);
+      return setup(sceneOf(root, { '2': sprite([[entry(1, 1)]]) }));
+    }
+    function recordClicks(player: Player) {
+      const seen: unknown[] = [];
+      player.stage.addEventListener(MouseEvent.CLICK, (e) => seen.push(e.target));
+      return seen;
+    }
+    it('picks an interactive clip that lies below non-interactive root shapes (click_block shape)', () => {
+      const { player } = blockScene();
+      const seen = recordClicks(player);
+      const clip = (player.root as unknown as { click_mc: MovieClip }).click_mc;
+      player.dispatchClick(25, 15); // inside click_mc and both root shapes
+      player.dispatchClick(35, 25); // inside click_mc and the depth-6 shape only
+      expect(seen).toEqual([clip, clip]);
+    });
+    it('a point that only a root shape contains is delivered to the Stage_Object', () => {
+      const { player } = blockScene();
+      const seen = recordClicks(player);
+      player.dispatchClick(80, 70);
+      expect(seen).toEqual([player.stage]);
+    });
+    it('mouseChildren = false on an ancestor makes the ancestor the target', () => {
+      const root = sprite([[entry(1, 2, 0, 0, 'outer')]]);
+      const { player } = setup(sceneOf(root, { '2': sprite([[entry(1, 3, 0, 0, 'inner')]]), '3': sprite([[entry(1, 1)]]) }));
+      const outer = (player.root as unknown as { outer: MovieClip }).outer;
+      const inner = (outer as unknown as { inner: MovieClip }).inner;
+      const seen = recordClicks(player);
+      player.dispatchClick(5, 5);
+      outer.mouseChildren = false;
+      player.dispatchClick(5, 5);
+      expect(seen).toEqual([inner, outer]);
+    });
+    it('mouseEnabled = false skips the object and the press and release on the same Hit_Target still click', () => {
+      const root = sprite([[entry(1, 2, 0, 0, 'outer')]]);
+      const { player } = setup(sceneOf(root, { '2': sprite([[entry(1, 3, 0, 0, 'inner')]]), '3': sprite([[entry(1, 1)]]) }));
+      const outer = (player.root as unknown as { outer: MovieClip }).outer;
+      const inner = (outer as unknown as { inner: MovieClip }).inner;
+      const clicks: unknown[] = [];
+      outer.addEventListener(MouseEvent.CLICK, (e) => clicks.push(e.currentTarget));
+      inner.mouseEnabled = false;
+      const seen = recordClicks(player);
+      player.dispatchClick(5, 5);
+      expect(seen).toEqual([outer]);
+      expect(clicks).toEqual([outer]);
+    });
+  });
   it('warns once, not per entry, for a skewed matrix', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const skew: DisplayListEntry = { depth: 1, symbolId: 1, matrix: [1, 0, 1, 1, 0, 0], colorTransform: ID_CT, name: '' };

@@ -27,7 +27,7 @@ import { isStage, Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
 import { constructorSite, messageOf, type ErrorSink } from './errorReport';
-import { hitTest } from './hitTest';
+import { hitTestAll, resolveHitTarget, type TargetNode } from './hitTest';
 import type { ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
 import { ScriptQueue } from './scriptQueue';
 import { buildHitView, decomposeMatrix, NodeRegistry, ShapeObject } from './stageTree';
@@ -58,14 +58,26 @@ const DEFAULT_MAX_CATCH_UP = 5;
 const ROOT_NAME = 'root1';
 
 /**
- * The Hit_Target for a hit object: its nearest ancestor-or-self that is a Sprite or MovieClip (the Shim's only
- * InteractiveObject kinds; both extend DisplayObjectContainer, Shape does not). null when there is none.
+ * A TargetNode view of a display object for `resolveHitTarget`. `parent` is the view of the parent container,
+ * or the Stage_Object for the root. The flags are read live from the object.
  */
-function interactiveTarget(hit: DisplayObject | undefined): DisplayObjectContainer | null {
-  for (let o: unknown = hit; o !== null && o !== undefined && !isStage(o); o = (o as DisplayObject)._parent) {
-    if (o instanceof DisplayObjectContainer) return o;
-  }
-  return null;
+interface TargetView extends TargetNode<Stage> {
+  readonly source: DisplayObjectContainer | DisplayObject;
+}
+function targetViewOf(o: DisplayObject, cache: Map<unknown, TargetView>): TargetView {
+  const known = cache.get(o);
+  if (known !== undefined) return known;
+  const container = o instanceof DisplayObjectContainer ? o : null;
+  const p = o._parent;
+  const view: TargetView = {
+    source: o,
+    parent: p === null || isStage(p) ? (p as Stage | null) : targetViewOf(p as DisplayObject, cache),
+    isContainer: container !== null,
+    mouseEnabled: container?.mouseEnabled ?? true,
+    mouseChildren: container?.mouseChildren ?? true,
+  };
+  cache.set(o, view);
+  return view;
 }
 
 function isIdentityColor(ct: Readonly<ColorTransform8>): boolean {
@@ -258,7 +270,10 @@ export class Player {
    * own event. Returns the Hit_Target (the Stage_Object when no shape is hit).
    */
   private pointerEntry(x: number, y: number, sync = true): PointerTarget {
-    const target = interactiveTarget(hitTest(buildHitView(this.root), x, y)?.source) ?? this.stage;
+    const cache = new Map<unknown, TargetView>();
+    const hits = hitTestAll(buildHitView(this.root), x, y).map((h) => targetViewOf(h.source, cache));
+    const picked = resolveHitTarget(hits, this.stage);
+    const target = picked === this.stage ? this.stage : ((picked as TargetView).source as DisplayObjectContainer);
     if (x !== this.pointerX || y !== this.pointerY) {
       this.pointerX = x;
       this.pointerY = y;
