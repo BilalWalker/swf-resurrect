@@ -7,6 +7,7 @@ import {
   clipsPreOrder,
   exitFrame,
   frameConstructed,
+  registerClassName,
   reportCaughtError,
   setCaughtErrorSink,
   setContextForConstructor,
@@ -103,6 +104,8 @@ export class Player {
       this.backend = options.backend;
       this.clock = options.clock;
       this.classRegistry = options.classRegistry;
+      // Class names for toString come from the registry keys, never from constructor.name (D34).
+      for (const [key, ctor] of Object.entries(options.classRegistry)) registerClassName(ctor, key);
       this.shapeBounds = options.shapeBounds;
       this.maxCatchUp = Math.max(1, options.maxCatchUpFrames ?? DEFAULT_MAX_CATCH_UP);
       this.frameIntervalMs = 1000 / options.scene.stage.frameRate;

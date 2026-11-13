@@ -7,6 +7,7 @@ import {
   clipsPreOrder,
   detachChild,
   isAttachedTo,
+  registerClassName,
   takeConstructionContext,
   type ClipScripts,
   type ConstructionContext,
@@ -241,3 +242,6 @@ export function announceRemoved(child: DisplayObject): void {
   if (!onStage) return;
   for (const o of subtree(child)) o.dispatchEvent(new Event(Event.REMOVED_FROM_STAGE));
 }
+
+registerClassName(DisplayObjectContainer, 'DisplayObjectContainer');
+registerClassName(Sprite, 'Sprite');

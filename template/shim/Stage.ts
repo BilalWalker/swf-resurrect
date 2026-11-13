@@ -1,5 +1,6 @@
 import { EventDispatcher } from './events';
 import type { DisplayObject } from './DisplayObject';
+import { classNameOf, registerClassName } from './classNames';
 import type { DisplayObjectContainer } from './Sprite';
 
 /** What a display object's parent can be: a container, or the Stage_Object for the root. */
@@ -13,7 +14,14 @@ export class Stage extends EventDispatcher {
   readonly _isStage = true;
   readonly _parent: null = null;
   _children: DisplayObject[] = [];
+
+  /** `[object Stage]` from the class-name registration (Requirement 28.1). */
+  toString(): string {
+    return `[object ${classNameOf(this)}]`;
+  }
 }
+
+registerClassName(Stage, 'Stage');
 
 /** True when `o` is a Stage_Object. */
 export function isStage(o: unknown): o is Stage {

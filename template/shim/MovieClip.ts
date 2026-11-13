@@ -1,6 +1,6 @@
 import type { DisplayListEntry } from '../runtime/scene';
 import type { DisplayObject } from './DisplayObject';
-import type { ClipScripts } from './internal';
+import { registerClassName, type ClipScripts } from './internal';
 import { Sprite } from './Sprite';
 
 function sameNumbers(a: readonly number[], b: readonly number[]): boolean {
@@ -197,3 +197,5 @@ export class MovieClip extends Sprite {
     return null;
   }
 }
+
+registerClassName(MovieClip, 'MovieClip');

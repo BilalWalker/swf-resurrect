@@ -1,5 +1,5 @@
 import { EventDispatcher, type Event } from './events';
-import { getPointerPosition, globalToLocal } from './internal';
+import { classNameOf, getPointerPosition, globalToLocal, registerClassName } from './internal';
 import type { DisplayObjectContainer } from './Sprite';
 import { isStage, type ParentNode, type Stage } from './Stage';
 
@@ -89,4 +89,10 @@ export class DisplayObject extends EventDispatcher {
   get parent(): ParentNode | null {
     return this._parent;
   }
+  /** `[object ClassName]` from the class-name registration (Requirement 28.1). */
+  toString(): string {
+    return `[object ${classNameOf(this)}]`;
+  }
 }
+
+registerClassName(DisplayObject, 'DisplayObject');

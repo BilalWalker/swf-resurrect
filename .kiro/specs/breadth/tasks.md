@@ -422,7 +422,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 25. Runtime: instance printing and default names (Requirement 28)
   - Commit area: `Runtime`; one commit per sub-task. Read design 21.6 and Appendix A.12. Verification V2 plus CC. Decided D34, D35. The numbering for script-created objects is "not verified" and is reported at Task 27.
-  - [ ] 25.1 `toString` and class-name registration
+  - [x] 25.1 `toString` and class-name registration
     - Add `registerClassName` and `classNameOf` to `template/shim/internal.ts`, register the Shim classes, register every `classRegistry` key in the Player constructor, and add `toString` to `DisplayObject` and `Stage` (design 21.6). Commit message: `Runtime: print display objects as [object Class] (25.1)`.
     - Test: `test/property/instanceNames.property.test.ts` (create), **Property 52: Display objects print as `[object ClassName]`**; `test/unit/instanceNames.test.ts` (create): `[object MovieClip]`, a registered `test_fla.MainTimeline` prints `[object MainTimeline]`, a replaced constructor name, a class with its own `toString`.
     - _Requirements: 28.1, 28.6, 28.7, 31.3_
