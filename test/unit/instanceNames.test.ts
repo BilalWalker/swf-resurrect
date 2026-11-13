@@ -113,6 +113,27 @@ describe("default instance names", () => {
     expect(`${root.getChildAt(1)}`).toBe("[object MovieClip]");
   });
 
+  it("prints the five click_block Reference_Trace target texts", () => {
+    const root = clickBlock().root as MovieClip & { click_mc: MovieClip };
+    const sprite = root.getChildAt(1);
+    // Hit order as measured in Ruffle: the unnamed sprite for the first click, click_mc for the rest.
+    const clicks: [number, number, MovieClip][] = [
+      [21, 24, sprite as MovieClip],
+      [522, 27, root.click_mc],
+      [26, 373, root.click_mc],
+      [477, 343, root.click_mc],
+      [276, 197, root.click_mc],
+    ];
+    const lines = clicks.map(([x, y, t]) => "Clicked at " + x + ", " + y + " target: " + t + " " + t.name);
+    expect(lines).toEqual([
+      "Clicked at 21, 24 target: [object MovieClip] instance2",
+      "Clicked at 522, 27 target: [object MovieClip] click_mc",
+      "Clicked at 26, 373 target: [object MovieClip] click_mc",
+      "Clicked at 477, 343 target: [object MovieClip] click_mc",
+      "Clicked at 276, 197 target: [object MovieClip] click_mc",
+    ]);
+  });
+
   it("restarts the counter in a new Player", () => {
     clickBlock();
     expect(clickBlock().root.getChildAt(1).name).toBe("instance2");

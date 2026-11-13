@@ -430,7 +430,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Add the Instance_Counter to `internal.ts` (`resetInstanceCounter`, `takeInstanceNumber`), reset it in the Player constructor, take the number at the start of the `MovieClip` constructor for an unnamed placement (the root included, then named `root1`), in `createChild` for an unnamed shape, and in the `DisplayObject` constructor for a script-created object. Commit message: `Runtime: give unnamed objects instanceN names (25.2)`.
     - Test: add **Property 51: Default instance names follow depth-first creation order** to `test/property/instanceNames.property.test.ts`; example in `test/unit/instanceNames.test.ts`: the `click_block` shape (root, named clip with a shape, unnamed sprite) gives `instance2` to the sprite; a named placement takes no number; a script-created `Sprite` takes the next number.
     - _Requirements: 28.2, 28.3, 28.4, 28.7, 31.3_
-  - [ ] 25.3 `click_block` evidence
+  - [-] 25.3 `click_block` evidence
     - Run the local Replay of `click_block` (downloaded under `.work/`, not committed) and state the five target strings against the Reference_Trace, the Overall_Match and the Trace_Score before (90.85 and 0.00) and after, and the cause of any remaining difference. Measure `clickgoto` and `tweendemo` (CC).
     - Test: `test/unit/instanceNames.test.ts` (extended) holds the five Reference_Trace target strings as a literal expectation built from the placement shape of `click_block`; `test/unit/clickgotoReplay.test.ts` unchanged.
     - _Requirements: 28.5, 28.6, 31.5_
