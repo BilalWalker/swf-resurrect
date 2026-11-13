@@ -356,7 +356,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/constructionBind.test.ts` (extended) runs the two fixture classes through `translate()` and the real Player with `FakeBackend`: no throw at tick 0.
     - _Requirements: 24.7, 24.8, 31.3_
 
-- [ ] 22. Runtime and Pipeline: Caught_Errors (Requirement 25)
+- [x] 22. Runtime and Pipeline: Caught_Errors (Requirement 25)
   - Commit area: `Runtime` for 22.1 to 22.4, `Pipeline` for 22.5 and 22.6 (the Replay and Verify changes; the message names Runtime where `template/` is touched); one commit per sub-task. Read design 21.3 and Appendix A.12. Verification V2 plus CC for 22.1 to 22.4. Decided D26 to D28; the Flash Player column of the table in 21.3 is not verified and is reported at Task 27.
   - [x] 22.1 `errorReport.ts`, the sink and the Player option
     - Add `template/runtime/errorReport.ts` (Core: `CaughtError`, `ErrorSink`, `messageOf`, `constructorSite`, `frameScriptSite`, `listenerSite`; add it to the purity test), `setCaughtErrorSink` and `reportCaughtError` in `template/shim/internal.ts` (default `console.error('[SWF Resurrect] <site>: <message>')`), and `onCaughtError` in the Player options, installed in the Player constructor. Commit message: `Runtime: add the caught-error sink (22.1)`.
@@ -374,11 +374,11 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - `template/src/main.ts` installs no sink and keeps `Startup failed` for load errors only. Commit message: `Runtime: show a caught error without a black canvas (22.4)`.
     - Test: `test/e2e/caughtErrors.e2e.test.ts` (create; skips with a reason when Chromium is absent): an Emitted_Project whose root class throws in its constructor builds, opens in headless Chromium, draws its timeline frame (not the background colour only), and logs one `console.error` with the Error_Site; a missing scene still shows `Startup failed`.
     - _Requirements: 25.5, 25.6, 31.3_
-  - [-] 22.5 The Replay records caught errors and keeps ticking
+  - [x] 22.5 The Replay records caught errors and keeps ticking
     - `src/verify/edge/replayRunner.ts` installs a sink that records `{ tick, site, message }`; `ReplayResult` gains `caughtErrors`; add `runtimeErrorProblems` to `src/verify/core/replayOutcome.ts` (cap 100, overflow Problem); the Fidelity_Report and the HTML report get `behaviour.replay.caughtErrors` (`count`, `first` 20). `decideBehaviour` is unchanged. Commit message: `Pipeline: record caught errors in the Replay (22.5)`.
     - Test: extend `test/property/replayOutcome.property.test.ts` with **Property 48: The Replay records every caught error with its tick and keeps ticking**; `test/unit/verifyStageBehaviour.test.ts` and `test/unit/htmlKnownGaps.test.ts` extended (Problems, overflow, the HTML count); `test/unit/clickgotoReplay.test.ts` unchanged: 32 ticks and Trace_Score 100.
     - _Requirements: 25.7, 25.8, 25.10, 25.11, 31.3, 31.5_
-  - [ ] 22.6 Evidence: the Replays of `mask_reapply` and `3_joystick`
+  - [x] 22.6 Evidence: the Replays of `mask_reapply` and `3_joystick`
     - Run both local Replays as in 21.3 and state in the commit message each Caught_Error that remains (tick, site, message) and the effect on the trace lines. Check the `click_block` and `3_joystick` Reference_Traces for error text (design 21.3, Trace echo row) and record the result. No code unless a fixture test is added: `test/unit/caughtErrors.test.ts` (create) holds one fixture of a class that throws after printing a line and checks that the line is captured and the Replay runs all planned ticks.
     - _Requirements: 25.7, 25.9, 31.3_
 
