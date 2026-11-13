@@ -89,7 +89,7 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
       }
     },
     type(slice: TokenSlice | null, ctx: RewriteContext): RewriteResult {
-      return rewriteType(slice, ctx);
+      return rewriteType(slice, ctx, (text) => options.plan.bindingOfChain.get(text) ?? null);
     },
     fieldDefault(slice: TokenSlice | null): string | null {
       if (slice === null) return null;
@@ -323,6 +323,10 @@ class ExprError extends Error {
   }
 }
 
+/** Binding the import plan gives a dotted type name (design 21.8), or null when it has no source. */
+type ChainBinding = (dotted: string) => string | null;
+const noChain: ChainBinding = () => null;
+
 interface Parsed {
   text: string;
   /** Index of the first token after the type. */
@@ -333,7 +337,7 @@ interface Parsed {
  * Parse a type at `j`: `*`, a dotted name, or `Vector.<T>` (nested). Returns null
  * when the tokens are not a type. `>` tokens must already be split.
  */
-function parseType(toks: readonly Token[], j: number): Parsed | null {
+function parseType(toks: readonly Token[], j: number, chain: ChainBinding = noChain): Parsed | null {
   const t = toks[j];
   if (t === undefined) return null;
   if (t.kind === 'punct' && t.text === '*') return { text: 'any', next: j + 1 };
@@ -346,11 +350,11 @@ function parseType(toks: readonly Token[], j: number): Parsed | null {
   }
   if (isP(toks, k + 1, '.<')) {
     if (t.text !== 'Vector' && toks[k].text !== 'Vector') return null;
-    const inner = parseType(toks, k + 2);
+    const inner = parseType(toks, k + 2, chain);
     if (inner === null || !isP(toks, inner.next, '>')) return null;
     return { text: inner.text + '[]', next: inner.next + 1 };
   }
-  return { text: k === j ? mapName(name) : name, next: k + 1 };
+  return { text: k === j ? mapName(name) : (chain(name) ?? name), next: k + 1 };
 }
 
 function isP(toks: readonly Token[], i: number, text: string): boolean {
@@ -358,7 +362,7 @@ function isP(toks: readonly Token[], i: number, text: string): boolean {
   return t !== undefined && t.kind === 'punct' && t.text === text;
 }
 
-function rewriteType(slice: TokenSlice | null, ctx: RewriteContext): RewriteResult {
+function rewriteType(slice: TokenSlice | null, ctx: RewriteContext, chain: ChainBinding): RewriteResult {
   const role = ctx.role ?? 'local';
   const toks = slice === null ? null : sigTokens(slice);
   const absent = toks === null || toks.length === 0;
@@ -376,7 +380,7 @@ function rewriteType(slice: TokenSlice | null, ctx: RewriteContext): RewriteResu
     const what = absent ? 'missing type annotation; emitted as any' : 'type * is emitted as any';
     return { text: 'any', diagnostics: [loose(what)] };
   }
-  const parsed = parseType(toks as Token[], 0);
+  const parsed = parseType(toks as Token[], 0, chain);
   if (parsed === null || parsed.next !== (toks as Token[]).length) {
     return { text: '', unsupported: 'unsupported type annotation' };
   }
@@ -402,6 +406,7 @@ class ExprRewriter {
   }
 
   private readonly opts: RewriteOptions;
+  private readonly chainOfType: ChainBinding = (text) => this.opts.plan.bindingOfChain.get(text) ?? null;
 
   run(): string {
     return this.range(0, this.toks.length);
@@ -569,7 +574,7 @@ class ExprRewriter {
   }
 
   private vector(i: number): Parsed {
-    const inner = parseType(this.toks, i + 2);
+    const inner = parseType(this.toks, i + 2, this.chainOfType);
     if (inner === null || !this.isP(inner.next, '>')) throw new ExprError('unsupported Vector type');
     const next = inner.next + 1;
     if (this.isId(i - 1, 'new')) return { text: `Array<${inner.text}>`, next };
@@ -580,7 +585,7 @@ class ExprRewriter {
   private typeOperator(i: number): Parsed {
     const word = this.toks[i].text;
     if (i + 1 >= this.toks.length) throw new ExprError(`"${word}" without a type`);
-    const rhs = parseType(this.toks, i + 1);
+    const rhs = parseType(this.toks, i + 1, this.chainOfType);
     if (rhs === null) throw new ExprError(`unsupported type after "${word}"`);
     if (word !== 'as') {
       const first = this.toks[i + 1].text;

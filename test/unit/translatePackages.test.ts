@@ -221,6 +221,35 @@ describe('planTranslate closure over imports', () => {
   });
 });
 
+describe('dotted type annotation through plan, emit and the real gate (Requirement 30.1)', () => {
+  it('var g:lib.util.Helper gives no TS2503 and imports Helper', () => {
+    const sources = [
+      {
+        className: 'app.Main',
+        source: src('app', '', 'Main {\n    public var g:lib.util.Helper;\n    public function f(p:lib.util.Helper):lib.util.Helper { var h:lib.util.Helper = p; return h; }\n  }'),
+      },
+      { className: 'lib.util.Helper', source: src('lib.util', '', 'Helper {}') },
+    ];
+    const sc: SceneJson = {
+      formatVersion: 1,
+      stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
+      rootSymbolId: 0,
+      symbols: { '0': { type: 'sprite', className: 'app.Main', frameCount: 1, labels: [], frames: [[]] } },
+    };
+    const artifact = planTranslate(sources, sc, tsSyntaxCheck);
+    const main = artifact.classes.find((c) => c.className === 'app.Main');
+    expect(main?.text).toContain("import { Helper } from '../lib/util/Helper';");
+    expect(main?.text).toContain('g: Helper');
+    expect(main?.text).not.toContain('lib.util.Helper');
+    const plan = planEmitDetailed(
+      { scene: sc, sceneJson: serialiseScene(sc), templates: readTemplates(), translated: artifact.classes, handwritten: [] },
+      [],
+    );
+    const { errors } = typeCheckProject({ files: new Map(plan.files.map((f) => [f.path, f.content])), repoRoot });
+    expect(errors.filter((e) => e.file.startsWith('src/app/') || e.file.startsWith('src/lib/'))).toEqual([]);
+  });
+});
+
 describe('two-package fixture through plan, emit and the real gate (Requirement 18.11)', () => {
   it('type-checks with zero gate errors', () => {
     const sources = [

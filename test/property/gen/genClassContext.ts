@@ -101,3 +101,37 @@ export const genMethodValueCase: fc.Arbitrary<MethodValueCase> = fc
     for (const names of declared) for (const n of names) if (wanted.has(n) && !expected.includes(n)) expected.push(n);
     return { sources, expected, hasBase: true };
   });
+
+export interface DottedAnnotationCase {
+  /** AS3 source of `app.Main` with one dotted annotation per position. */
+  source: string;
+  /** Qualified_Names that have a source, in generated order (shuffled by the test). */
+  known: string[];
+  /** The annotation text each position must produce: the binding, or the dotted name when it has no source. */
+  expected: string[];
+  /** Dotted names of the annotations that have a source. */
+  resolved: string[];
+}
+
+const dottedPool = ["lib.util.Helper", "lib.core.Core", "x.y.z.Deep", "other.Thing"] as const;
+const dottedUnknown = ["no.such.Thing", "gone.pkg.Lost"] as const;
+
+/**
+ * A class `app.Main` whose variable, parameter, return and field annotations (and a `Vector.<T>` element) are dotted
+ * names, some with a source and some without. Pool simple names are unique, so a resolved annotation is its simple name.
+ */
+export const genDottedAnnotationCase: fc.Arbitrary<DottedAnnotationCase> = fc
+  .record({
+    names: fc.array(fc.constantFrom<string>(...dottedPool, ...dottedUnknown), { minLength: 5, maxLength: 5 }),
+    known: fc.shuffledSubarray([...dottedPool], { minLength: 0 }),
+  })
+  .map(({ names, known }) => {
+    const knownSet = new Set<string>(known);
+    const out = (n: string): string => (knownSet.has(n) ? n.slice(n.lastIndexOf(".") + 1) : n);
+    const [v, p, r, f, e] = names as [string, string, string, string, string];
+    const source =
+      `package app {\n  public class Main {\n    public var fld:${f};\n` +
+      `    public function m(arg:${p}):${r} {\n      var loc:${v} = null;\n      var vec:Vector.<${e}> = null;\n      return null;\n    }\n  }\n}\n`;
+    const expected = [f, p, r, v, e].map(out);
+    return { source, known: [...known], expected, resolved: names.filter((n) => knownSet.has(n)) };
+  });

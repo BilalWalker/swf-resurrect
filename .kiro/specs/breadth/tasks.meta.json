@@ -825,6 +825,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485462546
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554978951
       }
     ],
     "10.2 Add `src/convert/pathData.ts`": [
@@ -832,6 +837,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485462667
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554979174
       }
     ],
     "10.3 Add `src/convert/evenOdd.ts`": [
@@ -839,6 +849,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485462783
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554979406
       }
     ],
     "10.4 `svgToShapeJson` for solid fills, wrapper, nested transforms and `<use>`": [
@@ -846,6 +861,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485462894
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554979639
       }
     ],
     "10.5 Strokes: cap, join, miter limit and the stroke limits": [
@@ -853,6 +873,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485463016
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554979882
       }
     ],
     "10.6 Gradient fills with the drawn-fill capabilities": [
@@ -860,6 +885,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485463187
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554980138
       }
     ],
     "10.7 Bitmap fills, image bytes and determinism": [
@@ -867,6 +897,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485463299
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554980453
       }
     ],
     "10.8 Named_Limit order": [
@@ -874,6 +909,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485463427
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554980742
       }
     ],
     "10.9 Known_Visual_Limit kinds and the `allComparedFramesExact` option": [
@@ -881,6 +921,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485463570
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554981105
       }
     ],
     "10.10 Scene_JSON v2": [
@@ -888,6 +933,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485463683
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554981494
       }
     ],
     "10.11 Convert writes Shape_JSON and records the limits": [
@@ -895,6 +945,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485463813
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554981729
       }
     ],
     "10.12 Backend draws Shape_JSON (solid fills, strokes, holes) and refuses undrawn fills": [
@@ -902,6 +957,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485463930
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554981966
       }
     ],
     "10.13 Verify the floors and the named limits": [
@@ -909,6 +969,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485464043
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554982202
       }
     ],
     "11.1 Stroke styles measured on wide open strokes": [
@@ -916,6 +981,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485464176
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554982451
       }
     ],
     "11.2 Linear gradients: `gradientTextureMatrix` and `FillGradient` drawing; flips `gradientLinear`": [
@@ -923,6 +993,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485464297
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554982692
       }
     ],
     "11.3 Radial gradients: own radial texture; flips `gradientRadial`": [
@@ -930,6 +1005,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485464412
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554982934
       }
     ],
     "11.4 Bitmap fills; flips `bitmap`": [
@@ -937,6 +1017,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485464532
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554983170
       }
     ],
     "11.5 Emit copies image assets": [
@@ -944,6 +1029,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485464653
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554983396
       }
     ],
     "11.6 `colourMatrix`, `hasOffsets`, `stripAlphaAdd`, `hasAlphaAdd`": [
@@ -951,6 +1041,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485464832
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554983634
       }
     ],
     "11.7 `setColorOffset` in the backend and Player, and the Exact_Render measurement": [
@@ -958,6 +1053,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485464976
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554983865
       }
     ],
     "11.8 Measure the alpha add term and narrow the `colour-offset` limit": [
@@ -965,6 +1065,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485465160
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554984197
       }
     ],
     "11.9 Record CC": [
@@ -972,6 +1077,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485465274
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554984568
       }
     ],
     "12.1 Export `texts/<id>.svg`": [
@@ -979,6 +1089,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485465380
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554984815
       }
     ],
     "12.2 Static text as a shape symbol; dynamic text dropped with a limit": [
@@ -986,6 +1101,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485465504
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554985066
       }
     ],
     "12.3 XML names for filters and blend modes": [
@@ -993,6 +1113,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485465624
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554985321
       }
     ],
     "12.4 Keep filtered and blend-mode placements and record the limit": [
@@ -1000,6 +1125,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485465739
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554985450
       }
     ],
     "12.5 `computeClipLayout`": [
@@ -1007,6 +1137,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485465854
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554985554
       }
     ],
     "12.6 `createClipGroup`, `setMask`, Player reconcile, `ClipHooks.entryUpdated`": [
@@ -1014,6 +1149,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485465977
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554985672
       }
     ],
     "12.7 `classifyMask` and `resolveMasks`: keep Trivial_Mask placements, drop the others with a Named_Limit": [
@@ -1021,6 +1161,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485466094
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554985786
       }
     ],
     "12.8 Measure and update the mask-dependent expectations": [
@@ -1028,6 +1173,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485466206
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554985904
       }
     ],
     "13.1 Add `src/verify/core/regions.ts`": [
@@ -1035,6 +1185,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485466327
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986019
       }
     ],
     "13.2 Add `src/verify/core/residual.ts`": [
@@ -1042,6 +1197,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485466457
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986136
       }
     ],
     "13.3 Wire the Verify_Stage, the HTML and the residual floor test": [
@@ -1049,6 +1209,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485466577
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986256
       }
     ],
     "14. Checkpoint: rendering done": [
@@ -1056,6 +1221,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485466689
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986368
       }
     ],
     "15.1 `radial` and `gradients`: files, PROVENANCE.md and fixtures": [
@@ -1063,6 +1233,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485466817
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986481
       }
     ],
     "15.2 `radial` and `gradients`: measure and attribute the residual": [
@@ -1070,6 +1245,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485466935
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986599
       }
     ],
     "15.3 `radial` and `gradients`: floors": [
@@ -1077,6 +1257,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485467119
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986716
       }
     ],
     "15.4 `acid-color-2`: files, PROVENANCE.md and fixtures": [
@@ -1084,6 +1269,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485467227
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986831
       }
     ],
     "15.5 `acid-color-2`: measure and attribute the residual": [
@@ -1091,6 +1281,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485467337
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554986946
       }
     ],
     "15.6 `acid-color-2`: Exact_Render floor": [
@@ -1098,6 +1293,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485467460
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554987060
       }
     ],
     "16.1 `mask_reapply`: files, PROVENANCE.md and fixtures": [
@@ -1105,6 +1305,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485467588
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554987176
       }
     ],
     "16.2 `mask_reapply`: gate, measurement and residual": [
@@ -1112,6 +1317,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485467704
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554987291
       }
     ],
     "16.3 `mask_reapply`: floors": [
@@ -1119,6 +1329,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485467826
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554987404
       }
     ],
     "16.4 `click_block`: files, PROVENANCE.md and fixtures": [
@@ -1126,6 +1341,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485467951
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554987527
       }
     ],
     "16.5 `click_block`: measure and attribute the residual": [
@@ -1133,6 +1353,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485468073
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554987712
       }
     ],
     "16.6 `click_block`: floors": [
@@ -1140,6 +1365,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485468201
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554987819
       }
     ],
     "17.1 `3_joystick`: files, PROVENANCE.md and fixtures": [
@@ -1147,6 +1377,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485468327
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554987934
       }
     ],
     "17.2 `3_joystick`: measure and attribute the 1,241 pixels": [
@@ -1154,6 +1389,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485468441
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554988048
       }
     ],
     "17.3 `3_joystick`: floors": [
@@ -1161,6 +1401,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485468557
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554988159
       }
     ],
     "17.4 `slider_component`: files, PROVENANCE.md and fixtures": [
@@ -1168,6 +1413,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485468677
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554988274
       }
     ],
     "17.5 `slider_component`: measure and attribute the residual": [
@@ -1175,6 +1425,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485468803
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554988433
       }
     ],
     "17.6 `slider_component`: floors": [
@@ -1182,6 +1437,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485468932
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554988547
       }
     ],
     "17.7 Add `src/samples/fetchedSample.ts`": [
@@ -1189,6 +1449,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485469052
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554988661
       }
     ],
     "17.8 Add `scripts/fetch-static-text.ts` and the npm script": [
@@ -1196,6 +1461,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485469169
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554988779
       }
     ],
     "17.9 The `--reference-dir` option": [
@@ -1203,6 +1473,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485469288
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554988895
       }
     ],
     "17.10 Skip helper and sample-directory classification in the tests": [
@@ -1210,6 +1485,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485469410
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554989016
       }
     ],
     "17.11 `static_text`: fetch the file, write the note and the reference files": [
@@ -1217,6 +1497,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485469537
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554989134
       }
     ],
     "17.12 `static_text`: measure and attribute the residual": [
@@ -1224,6 +1509,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485469716
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554989385
       }
     ],
     "17.13 `static_text`: skipping floor tests": [
@@ -1231,6 +1521,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485469823
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554989528
       }
     ],
     "17.14 Final measurement of every floor": [
@@ -1238,6 +1533,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485469941
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554989663
       }
     ],
     "18. Checkpoint: browser review of fidelity-report.html": [
@@ -1245,6 +1545,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485470053
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554989858
       }
     ],
     "19.1 Update the steering status and the added-API log": [
@@ -1252,6 +1557,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485470173
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554989993
       }
     ],
     "19.2 Repository hygiene test": [
@@ -1259,6 +1569,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485470278
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554990193
       }
     ],
     "19.3 Final summary": [
@@ -1266,6 +1581,11 @@
         "executionId": "bc9c92aa-28ab-4e75-8a2d-377ec15b28c6",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794485470396
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554990381
       }
     ],
     "3. Convert: crash fixes (SymbolClass-less Unpack, ids of unsupported characters) and the baseline": [
@@ -1294,6 +1614,200 @@
         "executionId": "ea9a2649-38fb-4f15-8ca4-5e4fa44adede",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794509617260
+      }
+    ],
+    "20.1 Dotted type annotations resolve through the import plan": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554971990
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554997561
+      }
+    ],
+    "20.2 `selfKey` without the stray parenthesis": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554972372
+      }
+    ],
+    "20.3 A forced import left behind by a rolled-back statement": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554972597
+      }
+    ],
+    "21.1 Build frame 1 in the `MovieClip` constructor": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554972831
+      }
+    ],
+    "21.2 Method-value binds (constructor form, field form) and fields named like a child": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554973083
+      }
+    ],
+    "21.3 Fixture evidence for `Main` and `Interactivity3`": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554973369
+      }
+    ],
+    "22.1 `errorReport.ts`, the sink and the Player option": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554973593
+      }
+    ],
+    "22.2 Frame scripts and listeners": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554973866
+      }
+    ],
+    "22.3 Constructors": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554974214
+      }
+    ],
+    "22.4 The browser keeps drawing": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554974446
+      }
+    ],
+    "22.5 The Replay records caught errors and keeps ticking": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554974677
+      }
+    ],
+    "22.6 Evidence: the Replays of `mask_reapply` and `3_joystick`": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554974916
+      }
+    ],
+    "23.1 Core: Bundler_Check input and survival rules": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554975146
+      }
+    ],
+    "23.2 Edge: `src/emit/bundlerGuard.ts`": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554975370
+      }
+    ],
+    "23.3 Pipeline wiring and reports": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554975611
+      }
+    ],
+    "23.4 Whole-bundle test and SC": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554975836
+      }
+    ],
+    "24.1 Shim: `defineInterface`, `declareImplements`, `AS3InterfaceToken`": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554976073
+      }
+    ],
+    "24.2 Translate: interface declarations and tokens": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554976355
+      }
+    ],
+    "24.3 Translate: `implements` registration": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554976589
+      }
+    ],
+    "24.4 `slider_component`: interface omissions gone": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554976834
+      }
+    ],
+    "25.1 `toString` and class-name registration": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554977066
+      }
+    ],
+    "25.2 Default instance names": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554977289
+      }
+    ],
+    "25.3 `click_block` evidence": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554977529
+      }
+    ],
+    "26.1 Shim members and `Event.formatToString`": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554977768
+      }
+    ],
+    "26.2 The Hit_Target rule": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554978023
+      }
+    ],
+    "26.3 Gate check on `slider_component`": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554978312
+      }
+    ],
+    "27. Checkpoint: robustness group": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794554978724
       }
     ]
   }
