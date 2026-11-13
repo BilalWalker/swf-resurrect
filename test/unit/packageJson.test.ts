@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { buildPackageJson } from "../../src/emit/packageJson.js";
 import { PIXI_VERSION, TYPESCRIPT_VERSION, VITE_VERSION } from "../../src/emit/versions.js";
@@ -31,5 +32,12 @@ describe("buildPackageJson", () => {
     expect(buildPackageJson()).toBe(text);
     expect(text.endsWith("\n")).toBe(true);
     expect(text).not.toContain("\r");
+  });
+});
+
+describe("repo package.json", () => {
+  it("has the gen:shim-members script", () => {
+    const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+    expect(pkg.scripts["gen:shim-members"]).toBe("tsx scripts/gen-shim-members.ts");
   });
 });
