@@ -146,6 +146,13 @@ export class MovieClip extends Sprite {
     return true;
   }
 
+  /** Internal: the owner text of a frame-script Error_Site: the class name, or `symbol <id>` for a plain clip. */
+  _scriptOwner(): string {
+    const name = this.constructor.name;
+    if (name !== 'MovieClip') return name;
+    return this._ctx === null ? name : `symbol ${this._ctx.symbolId}`;
+  }
+
   /** Phase D: queues the script of the current frame. */
   override _enqueueFrameScript(): ClipScripts | null {
     const ctx = this._ctx;

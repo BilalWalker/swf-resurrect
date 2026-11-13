@@ -1,3 +1,6 @@
+import { listenerSite, messageOf } from '../runtime/errorReport';
+import { reportCaughtError } from './errorSink';
+
 export type Listener = (e: Event) => void;
 
 export class Event {
@@ -82,6 +85,22 @@ export class EventDispatcher {
   _deliver(e: Event): void {
     const snapshot = this.listeners.get(e.type)?.slice();
     if (snapshot === undefined) return;
-    for (const listener of snapshot) listener(e);
+    // A throwing listener is abandoned alone (Requirement 25.2): report it and call the next one.
+    for (const listener of snapshot) {
+      try {
+        listener(e);
+      } catch (thrown) {
+        reportCaughtError({
+          site: listenerSite(e.type, this._describe()),
+          message: messageOf(thrown),
+          className: null,
+        });
+      }
+    }
+  }
+  /** Internal: the target description of a listener Error_Site: the instance name when there is one, else the class. */
+  _describe(): string {
+    const name = (this as { name?: unknown }).name;
+    return typeof name === 'string' && name !== '' ? name : this.constructor.name;
   }
 }

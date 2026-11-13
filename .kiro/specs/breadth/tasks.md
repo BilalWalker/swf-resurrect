@@ -362,7 +362,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Add `template/runtime/errorReport.ts` (Core: `CaughtError`, `ErrorSink`, `messageOf`, `constructorSite`, `frameScriptSite`, `listenerSite`; add it to the purity test), `setCaughtErrorSink` and `reportCaughtError` in `template/shim/internal.ts` (default `console.error('[SWF Resurrect] <site>: <message>')`), and `onCaughtError` in the Player options, installed in the Player constructor. Commit message: `Runtime: add the caught-error sink (22.1)`.
     - Test: `test/unit/errorReport.test.ts` (create): `messageOf` for an `Error`, a string, an object and `undefined` (no stack, no colour codes); the three site texts; the default sink prints once; `setCaughtErrorSink(null)` restores it.
     - _Requirements: 25.5, 15.1, 31.3_
-  - [ ] 22.2 Frame scripts and listeners
+  - [x] 22.2 Frame scripts and listeners
     - `ScriptQueue.drain` catches per script and reports `frame script <owner> frame <n>`; the Shim's listener loop in `events.ts` catches per listener and reports `listener <type> on <target>`; both continue. Commit message: `Runtime: isolate frame scripts and listeners (22.2)`.
     - Test: `test/unit/scriptQueue.test.ts` and `test/unit/shimEvents.test.ts` extended: a throwing script followed by a running one; a throwing listener followed by a running one on the same target and on a parent; a throw inside a nested `dispatchEvent`; `dispatchEvent` returns as without the error; the `draining` flag is reset.
     - _Requirements: 25.1, 25.2, 25.4, 31.3_

@@ -1,5 +1,4 @@
 // Internal API used by the runtime. Not re-exported from index.ts; translated code never sees it.
-import type { CaughtError, ErrorSink } from '../runtime/errorReport';
 import type { DisplayListEntry, SpriteSymbol } from '../runtime/scene';
 import type { DisplayObject } from './DisplayObject';
 import { Event } from './events';
@@ -122,18 +121,8 @@ export function detachChild(parent: DisplayObjectContainer, child: DisplayObject
   return true;
 }
 
-const defaultErrorSink: ErrorSink = (e) => {
-  console.error(`[SWF Resurrect] ${e.site}: ${e.message}`);
-};
-let errorSink: ErrorSink = defaultErrorSink;
-/** Replaces the Caught_Error sink (Requirement 25.5); null restores the console.error default. */
-export function setCaughtErrorSink(sink: ErrorSink | null): void {
-  errorSink = sink ?? defaultErrorSink;
-}
-/** Reports one Caught_Error to the current sink. Used by the dispatcher and the script queue. */
-export function reportCaughtError(e: CaughtError): void {
-  errorSink(e);
-}
+// The Caught_Error sink lives in errorSink.ts (events.ts needs it and must not import this file).
+export { reportCaughtError, setCaughtErrorSink } from './errorSink';
 let pointerX = 0;
 let pointerY = 0;
 
