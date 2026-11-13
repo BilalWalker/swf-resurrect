@@ -8,7 +8,11 @@ import type { TemplateFile } from '../../src/emit/planEmit';
 import { exportedNames } from '../../src/emit/exportedNames';
 import { planTranslate } from '../../src/translate/planTranslate';
 import { untranslatedCodeEntries } from '../../src/translate/report';
+import { SHIM_AS3_NAMES } from '../../src/translate/shimNames';
+import { translate } from '../../src/translate/translate';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
+import * as shimInterfaces from '../../template/shim/interfaces';
+import { evalTranslated } from '../support/evalTranslated';
 import { typeCheckProject } from '../../src/translate/typeCheckGate';
 import type { SceneJson } from '../../template/runtime/scene';
 
@@ -249,5 +253,112 @@ describe('translated interfaces through emit and the real gate (Requirement 27.1
     const artifact = plan(sliderSources, sliderScene);
     const button = artifact.classes.find((x) => x.className === 'fl.controls.Button');
     expect(button?.text).toContain('param1 instanceof IFocusManagerComponent');
+  });
+});
+
+// ---- 24.3: implements registration (Requirement 27.2, 27.3, 27.9 to 27.13) ----
+
+type Src = Record<string, string>;
+
+/** Translates every file with translate() and evaluates the results as modules, with the real Shim token module. */
+function runPackage(files: Src): Record<string, Record<string, any>> {
+  const known = new Set(Object.keys(files).map((n) => `p.${n}`));
+  const texts = new Map<string, string>();
+  for (const [name, source] of Object.entries(files)) {
+    const r = translate(source, { shimNames: SHIM_AS3_NAMES, selfQualified: `p.${name}`, siblingClasses: known as never, syntaxCheck: tsSyntaxCheck });
+    expect(r.diagnostics, name).toEqual([]);
+    texts.set(name, r.text);
+  }
+  const loaded: Record<string, Record<string, any>> = {};
+  const load = (name: string): Record<string, any> =>
+    (loaded[name] ??= evalTranslated(texts.get(name) as string, new Proxy({}, {
+      has: () => true,
+      get: (_t, spec: string) => (spec.endsWith('shim') ? shimInterfaces : load(spec.replace('./', ''))),
+    })));
+  for (const name of Object.keys(files)) load(name);
+  return loaded;
+}
+
+const iface = (name: string, extend = '') => `package p { public interface ${name}${extend} { function m${name}():void; } }`;
+const cls = (name: string, ext: string, impl: string) =>
+  `package p { public class ${name}${ext === '' ? '' : ' extends ' + ext}${impl === '' ? '' : ' implements ' + impl} { public function m${name}():void {} } }`;
+
+describe('implements registration through translate() (Requirement 27.2, 27.3, 27.11 to 27.13)', () => {
+  it('writes declareImplements after the class and imports it from the Shim', () => {
+    const r = translate('package p { public class C implements I { } }', { shimNames: SHIM_AS3_NAMES, selfQualified: 'p.C', siblingClasses: new Set(['p.I', 'p.C']) as never, syntaxCheck: tsSyntaxCheck });
+    expect(r.text).toContain("import { declareImplements } from '../../shim';");
+    expect(r.text).toContain('}\ndeclareImplements(C, I);\n');
+  });
+
+  it('a subclass of an implementer passes is I without declaring anything', () => {
+    const m = runPackage({ I: iface('I'), A: cls('A', '', 'I'), B: cls('B', 'A', '') });
+    expect(new m.B.B() instanceof m.I.I).toBe(true);
+    expect(new m.A.A() instanceof m.I.I).toBe(true);
+    expect(({}) instanceof m.I.I).toBe(false);
+  });
+
+  it('an implementer of a child interface passes for the child and the parent', () => {
+    const m = runPackage({ Parent: iface('Parent'), Child: iface('Child', ' extends Parent'), A: cls('A', '', 'Child') });
+    const a = new m.A.A();
+    expect(a instanceof m.Child.Child).toBe(true);
+    expect(a instanceof m.Parent.Parent).toBe(true);
+  });
+
+  it('a class implementing several interfaces passes for each and not for others', () => {
+    const m = runPackage({ I1: iface('I1'), I2: iface('I2'), I3: iface('I3'), I4: iface('I4'), A: cls('A', '', 'I1, I2, I3') });
+    const a = new m.A.A();
+    for (const n of ['I1', 'I2', 'I3']) expect(a instanceof m[n][n], n).toBe(true);
+    expect(a instanceof m.I4.I4).toBe(false);
+  });
+
+  it('a base and a subclass with different interfaces pass for the union', () => {
+    const m = runPackage({ I1: iface('I1'), I2: iface('I2'), A: cls('A', '', 'I1'), B: cls('B', 'A', 'I2') });
+    const b = new m.B.B();
+    expect(b instanceof m.I1.I1 && b instanceof m.I2.I2).toBe(true);
+    expect(new m.A.A() instanceof m.I2.I2).toBe(false);
+  });
+
+  it('the UIComponent shape, this is I in a constructor, evaluates against the registration', () => {
+    const m = runPackage({
+      I: iface('I'),
+      Base: `package p { public class Base { public var flag:Boolean; public function Base() { flag = this is I; } } }`,
+      Impl: cls('Impl', 'Base', 'I'),
+      Plain: cls('Plain', 'Base', ''),
+    });
+    // declareImplements runs after the class, so a constructor run later sees the registration.
+    expect(new m.Impl.Impl().flag).toBe(true);
+    expect(new m.Plain.Plain().flag).toBe(false);
+  });
+
+  it('a secondary class in the same file registers its own interfaces', () => {
+    const r = translate('package p { public class A implements I { } }\nclass Hidden implements J { }', {
+      shimNames: SHIM_AS3_NAMES, selfQualified: 'p.A', siblingClasses: new Set(['p.I', 'p.J', 'p.A']) as never, syntaxCheck: tsSyntaxCheck,
+    });
+    expect(r.text).toContain('declareImplements(A, I);');
+    expect(r.text).toContain('declareImplements(Hidden, J);');
+  });
+
+  it('an implements name with no source file stays a type in the clause and is left out of declareImplements', () => {
+    const r = translate('package p { import flash.events.IEventDispatcher; public class C implements IEventDispatcher { } }', {
+      shimNames: SHIM_AS3_NAMES, selfQualified: 'p.C', siblingClasses: new Set(['p.C']) as never, syntaxCheck: tsSyntaxCheck,
+    });
+    expect(r.text).toContain('export class C implements IEventDispatcher {');
+    expect(r.text).not.toContain('declareImplements');
+    const mixed = translate('package p { import flash.events.IEventDispatcher; public class C implements I, IEventDispatcher { } }', {
+      shimNames: SHIM_AS3_NAMES, selfQualified: 'p.C', siblingClasses: new Set(['p.I', 'p.C']) as never, syntaxCheck: tsSyntaxCheck,
+    });
+    expect(mixed.text).toContain('declareImplements(C, I);');
+  });
+
+  it('a class without implements gets no declareImplements and no Shim import for it', () => {
+    const r = translate('package p { public class C { } }', { shimNames: SHIM_AS3_NAMES, selfQualified: 'p.C', siblingClasses: new Set(['p.C']) as never, syntaxCheck: tsSyntaxCheck });
+    expect(r.text).not.toContain('declareImplements');
+  });
+
+  it('x as I stays a plain cast (decision D33: no run-time check, no null on mismatch)', () => {
+    const r = translate('package p { public class C { public function f(x:Object):void { var y:I = x as I; } } }', {
+      shimNames: SHIM_AS3_NAMES, selfQualified: 'p.C', siblingClasses: new Set(['p.I', 'p.C']) as never, syntaxCheck: tsSyntaxCheck,
+    });
+    expect(r.text).toContain('var y: I = x as I;');
   });
 });

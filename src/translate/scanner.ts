@@ -89,6 +89,8 @@ export interface ClassNode extends NodeBase {
   extendsName: string | null;
   extendsRange: TokRange | null;
   implementsNames: string[];
+  /** The subset of `implementsNames` that has a source file, so its token exists at run time (design 21.5). */
+  implementsTokens: string[];
   body: Body;
 }
 
@@ -624,6 +626,7 @@ class Scanner {
       extendsName,
       extendsRange,
       implementsNames,
+      implementsTokens: [],
       body: { nodes, braced: true, openLine, closeLine },
       ...this.mkBase(startP, this.p),
     };

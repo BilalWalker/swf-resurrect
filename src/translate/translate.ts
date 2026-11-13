@@ -120,6 +120,9 @@ function bindHeritage(nodes: readonly Node[], plan: ImportPlan): void {
     if (n.kind === 'package') bindHeritage(n.body, plan);
     else if (n.kind === 'class') {
       if (n.extendsName !== null) n.extendsName = plan.bindingOfChain.get(n.extendsName) ?? n.extendsName;
+      // A name with no source file (a Flash API interface such as IEventDispatcher) has no token: it stays in
+      // the TypeScript clause as a type and is left out of declareImplements, always, so the output is stable.
+      n.implementsTokens = n.implementsNames.filter((x) => resolveHeritage(x, plan) !== null).map((x) => plan.bindingOfChain.get(x) ?? x);
       n.implementsNames = n.implementsNames.map((x) => plan.bindingOfChain.get(x) ?? x);
     } else if (n.kind === 'interface') {
       // A parent with a source file has a token; one without is a type-only name (no run-time reference).
@@ -127,6 +130,14 @@ function bindHeritage(nodes: readonly Node[], plan: ImportPlan): void {
       n.extendsNames = n.extendsNames.map((x) => plan.bindingOfChain.get(x) ?? x);
     }
   }
+}
+
+function hasImplementedToken(nodes: readonly Node[], plan: ImportPlan): boolean {
+  return nodes.some((n) =>
+    n.kind === 'package'
+      ? hasImplementedToken(n.body, plan)
+      : n.kind === 'class' && n.implementsNames.some((x) => resolveHeritage(x, plan) !== null),
+  );
 }
 
 function findInterfaces(nodes: readonly Node[], out: InterfaceNode[] = []): InterfaceNode[] {
@@ -234,6 +245,8 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   if (findInterfaces(nodes).length > 0) {
     for (const n of ['AS3InterfaceToken', 'defineInterface']) if (!shimUsed.includes(n)) shimUsed.push(n);
   }
+  // A class that implements an interface with a source file calls declareImplements after its declaration.
+  if (hasImplementedToken(nodes, plan) && !shimUsed.includes('declareImplements')) shimUsed.push('declareImplements');
   const imports = createImportLines(plan, selfPath, shimUsed);
 
   // Class info is read before the heritage names are rewritten to their bindings.

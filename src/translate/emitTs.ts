@@ -377,6 +377,7 @@ class Emitter {
     } finally {
       this.curClass = savedClass;
     }
+    if (n.implementsTokens.length > 0) this.push(d, `declareImplements(${n.name}, ${n.implementsTokens.join(', ')});`);
   }
 
   /**
