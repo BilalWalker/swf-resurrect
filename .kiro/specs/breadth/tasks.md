@@ -415,7 +415,8 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Emit `declareImplements(Cls, ...)` after a class that declares `implements` and import the Shim names by the existing Shim specifier mechanism; confirm that `x is I` still becomes `x instanceof I`. Commit message: `Translate: register implemented interfaces (24.3)`.
     - Test: extend `test/unit/interfaces.test.ts`: `Button` `implements IFocusManagerComponent`, a class inheriting the declaration, a secondary class, the `UIComponent.as:102` shape (`this is IFocusManagerComponent` in a constructor), `x as I` stays a plain cast (a test pins the cast text and a comment names D33), a class that implements three interfaces; `test/unit/clickgotoEmit.test.ts` bytes unchanged.
     - _Requirements: 27.2, 27.3, 27.9, 27.10_
-  - [ ] 24.4 `slider_component`: interface omissions gone
+  - [-] 24.4 `slider_component`: interface omissions gone
+    - Prerequisite (user-approved, D41, Requirement 23.1 (f)): the module of `UIComponent` throws at load on `new TextFormat(...)`, which the Shim lacks, and the bundle dies. A gate error in Module_Evaluation_Code now omits the class with `load-time-error`; it is committed before this sub-task as `Emit: ... (24.4 prerequisite)`. The statements below then describe the measurement with that rule, and the omissions it adds are listed with their reasons and names.
     - Run SC with the pipeline on `.work/local/slider_component/` and state in the commit message: the `missing-export` omissions before (5) and after, the `fl.*` classes registered, the classes still omitted with their reasons, the Overall_Match (at least 99.93) and the Trace_Score. Add `test/unit/interfaces.test.ts` case on the local copy (skips with a reason when absent): no `class-omitted` entry has reason `missing-export` for a name that is an interface. Commit message: `Test: pin interface exports on slider_component (24.4)`.
     - _Requirements: 27.5, 23.5, 31.5_
 
