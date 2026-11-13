@@ -351,105 +351,105 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Fields named like a child (design 21.1, Requirement 24.10, D38). `planTranslate` takes `childNamesByClass: ReadonlyMap<QualifiedName, ReadonlySet<string>>` (the Pipeline builds it from Scene_JSON: for each symbol with a `className`, the names of its frame-1 placements); for a field whose name is in the set of its class, `emitTs.ts` emits `declare name: T;` and drops an initialiser that is the literal `null` or `undefined`, and keeps any other initialiser with a `child-field-initialiser` Diagnostic (kind added to `report.ts`); with no map entry the rule is off. Commit message: `Translate: bind method values by class need, protect child fields (21.2)`.
     - Test: amend **Property 44** (default form and the choice between the forms) and add **Property 46: A field initialiser sees the bound methods, and the bound function is one reference** in `test/property/implicitThis.property.test.ts` (generator `genClassContext.ts`; the run uses `typescript-js` transpile of the output). Identity test: the function read in the initialiser, in the constructor and after construction is the same reference, `this` is the instance, and `addEventListener(type, this.m)` in the initialiser is removed by `removeEventListener(type, this.m)` (dispatch count falls to zero), for the field form and for the constructor form. Examples in `test/unit/implicitThis.test.ts` (8.6 and 8.7 stay; the field form for a class whose initialiser reads a method, with and without a constructor, no TS2556; a lazy reference in an arrow function inside the initialiser takes the field form). Child fields in `test/unit/translateChildFields.test.ts` (create): `public var joystick:MovieClip;` and `= null` both emit `declare` and keep the bound child after an ES2022 transpile with a probe base class that binds in its constructor; the same source without the map entry keeps the initialiser (control); a non-null initialiser gives the Diagnostic. `test/unit/clickgotoEmit.test.ts`: bytes of `clickgoto` and `tweendemo` unchanged. Run SC and state the Overall_Match before and after.
     - _Requirements: 22.13, 24.5, 24.6, 24.8, 24.9, 24.10, 31.3, 31.5_
-  - [~] 21.3 Fixture evidence for `Main` and `Interactivity3`
+  - [-] 21.3 Fixture evidence for `Main` and `Interactivity3`
     - Download `mask_reapply` and `3_joystick` (SWF and references, `.work/`, deleted afterwards, not committed) and run `npm run pipeline -- <swf> <out> --force --verify --work-dir <dir>`. State in the commit message the first line of each Replay that was missing before, whether `Masks reapplied` is printed, and any `runtime-error` or `replay-error` that remains with its cause. Note for the report of Task 27: whether any translated class of these samples has an instance field initialiser that reads a method value (the field form of 21.2), and show its emitted text, or write that none does. No score is committed. Add the two class shapes as fixtures under `test/fixtures/construction/` (hand-written small classes, no third-party text) if 21.1 did not already.
     - Test: `test/unit/constructionBind.test.ts` (extended) runs the two fixture classes through `translate()` and the real Player with `FakeBackend`: no throw at tick 0.
     - _Requirements: 24.7, 24.8, 31.3_
 
 - [ ] 22. Runtime and Pipeline: Caught_Errors (Requirement 25)
   - Commit area: `Runtime` for 22.1 to 22.4, `Pipeline` for 22.5 and 22.6 (the Replay and Verify changes; the message names Runtime where `template/` is touched); one commit per sub-task. Read design 21.3 and Appendix A.12. Verification V2 plus CC for 22.1 to 22.4. Decided D26 to D28; the Flash Player column of the table in 21.3 is not verified and is reported at Task 27.
-  - [~] 22.1 `errorReport.ts`, the sink and the Player option
+  - [ ] 22.1 `errorReport.ts`, the sink and the Player option
     - Add `template/runtime/errorReport.ts` (Core: `CaughtError`, `ErrorSink`, `messageOf`, `constructorSite`, `frameScriptSite`, `listenerSite`; add it to the purity test), `setCaughtErrorSink` and `reportCaughtError` in `template/shim/internal.ts` (default `console.error('[SWF Resurrect] <site>: <message>')`), and `onCaughtError` in the Player options, installed in the Player constructor. Commit message: `Runtime: add the caught-error sink (22.1)`.
     - Test: `test/unit/errorReport.test.ts` (create): `messageOf` for an `Error`, a string, an object and `undefined` (no stack, no colour codes); the three site texts; the default sink prints once; `setCaughtErrorSink(null)` restores it.
     - _Requirements: 25.5, 15.1, 31.3_
-  - [~] 22.2 Frame scripts and listeners
+  - [ ] 22.2 Frame scripts and listeners
     - `ScriptQueue.drain` catches per script and reports `frame script <owner> frame <n>`; the Shim's listener loop in `events.ts` catches per listener and reports `listener <type> on <target>`; both continue. Commit message: `Runtime: isolate frame scripts and listeners (22.2)`.
     - Test: `test/unit/scriptQueue.test.ts` and `test/unit/shimEvents.test.ts` extended: a throwing script followed by a running one; a throwing listener followed by a running one on the same target and on a parent; a throw inside a nested `dispatchEvent`; `dispatchEvent` returns as without the error; the `draining` flag is reset.
     - _Requirements: 25.1, 25.2, 25.4, 31.3_
-  - [~] 22.3 Constructors
+  - [ ] 22.3 Constructors
     - `Player.createClip` catches a throw of `new Cls()` (design 21.3): it reports `constructor <Class>`, keeps `ctx.instance` and goes on; when `ctx.instance` is null it instantiates the symbol again as a plain `MovieClip` under a fresh context. Commit message: `Runtime: keep the instance when a constructor throws (22.3)`.
     - Test: `test/property/caughtErrors.property.test.ts` (create), **Property 47: A throw never stops the movie and never changes the other elements** (generator `genSymbolGraph.ts` extended with throwing constructors, frame scripts and listeners); examples in `test/unit/player.test.ts`: a throwing constructor leaves the partial instance with its children and its timeline; a throw in a field initialiser; a throw before the base constructor gives a plain `MovieClip`; a registered class that throws does not stop its siblings.
     - _Requirements: 25.3, 25.11, 31.3_
-  - [~] 22.4 The browser keeps drawing
+  - [ ] 22.4 The browser keeps drawing
     - `template/src/main.ts` installs no sink and keeps `Startup failed` for load errors only. Commit message: `Runtime: show a caught error without a black canvas (22.4)`.
     - Test: `test/e2e/caughtErrors.e2e.test.ts` (create; skips with a reason when Chromium is absent): an Emitted_Project whose root class throws in its constructor builds, opens in headless Chromium, draws its timeline frame (not the background colour only), and logs one `console.error` with the Error_Site; a missing scene still shows `Startup failed`.
     - _Requirements: 25.5, 25.6, 31.3_
-  - [~] 22.5 The Replay records caught errors and keeps ticking
+  - [ ] 22.5 The Replay records caught errors and keeps ticking
     - `src/verify/edge/replayRunner.ts` installs a sink that records `{ tick, site, message }`; `ReplayResult` gains `caughtErrors`; add `runtimeErrorProblems` to `src/verify/core/replayOutcome.ts` (cap 100, overflow Problem); the Fidelity_Report and the HTML report get `behaviour.replay.caughtErrors` (`count`, `first` 20). `decideBehaviour` is unchanged. Commit message: `Pipeline: record caught errors in the Replay (22.5)`.
     - Test: extend `test/property/replayOutcome.property.test.ts` with **Property 48: The Replay records every caught error with its tick and keeps ticking**; `test/unit/verifyStageBehaviour.test.ts` and `test/unit/htmlKnownGaps.test.ts` extended (Problems, overflow, the HTML count); `test/unit/clickgotoReplay.test.ts` unchanged: 32 ticks and Trace_Score 100.
     - _Requirements: 25.7, 25.8, 25.10, 25.11, 31.3, 31.5_
-  - [~] 22.6 Evidence: the Replays of `mask_reapply` and `3_joystick`
+  - [ ] 22.6 Evidence: the Replays of `mask_reapply` and `3_joystick`
     - Run both local Replays as in 21.3 and state in the commit message each Caught_Error that remains (tick, site, message) and the effect on the trace lines. Check the `click_block` and `3_joystick` Reference_Traces for error text (design 21.3, Trace echo row) and record the result. No code unless a fixture test is added: `test/unit/caughtErrors.test.ts` (create) holds one fixture of a class that throws after printing a line and checks that the line is captured and the Replay runs all planned ticks.
     - _Requirements: 25.7, 25.9, 31.3_
 
 - [ ] 23. Emit and Pipeline: Bundler_Guard and the survival rules (Requirement 26)
   - Commit area: `Emit` (the commit also changes Pipeline; the message names it); one commit per sub-task. Read design 21.4 and 19.2 to 19.4. Verification V1 plus SC. Decided D29, D30. No new dependency: the guard imports `transformWithOxc` and `parseAst` from the pinned `vite` 8.3.8; IF a dependency seems needed, STOP and ask (Requirement 26.8). This task comes before Task 24 because the interface export removes the missing-export omissions only once an unused import no longer counts.
-  - [~] 23.1 Core: Bundler_Check input and survival rules
+  - [ ] 23.1 Core: Bundler_Check input and survival rules
     - In `src/emit/classOmissions.ts` and `src/emit/exportedNames.ts` add `bundler`, `importEdges`, the specifier on `ImportedName`, the reason `bundler-parse`, and the rules of design 21.4 (a failing check omits, a handwritten class included; `syntax-error` only without a check, so while the guard ran a syntactic diagnostic never omits, for any code, and there is no octal case; `unresolved-import`, `missing-export` and `imports-omitted` only for Surviving_Imports). Update `omissionMessage`. Keep both files in the purity test. Commit message: `Emit: decide omissions from bundler checks (23.1)`.
     - Test: extend `test/property/classOmissions.property.test.ts` with **Property 49: The omitted set depends on load failures and Surviving_Imports only** (generator extended with checks, with and without checks) and keep P38 and P39 passing; `test/unit/classOmissions.test.ts` extended: `bundler-parse`, an unused and a type-only missing import that omit nothing, a syntactic diagnostic of any code with an ok check that stays registered, the same diagnostic with no checks (the guard could not run) that omits with `syntax-error`, a handwritten class with a failing check, a surviving import of an omitted class that propagates and a removed one that does not.
     - _Requirements: 26.2, 26.4, 26.5, 26.6, 26.10, 26.12, 23.1, 23.3_
-  - [~] 23.2 Edge: `src/emit/bundlerGuard.ts`
+  - [ ] 23.2 Edge: `src/emit/bundlerGuard.ts`
     - Add `checkClassFile` and `checkClassFiles` (design 21.4): lazy `import('vite')`, `transformWithOxc`, then `parseAst(code, { lang: 'js', showSemanticErrors: true })`; verdict with phase, message (colour codes removed), line and column; Surviving_Imports from import and re-export declarations, sorted. Commit message: `Emit: add the Vite parse guard (23.2)`.
     - Test: `test/unit/bundlerGuard.test.ts` (create): the nine cases of Appendix A.12 against the real pinned Vite (`yield`, `await`, `package`, duplicate declaration, `delete x`, `with`, `break`, octal accepted, clean class), the unused and the type-only import removed, a re-export counted, determinism of two runs, and the guard-unavailable case with a stubbed import failure. Octal test (Requirement 26.14): translate an AS3 source with the literal `010` through `translate()` and run the emitted text through the real guard; the test asserts which side it falls on (the A.12 probe says ok); IF it fails, the test asserts the `bundler-parse` omission and the task adds "rewrite AS3 octal literals" to the candidate list of Task 27 instead of keeping the class.
     - _Requirements: 26.1, 26.3, 26.7, 26.8, 26.9, 26.12, 26.14_
-  - [~] 23.3 Pipeline wiring and reports
+  - [ ] 23.3 Pipeline wiring and reports
     - In `src/pipeline/pipeline.ts` run `checkClassFiles` on the planned final text of every class file in the same step as the in-memory gate, pass the checks to `decideClassOmissions`, plan again and write once; on a guard failure fall back to the rules of Requirement 23 and record the Problem `bundler-guard-unavailable`. The `class-omitted` entry and Diagnostic carry `bundler-parse` with message, line and column. Commit message: `Pipeline: run the bundler guard before omissions (23.3)`.
     - Test: `test/unit/pipelineOmissions.test.ts` (extend or create) with a stub guard: a failing check omits the class and its dependants; no check falls back with the Problem; the Translation_Report entry text; `clickgoto` and `tweendemo` still emit a byte-identical `src/classes.ts`. Handwritten override (Requirement 26.10, 26.13, D40): a stub guard that fails an override file gives the omission, the Problem `handwritten-override-unparsable` with the path relative to the handwritten directory, the parser message, line and column in the Translation_Report, and one `warn [emit]:` line with the same path and message on the CLI output; one test with the real guard on a handwritten file that holds `with ({}) {}`; the file stays written.
     - _Requirements: 26.2, 26.7, 26.10, 26.11, 26.13, 23.7_
-  - [~] 23.4 Whole-bundle test and SC
+  - [ ] 23.4 Whole-bundle test and SC
     - Add `test/e2e/bundleAll.e2e.test.ts` (design 21.4): an Emitted_Project with one class per kill case and two clean classes builds with the real `vite.build` after the guard, kill classes omitted with `bundler-parse`, clean ones registered; the same on the `slider_component` copy when `.work/local/slider_component/` exists (skip with a reason otherwise). Run SC and state the Overall_Match before and after in the commit message. Commit message: `Test: build the whole bundle after the guard (23.4)`.
     - Test: the e2e file is the test.
     - _Requirements: 26.12, 26.11, 23.5, 31.5_
 
 - [ ] 24. Shim and Translate: AS3 interfaces (Requirement 27)
   - Commit area: `Shim` for 24.1, `Translate` for 24.2 and 24.3, `Pipeline` for 24.4; one commit per sub-task. Read design 21.5. Verification V2 for 24.1, V1 plus SC for the others. Decided D31 to D33. This task comes after Task 23. Every Shim addition goes into `template/shim/ADDED_APIS.md` with its fixture line: `defineInterface` and `declareImplements` with `Button.as:9`, `LabelButton.as:16`, `Slider.as:17` and `FocusManager.as:19` (the `implements` lines) and the interface files `IFocusManager.as`, `IFocusManagerComponent.as`, `IFocusManagerGroup.as`. `isOfInterface` and `asInterface` are not added (design 21.5, D32, D33).
-  - [~] 24.1 Shim: `defineInterface`, `declareImplements`, `AS3InterfaceToken`
+  - [ ] 24.1 Shim: `defineInterface`, `declareImplements`, `AS3InterfaceToken`
     - Add `template/shim/interfaces.ts` (the token with `[Symbol.hasInstance]`, the `WeakMap` registry, parents closure, cycle guard) and export it from `template/shim/index.ts`; log the rows in `ADDED_APIS.md`; run `npm run gen:shim-members` (the token module adds no class member, the drift test must still pass). Commit message: `Shim: add the AS3 interface token (24.1)`.
     - Test: `test/property/interfaces.property.test.ts` (create), **Property 50: `instanceof` against an interface follows the declared closure** (runtime part: the prototype-chain walk and the transitive closure through `parents`, for subclasses of implementers, interface inheritance at depth 1 to 3, and classes with several interfaces); `test/unit/shimMembersDrift.test.ts` passes; an example with replaced `constructor.name`; examples for Requirement 27.11 to 27.13 (a subclass of an implementer passes; an implementer of a child interface passes for the child and the parent; a class with three interfaces passes for each; a base and a subclass with different interfaces pass for the union).
     - _Requirements: 27.4, 27.8, 27.11, 27.12, 27.13, 31.3_
-  - [~] 24.2 Translate: interface declarations and tokens
+  - [ ] 24.2 Translate: interface declarations and tokens
     - In `src/translate/planTranslate.ts`, `emitTs.ts` and `report.ts` emit the TypeScript `interface` and the exported token for an AS3 interface (design 21.5); narrow the `as3-interface` Named_Limit to an interface with a member that cannot be expressed. Commit message: `Translate: emit AS3 interfaces and tokens (24.2)`.
     - Test: Property 50 (translator part: the file exports interface and token, passes the real gate with no error but an unresolved Shim type); `test/unit/interfaces.test.ts` (create): the three `slider_component` interface sources (hand-written equivalents of the same forms; no decompiled third-party text is copied into the Repository), an interface that extends another, an untranslatable interface that keeps the limit.
     - _Requirements: 27.1, 27.6, 27.7, 27.9, 27.10_
-  - [~] 24.3 Translate: `implements` registration
+  - [ ] 24.3 Translate: `implements` registration
     - Emit `declareImplements(Cls, ...)` after a class that declares `implements` and import the Shim names by the existing Shim specifier mechanism; confirm that `x is I` still becomes `x instanceof I`. Commit message: `Translate: register implemented interfaces (24.3)`.
     - Test: extend `test/unit/interfaces.test.ts`: `Button` `implements IFocusManagerComponent`, a class inheriting the declaration, a secondary class, the `UIComponent.as:102` shape (`this is IFocusManagerComponent` in a constructor), `x as I` stays a plain cast (a test pins the cast text and a comment names D33), a class that implements three interfaces; `test/unit/clickgotoEmit.test.ts` bytes unchanged.
     - _Requirements: 27.2, 27.3, 27.9, 27.10_
-  - [~] 24.4 `slider_component`: interface omissions gone
+  - [ ] 24.4 `slider_component`: interface omissions gone
     - Run SC with the pipeline on `.work/local/slider_component/` and state in the commit message: the `missing-export` omissions before (5) and after, the `fl.*` classes registered, the classes still omitted with their reasons, the Overall_Match (at least 99.93) and the Trace_Score. Add `test/unit/interfaces.test.ts` case on the local copy (skips with a reason when absent): no `class-omitted` entry has reason `missing-export` for a name that is an interface. Commit message: `Test: pin interface exports on slider_component (24.4)`.
     - _Requirements: 27.5, 23.5, 31.5_
 
 - [ ] 25. Runtime: instance printing and default names (Requirement 28)
   - Commit area: `Runtime`; one commit per sub-task. Read design 21.6 and Appendix A.12. Verification V2 plus CC. Decided D34, D35. The numbering for script-created objects is "not verified" and is reported at Task 27.
-  - [~] 25.1 `toString` and class-name registration
+  - [ ] 25.1 `toString` and class-name registration
     - Add `registerClassName` and `classNameOf` to `template/shim/internal.ts`, register the Shim classes, register every `classRegistry` key in the Player constructor, and add `toString` to `DisplayObject` and `Stage` (design 21.6). Commit message: `Runtime: print display objects as [object Class] (25.1)`.
     - Test: `test/property/instanceNames.property.test.ts` (create), **Property 52: Display objects print as `[object ClassName]`**; `test/unit/instanceNames.test.ts` (create): `[object MovieClip]`, a registered `test_fla.MainTimeline` prints `[object MainTimeline]`, a replaced constructor name, a class with its own `toString`.
     - _Requirements: 28.1, 28.6, 28.7, 31.3_
-  - [~] 25.2 Default instance names
+  - [ ] 25.2 Default instance names
     - Add the Instance_Counter to `internal.ts` (`resetInstanceCounter`, `takeInstanceNumber`), reset it in the Player constructor, take the number at the start of the `MovieClip` constructor for an unnamed placement (the root included, then named `root1`), in `createChild` for an unnamed shape, and in the `DisplayObject` constructor for a script-created object. Commit message: `Runtime: give unnamed objects instanceN names (25.2)`.
     - Test: add **Property 51: Default instance names follow depth-first creation order** to `test/property/instanceNames.property.test.ts`; example in `test/unit/instanceNames.test.ts`: the `click_block` shape (root, named clip with a shape, unnamed sprite) gives `instance2` to the sprite; a named placement takes no number; a script-created `Sprite` takes the next number.
     - _Requirements: 28.2, 28.3, 28.4, 28.7, 31.3_
-  - [~] 25.3 `click_block` evidence
+  - [ ] 25.3 `click_block` evidence
     - Run the local Replay of `click_block` (downloaded under `.work/`, not committed) and state the five target strings against the Reference_Trace, the Overall_Match and the Trace_Score before (90.85 and 0.00) and after, and the cause of any remaining difference. Measure `clickgoto` and `tweendemo` (CC).
     - Test: `test/unit/instanceNames.test.ts` (extended) holds the five Reference_Trace target strings as a literal expectation built from the placement shape of `click_block`; `test/unit/clickgotoReplay.test.ts` unchanged.
     - _Requirements: 28.5, 28.6, 31.5_
 
 - [ ] 26. Shim and Runtime: mouse flags, Hit_Target and `formatToString` (Requirement 29)
   - Commit area: `Shim` for 26.1, `Runtime` for 26.2 and 26.3; one commit per sub-task. Read design 21.7 and section 10. Verification V2 plus CC for all three; SC for 26.3. Decided D36. Every Shim addition is logged in `template/shim/ADDED_APIS.md` with its fixture line, and `npm run gen:shim-members` is run in the same sub-task.
-  - [~] 26.1 Shim members and `Event.formatToString`
+  - [ ] 26.1 Shim members and `Event.formatToString`
     - Add `mouseEnabled` and `mouseChildren` to `DisplayObjectContainer`, `buttonMode` and `useHandCursor` to `Sprite`, and `Event.formatToString` to `events.ts`. Before writing the test read `core/src/avm2/globals/flash/events/event.rs` at the pinned commit and follow it if its format differs from the AS3 documentation (state which in the commit message). Log in `ADDED_APIS.md`: `BaseButton.as:46` (`buttonMode`), `:47` (`mouseChildren`), `:48` (`useHandCursor`), `:68` (`mouseEnabled`), `Slider.as:393` (`useHandCursor`), `ComponentEvent.as:29` and `SliderEvent.as:55` (`formatToString`). Regenerate the Shim_Member_Table. Commit message: `Shim: add mouse flags and Event.formatToString (26.1)`.
     - Test: `test/unit/shimDisplay.test.ts` and `test/unit/shimEvents.test.ts` extended (defaults, a stored value, `formatToString` for a string, a number and a boolean, the order of properties); `test/unit/shimMembersDrift.test.ts` passes.
     - _Requirements: 29.1, 29.5, 29.7, 31.3_
-  - [~] 26.2 The Hit_Target rule
+  - [ ] 26.2 The Hit_Target rule
     - Add `hitTestAll` and `resolveHitTarget` to `template/runtime/hitTest.ts` (Core, browser-safe) and use them in `Player.pointerEntry` in place of `interactiveTarget(hitTest(...))`. Commit message: `Runtime: honour mouseEnabled and mouseChildren in hits (26.2)`.
     - Test: `test/property/hitTarget.property.test.ts` (create), **Property 53: The Hit_Target honours the mouse flags and equals the old rule by default**; `test/unit/hitTest.test.ts` extended: `mouseChildren = false` on a button-like clip, `mouseEnabled = false` and the parent receives the event, a disabled object above a directly hit sibling, the Stage_Object fallback; `test/unit/player.test.ts`: `dispatchClick` on the `clickgoto` shape is unchanged (`clickgotoReplay.test.ts`: Trace_Score 100, 32 ticks).
     - _Requirements: 29.2, 29.3, 29.4, 29.8, 31.3_
-  - [~] 26.3 Gate check on `slider_component`
+  - [ ] 26.3 Gate check on `slider_component`
     - Run SC and the type-check gate on `.work/local/slider_component/`: state the diagnostics of `ComponentEvent`, `SliderEvent`, `BaseButton` and `Slider` before and after, and require no TS4113 and no TS2339 for the five new members. Commit message: `Test: pin the new Shim members on slider_component (26.3)`.
     - Test: `test/unit/shimDisplay.test.ts` (extended) runs the real gate on the translated `ComponentEvent` and `SliderEvent` shapes (hand-written equivalents if the local copy is absent) and asserts no TS4113.
     - _Requirements: 29.6, 23.5, 31.5_
 
-- [~] 27. Checkpoint: robustness group
+- [ ] 27. Checkpoint: robustness group
   - STOP. Commit nothing.
   - Run the full suite `npm test -- --run` first. A failure it finds is fixed in a new commit that names the sub-task that caused it, then the suite runs again.
   - For `slider_component` (`.work/local/slider_component/`), `click_block`, `3_joystick` and `mask_reapply` (downloaded under `.work/`, deleted afterwards, not committed) run `npm run pipeline -- <swf> <out> --force --verify --work-dir <dir>` with the references under `reference/` and give a table of Overall_Match and Trace_Score before (Checkpoint 9: `slider_component` 99.93 and 0.00, `click_block` 90.85 and 0.00, `3_joystick` 15.82 and 25.00, `mask_reapply` 20.00 and 0.00) and after, with the `missing` and `extra` counts, the caught errors (`behaviour.replay.caughtErrors`: count and first entries), the omitted and the Loose_Classes of `slider_component`, and for every value below 100 the remaining cause, line by line for the trace.
@@ -462,178 +462,178 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 10. Runtime: Shape_JSON render path (Shape_JSON, Shape_Function, Scene_JSON v2, limit kinds)
   - Commit area: `Runtime` (the commit also changes Convert and the Verify limit builders; the message names them). Read design sections 2, 3 and 12 and the Data Models section (Scene_JSON version 2). Verification V2, plus CC. Decided D1: the Shape_JSON path (render path (b)). This is the task that introduces the Shape_Function, so from its commit every gradient and bitmap fill is returned as a Named_Limit (kinds `gradient-fill` and `bitmap-fill`), recorded in the Unsupported_Feature_List and in `visual.knownVisualLimits`, and the backend throws on a fill whose `DRAWN_FILLS` flag is false; the three flags start false and are flipped only in Task 11 (Requirements 2.8, 2.9, D21). No console.warn-only state exists at this commit. Measure `clickgoto` and `tweendemo` before and after (Requirement 7.11); IF they fall, STOP and ask. Sub-tasks 10.2 to 10.8 are Core and go into the purity test.
-  - [~] 10.1 Add `template/runtime/shapeJson.ts` with `DRAWN_FILLS`
+  - [ ] 10.1 Add `template/runtime/shapeJson.ts` with `DRAWN_FILLS`
     - Types `Mat6`, `PathCmd`, `GradientStop`, `ShapeFill`, `ShapeStroke`, `Contour`, `ShapePath`, `ShapeJson`, `ShapeJsonError`, `validateShapeJson`, `parseShapeJson`, `printShapeJson` as in design section 2 (finite numbers, no `-0`, colour `#rrggbb`, alpha 0..1, at least two sorted stops, a fill or a stroke per path, `miterLimit >= 1`, `width >= 0`, commands start with `M`, image path pattern). Error messages start with the failing field path. Add `DrawnFills`, `DRAWN_FILLS = { gradientLinear: false, gradientRadial: false, bitmap: false }` and `fillIsDrawn(fill, caps)` (solid: always; gradient: by type; bitmap: `caps.bitmap`). Add the file to the purity test (browser-safe: no `node:*`, no `pixi.js`).
     - Test: `test/property/shapeJson.property.test.ts` (create), **Property 1: Shape_JSON round trip** and **Property 2: The validator names the failing field**, with `test/property/gen/genShapeJson.ts` (create). `test/unit/shapeJson.test.ts` (create): the initial state of `DRAWN_FILLS` is all false (pinned in the introducing commit) and `fillIsDrawn` for each fill kind.
     - _Requirements: 7.7, 7.10, 2.8, 15.1, 15.2, 15.5_
 
-  - [~] 10.2 Add `src/convert/pathData.ts`
+  - [ ] 10.2 Add `src/convert/pathData.ts`
     - `parsePathD` (including implicit command repetition), `bakeCmds(cmds, matrix)` and `cmdsToD`. Add the file to the purity test.
     - Test: `test/property/pathData.property.test.ts` (create), **Property 6: Path baking composes, path data round-trips**.
     - _Requirements: 10.2, 7.7, 15.2, 15.5_
 
-  - [~] 10.3 Add `src/convert/evenOdd.ts`
+  - [ ] 10.3 Add `src/convert/evenOdd.ts`
     - `groupContours(subpaths)`: nesting depth of each subpath (bounding boxes first, then point-in-polygon on the on-curve points); even depths are outer contours, odd depths are holes of the smallest enclosing outer contour. Add the file to the purity test.
     - Test: `test/property/evenOdd.property.test.ts` (create), **Property 5: Contour grouping agrees with the even-odd rule** (brute-force model over sampled points), with `test/property/gen/genContours.ts` (create).
     - _Requirements: 8.1, 9.1, 10.2, 15.2, 15.5_
 
-  - [~] 10.4 `svgToShapeJson` for solid fills, wrapper, nested transforms and `<use>`
+  - [ ] 10.4 `svgToShapeJson` for solid fills, wrapper, nested transforms and `<use>`
     - Create `src/convert/svgToShape.ts` with `svgToShapeJson(svg, kind, caps = DRAWN_FILLS)` returning `{ shape, images, limits }`. The first `<g transform>` wrapper is the shape origin and is not applied; nested `<g transform>` and `<use transform>` compose into one matrix baked with `bakeCmds`; `<use xlink:href>` resolves to the `<g id>` in `<defs>`. Solid fills, one `ShapePath` per element in SVG order, holes through `groupContours`. Deterministic: no `Map` iteration order, no locale, shortest round-trip numbers, `-0` to `0`. Add the file to the purity test. Idempotence (Requirement 7.8) does not apply because the output form (Shape_JSON) differs from the input form (SVG); the test file header says so.
     - Test: `test/property/shapeFunction.property.test.ts` (create), **Property 3: The Shape_Function is deterministic, total and valid** (two calls equal, never throws, passes `validateShapeJson`, limits sorted by `(kind, message)` without duplicates), with `test/property/gen/genFfdecSvg.ts` (create). `test/unit/svgToShape.test.ts` (create): the SVGs of the `clickgoto` and `tweendemo` fixtures and an inline `<use>` glyph sample.
     - _Requirements: 7.7, 7.8, 7.9, 2.7, 10.2, 15.5_
 
-  - [~] 10.5 Strokes: cap, join, miter limit and the stroke limits
+  - [ ] 10.5 Strokes: cap, join, miter limit and the stroke limits
     - Map `stroke-linecap` and `stroke-linejoin` to `cap` and `join`, and `stroke-miterlimit` to `miterLimit` (always written; the SVG default is 4). Decided F8: `miter-clip` maps to `miter` and records a `stroke-style` limit whose message says `approximated: miter-clip join is drawn as miter (shape N)`. A gradient stroke is kept as no stroke with a `stroke-style` limit; a dash array records `stroke-style`. No limit is recorded for a cap: sub-task 11.1 measures caps on wide open strokes before any cap limit or floor is set.
     - Test: extend `test/property/shapeFunction.property.test.ts` with **Property 4: No part is dropped without a Named_Limit** (unresolved paint, `miter-clip`, gradient stroke, dash array) and `test/unit/svgToShape.test.ts` rows for every cap and join spelling.
     - _Requirements: 13.8, 13.9, 13.11, 2.1, 2.5, 2.6, 7.9, 15.5_
 
-  - [~] 10.6 Gradient fills with the drawn-fill capabilities
+  - [ ] 10.6 Gradient fills with the drawn-fill capabilities
     - Fill `url(#gradientN)` becomes a gradient with `gradientTransform` as `matrix`, `spreadMethod` as `spread`, `stop-opacity` as `alpha` (absent means 1) and `fx`/`fy` as `focal`. When `fillIsDrawn(fill, caps)` is false the fill is left out of the Shape_JSON and exactly one `gradient-fill` limit is returned with a per-fill message (`gradient fill 2 of shape 7 is not drawn (linear, 3 stops)`); a path whose only paint was that fill is dropped and one with a stroke keeps the stroke (design 2, "Fills before they are drawn"). When the flag is true: a radial gradient with `spread` other than `pad` records `gradient-spread` (shape id and method); a radial gradient with a focal point records `gradient-focal` with the message `approximated: ...` (Requirement 8.4); linear gradients with `reflect` or `repeat` are kept and record nothing.
     - Test: extend `test/unit/svgToShape.test.ts` with inline SVG excerpts of the `radial` and `gradients` exports (called with all flags true to test the conversion, and with the default all-false caps to test the limit) and extend `genFfdecSvg.ts`; extend **Property 4** for `gradient-spread` and `gradient-focal`; add **Property 42: Every gradient and bitmap fill is drawn or named exactly once** to `test/property/shapeFunction.property.test.ts` (every capability set).
     - _Requirements: 2.8, 2.9, 8.1, 8.2, 8.3, 8.4, 2.4, 7.9, 15.5_
 
-  - [~] 10.7 Bitmap fills, image bytes and determinism
+  - [ ] 10.7 Bitmap fills, image bytes and determinism
     - Fill `style="fill:url(#PatternID_s_n)"` becomes a bitmap fill: the `<pattern>` child of the shape `<g>` supplies `patternTransform` and the base64 data URL; `ffdec:fill-bitmapId` names the asset; `image-rendering` `optimizeSpeed` or `pixelated` gives `smooth: false`, `optimizeQuality` gives `true`; mime `jpeg`, `jpg` and `JPEG` map to `jpg`. `images` are sorted by `bitmapId`, one entry per id, bytes decoded from base64 without re-encoding. With `caps.bitmap` false the fill is left out and exactly one `bitmap-fill` limit is returned (`bitmap fill 1 of shape 9 is not drawn (image 5)`). An unresolved pattern or missing bytes records `bitmap-fill`; another `image-rendering` value records `bitmap-smoothing`.
     - Test: add **Property 19: Bitmap assets are deterministic** to `test/property/shapeFunction.property.test.ts`; extend **Property 4** for `bitmap-fill` and `bitmap-smoothing` and **Property 42** for bitmap fills; unit rows in `test/unit/svgToShape.test.ts`; `test/unit/svgToShapeDeterminism.test.ts` (create): two runs on SVGs with bitmap patterns give byte-identical printed Shape_JSON and image bytes.
     - _Requirements: 2.8, 2.9, 9.1, 9.2, 9.3, 9.4, 7.7, 15.5_
 
-  - [~] 10.8 Named_Limit order
+  - [ ] 10.8 Named_Limit order
     - Ensure `limits` are totally ordered and de-duplicated, and that the same SVG with its attributes permuted yields the same list.
     - Test: the order clause of **Property 3** in `test/property/shapeFunction.property.test.ts`, and `test/unit/svgToShape.test.ts`.
     - _Requirements: 2.7, 7.9_
 
-  - [~] 10.9 Known_Visual_Limit kinds and the `allComparedFramesExact` option
+  - [ ] 10.9 Known_Visual_Limit kinds and the `allComparedFramesExact` option
     - `src/verify/core/limits.ts`: `VisualLimit.kind` gains `gradient-fill`, `gradient-spread`, `gradient-focal`, `bitmap-fill`, `bitmap-smoothing`, `text-metrics`, `stroke-style`, `blend-mode`; an Unsupported entry of one of these kinds becomes a limit of the same kind with id and message kept; `text`, `button`, `filter`, `mask`, `video`, `morph-shape` stay `unsupported-feature`. `knownVisualLimits` gains `opts: { allComparedFramesExact: boolean }` and omits every `text-metrics` entry when it is true. Dedupe and order stay `(kind, id, message)`. `src/verify/edge/verifyStage.ts` computes `allComparedFramesExact` from the frame outcomes before building the limits; `html.ts` prints the new kinds generically and escaped. The `colour-offset` rule is not narrowed here (sub-task 11.8 does); the `residual-difference` kind is added in Task 13.
     - Test: `test/property/visualLimits.property.test.ts` (create), **Property 9: Visual limits are complete, ordered and deduplicated** (one limit per entry of a visually relevant kind including `gradient-fill` and `bitmap-fill`, no duplicate `(kind, id, message)`, permutation invariance, `text-metrics` omitted exactly when exact); `test/unit/limits.test.ts` (create), `test/unit/htmlKnownGaps.test.ts` rows (escaping) and `test/unit/verifyStage.test.ts` (flag computed from outcomes); extend the generators of `test/property/fidelityDeterminism.property.test.ts` through `genReportInputs.ts`.
     - _Requirements: 2.2, 2.3, 2.4, 2.7, 2.8, 10.5, 13.10, 15.5_
 
-  - [~] 10.10 Scene_JSON v2
+  - [ ] 10.10 Scene_JSON v2
     - `template/runtime/scene.ts`: `formatVersion` 2, shape `file` `<id>.shape.json`, shape `size`, optional integer `clipDepth >= depth`; `validateScene` accepts only 2. In this sub-task update `test/property/gen/genScene.ts`, `test/property/sceneRoundTrip.test.ts`, `test/unit/sceneJson.test.ts`, `test/unit/loader.test.ts`, `test/unit/pixiShapeOrigin.test.ts` and the `clickgoto` fixture `expected-scene.json`.
     - Test: **Property 13: Scene_JSON v2 round trip** in `test/property/sceneRoundTrip.test.ts`; unit rows in `test/unit/sceneJson.test.ts` for a `clipDepth` below the entry depth, a non-integer `clipDepth` and a `formatVersion` of 1, rejected with the field path.
     - _Requirements: 12.4, 12.5, 15.5_
 
-  - [~] 10.11 Convert writes Shape_JSON and records the limits
+  - [ ] 10.11 Convert writes Shape_JSON and records the limits
     - `src/convert/convertModel.ts` runs `svgToShapeJson` for every shape asset, adds the returned limits to `unsupported` with the shape id, takes `size` from the SVG `width` and `height`, collects images by `bitmapId`. `src/convert/writeConverted.ts` writes `<id>.shape.json` (canonical text) and `images/<bitmapId>.<ext>`; Emit copies `images/` and no longer writes `<id>.svg`. Everything is sorted by numeric id. The `gradient-fill` and `bitmap-fill` limits appear in the Unsupported_Feature_List of the run.
     - Test: update `test/unit/convertModel.test.ts`, `test/unit/writeConverted.test.ts`, `test/unit/emit.test.ts`; create `test/unit/convertShapeJson.test.ts` on the `clickgoto` and `tweendemo` fixtures (file names, `size`, empty `images`, byte-identical output on two runs) and a row with a synthetic SVG holding a gradient fill (an Unsupported entry `gradient-fill` with the shape id).
     - _Requirements: 2.8, 7.9, 9.2_
 
-  - [~] 10.12 Backend draws Shape_JSON (solid fills, strokes, holes) and refuses undrawn fills
+  - [ ] 10.12 Backend draws Shape_JSON (solid fills, strokes, holes) and refuses undrawn fills
     - `template/runtime/backend.ts` `loadShape(symbolId, shape, assetBase)`; `template/runtime/loader.ts` loads `<id>.shape.json` through `parseShapeJson`; `template/runtime/pixi/pixiBackend.ts` draws each path per contour: `outer`, `fill`, each hole drawn and `cut()`, `stroke({ width, color, alpha, cap, join, miterLimit })`. `drawFill` checks `fillIsDrawn(fill, DRAWN_FILLS)` and throws `ShapeJsonError('<path>: fill kind not drawn: <kind>')`; `loadScene` shows the error and does not start playback; there is no `console.warn`-only skip. `src/verify/edge/fakeBackend.ts` accepts the new `loadShape` and applies the same check. `src/verify/edge/replayRunner.ts` takes shape bounds from Scene_JSON `size` and `origin`; delete `src/verify/core/svgBounds.ts` and move its test rows to a Scene_JSON `size` test in `test/unit/sceneSize.test.ts` (create).
     - Test: `test/unit/pixiBackend.test.ts` (create) with the `FakeBackend` for the loader path and a hand-made Shape_JSON with a gradient fill that is refused with the field path; `test/unit/shapeJson.test.ts` (the `drawFill` check); `test/unit/clickgotoReplay.test.ts` and `test/unit/clickOracle.test.ts` stay green unchanged.
     - _Requirements: 2.8, 7.11, 13.8, 12.4_
 
-  - [~] 10.13 Verify the floors and the named limits
+  - [ ] 10.13 Verify the floors and the named limits
     - Run the `clickgoto` and `tweendemo` e2e floors (`test/e2e/overallMatch.e2e.test.ts`, Java and Chromium required, skipped with a reason otherwise) and state the CC numbers before and after. On local copies under `.work/` of `radial` and `gradients` state that the Fidelity_Report lists a `gradient-fill` Known_Visual_Limit for every gradient (no `console.warn`-only state).
     - Evidence is the recorded CC measurement and the recorded limit lists; they are guarded by `test/e2e/overallMatch.e2e.test.ts`, `test/unit/clickgotoReplay.test.ts` and `test/property/shapeFunction.property.test.ts` (Property 42).
     - _Requirements: 1.6, 2.8, 7.11_
 
 - [ ] 11. Runtime: drawing of strokes, gradients, bitmap fills and colour offsets
   - Commit area: `Runtime`. Read design sections 2, 3 and 4. Verification V2, plus CC. Decided F8, F16. Each drawing sub-task flips its `DRAWN_FILLS` flag in the same sub-task as the drawing code, so the Shape_Function stops returning the limit for exactly the cases that are drawn (Requirements 2.8, 8, 9; D21). A fill kind whose flag is still false stays refused by the backend and named.
-  - [~] 11.1 Stroke styles measured on wide open strokes
+  - [ ] 11.1 Stroke styles measured on wide open strokes
     - Read design section 3 (Strokes) and the second-pass table "Strokes: line caps and miter on a wide open stroke". The design already measured 100 percent, 0 differing pixels, in all six cases (10 px and 20 px; cap `none`, `round`, `square`); this sub-task records that value again on the implemented backend and does not take it on trust (Requirement 13.12). Under `.work/` build, as `samples/tweendemo/build.py` rebuilds its SWF, variants of the `gradients` dump with one open stroked path and no fill, width 10 and 20 px, one variant per cap value, and join variants (round, bevel, miter-clip with `stroke-miterlimit="2.0"`, with corners below and above the limit). Export each Reference_Frame with FFDec, render it with the real Pipeline backend, score with `compareImages` under the unchanged Verify_Tolerance. Record the matchPercent and differing pixels per variant in the commit message. IF a cap differs from the Reference_Frame, add a `stroke-style` limit for exactly that cap in `src/convert/svgToShape.ts` with a test, and report it; do not set a floor on a stroke that was not measured. Delete the variants.
     - Test: rows in `test/unit/svgToShape.test.ts` (every cap and join spelling reaches `ShapeStroke`, `miterLimit` always written) and `test/e2e/render.e2e.test.ts` (create; skipped when Chromium is missing): a synthetic Shape_JSON open stroke with each cap and each join, read back pixel extents (a `square` cap extends past the end point by half the width, `butt` does not, `round` stays inside the square cap box). The measurement is guarded by these tests and by the Overall_Match floors of `3_joystick` (sub-task 17.3), `acid-color-2` (15.6) and the other admitted samples.
     - _Requirements: 13.8, 13.9, 13.12_
 
-  - [~] 11.2 Linear gradients: `gradientTextureMatrix` and `FillGradient` drawing; flips `gradientLinear`
+  - [ ] 11.2 Linear gradients: `gradientTextureMatrix` and `FillGradient` drawing; flips `gradientLinear`
     - Create the Core file `template/runtime/gradientMatrix.ts` with `gradientTextureMatrix(M)` mapping texture space onto the FFDec square (`GRADIENT_HALF_EXTENT = 819.2`, `GRADIENT_TEXTURE_SIZE = 256`); add it to the purity test. `pixiBackend.ts` builds `new FillGradient({ type, ..., textureSpace: 'global', colorStops, wrapMode })`, calls `buildGradient()`, then sets `grad.transform = new Matrix(...fill.matrix).append(grad.transform)` before `g.fill(grad)`; the FFDec matrix must be the receiver of `append`. Cite the Pixi 8.22 file and line for each gradient attribute relied on in a code comment (Requirement 8.6, lines in the design Measurements section). Set `DRAWN_FILLS.gradientLinear = true`; `gradientRadial` stays false until 11.3, so a radial gradient is still refused and named.
     - Test: `test/property/gradientMatrix.property.test.ts` (create), **Property 7: The gradient matrix maps texture space onto the FFDec square**; extend `test/unit/shapeJson.test.ts` (`gradientLinear` true, the other two false) and `test/property/shapeFunction.property.test.ts` (Property 42 with the new constant: a linear gradient produces no limit, a radial one still produces exactly one); `test/e2e/render.e2e.test.ts` (a synthetic one-shape linear gradient scene draws the expected pixels).
     - _Requirements: 2.8, 8.1, 8.6, 15.2, 15.5_
 
-  - [~] 11.3 Radial gradients: own radial texture; flips `gradientRadial`
+  - [ ] 11.3 Radial gradients: own radial texture; flips `gradientRadial`
     - For radial gradients build an own canvas gradient texture without the last-stop pre-fill (`createRadialGradient(128 + fx*k, 128 + fy*k, 0, 128, 128, 128)`, `k = 128 / 819.2`, `clamp-to-edge`) and assign it to `grad.texture`, so stop alpha is drawn correctly (Requirement 8.2). Set `DRAWN_FILLS.gradientRadial = true`. The `gradient-spread` and `gradient-focal` limits stay.
     - Test: extend `test/e2e/render.e2e.test.ts`: a synthetic one-shape scene with a radial gradient whose first stop has alpha 0 draws the transparent centre, not the last stop colour (pixel read-back); extend `test/unit/shapeJson.test.ts` (`gradientRadial` true) and Property 42. Measure `radial` and `gradients` on local copies under `.work/` and report the Overall_Match; the committed floors come in sub-task 15.3.
     - _Requirements: 2.8, 8.1, 8.2, 8.5_
 
-  - [~] 11.4 Bitmap fills; flips `bitmap`
+  - [ ] 11.4 Bitmap fills; flips `bitmap`
     - `pixiBackend.ts`: `new FillPattern(texture, 'repeat')` with `setTransform(new Matrix(...fill.matrix))`, texture `scaleMode = 'nearest'` when `smooth` is false, the image loaded from `assetBase + fill.image` through an `HTMLImageElement`. A load failure shows an on-page error and skips nothing silently (the fill is named by the page error and the scene does not start). `loader.ts` passes `assetBase`. `fakeBackend.ts` records the fill kinds it receives. Set `DRAWN_FILLS.bitmap = true`.
     - Test: extend `test/unit/loader.test.ts` (image path resolved from `assetBase`), `test/unit/shapeJson.test.ts` (`bitmap` true), `test/property/shapeFunction.property.test.ts` (Property 42) and `test/e2e/render.e2e.test.ts` (a synthetic scene with a 2x2 bitmap fill at scale 10 draws the expected pixels, nearest versus smooth).
     - _Requirements: 2.8, 9.1, 9.4_
 
-  - [~] 11.5 Emit copies image assets
+  - [ ] 11.5 Emit copies image assets
     - Confirm that `src/emit/emit.ts` and the `vite build` of the emitted project copy `assets/images/*` into the project and into `dist`, and that the dev server serves them.
     - Test: extend `test/unit/emit.test.ts` and `test/unit/buildProject.test.ts` with a fixture holding `images/5.png`: the file is present in the emitted project and in `dist/assets/images`.
     - _Requirements: 9.2_
 
-  - [~] 11.6 `colourMatrix`, `hasOffsets`, `stripAlphaAdd`, `hasAlphaAdd`
+  - [ ] 11.6 `colourMatrix`, `hasOffsets`, `stripAlphaAdd`, `hasAlphaAdd`
     - Create `template/runtime/colourMatrix.ts` as in design section 4 (row-major 4x5, offsets divided by 255; `colourMatrix` keeps the full Flash formula; `stripAlphaAdd` returns the transform with the alpha add term replaced by 0; `hasAlphaAdd`). Add the file to the purity test.
     - Test: `test/property/colourMatrix.property.test.ts` (create), **Property 8: The colour matrix equals the Flash formula** (including `stripAlphaAdd` and `hasAlphaAdd`).
     - _Requirements: 13.5, 13.6, 15.2, 15.5_
 
-  - [~] 11.7 `setColorOffset` in the backend and Player, and the Exact_Render measurement
+  - [ ] 11.7 `setColorOffset` in the backend and Player, and the Exact_Render measurement
     - `backend.ts`, `pixiBackend.ts`, `fakeBackend.ts`: `setColorOffset(node, ct | null)` sets `node.filters = [filter]` and resets `tint` and colour alpha, `null` removes the filter; remove `warnColorOffsetsUnsupported`. `Player` calls it with the matrix of `stripAlphaAdd(ct)` when `hasOffsets(ct)` and `setColorMultiplier` otherwise; `template/src/main.ts` drops `hasColorOffsets`. Measure `acid-color-2` on a local copy under `.work/`: it must show 0 differing pixels (Exact_Render, Requirement 13.6); IF it does not, STOP and ask and keep the `colour-offset` limit (Requirement 13.7). Report the Overall_Match; the committed floor comes in sub-task 15.6.
     - Test: `test/unit/player.test.ts` (an offset colour transform calls `setColorOffset`, a multiplier-only transform calls `setColorMultiplier`) and `test/e2e/render.e2e.test.ts` (a synthetic one-sprite scene with `redAddTerm=255` read back through the filter shows the expected colour and leaves the box around the glyphs unchanged).
     - _Requirements: 13.5, 13.6, 13.7_
 
-  - [~] 11.8 Measure the alpha add term and narrow the `colour-offset` limit
+  - [ ] 11.8 Measure the alpha add term and narrow the `colour-offset` limit
     - Build, under `.work/`, swf2xml variants of `acid-color-2` (`alphaAddTerm=100`; `alphaMultTerm=128` with `alphaAddTerm=64`; `alphaMultTerm=0` with `alphaAddTerm=255`; the controls with no alpha add term), export each Reference_Frame, score the render with the real backend under the unchanged Verify_Tolerance, and record the differing pixels per variant in the commit message (Requirement 13.13; the design recorded 7389, 8335 and 10194). `src/verify/core/limits.ts` then produces `colour-offset` only for a placement with a non-zero alpha add term, with the message `approximated: alpha add term (alphaAddTerm N) is not drawn exactly`. IF a variant with a non-zero alpha add term is an Exact_Render, the limit is not recorded for it and the commit message says so. Delete the variants.
     - Test: extend **Property 9** in `test/property/visualLimits.property.test.ts` (`colour-offset` only for a non-zero alpha offset) and `test/unit/limits.test.ts`. The measurement itself is guarded by the `acid-color-2` Exact_Render assertion of sub-task 15.6.
     - _Requirements: 13.6, 13.7, 13.13, 2.4_
 
-  - [~] 11.9 Record CC
+  - [ ] 11.9 Record CC
     - Run `clickgoto` and `tweendemo` end to end and state CC before and after (they have no gradients, bitmap fills or colour offsets, so their solid path is unchanged).
     - Evidence is the recorded CC measurement; it is guarded by `test/unit/clickgotoReplay.test.ts` and `test/e2e/overallMatch.e2e.test.ts`.
     - _Requirements: 1.6, 1.7_
 
 - [ ] 12. Convert: static and dynamic text, filters, blend modes and masks
   - Commit area: `Convert` (the commit also changes Unpack and the Runtime clip groups; the message names them). Read design sections 5, 6 and 7. Verification V2 (sub-tasks 12.6 and 12.7 change `template/`), plus CC. Decided F2, F7. `TextField` stays out of this spec; dynamic text stays a Named_Limit (Requirement 11).
-  - [~] 12.1 Export `texts/<id>.svg`
+  - [ ] 12.1 Export `texts/<id>.svg`
     - `src/unpack/unpack.ts`: the second FFDec call becomes `-format text:svg -export shape,script,symbolClass,text <workDir> <swf>`; `UnpackResult` gains `textsDir`; `texts` joins the expected exports. `src/convert/readUnpacked.ts` reads `texts/<id>.svg` for each id in `staticTextIds` into `textAssets`; a missing, empty or invalid file records `{ kind: 'text' }` with the id and the placements are dropped (Requirement 10.4). The empty-group SVG that FFDec writes for a `DefineEditTextTag` is not read (F7).
     - Test: extend `test/unit/unpack.test.ts` (the argument vector contains `-format text:svg`, `texts` is expected) and `test/unit/readUnpacked.test.ts` (text assets, a missing file, an empty edit-text SVG ignored).
     - _Requirements: 10.1, 10.4_
 
-  - [~] 12.2 Static text as a shape symbol; dynamic text dropped with a limit
+  - [ ] 12.2 Static text as a shape symbol; dynamic text dropped with a limit
     - `convertModel` builds a `shape` symbol from each static-text asset with `svgToShapeJson(raw, 'text')` exactly like a shape, with `size` and `origin`; placements are kept. It records one `text-metrics` entry per static-text shape (message `glyph shapes come from the embedded font outlines; the original font hinting is not reproduced`). Dynamic text placements are dropped with kind `text` and the message `dynamic text (DefineEditText) is not rendered`. `TextField` is not added to the Shim (Requirement 11.3), and the Translate stage keeps reporting `TextField` members as before (Requirement 11.2).
     - Test: extend **Property 10** in `test/property/convertAccounting.property.test.ts` (static text drawn, not dropped) and `test/unit/convertModel.test.ts` (static text symbol, `text-metrics` entry, dynamic text drop, a `TextField` member still produces the existing diagnostic); extend `genTagsModel.ts`; `test/unit/convertTextDeterminism.test.ts` (create): two Convert runs over a model with static text give byte-identical `*.shape.json`.
     - _Requirements: 5.3, 10.2, 10.3, 10.5, 11.1, 11.2, 11.3, 11.4, 9.2_
 
-  - [~] 12.3 XML names for filters and blend modes
+  - [ ] 12.3 XML names for filters and blend modes
     - Download `visual/blend_modes/add/test.swf` under `.work/` (not committed), run FFDec `-swf2xml`, and record the `PlaceObject3Tag` filter flag (`placeFlagHasFilterList`), the blend-mode flag and the blend-mode value attribute in `FFDEC_XML`; names seen lose their `UNVERIFIED` mark. IF an attribute name cannot be observed on a placement that uses it, STOP and ask before relying on it (Requirement 13.4, git workflow). Delete the download.
     - Test: `test/unit/ffdecXmlVerifiedNames.test.ts` rows for the observed names only, using a dump excerpt.
     - _Requirements: 13.3, 13.4_
 
-  - [~] 12.4 Keep filtered and blend-mode placements and record the limit
+  - [ ] 12.4 Keep filtered and blend-mode placements and record the limit
     - `PlaceOp` gets `hasBlendMode`; `resolveTimeline.ts` no longer calls `drop(depth, 'filter')`: the placement is processed like an unfiltered one and adds a `KeptPlacementLimit` (sprite, frame, depth, character id, kind `filter` or `blend-mode`; two entries when it has both). `DroppedPlacement.kind` loses `'filter'`. `convertModel` turns each entry into an Unsupported entry with the messages `filter list is not drawn; the character is drawn without it (character N)` and `blend mode is not drawn; the character is drawn normally (character N)`. A move without a character uses the character at that depth. The Runtime needs no change.
     - Test: extend **Property 10** in `test/property/convertAccounting.property.test.ts` (filtered and blend-mode placements stay in the Scene_JSON, contribute exactly one `filter` or `blend-mode` entry each, and never count as drops), `test/unit/resolveTimeline.test.ts` (a filtered move without a character keeps the character id) and `test/unit/convertModel.test.ts`.
     - _Requirements: 13.1, 13.2, 13.3, 2.5_
 
-  - [~] 12.5 `computeClipLayout`
+  - [ ] 12.5 `computeClipLayout`
     - Create `template/runtime/clipLayout.ts` with `ClipGroup` and `computeClipLayout(items)`; add it to the purity test.
     - Test: `test/property/masks.property.test.ts` (create), **Property 12: Mask classification and layout** (layout half: each non-mask item in at most one group, only when its depth is above the mask depth and not above `clipDepth`, member order kept, masks never members), with `test/property/gen/genSymbolGraph.ts` (create); unit rows in `test/unit/clipLayout.test.ts` (create: empty range, nested range, two masks).
     - _Requirements: 12.1, 12.2, 15.2, 15.5_
 
-  - [~] 12.6 `createClipGroup`, `setMask`, Player reconcile, `ClipHooks.entryUpdated`
+  - [ ] 12.6 `createClipGroup`, `setMask`, Player reconcile, `ClipHooks.entryUpdated`
     - `backend.ts`, `pixiBackend.ts` and `fakeBackend.ts` gain `createClipGroup()` and `setMask(group, mask)`; the mask node stays a visible sibling in the scene graph and is never hidden. `Player.reconcile(parent)` builds the layout from the parent's current-frame entries (a `WeakMap` updated by `ClipHooks.entryUpdated`, called from `MovieClip._renderFrame`), creates one group per mask range and applies the matrix of the current frame to the mask (Requirement 12.2). Check whether today's `buildHitView` includes the mask shape; if it does, exclude it and log that (a mask layer is not a hit target in Flash). Add the `ClipHooks.entryUpdated` row to `template/shim/ADDED_APIS.md`, saying it supports clip groups for the Scene_JSON `clipDepth` need (no AS3 fixture line uses it, as design section 11 states). No Convert output carries `clipDepth` yet (12.7), so existing samples are unchanged.
     - Test: `test/unit/player.test.ts` rows (a scene with a mask placement creates one group per range, the mask node is a visible sibling, the mask matrix follows the frame, the mask shape is not a hit target) and `test/e2e/render.e2e.test.ts` (Chromium: clip with a moving matrix, one mask shared by two targets goes through one group and stays correct after a move; skipped when Chromium is missing).
     - _Requirements: 12.1, 12.2, 12.5, 12.7_
 
-  - [~] 12.7 `classifyMask` and `resolveMasks`: keep Trivial_Mask placements, drop the others with a Named_Limit
+  - [ ] 12.7 `classifyMask` and `resolveMasks`: keep Trivial_Mask placements, drop the others with a Named_Limit
     - Read design section 5 (Convert). Create `src/convert/masks.ts` with `classifyMask(symbolId, symbols)` (trivial for a shape; for a sprite whose every frame holds only shape entries with identity colour transform and no `clipDepth`) and `resolveMasks(spriteId, frames, symbols)` (a non-trivial mask is removed and recorded as kind `mask` with the message that the masked content is drawn without the mask; a trivial one is kept with `clipDepth`). `src/convert/resolveTimeline.ts` keeps `clipDepth` on the resolved entry instead of dropping the placement; `convertModel` runs `resolveMasks` after all timelines exist. Add the file to the purity test. `DisplayObject.mask` is not added to the Shim (Requirement 12.7).
     - Test: extend `test/property/masks.property.test.ts` (**Property 12**, classification half, brute-force model) and `test/unit/masks.test.ts` (create: shape mask, sprite mask, nested clip, empty range).
     - _Requirements: 12.1, 12.3, 12.4, 12.7, 15.2, 15.5_
 
-  - [~] 12.8 Measure and update the mask-dependent expectations
+  - [ ] 12.8 Measure and update the mask-dependent expectations
     - Update `test/unit/resolveTimeline.test.ts`, `test/property/resolveTimeline.test.ts` and `test/unit/convertModel.test.ts` where they expected `clipDepth` placements to be dropped. Record the Overall_Match of the local smoke `clipDepth` before and after (84.09 for frames 1 and 2 before; 92.05 over four frames) and of `mask_reapply` and `3_joystick` (local copies under `.work/`); `3_joystick` and `mask_reapply` must be at least their value before this sub-task (Requirement 12.6). State that `clipDepth` has no Score_Floor because it is not committed. Delete the copies. Record CC.
     - Test: extend `test/unit/convertModel.test.ts` (a mask entry kept with `clipDepth`, a non-trivial mask recorded as `mask`) and `test/unit/resolveTimeline.test.ts`. The measurement is guarded by the floors of sub-tasks 16.3 and 17.3.
     - _Requirements: 12.3, 12.6, 13.10, 1.6_
 
 - [ ] 13. Pipeline: residual attribution (Requirement 21)
   - Commit area: `Pipeline`. Read design section 17. Verification V1. The tool built here is used by every admission sub-task.
-  - [~] 13.1 Add `src/verify/core/regions.ts`
+  - [ ] 13.1 Add `src/verify/core/regions.ts`
     - `clusterDiffRegions(mask, width, height)` (8-connected components of the `FrameDiff.mask`, ids in raster order of each region's first pixel, `RangeError` when the length differs) and `regionTable(regions, maxRows)` (rows in id order plus an omitted aggregate, so the pixel counts always add up). The file is covered by the purity glob of `src/verify/core/*.ts`; add it to the explicit list too.
     - Test: `test/property/regions.property.test.ts` (create), **Property 26: Region clustering partitions the mask deterministically**.
     - _Requirements: 21.1, 21.4, 15.5_
 
-  - [~] 13.2 Add `src/verify/core/residual.ts`
+  - [ ] 13.2 Add `src/verify/core/residual.ts`
     - `ResidualRegister`, `ResidualEntry`, `validateResidualRegister` (kind pattern, box inside the stage, integer frame, `message` non-empty and not `unknown`, `not examined`, `todo` or `tbd` in any letter case), `attributeRegions(frame, regions, register)` (the containing entry of the same frame with the smallest box area, ties by `(kind, message)`) and `residualLimits(attributions)`. Add the kind `residual-difference` to `VisualLimit.kind` in `limits.ts`.
     - Test: `test/property/residual.property.test.ts` (create), **Property 27: Residual attribution is total and independent of the register's order**; `test/unit/residual.test.ts` (create): the example register of the design Data Models section parses.
     - _Requirements: 21.2, 21.3, 21.7, 15.5_
 
-  - [~] 13.3 Wire the Verify_Stage, the HTML and the residual floor test
+  - [ ] 13.3 Wire the Verify_Stage, the HTML and the residual floor test
     - `verifyStage` clusters the mask after `compareImages` for each frame, reads `samples/<name>/residual-causes.json` from `dirname(referenceDir)` when present, adds `visual.frames[n].regions` (additive), `visual.residual: { regions, attributed, unattributed }`, `residualLimits` in `knownVisualLimits`, and an `unattributed-region` Problem for each unattributed region only when a register exists (at most 50, then one summary problem); an invalid register gives a `residual-register-invalid` Problem and never throws. `html.ts` prints the regions table per frame and the three counts. Create `test/e2e/residual.e2e.test.ts` with an `it.each` over the admitted samples whose Overall_Match is below 100 (an empty list until Task 15) asserting `visual.residual.unattributed === 0`.
     - Test: extend `test/unit/residual.test.ts` (an `unattributed-region` Problem appears only when a register exists; counts), `test/unit/verifyStage.test.ts`, `test/unit/htmlKnownGaps.test.ts` and `test/property/fidelityDeterminism.property.test.ts` generators.
     - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.7_
 
-- [~] 14. Checkpoint: rendering done
+- [ ] 14. Checkpoint: rendering done
   - STOP. Commit nothing. No Breadth_Sample is committed yet, so use local copies of the eight approved SWFs under `.work/` (deleted afterwards; `static_text` through `npm run fetch:static-text` is not yet available, so run its local copy under `.work/` and say so).
   - Run `npm run pipeline -- <swf> <out> --force --verify` on each (references next to the SWF under `reference/`) and give, for every approved SWF that can be run, the Overall_Match and the Trace_Score before (from the Task 3.6 commit and Appendix A.3) and after the render work, the Named_Limits that remain (kinds and counts, including the `gradient-fill` and `bitmap-fill` limits that must now be gone for the drawn cases), and the clustered regions of each sample below 100 with the cause known so far; the attribution of every region to a Residual_Cause and the floors are done by Tasks 15 to 17 before a floor is set. Include `clickgoto` and `tweendemo` at 100.
   - Confirm the design records that have no code task (Requirements 7.1 to 7.6, 7.12 and 17.1 to 17.4): `design.md` holds the table of the three Render_Paths on the four Probe_Shapes (matchPercent, behaviour under scale and rotation, hit testing, effort) and the choice of the Shape_JSON_Path (D1) with the stated differences; each of the four checks of Requirement 17 is marked `re-run` (command, value, date) or `not re-run` (reason), and Appendix A.3 and A.7 are unedited; Chromium's native SVG render appears only as a diagnostic aid; `git status` shows no throwaway render or script of the discovery in the Repository (Requirement 7.5). Do not edit `design.md`; report any gap.
@@ -643,142 +643,142 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 15. Samples: admit the gradient samples `radial`, `gradients` and `acid-color-2`
   - Commit area: `Samples`. Verification V1. This admission sits after Task 14 ("Checkpoint: rendering done") and after Tasks 4, 5 and 8, so no sample is admitted before packages, implicit `this`, the class fallback and the render work exist. `radial` and `gradients` are `MIT OR Apache-2.0` with MIT chosen and visual only (no SymbolClass tag; no `input.json`); `acid-color-2` is `Apache-2.0` only, with no SymbolClass tag, no trace and no `input.json`, and `test.toml` sets `num_frames = 1`. Before numbers: the stage and error recorded in Task 3 and the Overall_Match from Appendix A.3 or the design harness (Requirement 14.1). The residual steps cover the 1,302 differing pixels measured on `gradients` (Requirement 21.5). Decided O9 (the Approved_Reporting_Change of Requirements 3.7 and 14.24): these three samples have an Empty_Reference_Trace (0-byte `output.txt`), so their behaviour is `not-compared` with the reason `empty-reference-trace` and they get no Trace_Score and no Trace_Score floor (no `TRACE_SCORE_FLOOR_*` constant and no vacuous 100); their `reference/` files are still copied, their Overall_Match floors still apply, and a reporting test asserts the status and the reason (it is not a floor).
-  - [~] 15.1 `radial` and `gradients`: files, PROVENANCE.md and fixtures
+  - [ ] 15.1 `radial` and `gradients`: files, PROVENANCE.md and fixtures
     - Copy the two `test.swf` files unmodified into `samples/radial/` and `samples/gradients/` (SHA-256 prefixes `b7199186` and `74a3c649`; verify the full values at copy time). Add `PROVENANCE.md` for each in the format of `samples/clickgoto/PROVENANCE.md`: author, source URL pinned to commit `4a8d39661ed8aec97afee1504a4e33080da2efd0`, `MIT OR Apache-2.0` with MIT chosen, the pointer to `samples/LICENSES/MIT-Ruffle.txt`, the embedded fonts from the swf2xml dump (or `no embedded fonts`), modifications none, SHA-256, reason. Copy `output.txt`, `input.json` and `test.toml` unchanged into `samples/<name>/reference/` for each file that exists; do not edit them. Create `test/fixtures/radial/` and `test/fixtures/gradients/` with the FFDec structure dump and the symbol list in the form of `test/fixtures/clickgoto/`.
     - Test: `test/unit/provenance.test.ts` picks the new directories up (it walks `samples/`); add fixture-presence rows if it does not already check them.
     - _Requirements: 3.4, 3.5, 3.7, 3.8, 3.14, 3.15, 3.16, 3.20, 4.5_
 
-  - [~] 15.2 `radial` and `gradients`: measure and attribute the residual
+  - [ ] 15.2 `radial` and `gradients`: measure and attribute the residual
     - Run `npm run pipeline -- samples/<name>/test.swf out/<name> --verify --force` for each. Report the Overall_Match, the behaviour (`not-compared: empty-reference-trace`, no Trace_Score) and the Known_Visual_Limits (the `gradients` file carries a `reflect` spread; a radial focal point records `gradient-focal`; no `gradient-fill` limit remains for a drawn gradient). Residual step (Requirement 21): for every sample whose Overall_Match is below 100, open the Diff_Image of every compared frame, cluster the differing pixels (the Task 13 tool), and attribute every region to a Residual_Cause, fixed (measure again) or recorded in `samples/<name>/residual-causes.json` with a `kind` and a `message` that states what differs; the summary holds, per frame, a table (bounding box, pixel count, cause, outcome) whose pixel counts add up to the differing pixels of the frame. For `gradients` this covers its 1,302 differing pixels. A cause that cannot be determined: STOP and ask, set no floor.
     - Test: `test/e2e/residual.e2e.test.ts` gets the sample name for each sample with an Overall_Match below 100 (`unattributed === 0`).
     - Both samples are single-frame SWFs (`num_frames = 1`): the Frame_Sample is `[1]` and the run must complete with it (Requirement 14.18). Test: `test/unit/frameSample.test.ts` (create): `selectFrames(1)` returns `[1]` and a one-frame SWF through the Verify_Stage with a stub yields one compared frame.
     - _Requirements: 8.5, 14.2, 14.18, 21.1, 21.2, 21.3, 21.4, 21.5, 21.6_
 
-  - [~] 15.3 `radial` and `gradients`: floors
+  - [ ] 15.3 `radial` and `gradients`: floors
     - Only after 15.2 is complete, add `OVERALL_MATCH_FLOOR_RADIAL` and `OVERALL_MATCH_FLOOR_GRADIENTS` to `test/e2e/overallMatch.e2e.test.ts`, each equal to the measured Overall_Match (the measured value, not the expectation of about 100 and about 99.4). Add no Trace_Score floor for these two samples (Empty_Reference_Trace, Requirement 3.7). Create `test/e2e/emptyReferenceTrace.e2e.test.ts` (same skip rules as `overallMatch.e2e.test.ts`; its header says that it pins the report and is not a floor): for `radial` and `gradients`, `behaviour.status === 'not-compared'`, `behaviour.reason === 'empty-reference-trace'` and no Trace_Score field. Delete the Diff_Images; commit none.
     - Test: the Overall_Match floor test and `test/e2e/emptyReferenceTrace.e2e.test.ts` (both skipped with a reason when the SWF, Java or Chromium is missing).
     - _Requirements: 3.6, 3.7, 8.5, 14.24, 21.7_
 
-  - [~] 15.4 `acid-color-2`: files, PROVENANCE.md and fixtures
+  - [ ] 15.4 `acid-color-2`: files, PROVENANCE.md and fixtures
     - Copy `test.swf` unmodified into `samples/acid-color-2/` (SHA-256 `17ef8545fddb565af25d6178e52a7fffaa5c74b4711761952f7c8df5efad8ef9`). `PROVENANCE.md` states `Apache-2.0`, points to `samples/LICENSES/Apache-2.0.txt`, gives the Shumway attribution from `tests/tests/swfs/from_shumway/README.md` and that `mozilla/shumway` ships no NOTICE file (Appendix A.1), the embedded fonts (or `no embedded fonts`), the SHA-256 and the reason. Copy the reference files that exist unchanged. Create `test/fixtures/acid-color-2/`. IF a NOTICE file is found, STOP and ask.
     - Test: `test/unit/provenance.test.ts` (Apache pointer, attribution text, no-NOTICE statement) and fixture-presence rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.13, 3.20_
 
-  - [~] 15.5 `acid-color-2`: measure and attribute the residual
+  - [ ] 15.5 `acid-color-2`: measure and attribute the residual
     - Run the Pipeline with `--verify`. Report the Overall_Match (expected 100), the Known_Visual_Limits and that no `colour-offset` limit is recorded for the drawn placements. If the Overall_Match is below 100, apply the residual step of 15.2 (every region of every compared frame to a cause, fixed or recorded in `samples/acid-color-2/residual-causes.json`).
     - Test: the `residual.e2e.test.ts` entry when the Overall_Match is below 100; otherwise the Exact_Render assertion of 15.6.
     - _Requirements: 13.6, 14.2, 21.1, 21.3_
 
-  - [~] 15.6 `acid-color-2`: Exact_Render floor
+  - [ ] 15.6 `acid-color-2`: Exact_Render floor
     - Add `OVERALL_MATCH_FLOOR_ACID_COLOR_2` to `test/e2e/overallMatch.e2e.test.ts` set to the measured Overall_Match, plus an assertion that frame 1 has zero differing pixels under the unchanged Verify_Tolerance (Requirement 13.6). IF it does not, STOP and ask; keep the `colour-offset` limit and record why (Requirement 13.7). Add no Trace_Score floor (Empty_Reference_Trace, Requirement 3.7); add `acid-color-2` to `test/e2e/emptyReferenceTrace.e2e.test.ts` (`not-compared`, `empty-reference-trace`).
     - Test: `test/e2e/overallMatch.e2e.test.ts` (floor and Exact_Render assertion) and `test/e2e/emptyReferenceTrace.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 13.5, 13.6, 13.10, 14.24, 21.7_
 
 - [ ] 16. Samples: admit `mask_reapply` and `click_block`
   - Commit area: `Samples`. Verification V1. Both are `MIT OR Apache-2.0` with MIT chosen. This admission comes after Task 14 and Task 15. Decided O4 (changed) and F19 apply to `mask_reapply`: its root class `Main` assigns `maskee1.mask = mask1` (TS2339, the Shim has no `mask`, Requirement 12.7) and, before Task 21, read `maskee1` before the Player bound it (Amended after Checkpoint 9: Task 21 binds the children before the constructor runs). The TS2339 is a type error, so `Main` is a Loose_Class, stays registered under the key `Main` and has no `class-omitted` entry; the `Main`/`main` collision is repaired by Emit (Requirement 6) and is not a Class_Failure (Requirements 6.6, 23.2). Amended after Checkpoint 9: Tasks 21 and 22 make the constructor run past `maskee1` and catch any remaining throw as a Caught_Error (a `runtime-error` Problem, the Replay keeps ticking), so the expectation that the Trace_Score is 0 no longer holds; the value is what Task 27 reports (design 19.6 and 21.3). The Overall_Match is not affected.
-  - [~] 16.1 `mask_reapply`: files, PROVENANCE.md and fixtures
+  - [ ] 16.1 `mask_reapply`: files, PROVENANCE.md and fixtures
     - Copy `test.swf` unmodified into `samples/mask_reapply/` (SHA-256 `8146cb4de7e39bdb2d4ee418e90d65509d4b3afa246b899ac3260abfa6ac41c7`), the reference files unchanged (no `input.json`; `test.toml` sets `num_ticks = 1`), `PROVENANCE.md` (MIT, pointer, fonts, SHA-256, reason) and `test/fixtures/mask_reapply/` with the structure dump, the symbol list and the original `Main.as` as the fixture class source (as `test/fixtures/clickgoto/` holds its classes).
     - Test: `test/unit/provenance.test.ts` and fixture rows; a row in `test/unit/emit.test.ts` that the real fixture emits `src/Main.class.ts`.
     - _Requirements: 3.4, 3.5, 3.7, 3.14, 3.15, 3.20, 6.3_
 
-  - [~] 16.2 `mask_reapply`: gate, measurement and residual
+  - [ ] 16.2 `mask_reapply`: gate, measurement and residual
     - Run the Pipeline with `--verify`. The type-check gate must report `typeCheck: ran` and zero `otherErrors` (Requirement 6.6; the errors from `maskee1.mask = mask1` at `Main.as:20, 21` must be attributed to the class as the gate does today, otherwise report it). State the Overall_Match before (20.00 with the mask off) and after (about 99.99 expected), the Trace_Score with `missing` and `extra` (empty input replay, `num_ticks = 1`, Task 7.9), that `Main` is registered under the key `Main` and reported as a Loose_Class (`classes[].loose`), not omitted, and apply the residual step of 15.2 to the 2 differing pixels or whatever is measured.
     - Test: extend `test/unit/emitMainCollision.test.ts` with the real `Main.as` fixture (type-check gate `ran`, zero `otherErrors`, `Main` in `src/classes.ts`, no `class-omitted` entry); `residual.e2e.test.ts` entry when below 100.
     - _Requirements: 6.6, 12.6, 14.2, 14.23, 21.1, 21.3_
 
-  - [~] 16.3 `mask_reapply`: floors
+  - [ ] 16.3 `mask_reapply`: floors
     - Only after 16.2 is complete, add the Overall_Match floor to `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score floor to `test/e2e/traceScore.e2e.test.ts` (the measured values; create the latter in this sub-task, with the same skip rules as `overallMatch.e2e.test.ts`, if it does not exist yet). IF the measured Trace_Score is 0 (for example because the constructor of the registered `Main` throws and the Replay records a `replay-error`), STOP and ask before setting a floor of 0 (Requirement 18.13).
     - Test: the two floor tests.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
-  - [~] 16.4 `click_block`: files, PROVENANCE.md and fixtures
+  - [ ] 16.4 `click_block`: files, PROVENANCE.md and fixtures
     - Links `test_fla.MainTimeline`, uses `mouseX`, `mouseY` and `stage`, and has `MouseMove`/`MouseDown`/`MouseUp` entries; `test.toml` sets `num_frames = 100`. Copy `test.swf` unmodified into `samples/click_block/` (SHA-256 prefix `4023640b`; verify the full value), the reference files unchanged, `PROVENANCE.md` (MIT, pointer, a fonts section stating that the font reference with zero glyphs counts as no embedded outlines, SHA-256, reason) and `test/fixtures/click_block/` with the structure dump, symbol list and the class source `test_fla/MainTimeline.as`.
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.14, 3.15, 3.20, 3.23_
 
-  - [~] 16.5 `click_block`: measure and attribute the residual
+  - [ ] 16.5 `click_block`: measure and attribute the residual
     - Run `--verify`. The Trace_Score is whatever Tasks 5 to 8 give, measured at Task 9; do not add a Shim API beyond the fixture lines (Requirement 14.17). Report the Known_Visual_Limits (the morph shape, the edit text), that no `bitmap-fill` limit is recorded for its two Bitmap_Fills (Requirement 9.5), the Overall_Match (about 94.5 expected), the Trace_Score with `missing` and `extra` counts and any `release-outside`, `unsupported-input` and `unpaired-mouse-event` notes next to them (Requirement 14.21). Apply the residual step of 15.2 to every differing region (the dropped morph shape and edit text regions are attributed to their Named_Limit kinds in `samples/click_block/residual-causes.json`).
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 9.5, 14.2, 14.21, 21.1, 21.3, 21.4_
 
-  - [~] 16.6 `click_block`: floors
+  - [ ] 16.6 `click_block`: floors
     - Only after 16.5 is complete, add the Overall_Match and Trace_Score floors (the measured values) to `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`. No zero Trace_Score floor is accepted as a stand-in (Requirement 18.13): if the measured value is 0, STOP and ask.
     - Test: the two floor tests.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
 - [ ] 17. Samples: admit `3_joystick`, `slider_component` and the fetched `static_text`
   - Commit area: `Samples`. Verification V1. This admission sits last, after Tasks 15 and 16. `3_joystick` and `slider_component` are `Apache-2.0` only; `static_text` is never committed (decided F9, F10): its 17 glyph outlines of "Times New Roman" under a Monotype copyright have no established licence, so the Repository gets only `samples/static_text/PROVENANCE.md`, `reference/output.txt` and `reference/test.toml`, no `test.swf`, no `input.json` and no `test/fixtures/static_text/` (Requirement 20). The Fetch_Script and its measurement are sub-tasks 17.7 to 17.13. What the Replay does with `3_joystick` depends on the implicit-`this` outcome of Task 8; report the outcome as measured. Decided items touched, reported as measured counts and not as questions: O3 (the binding count on `3_joystick` and `slider_component`), O4 (the `fl.*` classes that cannot load and are omitted, versus the Loose_Classes with only type errors, which stay registered) and O1 (names resolved to `Declaring.x`).
-  - [~] 17.1 `3_joystick`: files, PROVENANCE.md and fixtures
+  - [ ] 17.1 `3_joystick`: files, PROVENANCE.md and fixtures
     - `test.toml` sets `num_ticks = 21`; `input.json` holds `MouseMove` entries without a `btn` field. Copy `test.swf` unmodified into `samples/3_joystick/` (SHA-256 prefix `9f21a582`; verify the full value), the reference files unchanged, `PROVENANCE.md` (`Apache-2.0`, pointer to `samples/LICENSES/Apache-2.0.txt`, Shumway attribution, the no-NOTICE statement, `no embedded fonts`, SHA-256, reason) and `test/fixtures/3_joystick/` with the structure dump, symbol list and the class source `code/Interactivity3.as`.
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.20_
 
-  - [~] 17.2 `3_joystick`: measure and attribute the 1,241 pixels
+  - [ ] 17.2 `3_joystick`: measure and attribute the 1,241 pixels
     - Run `--verify`. Report the Overall_Match (15.82 before this spec, about 98.9 expected), the Trace_Score and `missing`/`extra` counts (0.00 before) or the `not-compared` reason with the `replay-error` message, the tick count read from `num_ticks = 21`, the Known_Visual_Limits (`gradient-focal` if recorded) and that the mask is a Trivial_Mask kept (Requirement 12.6). Apply the residual step of 15.2 to every region, including the 1,241 pixels the first pass described as a thin band along the top of the right panel and arcs around the ball without a cause; the cause of each region is examined, not assumed.
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 12.6, 14.2, 14.12, 21.1, 21.3, 21.4, 21.5_
 
-  - [~] 17.3 `3_joystick`: floors
+  - [ ] 17.3 `3_joystick`: floors
     - Only after 17.2 is complete, add the Overall_Match floor and, when the behaviour is `compared`, the Trace_Score floor (the measured values). A Replay that throws is `compared` (Task 7.8), so a low value is explained line by line (Requirement 22.11, 18.13). If the measured Trace_Score is 0, set no Trace_Score floor, state the cause line by line and STOP and ask.
     - Test: the floor tests in `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
-  - [~] 17.4 `slider_component`: files, PROVENANCE.md and fixtures
+  - [ ] 17.4 `slider_component`: files, PROVENANCE.md and fixtures
     - `test.toml` sets `num_ticks = 10`; `input.json` holds `MouseMove` entries and a press at (250, 22) released at (150, 22). Copy `test.swf` unmodified into `samples/slider_component/` (SHA-256 prefix `bf6dbcb7`; verify the full value and compare with the SC copy), the reference files unchanged, `PROVENANCE.md` (Apache-2.0 fields as in 17.1) and `test/fixtures/slider_component/` with the structure dump, symbol list and the 27 class sources. The SC copy under `.work/local/slider_component/` may be deleted once this task has committed (Requirement 3.17).
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.20, 23.6_
 
-  - [~] 17.5 `slider_component`: measure and attribute the residual
+  - [ ] 17.5 `slider_component`: measure and attribute the residual
     - Run `--verify`. Report the Overall_Match (99.93 before this spec), the Trace_Score and counts (0.00 before), the tick count 10 from `num_ticks` (13 before), the classes that translated, those left out of the registry because they cannot load, the Loose_Classes and those reported (Requirements 18.14, 23.7), and the Known_Visual_Limits. Its `fl.*` library lines use `stage.focus`, `stage.invalidate()` and `stage.getChildAt(0)` (design section 15): add a Shim member only if Requirement 14.17 allows it for a fixture line, with its row in `ADDED_APIS.md`; otherwise leave it and report the lines. Apply the residual step of 15.2 to every region (the 165 differing pixels of the baseline are six regions whose cause was not examined: two 1 px lines at x 175 and 178, y 110 to 188 on the reflected `bSlider` instance, two 3 px marks at x 18 and x 321, two single pixels).
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 14.2, 14.12, 18.14, 21.1, 21.3, 21.4_
 
-  - [~] 17.6 `slider_component`: floors
+  - [ ] 17.6 `slider_component`: floors
     - Only after 17.5 is complete, add the Overall_Match floor of 99.93 or the higher measured value (Requirement 23.5) and the Trace_Score floor (the measured value; the floor reachable without Shim additions beyond Requirement 14.17). If the measured Overall_Match is below 99.93, STOP and ask before setting any floor (Requirement 1.5); never lower a floor.
     - Test: the floor tests in `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 18.14, 23.5, 21.7_
 
-  - [~] 17.7 Add `src/samples/fetchedSample.ts`
+  - [ ] 17.7 Add `src/samples/fetchedSample.ts`
     - Read design section 16. Core module with `STATIC_TEXT_SOURCE`, `candidateUrl`, `sha256Hex`, `verifySha256`, `decideFloorTest` and `classifySampleDir` as in design section 16. Add the file to the purity test (SHA-256 through `globalThis.crypto.subtle`, no `node:*`).
     - Test: `test/property/fetchedSample.property.test.ts` (create), **Property 28: The fetch SHA-256 check** and **Property 29: The fetch URL and the floor decision**; `test/unit/fetchedSample.test.ts` (create): the known SHA-256 of the empty array, `decideFloorTest` messages (skip names `npm run fetch:static-text`, fail names both values), `classifySampleDir` cases.
     - _Requirements: 20.2, 20.3, 20.7, 15.1, 15.2, 15.5_
 
-  - [~] 17.8 Add `scripts/fetch-static-text.ts` and the npm script
+  - [ ] 17.8 Add `scripts/fetch-static-text.ts` and the npm script
     - Edge script with `FetchDeps`, `fetchStaticText(deps, source)` and `main(argv)`: already present with a matching hash returns without network; otherwise download from `candidateUrl(...)`, verify; on a mismatch print both values, write nothing and remove `<target>.part`; on a match write `<target>.part` and rename to `.work/samples/static_text/test.swf`. Exit codes 0 (fetched or already present), 1 (mismatch), 2 (download failed). Add `"fetch:static-text": "tsx scripts/fetch-static-text.ts"` to `package.json`; `scripts/**/*.ts` is already in the `include` of `tsconfig.json` from sub-task 8.2. The script imports nothing from `src/` except `src/samples/fetchedSample.ts`. The script is run by no test, no Pipeline stage and no other npm script (Requirement 20.1).
     - Test: `test/unit/fetchStaticText.test.ts` (create): stub `FetchDeps` for the four outcomes, and on `sha-mismatch` neither `writeFile` nor `rename` was called; no network in any test. `test/unit/packageJson.test.ts` (extend): the script entry exists and a static check shows that only that entry names `scripts/fetch-static-text.ts` (no file under `src/` or `test/` runs it).
     - _Requirements: 20.1, 20.2, 20.7, 15.9_
 
-  - [~] 17.9 The `--reference-dir` option
+  - [ ] 17.9 The `--reference-dir` option
     - Add `--reference-dir <dir>` to the CLI (`PipelineArgs.referenceDir: string | null`; default `<swf dir>/reference`, which is how `pipeline.ts` reads it today), so that a SWF under `.work/samples/static_text/` can use the committed `samples/static_text/reference/`.
     - Test: extend `test/unit/cli.test.ts` (flag parsed, default unchanged) and `test/unit/pipeline.test.ts` (the Verify_Stage reads the given directory).
     - _Requirements: 20.5_
 
-  - [~] 17.10 Skip helper and sample-directory classification in the tests
+  - [ ] 17.10 Skip helper and sample-directory classification in the tests
     - Add `test/support/fetchedSample.ts`: reads `.work/samples/static_text/test.swf` synchronously at collection time, computes the hash, returns `decideFloorTest(...)` for use as `describe.skipIf(decision.action === 'skip')` with the message in the suite title; a `fail` decision throws the message in the first test. Update `test/unit/provenance.test.ts` to enumerate `samples/` through `classifySampleDir` (a directory with `PROVENANCE.md` and no `test.swf` is a Fetched_Sample and is not failed), to assert that `samples/static_text/test.swf` does not exist, and to check the extra rows (`Not in the Repository`, `Fetch command`, `Target path`, `Embedded fonts`) of a fetched note on a synthetic temp directory (the real note comes with 17.11).
     - Test: `test/unit/provenance.test.ts` and `test/unit/fetchedSample.test.ts`.
     - _Requirements: 20.3, 20.4, 20.9_
 
-  - [~] 17.11 `static_text`: fetch the file, write the note and the reference files
+  - [ ] 17.11 `static_text`: fetch the file, write the note and the reference files
     - Run `npm run fetch:static-text` (an explicit network call permitted by Requirement 15.9). It must write `.work/samples/static_text/test.swf` only when the SHA-256 equals `b16194d9913a94b90a733841e8f19cd72fae38e223bc92e5e1040c368f33997e`. Generate the FFDec structure dump and the symbol list under `.work/samples/static_text/` (uncommitted; they may hold glyph shapes). Copy `output.txt` and `test.toml` unchanged from the Candidate_Source into `samples/static_text/reference/`. Write `samples/static_text/PROVENANCE.md` with the Requirement 20.4 fields in the `| Field | Value |` format: author, source URL pinned to the commit, `MIT OR Apache-2.0` with MIT chosen and a pointer to `samples/LICENSES/MIT-Ruffle.txt`, the statement that the licence of the embedded font is not part of it, the SHA-256, the rows `Not in the Repository`, `Fetch command` (`npm run fetch:static-text`), `Target path` (`.work/samples/static_text/test.swf`), and `Embedded fonts` (the `DefineFont3Tag` font id 1 `Times New Roman`, 17 glyphs, the `DefineFontNameTag` copyright text). Read the SymbolClass string from the generated list (design assumed `test_fla.MainTimeline`, not read).
     - Test: `test/unit/provenance.test.ts` validates the real note (fetched directory, extra rows present, no `samples/static_text/test.swf`, no `test/fixtures/static_text`).
     - _Requirements: 3.4, 3.16, 3.20, 20.2, 20.4, 20.5, 20.6_
 
-  - [~] 17.12 `static_text`: measure and attribute the residual
+  - [ ] 17.12 `static_text`: measure and attribute the residual
     - Run `npm run pipeline -- .work/samples/static_text/test.swf out/static_text --verify --force --reference-dir samples/static_text/reference`. The Replay uses empty input and `num_frames = 1` (Requirement 14.23; a Replay that throws is `compared`, Requirement 14.22). Report the Overall_Match (about 100 on frame 1 expected, and that `text-metrics` is omitted when every compared frame is exact), the Trace_Score with `missing` and `extra`, and whether the three reference lines `Caught error: ArgumentError: Error #2012: StaticText$ class cannot be instantiated.`, `e.errorID: 2012` and `Child: [object StaticText]` appear as `missing` (Requirement 20.8). Do not remove a line or an event type from the comparison (Requirement 14.19) and do not add a Shim API for it (Requirement 14.17). Apply the residual step of 15.2 if the Overall_Match is below 100. State the Overall_Match and Trace_Score measured on the fetched file in the commit message (Requirement 10.7).
     - Test: `test/e2e/residual.e2e.test.ts` entry when below 100 (the entry skips with the others' rule when the file is absent).
     - _Requirements: 10.5, 10.6, 10.7, 14.19, 20.8, 21.1, 21.3_
 
-  - [~] 17.13 `static_text`: skipping floor tests
+  - [ ] 17.13 `static_text`: skipping floor tests
     - Create `test/e2e/staticText.e2e.test.ts`: it uses the helper of 17.10 (`describe.skipIf` with the skip message naming `npm run fetch:static-text`; a present file with another hash fails naming both values) and asserts the Overall_Match floor and the Trace_Score floor equal to the values measured in 17.12. A test asserts that `samples/static_text/test.swf` does not exist.
     - Test: `test/e2e/staticText.e2e.test.ts`; with the file absent the suite is reported as skipped, not failed.
     - _Requirements: 3.6, 10.6, 20.3, 20.8, 20.9_
 
-  - [~] 17.14 Final measurement of every floor
+  - [ ] 17.14 Final measurement of every floor
     - Run `npm run pipeline -- samples/<name>/test.swf out/<name> --verify --force` for every admitted sample, for `clickgoto` and `tweendemo`, and for `static_text` when the fetched file is present. Raise any Overall_Match or Trace_Score floor in `test/e2e/overallMatch.e2e.test.ts`, `test/e2e/traceScore.e2e.test.ts`, `test/e2e/staticText.e2e.test.ts` and `test/unit/clickgotoReplay.test.ts` whose measured value rose (Ratchet_Rule); never lower one. If a value is below its floor, fix the cause or STOP; do not touch a floor or the tolerance. Add a determinism test: two Pipeline runs on `radial` and on `mask_reapply` give byte-identical `*.shape.json`, `images/*`, `scene.json`, `fidelity-report.json` and `fidelity-report.html`.
     - Test: the floor tests above and `test/e2e/determinism.e2e.test.ts` (create; same skip rules as the other e2e tests).
     - _Requirements: 1.3, 1.4, 1.5, 3.6, 3.7, 15.5_
 
-- [~] 18. Checkpoint: browser review of fidelity-report.html
+- [ ] 18. Checkpoint: browser review of fidelity-report.html
   - STOP. Commit nothing.
   - Run `npm run pipeline -- samples/<name>/test.swf out/<name> --verify --force` on every Approved_Sample_List SWF (and report any that was not admitted and why). `avm2/static_text` is run on `.work/samples/static_text/test.swf` with `--reference-dir samples/static_text/reference` after `npm run fetch:static-text`, or is reported as `skipped: file absent` with the reason. Give the paths of each `fidelity-report.html` and `fidelity-report.json`, the Overall_Match, the Trace_Score or `not-compared`, the `missing` and `extra` counts, the `release-outside`, `unsupported-input` and `unpaired-mouse-event` notes, the Known_Visual_Limits and the Residual_Cause list of each. Include `clickgoto` and `tweendemo` for comparison and the figures before and after this spec for every sample.
   - Report the measured effect of every decided item O1 to O9 and of F19 to F21 (counts, and which sample or task it affected), as information. Name the three empty-trace samples as `not-compared: empty-reference-trace` and the `Main` of `mask_reapply` as a registered Loose_Class with its measured Trace_Score.
@@ -787,17 +787,17 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 19. Steering: status, ADDED_APIS.md and final summary
   - Commit area: `Steering` (the `ADDED_APIS.md` check is part of the same commit). Verification V1. The steering status lines are the only edit to `.kiro/steering/` in this plan; the git-workflow test list is not edited (Requirement 15.14: the plan's V2 rule carries the drift test, so the steering file's test list is not edited).
-  - [~] 19.1 Update the steering status and the added-API log
+  - [ ] 19.1 Update the steering status and the added-API log
     - Update the status lines of `.kiro/steering/tech.md` and `.kiro/steering/structure.md` (render path is Shape_JSON; Scene_JSON v2; package-qualified classes; Stage_Object; implicit `this` and the generated Shim_Member_Table with `npm run gen:shim-members`; class fallback; fetched sample and `npm run fetch:static-text`; residual register; new modules; samples count) and verify the commands against `package.json`. Confirm that every API the Shim gained in this spec has a row in `template/shim/ADDED_APIS.md` with the fixture line that needs it, and that no row exists for an API that was not added. Do not edit `requirements.md` or `design.md`.
     - Test: `test/unit/addedApis.test.ts` (create) checks that every `MouseEvent.MOUSE_*`, `mouseX`, `mouseY`, `Stage`, `DisplayObject.stage` and `ClipHooks.entryUpdated` named in the Shim source has a row in `ADDED_APIS.md` with a fixture line reference or the stated support reason.
     - _Requirements: 14.10, 14.17, 19.5, 15.10_
 
-  - [~] 19.2 Repository hygiene test
+  - [ ] 19.2 Repository hygiene test
     - Create `test/unit/repoHygiene.test.ts` (reads `git ls-files` through a child process; skipped with a reason when `.git` is absent; it prints a path and never a matched text): no tracked path under `tools/`, `out/`, `.work/` or `dist/` and no tracked PNG named like a Reference_Frame, Rendered_Frame or Diff_Image outside `test/fixtures/` (Requirement 15.11); every version in `package.json` is exact (no `^`, `~`, `*`, `>`) and every dependency name is in a list held in the test, built once from `package.json` as it was before Task 1 (`git show` of the parent of the first commit of this spec) so that a New_Dependency fails the test (Requirement 15.8); no tracked file contains a token-like string (`ghp_` or `github_pat_` followed by 20 or more word characters, `AKIA` followed by 16 capitals or digits, a `-----BEGIN` line for a private key), with the patterns built by string concatenation so that the test does not match itself (Requirement 15.13); every Core file named in the purity test of 5.1 is named by at least one test file under `test/` (Requirements 15.4, 15.6).
     - Test: the file above is the test; it must pass with the repository as committed.
     - _Requirements: 15.4, 15.6, 15.8, 15.11, 15.13_
 
-  - [~] 19.3 Final summary
+  - [ ] 19.3 Final summary
     - Write the final summary in the commit message and in the reply: for each sample, the Overall_Match and Trace_Score before and after this spec (the three empty-trace samples as `not-compared: empty-reference-trace`); the Known_Visual_Limits and Residual_Causes left; the new stage results of every Appendix A candidate; the measured effect of the decided items O1 to O9 and F19 to F21 (the user owes no decision); what was not verified (alpha add term beyond the three variants, caps on strokes of the real samples beyond the floors, focal radial gradients, `nonzero` fills, hit testing through masks, texture cost, `acid-gradient` if not downloaded, `static_text` if the file was absent, the run-time behaviour of a registered Loose_Class that throws). State that no test is optional and that all required tests passed.
     - Evidence is the full `npm run typecheck` and `npm test -- --run` run recorded in the message; no new code (guarded by the suites above).
     - _Requirements: 1.6, 14.1, 14.2, 15.3, 15.7_

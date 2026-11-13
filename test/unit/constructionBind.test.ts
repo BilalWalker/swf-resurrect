@@ -5,6 +5,9 @@ import { Player } from '../../template/runtime/player';
 import type { DisplayListEntry, SceneJson, SpriteSymbol } from '../../template/runtime/scene';
 import { MovieClip } from '../../template/shim/MovieClip';
 import { FakeBackend } from '../support/fakeBackend';
+import { evalTranslated } from '../support/evalTranslated';
+import { childNamesByClass, planTranslate } from '../../src/translate/planTranslate';
+import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 
 const CT: DisplayListEntry['colorTransform'] = [1, 1, 1, 1, 0, 0, 0, 0];
 const entry = (depth: number, symbolId: number, name: string): DisplayListEntry => ({
@@ -166,5 +169,39 @@ describe('Construction_Bind: the declare pin', () => {
   it('the translator keeps declare for an uninitialised class-typed field (clickgoto golden)', () => {
     const golden = readFileSync('test/fixtures/clickgoto/translated/MainTimeline.ts.txt', 'utf8');
     expect(golden).toMatch(/public declare l_button: LeftButton;/);
+  });
+});
+
+describe('Construction_Bind: fixture classes through translate() (Requirement 24.7)', () => {
+  const fixture = (name: string): string => readFileSync(`test/fixtures/construction/${name}.as`, 'utf8');
+  const shimModule = (): Promise<Record<string, unknown>> => import('../../template/shim/index');
+
+  function scene(rootClass: string, names: string[]): SceneJson['symbols'] {
+    const kids = names.map((n, i) => entry(i + 1, 1, n));
+    return { '0': clip([kids], rootClass), '1': clip([[]]) };
+  }
+
+  it('Main: maskee1.mask = mask1 runs at tick 0', async () => {
+    const symbols = scene('Main', ['mask1', 'maskee1']);
+    const sc: SceneJson = { formatVersion: 1, stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 }, rootSymbolId: 0, symbols };
+    const plan = planTranslate([{ className: 'Main', source: fixture('Main') }], sc, tsSyntaxCheck, [], childNamesByClass(sc));
+    const text = plan.classes.find((c) => c.className === 'Main')!.text;
+    const Main = evalTranslated(text, { '../shim': await shimModule() }).Main as new () => MovieClip;
+    const p = play(symbols, { Main });
+    const root = p.root as any;
+    expect(root.maskee1.mask).toBe(root.mask1);
+    expect(root.seen).toBe(root.maskee1);
+  });
+
+  it('code.Interactivity3: initx = joystick.x runs at tick 0 and the listeners fire', async () => {
+    const symbols = scene('code.Interactivity3', ['joystick']);
+    const sc: SceneJson = { formatVersion: 1, stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 }, rootSymbolId: 0, symbols };
+    const plan = planTranslate([{ className: 'code.Interactivity3', source: fixture('Interactivity3') }], sc, tsSyntaxCheck, [], childNamesByClass(sc));
+    const text = plan.classes.find((c) => c.className === 'code.Interactivity3')!.text;
+    const Cls = evalTranslated(text, { '../../shim': await shimModule() }).Interactivity3 as new () => MovieClip;
+    const p = play(symbols, { 'code.Interactivity3': Cls });
+    const root = p.root as any;
+    expect(root.initx).toBe(7);
+    expect(root.joystick).toBeInstanceOf(MovieClip);
   });
 });
