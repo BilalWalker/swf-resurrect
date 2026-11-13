@@ -6,6 +6,7 @@ import { AS3_GLOBALS, isReference, resolveIdentifier } from "../../src/translate
 import type { ResolveEnv } from "../../src/translate/implicitThis";
 import { buildMemberTables } from "../../src/translate/memberTables";
 import { SHIM_MEMBER_TABLE } from "../../src/translate/shimMembers.generated";
+import { canonicalClassPath } from "../../src/convert/qualifiedName";
 import { planTranslate } from "../../src/translate/planTranslate";
 import { tokenize } from "../../src/translate/tokenizer";
 import { tsSyntaxCheck } from "../../src/translate/tsSyntaxCheck";
@@ -189,5 +190,77 @@ describe("method-value binding", () => {
     for (const c of plan.classes) files.set(`src/${c.className}.ts`, c.text);
     const { errors } = typeCheckProject({ files, repoRoot });
     expect(errors.filter((e) => e.code === 2556)).toEqual([]);
+  });
+});
+
+// ---- fixture lines that motivated Requirement 22 (8.7, Requirement 22.10) --------------------
+// Sources below reproduce the shape of Interactivity3.as and click_block MainTimeline.as (not copies of the files).
+const INTERACTIVITY3 = [
+  "package code {",
+  "  import flash.display.MovieClip;",
+  "  import flash.events.Event;",
+  "  import flash.events.MouseEvent;",
+  "  public class Interactivity3 extends MovieClip {",
+  "    public var joystick:MovieClip;",
+  "    public var initx:Number = 0;",
+  "    public var inity:Number = 0;",
+  "    public var dragging:Boolean = false;",
+  "    public function Interactivity3() {",
+  "      super();",
+  "      initx = joystick.x;",
+  "      inity = joystick.y;",
+  "      joystick.addEventListener(MouseEvent.MOUSE_DOWN, dragPressHandler);",
+  "      stage.addEventListener(MouseEvent.MOUSE_UP, dragReleaseHandler);",
+  "      addEventListener(Event.ENTER_FRAME, enterFrameHandler);",
+  "    }",
+  "    protected function dragPressHandler(e:MouseEvent):void { dragging = true; }",
+  "    protected function dragReleaseHandler(e:MouseEvent):void { dragging = false; }",
+  "    protected function enterFrameHandler(e:Event):void {",
+  "      with (joystick) { rotation = 1; }",
+  "    }",
+  "  }",
+  "}",
+  "",
+].join("\n");
+const CLICK_BLOCK = [
+  "package test_fla {",
+  "  import flash.display.MovieClip;",
+  "  import flash.events.MouseEvent;",
+  "  public dynamic class MainTimeline extends MovieClip {",
+  "    public function MainTimeline() {",
+  "      super();",
+  "    }",
+  "    public function clickHandler(e:*):* {",
+  '      trace("Clicked at " + mouseX + ", " + mouseY);',
+  "    }",
+  "  }",
+  "}",
+  "",
+].join("\n");
+const FORBIDDEN = new Set([2663, 2662, 2552, 2304]);
+function gateOf(sources: Array<{ className: string; source: string }>, link: string) {
+  const plan = planTranslate(sources, scene([link]), tsSyntaxCheck);
+  const files = new Map(readTree(join(repoRoot, "template")));
+  const pathOf = (q: string) => canonicalClassPath(q);
+  for (const c of plan.classes) files.set(pathOf(c.className), c.text);
+  const cls = plan.classes.find((c) => c.className === link)!;
+  const { errors } = typeCheckProject({ files, repoRoot });
+  return { cls, errors: errors.filter((e) => e.file === pathOf(cls.className)) };
+}
+describe("fixture lines through the real gate (Requirement 22.10)", () => {
+  it("Interactivity3: bare stage, own fields and own methods resolve; only the with statement stays reported", () => {
+    const { cls, errors } = gateOf([{ className: "code.Interactivity3", source: INTERACTIVITY3 }], "code.Interactivity3");
+    expect(cls.text).toContain("this.initx = this.joystick.x;");
+    expect(cls.text).toContain("this.stage.addEventListener(MouseEvent.MOUSE_UP, this.dragReleaseHandler);");
+    expect(cls.text).toContain("this.joystick.addEventListener(MouseEvent.MOUSE_DOWN, this.dragPressHandler);");
+    expect(binds(cls.text).sort()).toEqual(["dragPressHandler", "dragReleaseHandler", "enterFrameHandler"]);
+    expect(errors.filter((e) => FORBIDDEN.has(e.code))).toEqual([]);
+    expect(cls.diagnostics.filter((d) => d.kind === "unsupported-construct").map((d) => d.message).join("\n")).toMatch(/with/);
+  });
+  it("click_block MainTimeline: bare mouseX and mouseY resolve to this", () => {
+    const { cls, errors } = gateOf([{ className: "test_fla.MainTimeline", source: CLICK_BLOCK }], "test_fla.MainTimeline");
+    expect(cls.text).toContain("this.mouseX");
+    expect(cls.text).toContain("this.mouseY");
+    expect(errors.filter((e) => FORBIDDEN.has(e.code))).toEqual([]);
   });
 });
