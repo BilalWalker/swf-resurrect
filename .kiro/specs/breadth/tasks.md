@@ -247,7 +247,7 @@ Rules that apply to every task:
     - Test: `test/unit/stageTree.test.ts` (create): `describeTarget` for the Stage_Object, a named chain and an unnamed child; extend `test/unit/replayPointers.test.ts`: down on shape A, up on shape B gives one note and no `click`.
     - _Requirements: 14.20, 14.7_
 
-  - [ ] 7.6 Add `src/verify/core/inputNotes.ts`
+  - [-] 7.6 Add `src/verify/core/inputNotes.ts`
     - `InputNote`, `buildInputNotes(problems, released)` (merges the planner's `unsupported-input` and `unpaired-mouse-event` problems with the runner's notes, sorted by `(index, kind)`) and `formatInputNotes(notes)` (for example `release-outside at entry 21 (pressed root1.joystick, released over stage; MouseDown at entry 17)`). Add the file to the purity test.
     - Test: `test/property/releaseOutside.property.test.ts` (create), **Property 25: `release-outside` records follow the pressed and hit targets** (Replay over a fixed scene with at least two shapes and empty space; exactly the releases with a pending press and another Hit_Target; no `click` for them; nothing added or lost by `buildInputNotes`). Examples in `test/unit/inputNotes.test.ts` (create).
     - _Requirements: 14.9, 14.20, 14.21, 15.5_
