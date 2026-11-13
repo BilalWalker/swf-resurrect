@@ -32,7 +32,12 @@ async function boot(): Promise<void> {
 
   // Req 6.6 and 6.7: on failure an error is shown and no frame is rendered.
   const loaded = await loadScene(fetchText, backend);
-  if (loaded === null) return;
+  if (loaded === null) {
+    // 25.6: a load error is the only startup failure. loadScene has put the reason in the alert; keep it and name the stage.
+    const reason = document.getElementById('swf-resurrect-error')?.textContent ?? 'the scene or an asset could not be loaded';
+    backend.showError(`Startup failed: ${reason}`);
+    return;
+  }
   const only = parseTimelineOnly(window.location.search);
   if (only !== null) {
     await runTimelineOnly(loaded, backend, only);
