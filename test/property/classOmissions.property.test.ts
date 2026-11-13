@@ -207,6 +207,49 @@ describe("Property 49: The omitted set depends on load failures and Surviving_Im
   });
 });
 
+/** **Validates: Requirements 23.1, 23.2, 23.3, 26.5** (D41: Property 38 and 49 with module-evaluation ranges) */
+describe("Properties 38 and 49 with module-evaluation ranges: load-time-error", () => {
+  const rangesArb = fc.array(fc.record({ line: fc.integer({ min: 1, max: 30 }), len: fc.integer({ min: 1, max: 4 }) }), { maxLength: 3 });
+  const lineIn = (rs: { line: number; len: number }[], e: GateError) => rs.some((r) => e.line >= r.line && e.line < r.line + r.len);
+
+  it("omits exactly the non-handwritten classes with a non-syntactic error in a range, then closes under propagation", () => {
+    fc.assert(
+      fc.property(bundledProjectArb, fc.array(rangesArb, { minLength: 8, maxLength: 8 }), ({ gateErrors, classes, linked }, perClass) => {
+        const withRanges = classes.map((c, i): OmissionClass => ({
+          ...c,
+          moduleEval: perClass[i % perClass.length].map((r) => ({ line: r.line, column: 1, endLine: r.line + r.len, endColumn: 1 })),
+        }));
+        const result = decideClassOmissions(gateErrors, withRanges, linked);
+        const got = new Set(result.map((o) => o.className));
+
+        // Oracle: a class with a load-time error is a base failure (modelled as a missing file), then the old oracle.
+        const failing = (c: OmissionClass, i: number): boolean =>
+          !c.handwritten &&
+          c.produced &&
+          gateErrors.some((e) => e.file === c.path && !e.syntactic && lineIn(perClass[i % perClass.length], e));
+        const asBase = classes.map((c, i) => (failing(withRanges[i], i) ? { ...c, produced: false, bundler: undefined } : c));
+        const expected = new Set(decideClassOmissions(gateErrors, asBase, linked).map((o) => o.className));
+        expect(got).toEqual(expected);
+
+        for (const o of result) {
+          const reason = o.reason;
+          if (reason.kind !== "load-time-error") continue;
+          const i = withRanges.findIndex((c) => c.className === o.className);
+          const mine = gateErrors.filter((e) => e.file === withRanges[i].path && !e.syntactic && lineIn(perClass[i % perClass.length], e));
+          expect(mine.some((e) => e.code === reason.code && e.line === reason.line)).toBe(true);
+        }
+        // Without ranges the result is the one of the old rules.
+        expect(new Set(decideClassOmissions(gateErrors, classes, linked).map((o) => o.className)).size).toBeLessThanOrEqual(got.size);
+        // A class that survives has no load-time error and no omitted base or surviving import.
+        for (const c of withRanges) if (!got.has(c.className) && !c.handwritten && c.extendsQualified !== null) expect(got.has(c.extendsQualified)).toBe(false);
+        // Order independence.
+        expect(decideClassOmissions([...gateErrors].reverse(), [...withRanges].reverse(), [...linked].reverse())).toEqual(result);
+      }),
+      fcConfig,
+    );
+  });
+});
+
 const IDENTITY: [number, number, number, number, number, number] = [1, 0, 0, 1, 0, 0];
 
 function sceneFor(classNames: readonly string[]): SceneJson {

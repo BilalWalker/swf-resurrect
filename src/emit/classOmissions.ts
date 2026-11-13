@@ -1,6 +1,6 @@
 // Core: no node:*, no clock, no randomness, no locale-dependent calls.
 // Decides which linked classes cannot load and must fall back to a plain MovieClip (breadth design 19.2).
-import type { GateError } from '../translate/typeCheckGate';
+import type { EvalRange, GateError } from '../translate/typeCheckGate';
 
 import type { QualifiedName } from '../convert/qualifiedName';
 
@@ -31,6 +31,8 @@ export type OmissionReason =
   | { kind: 'unresolved-import'; specifier: string; line: number }
   /** The class imports `name` from `target`, whose planned file exports no such binding. */
   | { kind: 'missing-export'; name: string; target: QualifiedName; line: number }
+  /** A gate error in code that runs when the module is evaluated (Requirement 23.1 (f)); `name` is the missing name or `Type.member`. */
+  | { kind: 'load-time-error'; code: number; line: number; name: string }
   | { kind: 'extends-omitted'; base: QualifiedName }
   | { kind: 'imports-omitted'; imported: QualifiedName };
 
@@ -64,6 +66,8 @@ export interface OmissionClass {
   handwritten: boolean;
   /** false when Emit failed to produce the file. */
   produced: boolean;
+  /** Stretches of the file that run at module evaluation (GateResult.moduleEval); absent: the load-time-error rule does not run. */
+  moduleEval?: readonly EvalRange[];
   /** The guard's check of the planned final text; absent: the guard did not run and the Requirement 23 rules apply. */
   bundler?: BundlerCheckData;
   /** Edges of the class imports with the specifier text of the emitted file; absent: every edge counts. */
@@ -100,6 +104,26 @@ export function isEmittedSpecifier(fromFile: string, specifier: string): boolean
     } else out.push(seg);
   }
   return out[0] !== 'shim' && out[0] !== 'runtime';
+}
+
+/** True when the 1-based position lies in the range (end exclusive). */
+function inRange(r: EvalRange, line: number, column: number): boolean {
+  return (line > r.line || (line === r.line && column >= r.column)) && (line < r.endLine || (line === r.endLine && column < r.endColumn));
+}
+
+/**
+ * The exact name a load-time error is about: the missing name for 2304 and 2552, `Type.member` for 2339
+ * and 2551 (a leading `typeof ` removed from the type), the message text for any other code.
+ */
+export function loadTimeName(e: GateError): string {
+  if (e.code === 2304 || e.code === 2552) {
+    const m = /^Cannot find name '([^']*)'/.exec(e.message);
+    if (m) return m[1];
+  } else if (e.code === 2339 || e.code === 2551) {
+    const m = /^Property '([^']*)' does not exist on type '(.*?)'\./.exec(e.message);
+    if (m) return `${m[2].replace(/^typeof /, '')}.${m[1]}`;
+  }
+  return e.message;
 }
 
 function errorsByFile(gateErrors: readonly GateError[]): Map<string, GateError[]> {
@@ -202,6 +226,14 @@ export function decideClassOmissions(
       .sort((a, b) => cmp(a.target, b.target) || cmp(a.name, b.name))[0];
     if (missing !== undefined) {
       reasons.set(c.className, { kind: 'missing-export', name: missing.name, target: missing.target, line: missing.line });
+      continue;
+    }
+    // A type error in code that runs at module evaluation is a load failure whatever the guard said: Vite
+    // accepts `new TextFormat()`, and the module throws when it runs. Syntactic errors are the guard's.
+    const ranges = c.moduleEval;
+    const loadTime = ranges === undefined ? undefined : errs.find((e) => !e.syntactic && ranges.some((r) => inRange(r, e.line, e.column)));
+    if (loadTime !== undefined) {
+      reasons.set(c.className, { kind: 'load-time-error', code: loadTime.code, line: loadTime.line, name: loadTimeName(loadTime) });
     }
   }
 
@@ -276,6 +308,9 @@ export function omissionMessage(o: ClassOmission): string {
       break;
     case 'missing-export':
       why = `imports ${r.name} from ${r.target} at line ${r.line}, but that file exports no ${r.name}`;
+      break;
+    case 'load-time-error':
+      why = `TS${r.code} at line ${r.line} in code that runs when the module loads: ${r.name}`;
       break;
     case 'extends-omitted':
       why = `extends ${r.base}, which is omitted`;

@@ -84,7 +84,7 @@ export interface ReportExtras {
 function omissionLine(o: ClassOmission): number {
   const r = o.reason;
   if (r.kind === 'bundler-parse') return r.line;
-  return r.kind === 'syntax-error' ? r.firstLine : r.kind === 'unresolved-import' || r.kind === 'missing-export' ? r.line : 1;
+  return r.kind === 'syntax-error' ? r.firstLine : r.kind === 'unresolved-import' || r.kind === 'missing-export' || r.kind === 'load-time-error' ? r.line : 1;
 }
 
 export function buildReport(

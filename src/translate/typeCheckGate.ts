@@ -18,8 +18,21 @@ export interface GateError {
   /** For code 2307 or 2792: the module specifier as written, quotes removed, read from the source text at the span. Else null. */
   specifier: string | null;
 }
+/** A stretch of an emitted file, 1-based line and column; the end is exclusive. */
+export interface EvalRange {
+  line: number;
+  column: number;
+  endLine: number;
+  endColumn: number;
+}
+
 export interface GateResult {
   errors: GateError[];
+  /**
+   * Per emitted file (same path as `GateError.file`): the stretches that run when the module is evaluated
+   * (design 19.2, Requirement 23.1 (f)). Only files that have a stretch are listed. Absent: not computed.
+   */
+  moduleEval?: Record<string, EvalRange[]>;
 }
 
 /** The gate itself failed (not the project): bad tsconfig, unreadable input. */
@@ -33,6 +46,99 @@ export class TypeCheckGateError extends PipelineError {
 
 function byCodeUnit(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
+}
+
+type Span = readonly [start: number, end: number];
+
+function hasModifier(n: ts.Node, kind: ts.SyntaxKind): boolean {
+  return ts.canHaveModifiers(n) && (ts.getModifiers(n) ?? []).some((m) => m.kind === kind);
+}
+
+function isFunctionLikeNode(n: ts.Node): boolean {
+  return (
+    ts.isFunctionDeclaration(n) ||
+    ts.isFunctionExpression(n) ||
+    ts.isArrowFunction(n) ||
+    ts.isMethodDeclaration(n) ||
+    ts.isGetAccessorDeclaration(n) ||
+    ts.isSetAccessorDeclaration(n) ||
+    ts.isConstructorDeclaration(n)
+  );
+}
+
+/** `span` minus the (sorted, possibly overlapping) `holes`. */
+function subtractSpans(span: Span, holes: readonly Span[]): Span[] {
+  const out: Span[] = [];
+  let at = span[0];
+  for (const [hs, he] of [...holes].sort((a, b) => a[0] - b[0] || a[1] - b[1])) {
+    if (he <= at) continue;
+    if (hs >= span[1]) break;
+    if (hs > at) out.push([at, hs]);
+    at = Math.max(at, he);
+  }
+  if (at < span[1]) out.push([at, span[1]]);
+  return out;
+}
+
+/**
+ * The stretches of one emitted file that run when its module is evaluated (Requirement 23.1 (f), design
+ * 19.2): heritage expressions, decorators, computed member names, static property initialisers, static
+ * blocks and top-level statements, each without function bodies, class member bodies and type nodes.
+ * A pure function of the syntax tree: no clock, no locale call; ranges are sorted by start.
+ */
+export function moduleEvaluationRanges(sf: ts.SourceFile): EvalRange[] {
+  const spans: Span[] = [];
+  const spanOf = (n: ts.Node): Span => [n.getStart(sf), n.end];
+  const addEval = (node: ts.Node): void => {
+    if (isFunctionLikeNode(node)) return;
+    if (ts.isClassLike(node)) {
+      addClass(node);
+      return;
+    }
+    const holes: Span[] = [];
+    const walk = (parent: ts.Node): void => {
+      ts.forEachChild(parent, (child) => {
+        if (isFunctionLikeNode(child)) holes.push(spanOf(child));
+        else if (ts.isClassLike(child)) {
+          holes.push(spanOf(child));
+          addClass(child);
+        } else if (ts.isTypeNode(child) && !ts.isExpressionWithTypeArguments(child)) holes.push(spanOf(child));
+        else walk(child);
+      });
+    };
+    walk(node);
+    spans.push(...subtractSpans(spanOf(node), holes));
+  };
+  const addClass = (cls: ts.ClassLikeDeclaration): void => {
+    for (const d of ts.getDecorators(cls) ?? []) addEval(d);
+    for (const h of cls.heritageClauses ?? []) for (const t of h.types) addEval(t.expression);
+    for (const m of cls.members) {
+      for (const d of (ts.canHaveDecorators(m) ? ts.getDecorators(m) : undefined) ?? []) addEval(d);
+      if (m.name !== undefined && ts.isComputedPropertyName(m.name)) addEval(m.name.expression);
+      if (ts.isClassStaticBlockDeclaration(m)) addEval(m.body);
+      else if (ts.isPropertyDeclaration(m) && hasModifier(m, ts.SyntaxKind.StaticKeyword) && m.initializer !== undefined) addEval(m.initializer);
+    }
+  };
+  for (const stmt of sf.statements) {
+    if (
+      ts.isImportDeclaration(stmt) ||
+      (ts.isExportDeclaration(stmt) && stmt.moduleSpecifier !== undefined) ||
+      ts.isInterfaceDeclaration(stmt) ||
+      ts.isTypeAliasDeclaration(stmt) ||
+      ts.isFunctionDeclaration(stmt) ||
+      hasModifier(stmt, ts.SyntaxKind.DeclareKeyword)
+    ) {
+      continue;
+    }
+    addEval(stmt);
+  }
+  return spans
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+    .map(([s, e]) => {
+      const a = sf.getLineAndCharacterOfPosition(s);
+      const b = sf.getLineAndCharacterOfPosition(e);
+      return { line: a.line + 1, column: a.character + 1, endLine: b.line + 1, endColumn: b.character + 1 };
+    });
 }
 
 function toPosix(p: string): string {
@@ -130,12 +236,18 @@ export function typeCheckProject(input: GateInput): GateResult {
   };
 
   let diagnostics: readonly ts.Diagnostic[];
+  const moduleEval: Record<string, EvalRange[]> = {};
   const syntacticKeys = new Set<string>();
   const keyOf = (d: ts.Diagnostic): string => `${d.file?.fileName ?? ''}:${d.start ?? -1}:${d.code}`;
   try {
     const program = ts.createProgram({ rootNames, options, host });
     diagnostics = ts.getPreEmitDiagnostics(program);
     for (const d of program.getSyntacticDiagnostics()) syntacticKeys.add(keyOf(d));
+    for (const abs of rootNames) {
+      const sf = program.getSourceFile(abs);
+      const ranges = sf === undefined ? [] : moduleEvaluationRanges(sf);
+      if (ranges.length > 0) moduleEval[abs.slice(prefix.length)] = ranges;
+    }
   } catch (e) {
     throw new TypeCheckGateError(e instanceof Error ? e.message : String(e));
   }
@@ -177,5 +289,5 @@ export function typeCheckProject(input: GateInput): GateResult {
       a.code - b.code ||
       byCodeUnit(a.message, b.message),
   );
-  return { errors };
+  return { errors, moduleEval };
 }

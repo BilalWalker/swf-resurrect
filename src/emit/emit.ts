@@ -14,7 +14,7 @@ import type { BundlerCheckData, ClassOmission, ImportedName, LinkedSymbol, Loose
 import type { ClassPathEntry } from './classPaths';
 import { exportedNames } from './exportedNames';
 import type { TranslationProblem } from '../translate/report';
-import type { GateResult } from '../translate/typeCheckGate';
+import type { EvalRange, GateResult } from '../translate/typeCheckGate';
 import { relativeSpecifier } from '../convert/qualifiedName';
 import type { SceneJson } from '../../template/runtime/scene';
 
@@ -198,7 +198,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
       problems.push({ kind: 'bundler-guard-unavailable', message: err instanceof Error ? err.message : String(err) });
     }
   }
-  const omissionClasses = describeClasses(planned.classes, planInput.translated, planned.files, checks);
+  const omissionClasses = describeClasses(planned.classes, planInput.translated, planned.files, checks, gate?.moduleEval);
   const linked = linkedSymbols(artifact.scene);
   const gateErrors = gate?.errors ?? [];
   const omissions = decideClassOmissions(gateErrors, omissionClasses, linked);
@@ -261,6 +261,7 @@ function describeClasses(
   translated: readonly TranslatedClass[],
   files: readonly EmittedFile[],
   checks?: ReadonlyMap<string, BundlerCheckData>,
+  moduleEval?: Readonly<Record<string, readonly EvalRange[]>>,
 ): OmissionClass[] {
   const pathOf = new Map(classes.map((c) => [c.className, c.path]));
   const known = new Set(classes.map((c) => c.className));
@@ -281,6 +282,7 @@ function describeClasses(
     }
     const own = text.get(c.path);
     const bundler = checks?.get(c.path);
+    const evalRanges = moduleEval?.[c.path];
     const names = own === undefined ? undefined : exportedNames(own);
     return {
       className: c.className,
@@ -291,6 +293,7 @@ function describeClasses(
       ...(names === undefined ? {} : { exports: names === null ? null : [...names].sort(byCodeUnit) }),
       handwritten: c.handwritten,
       produced: text.has(c.path),
+      ...(evalRanges === undefined ? {} : { moduleEval: evalRanges }),
       ...(bundler === undefined ? {} : { bundler, importEdges: [...edges].map(([target, specifier]) => ({ target, specifier })) }),
     };
   });
