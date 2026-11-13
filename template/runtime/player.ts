@@ -7,6 +7,7 @@ import {
   clipsPreOrder,
   exitFrame,
   frameConstructed,
+  reportCaughtError,
   setCaughtErrorSink,
   setContextForConstructor,
   setPointerPosition,
@@ -20,7 +21,7 @@ import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
-import type { ErrorSink } from './errorReport';
+import { constructorSite, messageOf, type ErrorSink } from './errorReport';
 import { hitTest } from './hitTest';
 import type { ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
 import { ScriptQueue } from './scriptQueue';
@@ -288,7 +289,20 @@ export class Player {
     // The Sprite constructor (MovieClip inherits it) registers the node and builds frame 1 (constructFrameOne), so the children are
     // created and bound before any code of `Cls` runs. Events and frame-1 scripts wait until the whole tree exists
     // (initialBuild, design G5b).
-    return withConstructionContext(ctx, () => new Cls());
+    try {
+      return withConstructionContext(ctx, () => new Cls());
+    } catch (thrown) {
+      // A plain MovieClip has no class code to fail: a throw there is a defect of the runtime and escapes.
+      if (Cls === MovieClip) throw thrown;
+      const className = (symbol.className ?? Cls.name).split('.').pop() as string;
+      reportCaughtError({ site: constructorSite(className), message: messageOf(thrown), className });
+      // D27: the Sprite constructor set ctx.instance before the Construction_Bind, so a throw in a field initialiser
+      // or in the derived body leaves the partial instance (children, timeline, scripts registered so far). A throw
+      // before the base constructor completed leaves none: build the symbol again as a plain MovieClip.
+      if (ctx.instance !== null) return ctx.instance;
+      const fresh: ConstructionContext = { ...ctx, instance: null };
+      return withConstructionContext(fresh, () => new MovieClip());
+    }
   }
 
   /**

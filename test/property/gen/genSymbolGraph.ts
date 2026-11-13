@@ -20,3 +20,32 @@ function number_(t: { children: unknown[] }, next: { n: number }): SymbolNode {
 
 /** Generator for Property 45: a symbol tree whose root has id 0. */
 export const genSymbolGraph: fc.Arbitrary<SymbolNode> = shape(3).map((t) => number_(t, { n: 0 }));
+
+/** Where a generated constructor throws: not at all, in a field initialiser, in the body, or before `super`. */
+export type CtorThrow = "none" | "field" | "body" | "pre";
+
+export interface ThrowFlags {
+  ctor: CtorThrow;
+  /** The frame-1 script throws instead of logging. */
+  script: boolean;
+  /** The enterFrame listener throws instead of logging. */
+  listener: boolean;
+}
+
+export interface ThrowingGraph {
+  tree: SymbolNode;
+  /** Flags by symbol id. */
+  flags: ThrowFlags[];
+}
+
+const genFlags: fc.Arbitrary<ThrowFlags> = fc.record({
+  ctor: fc.constantFrom<CtorThrow>("none", "none", "field", "body", "pre"),
+  script: fc.boolean(),
+  listener: fc.boolean(),
+});
+
+/** Generator for Property 47: a symbol tree plus throwing flags for each symbol (ids are pre-order from 0). */
+export const genThrowingGraph: fc.Arbitrary<ThrowingGraph> = fc.record({
+  tree: genSymbolGraph,
+  flags: fc.array(genFlags, { minLength: 40, maxLength: 40 }),
+});

@@ -218,6 +218,132 @@ describe('Player instance creation', () => {
   });
 });
 
+describe('Player: a constructor that throws (Requirement 25.3)', () => {
+  function withSink(scene: SceneJson, registry: Record<string, new (...args: any[]) => Sprite>) {
+    const errors: Array<{ site: string; message: string; className: string | null }> = [];
+    const backend = new FakeBackend();
+    const clock = new ManualClock();
+    const player = new Player({
+      scene,
+      backend,
+      clock,
+      classRegistry: registry,
+      shapeBounds: new Map([[1, { x: 0, y: 0, width: 40, height: 30 }]]),
+      onCaughtError: (e) => errors.push(e),
+    });
+    return { player, errors, clock };
+  }
+  const childScene = (className = 'Bad') =>
+    sceneOf(sprite([[entry(1, 2, 0, 0, 'bad'), entry(2, 4, 0, 0, 'sibling')]]), {
+      '2': sprite([[entry(1, 3, 0, 0, 'kid')], [entry(1, 3, 0, 0, 'kid')]], className),
+      '3': sprite([[entry(1, 1)]]),
+      '4': sprite([[entry(1, 1)]], 'Good'),
+    });
+
+  it('keeps the partial instance with its children, timeline and scripts registered before the throw', () => {
+    let ran = 0;
+    class Bad extends MovieClip {
+      constructor() {
+        super();
+        this.addFrameScript(0, () => {
+          ran++;
+        });
+        throw new Error('late');
+      }
+    }
+    const { player, errors, clock } = withSink(childScene(), { Bad, Good: MovieClip });
+    const bad = (player.root as unknown as { bad: MovieClip & { kid: unknown } }).bad;
+    expect(bad).toBeInstanceOf(Bad);
+    expect(bad.kid).toBeInstanceOf(MovieClip);
+    expect(bad.totalFrames).toBe(2);
+    expect(ran).toBe(1);
+    expect(errors).toEqual([{ site: 'constructor Bad', message: 'late', className: 'Bad' }]);
+    tick(clock, player, 100);
+    expect(bad.currentFrame).toBe(2);
+  });
+
+  it('keeps the partial instance when a field initialiser throws', () => {
+    class Bad extends MovieClip {
+      field = (() => {
+        throw new Error('field');
+      })();
+    }
+    const { player, errors } = withSink(childScene(), { Bad, Good: MovieClip });
+    const bad = (player.root as unknown as { bad: MovieClip & { kid: unknown } }).bad;
+    expect(bad).toBeInstanceOf(Bad);
+    expect(bad.kid).toBeInstanceOf(MovieClip);
+    expect(errors.map((e) => e.message)).toEqual(['field']);
+  });
+
+  it('builds a plain MovieClip when the throw comes before the base constructor completes', () => {
+    class Bad extends MovieClip {
+      constructor() {
+        super(
+          // An argument that throws before the base constructor completes.
+          ...((() => {
+            throw new Error('pre');
+          })() as unknown as []),
+        );
+      }
+    }
+    const { player, errors } = withSink(childScene(), { Bad, Good: MovieClip });
+    const bad = (player.root as unknown as { bad: MovieClip & { kid: unknown } }).bad;
+    expect(bad.constructor).toBe(MovieClip);
+    expect(bad.kid).toBeInstanceOf(MovieClip);
+    expect(bad.totalFrames).toBe(2);
+    expect(errors.map((e) => e.site)).toEqual(['constructor Bad']);
+  });
+
+  it('does not stop its siblings or the movie', () => {
+    class Bad extends MovieClip {
+      constructor() {
+        super();
+        throw new Error('x');
+      }
+    }
+    let good = 0;
+    class Good extends MovieClip {
+      constructor() {
+        super();
+        good++;
+      }
+    }
+    const { player, errors, clock } = withSink(childScene(), { Bad, Good });
+    expect(good).toBe(1);
+    expect((player.root as unknown as { sibling: unknown }).sibling).toBeInstanceOf(Good);
+    expect(errors).toHaveLength(1);
+    tick(clock, player, 100);
+  });
+
+  it('writes to console.error when no sink is given', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      class Bad extends MovieClip {
+        constructor() {
+          super();
+          throw new Error('y');
+        }
+      }
+      setup(childScene(), { Bad, Good: MovieClip });
+      expect(spy).toHaveBeenCalledWith('[SWF Resurrect] constructor Bad: y');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('lets a script-called new propagate to its caller (25.4)', () => {
+    class Thrower extends MovieClip {
+      constructor() {
+        super();
+        throw new Error('direct');
+      }
+    }
+    const { player } = withSink(childScene('Plain'), { Thrower });
+    expect(() => new Thrower()).toThrow('direct');
+    expect(player.root).toBeDefined();
+  });
+});
+
 describe('Player: a registry typed for DisplayObject subclasses', () => {
   it('accepts a Sprite subclass in the options (type level) and instantiates a linked MovieClip subclass', () => {
     class OnlyTyped extends Sprite {}

@@ -366,7 +366,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - `ScriptQueue.drain` catches per script and reports `frame script <owner> frame <n>`; the Shim's listener loop in `events.ts` catches per listener and reports `listener <type> on <target>`; both continue. Commit message: `Runtime: isolate frame scripts and listeners (22.2)`.
     - Test: `test/unit/scriptQueue.test.ts` and `test/unit/shimEvents.test.ts` extended: a throwing script followed by a running one; a throwing listener followed by a running one on the same target and on a parent; a throw inside a nested `dispatchEvent`; `dispatchEvent` returns as without the error; the `draining` flag is reset.
     - _Requirements: 25.1, 25.2, 25.4, 31.3_
-  - [ ] 22.3 Constructors
+  - [-] 22.3 Constructors
     - `Player.createClip` catches a throw of `new Cls()` (design 21.3): it reports `constructor <Class>`, keeps `ctx.instance` and goes on; when `ctx.instance` is null it instantiates the symbol again as a plain `MovieClip` under a fresh context. Commit message: `Runtime: keep the instance when a constructor throws (22.3)`.
     - Test: `test/property/caughtErrors.property.test.ts` (create), **Property 47: A throw never stops the movie and never changes the other elements** (generator `genSymbolGraph.ts` extended with throwing constructors, frame scripts and listeners); examples in `test/unit/player.test.ts`: a throwing constructor leaves the partial instance with its children and its timeline; a throw in a field initialiser; a throw before the base constructor gives a plain `MovieClip`; a registered class that throws does not stop its siblings.
     - _Requirements: 25.3, 25.11, 31.3_
