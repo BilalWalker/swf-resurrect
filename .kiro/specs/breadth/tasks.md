@@ -445,7 +445,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Add `hitTestAll` and `resolveHitTarget` to `template/runtime/hitTest.ts` (Core, browser-safe) and use them in `Player.pointerEntry` in place of `interactiveTarget(hitTest(...))`. Commit message: `Runtime: honour mouseEnabled and mouseChildren in hits (26.2)`.
     - Test: `test/property/hitTarget.property.test.ts` (create), **Property 53: The Hit_Target honours the mouse flags and equals the old rule by default**; `test/unit/hitTest.test.ts` extended: `mouseChildren = false` on a button-like clip, `mouseEnabled = false` and the parent receives the event, a disabled object above a directly hit sibling, the Stage_Object fallback; `test/unit/player.test.ts`: `dispatchClick` on the `clickgoto` shape is unchanged (`clickgotoReplay.test.ts`: Trace_Score 100, 32 ticks).
     - _Requirements: 29.2, 29.3, 29.4, 29.8, 31.3_
-  - [ ] 26.3 Gate check on `slider_component`
+  - [x] 26.3 Gate check on `slider_component`
     - Run SC and the type-check gate on `.work/local/slider_component/`: state the diagnostics of `ComponentEvent`, `SliderEvent`, `BaseButton` and `Slider` before and after, and require no TS4113 and no TS2339 for the five new members. Commit message: `Test: pin the new Shim members on slider_component (26.3)`.
     - Test: `test/unit/shimDisplay.test.ts` (extended) runs the real gate on the translated `ComponentEvent` and `SliderEvent` shapes (hand-written equivalents if the local copy is absent) and asserts no TS4113.
     - _Requirements: 29.6, 23.5, 31.5_

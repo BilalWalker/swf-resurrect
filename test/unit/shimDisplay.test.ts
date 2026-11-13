@@ -1,4 +1,14 @@
 import fc from 'fast-check';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { serialiseScene } from '../../src/convert/sceneJson';
+import { planEmitDetailed } from '../../src/emit/planEmit';
+import type { TemplateFile } from '../../src/emit/planEmit';
+import { planTranslate } from '../../src/translate/planTranslate';
+import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
+import { typeCheckProject } from '../../src/translate/typeCheckGate';
+import type { SceneJson } from '../../template/runtime/scene';
 import { describe, expect, it } from 'vitest';
 import { DisplayObject } from '../../template/shim/DisplayObject';
 import { Event, EventDispatcher, MouseEvent } from '../../template/shim/events';
@@ -169,5 +179,94 @@ describe('mouse flags and cursor flags', () => {
     s.useHandCursor = false;
     expect([s.mouseEnabled, s.mouseChildren, s.buttonMode, s.useHandCursor]).toEqual([false, false, true, false]);
     expect([t.mouseEnabled, t.mouseChildren, t.buttonMode, t.useHandCursor]).toEqual([true, true, false, true]);
+  });
+});
+
+// Hand-written equivalents of the ComponentEvent and SliderEvent shapes of slider_component (Requirement 29.6, Task 26.3).
+const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
+function readTemplates(dir = join(repoRoot, 'template'), prefix = ''): TemplateFile[] {
+  const out: TemplateFile[] = [];
+  for (const name of readdirSync(dir).sort()) {
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) out.push(...readTemplates(full, `${prefix}${name}/`));
+    else out.push({ path: `${prefix}${name}`, content: readFileSync(full, 'utf8') });
+  }
+  return out;
+}
+const COMPONENT_EVENT = `package fl.events
+{
+   import flash.events.Event;
+   public class ComponentEvent extends Event
+   {
+      public static const HIDE:String = "hide";
+      public function ComponentEvent(param1:String, param2:Boolean = false, param3:Boolean = false)
+      {
+         super(param1,param2,param3);
+      }
+      override public function toString() : String
+      {
+         return formatToString("ComponentEvent","type","bubbles","cancelable");
+      }
+      override public function clone() : Event
+      {
+         return new ComponentEvent(type,bubbles,cancelable);
+      }
+   }
+}
+`;
+const SLIDER_EVENT = `package fl.events
+{
+   import flash.events.Event;
+   public class SliderEvent extends Event
+   {
+      public static const CHANGE:String = "change";
+      private var _value:Number;
+      public function SliderEvent(param1:String, param2:Number, param3:Boolean = false, param4:Boolean = false)
+      {
+         super(param1,param3,param4);
+         this._value = param2;
+      }
+      public function get value() : Number
+      {
+         return this._value;
+      }
+      override public function toString() : String
+      {
+         return formatToString("SliderEvent","type","bubbles","cancelable","value");
+      }
+      override public function clone() : Event
+      {
+         return new SliderEvent(type,this._value,bubbles,cancelable);
+      }
+   }
+}
+`;
+describe('ComponentEvent and SliderEvent shapes through the real gate (Requirement 29.6)', () => {
+  it('give no TS4113 and no TS2339 for clone or formatToString', () => {
+    const scene: SceneJson = {
+      formatVersion: 1,
+      stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
+      rootSymbolId: 0,
+      symbols: {
+        '0': { type: 'sprite', className: 'fl.events.ComponentEvent', frameCount: 1, labels: [], frames: [[]] },
+        '1': { type: 'sprite', className: 'fl.events.SliderEvent', frameCount: 1, labels: [], frames: [[]] },
+      },
+    };
+    const artifact = planTranslate(
+      [
+        { className: 'fl.events.ComponentEvent', source: COMPONENT_EVENT },
+        { className: 'fl.events.SliderEvent', source: SLIDER_EVENT },
+      ],
+      scene,
+      tsSyntaxCheck,
+    );
+    const emitted = planEmitDetailed(
+      { scene, sceneJson: serialiseScene(scene), templates: readTemplates(), translated: artifact.classes, handwritten: [] },
+      [],
+    );
+    const { errors } = typeCheckProject({ files: new Map(emitted.files.map((f) => [f.path, f.content])), repoRoot });
+    const own = errors.filter((e) => e.file.startsWith('src/fl/events/'));
+    expect(own.filter((e) => e.code === 4113 || e.code === 2339)).toEqual([]);
+    expect(own).toEqual([]);
   });
 });
