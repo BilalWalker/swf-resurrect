@@ -17,6 +17,7 @@
 import { normalizeNewlines, tokenize } from './tokenizer';
 import type { Token } from './tokenizer';
 import { scan } from './scanner';
+import { collectFunctionLocals } from './implicitThis';
 import type {
   AccessorNode, Body, ClassNode, Declarator, FieldNode, MethodNode, Node, Param,
   StatementNode, TokRange, UnsupportedNode, VarDecl,
@@ -251,15 +252,6 @@ class Emitter {
     return false;
   }
 
-  private collectLocals(nodes: readonly Node[], into: Set<string>): void {
-    for (const n of nodes) {
-      if (n.kind !== 'statement') continue;
-      if (n.decl !== null) for (const dc of n.decl.declarators) into.add(dc.name);
-      if (n.body !== null) this.collectLocals(n.body.nodes, into);
-      if (n.elseBody !== null) this.collectLocals(n.elseBody.nodes, into);
-    }
-  }
-
   // -- node walk -----------------------------------------------------------
 
   private nodeList(nodes: readonly Node[], d: number, cls: ClassNode | null): void {
@@ -437,9 +429,7 @@ class Emitter {
     n: MethodNode | AccessorNode, d: number, cls: ClassNode | null, plan: BodyItem[] | null,
   ): void {
     const isCtor = n.kind === 'method' && n.isConstructor;
-    const locals = new Set<string>();
-    for (const p of n.params) locals.add(p.name);
-    this.collectLocals(n.body.nodes, locals);
+    const locals = collectFunctionLocals(n.params, n.body.nodes);
     const saved = this.fn;
     this.fn = { locals, hasValueReturn: this.hasValueReturn(n.body.nodes) };
     try {

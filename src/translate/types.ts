@@ -1,6 +1,6 @@
 /** Type-only definitions shared by the pure Transpiler files. No imports, no runtime code. */
 
-export type DiagnosticKind = 'unsupported-construct' | 'loose-type' | 'class-omitted';
+export type DiagnosticKind = 'unsupported-construct' | 'loose-type' | 'class-omitted' | 'unresolved-identifier';
 
 /** `line` is 1-based. */
 export interface Diagnostic {

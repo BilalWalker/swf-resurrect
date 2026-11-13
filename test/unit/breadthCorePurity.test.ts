@@ -13,6 +13,7 @@ const CORE_FILES = [
   "src/emit/classPaths.ts",
   "src/translate/shimMembers.ts",
   "src/translate/memberTables.ts",
+  "src/translate/implicitThis.ts",
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];
