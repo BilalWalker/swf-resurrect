@@ -11,11 +11,12 @@ import { canonicalClassPath, relativeSpecifier, shimSpecifier } from '../convert
 import type { QualifiedName } from '../convert/qualifiedName';
 import type { ImportDecl, ImportPlan } from './importPlan';
 import { splitAngleTokens } from './scanner';
-import type { ClassNode, MethodNode, Node, TokRange } from './scanner';
+import type { ClassNode, Node, TokRange } from './scanner';
 import type { Token } from './tokenizer';
 import type { MemberContext, RewriteContext, RewriteResult, Rewriter, TokenSlice } from './emitTs';
 import { isReference, resolveIdentifier } from './implicitThis';
-import type { MemberTables } from './memberTables';
+import { lookupInstance } from './memberTables';
+import type { MemberKindFound, MemberTables } from './memberTables';
 import type { Diagnostic, ImportRecord } from './types';
 
 export interface RewriteOptions {
@@ -29,6 +30,11 @@ export interface RewriteOptions {
   self: QualifiedName;
   /** Receives every class a resolution wants imported (inherited statics); used by the dry pass. */
   onImportTarget?: (target: QualifiedName) => void;
+  /**
+   * Receives every instance method of a translated class (own or of a translated superclass) that an
+   * expression uses as a value, once per use, in source order (Requirement 22.13); used by the dry pass.
+   */
+  onMethodValue?: (className: string, name: string) => void;
 }
 
 /** Right-hand sides of `is` / `instanceof` that JS `instanceof` gets wrong. */
@@ -73,6 +79,9 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
       const rw = new ExprRewriter(slice.source, toks, env, ctx.locals ?? EMPTY_SET, ctx.member ?? null);
       try {
         const text = rw.run();
+        if (ctx.member !== undefined && options.onMethodValue !== undefined) {
+          for (const name of rw.methodValues) options.onMethodValue(ctx.member.className, name);
+        }
         return rw.diags.length > 0 ? { text, diagnostics: rw.diags } : { text };
       } catch (e) {
         if (e instanceof ExprError) return { text: '', unsupported: e.reason };
@@ -264,43 +273,6 @@ export function collectOwnMethods(nodes: readonly Node[]): ReadonlySet<string> {
   return out;
 }
 
-/**
- * Value-referenced methods (design 1.7): non-static, non-accessor methods declared
- * in `cls` that the class body names as `this . name` without a following `(`.
- * Returned in declaration order.
- */
-export function findValueReferencedMethods(tokens: readonly Token[], cls: ClassNode): MethodNode[] {
-  const methods: MethodNode[] = [];
-  for (const m of cls.body.nodes) {
-    if (m.kind === 'method' && !m.isConstructor && m.modifiers.indexOf('static') < 0) methods.push(m);
-  }
-  const referenced = new Set<string>();
-  visitRanges(cls.body.nodes, (r) => {
-    const sig: Token[] = [];
-    for (let i = r.from; i < r.to; i++) if (tokens[i].kind !== 'comment') sig.push(tokens[i]);
-    for (let k = 0; k + 2 < sig.length; k++) {
-      const a = sig[k];
-      if (a.kind !== 'id' || a.text !== 'this') continue;
-      if (k > 0 && sig[k - 1].kind === 'punct' && sig[k - 1].text === '.') continue;
-      const dot = sig[k + 1];
-      const name = sig[k + 2];
-      if (dot.kind !== 'punct' || dot.text !== '.' || name.kind !== 'id') continue;
-      const after = sig[k + 3];
-      if (after !== undefined && after.kind === 'punct' && after.text === '(') continue;
-      referenced.add(name.text);
-    }
-  });
-  const seen = new Set<string>();
-  const out: MethodNode[] = [];
-  for (const m of methods) {
-    if (referenced.has(m.name) && !seen.has(m.name)) {
-      seen.add(m.name);
-      out.push(m);
-    }
-  }
-  return out;
-}
-
 // ---------------------------------------------------------------------------
 // Types
 
@@ -338,6 +310,11 @@ function selfKey(self: QualifiedName, className: string): QualifiedName {
   const dot = self.lastIndexOf('.');
   if (self.slice(dot + 1) === className) return self;
   return dot < 0 ? className : `(${self.slice(0, dot)}.${className}`;
+}
+
+/** An instance method of a translated class, own or inherited: not a static, a field, an accessor or a Shim member. */
+function isBindableMethod(found: MemberKindFound): boolean {
+  return found.kind === 'method' && (found.rule === 'own-instance' || found.rule === 'translated-super');
 }
 
 class ExprError extends Error {
@@ -411,6 +388,8 @@ function rewriteType(slice: TokenSlice | null, ctx: RewriteContext): RewriteResu
 
 class ExprRewriter {
   readonly diags: Diagnostic[] = [];
+  /** Methods this expression uses as values, in source order (Requirement 22.13). */
+  readonly methodValues: string[] = [];
 
   constructor(
     private readonly src: string,
@@ -468,6 +447,7 @@ class ExprRewriter {
     if (i > 0 && (this.isP(i - 1, '.') || this.isP(i - 1, '::'))) return this.raw(i);
     const bound = this.chainBinding(i);
     if (bound !== null) return bound;
+    if (t.text === 'this') this.noteExplicitThis(i);
     switch (t.text) {
       case 'int':
       case 'uint':
@@ -512,8 +492,26 @@ class ExprRewriter {
         return t.text;
       default:
         if (r.importTarget !== null) this.opts.onImportTarget?.(r.importTarget);
+        if (isBindableMethod(r.found) && this.isValuePosition(i + 1)) this.methodValues.push(t.text);
         return r.text;
     }
+  }
+
+  /** True when the token at `next` does not make the preceding name a call or a member access. */
+  private isValuePosition(next: number): boolean {
+    return !this.isP(next, '(') && !this.isP(next, '.');
+  }
+
+  /** `this.name` used as a value, where `name` is an instance method of a translated class. */
+  private noteExplicitThis(i: number): void {
+    const member = this.member;
+    const nameTok = this.toks[i + 2];
+    if (member === null || member.isStatic || !this.isP(i + 1, '.') || nameTok === undefined || nameTok.kind !== 'id') {
+      return;
+    }
+    if (!this.isValuePosition(i + 3)) return;
+    const found = lookupInstance(this.opts.tables, selfKey(this.opts.self, member.className), nameTok.text);
+    if (found !== null && isBindableMethod(found)) this.methodValues.push(nameTok.text);
   }
 
   /** A dotted chain that the import plan binds, unless its first identifier is a local. */

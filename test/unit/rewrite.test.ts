@@ -3,16 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { emitTs } from '../../src/translate/emitTs';
 import { canonicalClassPath } from '../../src/convert/qualifiedName';
 import { planFileImports } from '../../src/translate/importPlan';
-import { collectReferences, createImportLines, createRewriter, findValueReferencedMethods } from '../../src/translate/rewrite';
+import { collectReferences, createImportLines, createRewriter } from '../../src/translate/rewrite';
 import { scan } from '../../src/translate/scanner';
-import type { ClassNode } from '../../src/translate/scanner';
 import { SHIM_AS3_NAMES } from '../../src/translate/shimNames';
 import { normalizeNewlines, tokenize } from '../../src/translate/tokenizer';
 import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 import { fixtureTables } from '../support/tables';
 
 const SIBLINGS = new Set(['EventWatcher', 'LeftButton', 'RightButton', 'MainTimeline']);
-function run(source: string, known: ReadonlySet<string> = SIBLINGS, self = 'A') {
+function run(source: string, known: ReadonlySet<string> = SIBLINGS, self = 'A', onMethodValue?: (className: string, name: string) => void) {
   const src = normalizeNewlines(source);
   const tokens = tokenize(src);
   const { nodes } = scan(tokens);
@@ -31,7 +30,7 @@ function run(source: string, known: ReadonlySet<string> = SIBLINGS, self = 'A') 
   );
   const imports = createImportLines(plan, canonicalClassPath(self), shimUsed);
   const tables = fixtureTables('test/fixtures/clickgoto', [[self, src]]);
-  const options = { shimNames: SHIM_AS3_NAMES, plan, tables, self };
+  const options = { shimNames: SHIM_AS3_NAMES, plan, tables, self, onMethodValue };
   const out = emitTs(nodes, {
     source: src,
     tokens,
@@ -131,11 +130,10 @@ describe('rewrite: declarations', () => {
     expect(out.diagnostics.filter((d) => d.kind === 'loose-type')).toHaveLength(1);
   });
 
-  it('detects value-referenced methods for task 8.1', () => {
-    const { nodes, tokens } = run(fixture('LeftButton'));
-    const pkg = nodes.find((n) => n.kind === 'package');
-    const c = (pkg as { body: ClassNode[] }).body.find((n) => n.kind === 'class') as ClassNode;
-    expect(findValueReferencedMethods(tokens, c).map((m) => m.name)).toEqual(['clicked', 'frame1', 'frame2']);
+  it('reports the methods used as values through onMethodValue, in source order', () => {
+    const seen: string[] = [];
+    run(fixture('LeftButton'), SIBLINGS, 'LeftButton', (c, n) => seen.push(c + '.' + n));
+    expect(seen).toEqual(['LeftButton.frame1', 'LeftButton.frame2', 'LeftButton.clicked']);
   });
 });
 

@@ -218,6 +218,23 @@ export function lookupInstance(t: MemberTables, cls: QualifiedName, name: string
   return end.kind === 'shim' ? shimLookup(t, end.name, name) : null;
 }
 
+/**
+ * Declaration order of `names` (Requirement 22.13): the instance methods of `cls` in declaration order,
+ * then those of its translated superclasses, nearest base first and in declaration order within each base.
+ * A name already placed by a nearer class is not placed again; a name no class declares as a method is
+ * dropped.
+ */
+export function orderByDeclaration(t: MemberTables, cls: QualifiedName, names: ReadonlySet<string>): string[] {
+  const out: string[] = [];
+  walkChain(t, cls, (_q, m) => {
+    for (const [name, kind] of m.instance) {
+      if (kind === 'method' && names.has(name) && !out.includes(name)) out.push(name);
+    }
+    return false;
+  });
+  return out;
+}
+
 /** Static context (rule 2): the own static, then the nearest static of a translated superclass; owner is the declaring class. */
 export function lookupStatic(t: MemberTables, cls: QualifiedName, name: string): MemberKindFound | null {
   let found: MemberKindFound | null = null;

@@ -47,10 +47,15 @@ describe('translateCore: constructors (design 1.6)', () => {
     const members =
       '    public function a() : *\n    {\n      this.addEventListener("x", this.b);\n    }\n' +
       '    public function b() : *\n    {\n    }';
-    const withBase = t(cls('public class A extends B', members));
-    expect(withBase).toContain('constructor() {\n    super();\n    this.b = this.b.bind(this);\n  }');
-    const plain = t(cls('public class A', members));
-    expect(plain).toContain('constructor() {\n    this.b = this.b.bind(this);\n  }');
+    // The ad-hoc class is not in the fixture tables, so the tables are built from the test source.
+    const own = (src: string): string =>
+      translateCore(src, { ...options, selfQualified: 'A', tables: fixtureTables('test/fixtures/clickgoto', [['A', src]]) }).text;
+    const withBase = own(cls('public class A extends B', members));
+    expect(withBase).toContain(
+      'public constructor(...args: ConstructorParameters<typeof B>) {\n    super(...args);\n    this.b = this.b.bind(this);\n  }',
+    );
+    const plain = own(cls('public class A', members));
+    expect(plain).toContain('public constructor() {\n    this.b = this.b.bind(this);\n  }');
     expect(plain).not.toContain('super');
   });
 

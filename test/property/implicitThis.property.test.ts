@@ -9,7 +9,7 @@ import { tokenize } from "../../src/translate/tokenizer";
 import { tsSyntaxCheck } from "../../src/translate/tsSyntaxCheck";
 import { SHIM_MEMBER_TABLE } from "../../src/translate/shimMembers.generated";
 import { fcConfig } from "./config";
-import { fileFromSource, genChainCase } from "./gen/genClassContext";
+import { fileFromSource, genChainCase, genMethodValueCase } from "./gen/genClassContext";
 
 /** Members of a Shim class and its chain with the class that declares each (nearest first). */
 function chainMembers(base: string): Array<{ name: string; owner: string }> {
@@ -254,5 +254,35 @@ describe("Property 43: Inherited statics resolve to the declaring class and impo
     const c = run(sources).classes.find((x) => x.className === "p0.K0")!;
     expect(c.text).toContain("return q_K2.zzS;");
     expect(c.text).toContain("import { K2 as q_K2 } from");
+  });
+});
+
+describe("Property 44: Method values are bound once, after super, in declaration order", () => {
+  /** **Validates: Requirements 22.8, 22.13** */
+  it("one bind per instance method used as a value, own methods first then the nearest base, after super", () => {
+    fc.assert(
+      fc.property(genMethodValueCase, (c) => {
+        const text = run(c.sources, "C0").classes.find((x) => x.className === "C0")!.text;
+        const lines = text.split("\n").map((l) => l.trim());
+        const found = lines
+          .map((l) => /^this\.(\w+) = this\.\1\.bind\(this\);$/.exec(l)?.[1])
+          .filter((n): n is string => n !== undefined);
+        expect(found).toEqual(c.expected);
+        // Static, field, accessor and Shim members are never bound.
+        for (const n of ["fld", "acc", "sm", "play"]) expect(found).not.toContain(n);
+        if (c.expected.length === 0) {
+          expect(text).not.toContain("constructor(");
+        } else {
+          expect(text.match(/constructor\(/g)).toHaveLength(1);
+          const ctor = lines.findIndex((l) => l.includes("constructor("));
+          const first = lines.findIndex((l) => l.includes(".bind(this);"));
+          // super(...) is the single line between the head and the first bind when the class has a base.
+          expect(first - ctor).toBe(c.hasBase ? 2 : 1);
+          if (c.hasBase) expect(lines[ctor + 1]).toMatch(/^super\(/);
+        }
+        expect(run(c.sources, "C0").classes.find((x) => x.className === "C0")!.text).toBe(text);
+      }),
+      fcConfig,
+    );
   });
 });

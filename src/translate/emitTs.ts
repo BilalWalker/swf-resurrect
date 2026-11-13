@@ -99,6 +99,8 @@ export interface EmitHooks {
    * the constructor exactly as written.
    */
   constructorBody?(cls: ClassNode, ctor: MethodNode | null): BodyItem[] | null;
+  /** Signature line of a synthesised constructor, without the opening brace. Default: `constructor()`. */
+  syntheticConstructorHead?(cls: ClassNode): string;
 }
 
 export interface EmitInput {
@@ -371,7 +373,7 @@ class Emitter {
       if (synthAt < 0) synthAt = members.length;
     }
     for (let i = 0; i <= members.length; i++) {
-      if (i === synthAt && plan !== null) this.synthConstructor(plan, d + 1);
+      if (i === synthAt && plan !== null) this.synthConstructor(plan, d + 1, n);
       if (i === members.length) break;
       const m = members[i];
       if (m === ctor && plan !== null) this.node2(m, d + 1, n, plan);
@@ -395,9 +397,9 @@ class Emitter {
     }
   }
 
-  private synthConstructor(plan: BodyItem[], d: number): void {
+  private synthConstructor(plan: BodyItem[], d: number, cls: ClassNode): void {
     this.blankBefore();
-    this.push(d, 'constructor() {');
+    this.push(d, `${this.hooks.syntheticConstructorHead?.(cls) ?? 'constructor()'} {`);
     this.bodyItems(plan, d + 1);
     this.push(d, '}');
   }

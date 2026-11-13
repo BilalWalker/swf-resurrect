@@ -10,10 +10,10 @@ import { emitTs, escapeComment } from './emitTs';
 import type { BodyItem, EmitHooks } from './emitTs';
 import { planFileImports } from './importPlan';
 import type { ImportPlanInput } from './importPlan';
-import { buildMemberTables } from './memberTables';
+import { buildMemberTables, orderByDeclaration } from './memberTables';
 import { SHIM_MEMBER_TABLE } from './shimMembers.generated';
 import type { ImportPlan } from './importPlan';
-import { collectReferences, createImportLines, createRewriter, findValueReferencedMethods } from './rewrite';
+import { collectReferences, createImportLines, createRewriter } from './rewrite';
 import { scan } from './scanner';
 import type { ClassNode, MethodNode, Node } from './scanner';
 import { normalizeNewlines, tokenize } from './tokenizer';
@@ -33,17 +33,20 @@ function isSuperCall(tokens: readonly Token[], node: Node): boolean {
   return b !== undefined && b.kind === 'punct' && b.text === '(';
 }
 
-function constructorHook(tokens: readonly Token[]): NonNullable<EmitHooks['constructorBody']> {
+/** Method names a class binds in its constructor, in declaration order (Requirement 22.13). */
+export type MethodValues = ReadonlyMap<string, readonly string[]>;
+
+function constructorHook(tokens: readonly Token[], values: MethodValues): NonNullable<EmitHooks['constructorBody']> {
   return (cls: ClassNode, ctor: MethodNode | null): BodyItem[] | null => {
-    const binds: BodyItem[] = findValueReferencedMethods(tokens, cls).map((m) => ({
+    const binds: BodyItem[] = (values.get(cls.name) ?? []).map((name) => ({
       kind: 'generated',
-      text: `this.${m.name} = this.${m.name}.bind(this);`,
+      text: `this.${name} = this.${name}.bind(this);`,
     }));
     const extendsBase = cls.extendsName !== null;
 
     if (ctor === null) {
       if (binds.length === 0) return null;
-      return extendsBase ? [{ kind: 'generated', text: 'super();' }, ...binds] : binds;
+      return extendsBase ? [{ kind: 'generated', text: 'super(...args);' }, ...binds] : binds;
     }
 
     const body = ctor.body.nodes;
@@ -61,6 +64,15 @@ function constructorHook(tokens: readonly Token[]): NonNullable<EmitHooks['const
     });
     return items;
   };
+}
+
+/**
+ * Head of a synthesised constructor (Requirement 22.13). A class with a base forwards its arguments, typed with
+ * ConstructorParameters of the extends clause as written (...args: any[] gives TS2556).
+ */
+function forwardingHead(cls: ClassNode): string {
+  if (cls.extendsName === null) return 'public constructor()';
+  return `public constructor(...args: ConstructorParameters<typeof ${cls.extendsName}>)`;
 }
 
 function findPackageName(nodes: readonly Node[]): string {
@@ -162,14 +174,28 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   // imported (the declaring class of an inherited static); when one is not bound yet the plan
   // is made again with those targets forced, and the rewriting pass uses the final plan.
   const wanted = new Set<string>();
+  const values = new Map<string, string[]>();
   emitTs(nodes, {
     source: src,
     tokens,
     rewriter: createRewriter(nodes, {
       shimNames: options.shimNames, plan, tables, self: options.selfQualified,
       onImportTarget: (t) => wanted.add(t),
+      onMethodValue: (cls, name) => {
+        const list = values.get(cls) ?? [];
+        if (!list.includes(name)) list.push(name);
+        values.set(cls, list);
+      },
     }),
   });
+  // The dry pass found which methods are used as values; the binds follow declaration order.
+  const dot = options.selfQualified.lastIndexOf('.');
+  const selfSimple = options.selfQualified.slice(dot + 1);
+  const bound = new Map<string, string[]>();
+  for (const [name, used] of values) {
+    const key = name === selfSimple ? options.selfQualified : dot < 0 ? name : `${options.selfQualified.slice(0, dot)}.${name}`;
+    bound.set(name, orderByDeclaration(tables, key, new Set(used)));
+  }
   if ([...wanted].some((t) => !plan.imports.some((p) => p.target === t))) {
     plan = planFileImports({ ...planInput, forced: [...wanted].sort(cmp) });
   }
@@ -192,7 +218,8 @@ export function translateCore(source: string, options: TranslateOptions): Transl
     rewriter: createRewriter(nodes, rwOptions),
     hooks: {
       importLines: () => imports.lines,
-      constructorBody: constructorHook(tokens),
+      constructorBody: constructorHook(tokens, bound),
+      syntheticConstructorHead: forwardingHead,
     },
   });
   const diagnostics =
