@@ -11,6 +11,7 @@ const CORE_FILES = [
   "src/convert/qualifiedName.ts",
   "src/translate/importPlan.ts",
   "src/emit/classPaths.ts",
+  "src/translate/shimMembers.ts",
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];
