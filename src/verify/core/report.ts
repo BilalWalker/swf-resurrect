@@ -39,7 +39,7 @@ export type BehaviourInput =
   | {
       status: 'compared';
       comparison: Extract<TraceComparison, { kind: 'compared' }>;
-      replay: { ticks: number; inputGroups: number; clicks: number };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number };
     };
 
 export interface FidelityInputs {
@@ -89,7 +89,7 @@ export type BehaviourReport =
       extra: TraceLine[];
       traceScore: number;
       firstDivergence: Divergence | null;
-      replay: { ticks: number; inputGroups: number; clicks: number };
+      replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number };
       knownBehaviourGaps: string[];
     };
 
@@ -165,7 +165,7 @@ function buildBehaviour(b: BehaviourInput, gaps: string[]): BehaviourReport {
     extra: c.extra.map((l) => ({ line: l.line, text: l.text })),
     traceScore: c.traceScore,
     firstDivergence: c.firstDivergence === null ? null : { ...c.firstDivergence },
-    replay: { ticks: b.replay.ticks, inputGroups: b.replay.inputGroups, clicks: b.replay.clicks },
+    replay: { ticks: b.replay.ticks, inputGroups: b.replay.inputGroups, clicks: b.replay.clicks, pointerEvents: b.replay.pointerEvents },
     knownBehaviourGaps: gaps,
   };
 }

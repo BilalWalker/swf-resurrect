@@ -302,13 +302,13 @@ describe('Player.dispatchClick', () => {
     return { ...made, clicks: () => clicks, reset: () => (clicks = []) };
   }
 
-  it('delivers one click to the hit clip with the shape as target', () => {
+  it('delivers one click to the hit clip, which is also the target (a Shape is never a Hit_Target)', () => {
     const { player, clicks } = clickScene();
     player.dispatchClick(110, 60);
     expect(clicks()).toHaveLength(1);
     const btn = (player.root as unknown as { btn: MovieClip }).btn;
     expect(clicks()[0]!.current).toBe(btn);
-    expect(clicks()[0]!.target).not.toBe(btn);
+    expect(clicks()[0]!.target).toBe(btn);
   });
 
   it('bubbles to ancestors', () => {
@@ -352,9 +352,35 @@ describe('Player.dispatchClick', () => {
     for (const s of seen) expect(s.current).toBe(s.owner);
     expect(seen[0]!.owner).toBe(btn);
     expect(seen[1]!.owner).toBe(player.root);
-    // The hit shape is the target everywhere, never the ancestor.
-    expect(seen[0]!.target).not.toBe(btn);
-    expect(seen[1]!.target).toBe(seen[0]!.target);
+    // The clip is the target everywhere; the shape under it never is.
+    expect(seen[0]!.target).toBe(btn);
+    expect(seen[1]!.target).toBe(btn);
+  });
+
+  it('fires click on the clip when it swaps its shape child between press and release', () => {
+    const clicks: unknown[] = [];
+    class Swapper extends MovieClip {
+      constructor() {
+        super();
+        this.stop();
+        this.addEventListener(MouseEvent.CLICK, (e) => clicks.push(e.target));
+      }
+    }
+    const root = sprite([[entry(1, 2, 10, 10, 'btn')]]);
+    const scene = sceneOf(root, {
+      '2': sprite([[entry(1, 1)], [entry(1, 3)]], 'Swapper'),
+      '3': { type: 'shape', file: '3.svg', origin: { x: 0, y: 0 } },
+    });
+    const { player } = setup(scene, { Swapper }, [1, 3]);
+    const btn = (player.root as unknown as { btn: MovieClip }).btn;
+    const before = btn._children[0];
+    player.dispatchMouseDown(20, 20);
+    btn.gotoAndStop(2);
+    player.update();
+    expect(btn._children[0]).not.toBe(before);
+    const out = player.dispatchMouseUp(20, 20);
+    expect(out.releaseOutside).toBeNull();
+    expect(clicks).toEqual([btn]);
   });
 
   it('warns once, not per entry, for a skewed matrix', () => {

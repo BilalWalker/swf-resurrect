@@ -285,6 +285,8 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
   return {
     status: 'compared',
     comparison,
-    replay: { ticks: plan.tickCount, inputGroups, clicks: plan.pressReleasePairs },
+    replay: { ticks: plan.tickCount, inputGroups, clicks: plan.pressReleasePairs,
+      pointerEvents: plan.pointers.filter((p) => p.tick < plan.tickCount).length,
+    },
   };
 }

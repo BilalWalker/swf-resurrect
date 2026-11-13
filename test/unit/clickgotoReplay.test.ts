@@ -61,6 +61,10 @@ describe('clickgoto Replay', () => {
     expect(plan.pointers.filter((x) => x.kind === 'up').map((x) => x.tick)).toEqual([3, 7, 12, 14, 20]);
     expect(plan.pressReleasePairs).toBe(5);
     expect(groups).toBe(21);
+    // Separate pointer events: each press arrives in the Input_Group before its release.
+    const downs = plan.pointers.filter((x) => x.kind === 'down').map((x) => x.tick);
+    expect(downs).toEqual([2, 6, 11, 13, 19]);
+    expect(plan.pointers.every((x) => !x.unpaired)).toBe(true);
   });
 
   it('runs 32 ticks without error', () => {

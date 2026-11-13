@@ -36,7 +36,7 @@ describe('html known behaviour gaps', () => {
         referenceLineCount: 0,
         capturedLineCount: 0,
         matched: 0,
-        replay: { ticks: 0, inputGroups: 0, clicks: 0 },
+        replay: { ticks: 0, inputGroups: 0, clicks: 0, pointerEvents: 0 },
         knownBehaviourGaps: [],
       } as never),
     );

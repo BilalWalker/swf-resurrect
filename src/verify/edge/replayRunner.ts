@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { ShapeBounds } from '../../../template/runtime/backend';
-import type { PlannedPointer, ReplayPlan } from '../core/replayPlan';
+import type { ReplayPlan } from '../core/replayPlan';
 import { svgShapeBounds } from '../core/svgBounds';
 import { formatTraceCall, splitTraceLines } from '../core/traceFormat';
 import { FakeBackend } from './fakeBackend';
@@ -80,7 +80,12 @@ async function main(): Promise<void> {
         clock.advance(player.frameIntervalMs);
         player.update();
       }
-      for (const c of clicksOf(plan.pointers)) if (c.tick === tick) player.dispatchClick(c.x, c.y);
+      for (const p of plan.pointers) {
+        if (p.tick !== tick) continue;
+        if (p.kind === 'move') player.dispatchMouseMove(p.x, p.y);
+        else if (p.kind === 'down') player.dispatchMouseDown(p.x, p.y);
+        else player.dispatchMouseUp(p.x, p.y);
+      }
       ticksRun = tick + 1;
     }
   } catch (e) {
@@ -90,20 +95,6 @@ async function main(): Promise<void> {
   }
   const result: ReplayRunnerResult = { lines, ticksRun, error };
   writeFileSync(resultPath, JSON.stringify(result), 'utf8');
-}
-
-/** Interim until sub-task 7.4: pairs a valid press and release at one position into a click. */
-function clicksOf(pointers: readonly PlannedPointer[]): Array<{ tick: number; x: number; y: number }> {
-  const out: Array<{ tick: number; x: number; y: number }> = [];
-  let down: PlannedPointer | null = null;
-  for (const p of pointers) {
-    if (p.kind === 'down') down = p;
-    else if (p.kind === 'up') {
-      if (down !== null && down.x === p.x && down.y === p.y) out.push({ tick: p.tick, x: p.x, y: p.y });
-      down = null;
-    }
-  }
-  return out;
 }
 
 main().catch((e) => {

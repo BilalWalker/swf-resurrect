@@ -134,7 +134,7 @@ function behaviourSection(r: FidelityReport): string {
     );
     parts.push(
       `<p>Reference lines: ${b.referenceLineCount}, captured lines: ${b.capturedLineCount}, matched: ${b.matched}</p>`,
-      `<p>Replay: ${b.replay.ticks} ticks, ${b.replay.inputGroups} input groups, ${b.replay.clicks} clicks</p>`,
+      `<p>Replay: ${b.replay.ticks} ticks, ${b.replay.inputGroups} input groups, ${b.replay.clicks} clicks, ${b.replay.pointerEvents} pointer events</p>`,
     );
     const d = b.firstDivergence;
     if (d !== null) {

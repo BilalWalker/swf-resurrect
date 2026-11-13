@@ -13,30 +13,32 @@ import { fcConfig } from './config';
 const ID_CT: DisplayListEntry['colorTransform'] = [1, 1, 1, 1, 0, 0, 0, 0];
 const at = (depth: number, tx: number, ty: number): DisplayListEntry => ({
   depth,
-  symbolId: 1,
+  symbolId: 2,
   matrix: [1, 0, 0, 1, tx, ty],
   colorTransform: ID_CT,
   name: '',
 });
 
-// Three 40 x 30 shapes: A at (0,0), B (above A) at (20,10), C at (100,0).
+// Three clips, each holding one 40 x 30 shape: A at (0,0), B (above A) at (20,10), C at (100,0). The Hit_Target of a
+// hit shape is its clip (the nearest Sprite/MovieClip), never the shape itself.
 const SCENE: SceneJson = {
   formatVersion: 1,
   stage: { width: 300, height: 300, backgroundColor: '#ffffff', frameRate: 10 },
   rootSymbolId: 0,
   symbols: {
     '0': { type: 'sprite', frameCount: 1, frames: [[at(1, 0, 0), at(2, 20, 10), at(3, 100, 0)]], labels: [] },
+    '2': { type: 'sprite', frameCount: 1, frames: [[{ ...at(1, 0, 0), symbolId: 1 }]], labels: [] },
     '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
   },
 };
 
-// Points with the shape they hit: A, B (over A), C, nothing, B only.
-const POINTS: Array<{ x: number; y: number; hit: string }> = [
-  { x: 5, y: 5, hit: 'A' },
-  { x: 30, y: 20, hit: 'B' },
-  { x: 120, y: 10, hit: 'C' },
-  { x: 200, y: 200, hit: 'stage' },
-  { x: 50, y: 35, hit: 'B' },
+// Points with the shape they hit (hit) and the Hit_Target that results: that shape's clip, or the stage for none.
+const POINTS: Array<{ x: number; y: number; hit: string; target: string }> = [
+  { x: 5, y: 5, hit: 'A', target: 'A' },
+  { x: 30, y: 20, hit: 'B', target: 'B' },
+  { x: 120, y: 10, hit: 'C', target: 'C' },
+  { x: 200, y: 200, hit: 'stage', target: 'stage' },
+  { x: 50, y: 35, hit: 'B', target: 'B' },
 ];
 
 type Op = { kind: 'move' | 'down' | 'up'; p: number };
@@ -68,7 +70,7 @@ function rig() {
   return { player, log };
 }
 
-/** Straightforward model of Requirements 14.4 to 14.8. Bubbling: shape, root, stage; the stage target stays alone. */
+/** Straightforward model of Requirements 14.4 to 14.8. Bubbling: clip, root, stage; the stage target stays alone. */
 function model(ops: Op[]) {
   const log: string[] = [];
   const outcomes: Array<{ pressed: string; hit: string } | null> = [];
@@ -85,21 +87,21 @@ function model(ops: Op[]) {
     if (pt.x !== px || pt.y !== py) {
       px = pt.x;
       py = pt.y;
-      emit('mouseMove', pt.hit);
+      emit('mouseMove', pt.target);
     }
     if (op.kind === 'down' && !down) {
       down = true;
-      pressed = pt.hit;
-      emit('mouseDown', pt.hit);
+      pressed = pt.target;
+      emit('mouseDown', pt.target);
     } else if (op.kind === 'up') {
       if (!down) outcomes.push(null);
       else {
         down = false;
-        emit('mouseUp', pt.hit);
-        if (pressed === pt.hit) {
-          emit('click', pt.hit);
+        emit('mouseUp', pt.target);
+        if (pressed === pt.target) {
+          emit('click', pt.target);
           outcomes.push(null);
-        } else outcomes.push({ pressed, hit: pt.hit });
+        } else outcomes.push({ pressed, hit: pt.target });
       }
     }
   }

@@ -13,8 +13,8 @@ import {
   type ConstructionContext,
 } from '../shim/internal';
 import { MovieClip } from '../shim/MovieClip';
-import type { DisplayObjectContainer } from '../shim/Sprite';
-import { Stage } from '../shim/Stage';
+import { DisplayObjectContainer } from '../shim/Sprite';
+import { isStage, Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
 import { hitTest } from './hitTest';
@@ -43,6 +43,17 @@ export interface PointerOutcome {
 
 const EPSILON_MS = 1e-9;
 const DEFAULT_MAX_CATCH_UP = 5;
+
+/**
+ * The Hit_Target for a hit object: its nearest ancestor-or-self that is a Sprite or MovieClip (the Shim's only
+ * InteractiveObject kinds; both extend DisplayObjectContainer, Shape does not). null when there is none.
+ */
+function interactiveTarget(hit: DisplayObject | undefined): DisplayObjectContainer | null {
+  for (let o: unknown = hit; o !== null && o !== undefined && !isStage(o); o = (o as DisplayObject)._parent) {
+    if (o instanceof DisplayObjectContainer) return o;
+  }
+  return null;
+}
 
 function isIdentityColor(ct: Readonly<ColorTransform8>): boolean {
   return ct[0] === 1 && ct[1] === 1 && ct[2] === 1 && ct[3] === 1 && ct[4] === 0 && ct[5] === 0 && ct[6] === 0 && ct[7] === 0;
@@ -226,7 +237,7 @@ export class Player {
    * own event. Returns the Hit_Target (the Stage_Object when no shape is hit).
    */
   private pointerEntry(x: number, y: number, sync = true): PointerTarget {
-    const target: PointerTarget = hitTest(buildHitView(this.root), x, y)?.source ?? this.stage;
+    const target = interactiveTarget(hitTest(buildHitView(this.root), x, y)?.source) ?? this.stage;
     if (x !== this.pointerX || y !== this.pointerY) {
       this.pointerX = x;
       this.pointerY = y;
