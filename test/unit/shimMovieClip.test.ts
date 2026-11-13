@@ -38,6 +38,8 @@ function rig(sym: SpriteSymbol, childFactory?: (e: DisplayListEntry) => DisplayO
     symbol: sym,
     symbolId: 1,
     scripts,
+    named: false,
+    instance: null,
     hooks: {
       createChild: (e) => {
         created.push(e.symbolId);
@@ -49,15 +51,15 @@ function rig(sym: SpriteSymbol, childFactory?: (e: DisplayListEntry) => DisplayO
         c.x = m[4];
       },
       applyColorTransform: () => {},
+      constructFrameOne: (mc) => renderFrame(mc),
     },
   };
   return { ctx, scripts, detached, created };
 }
 
 function make(r: Rig): MovieClip {
-  const mc = withConstructionContext(r.ctx, () => new MovieClip());
-  renderFrame(mc);
-  return mc;
+  // The constructor builds frame 1 through the hook (Construction_Bind).
+  return withConstructionContext(r.ctx, () => new MovieClip());
 }
 
 let warn: ReturnType<typeof vi.spyOn>;

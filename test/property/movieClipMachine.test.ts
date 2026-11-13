@@ -66,7 +66,7 @@ function build(specs: [ClipSpec, ClipSpec]): { parent: MovieClip; kids: [MovieCl
     createChild: (e) => {
       const spec = specs[e.symbolId - 2]!;
       return withConstructionContext(
-        { symbol: clipSymbol(spec), symbolId: e.symbolId, scripts, hooks },
+        { symbol: clipSymbol(spec), symbolId: e.symbolId, scripts, hooks, named: true, instance: null },
         () => new MovieClip(),
       ) as DisplayObject;
     },
@@ -74,6 +74,7 @@ function build(specs: [ClipSpec, ClipSpec]): { parent: MovieClip; kids: [MovieCl
     childDetached: () => {},
     applyMatrix: () => {},
     applyColorTransform: () => {},
+    constructFrameOne: (mc) => renderFrame(mc),
   };
   const parentSym: SpriteSymbol = {
     type: "sprite",
@@ -82,10 +83,9 @@ function build(specs: [ClipSpec, ClipSpec]): { parent: MovieClip; kids: [MovieCl
     labels: [],
   };
   const parent = withConstructionContext(
-    { symbol: parentSym, symbolId: 1, scripts, hooks },
+    { symbol: parentSym, symbolId: 1, scripts, hooks, named: false, instance: null },
     () => new MovieClip(),
   );
-  renderFrame(parent);
   const kids = [(parent as unknown as { c1: MovieClip }).c1, (parent as unknown as { c2: MovieClip }).c2];
   return { parent, kids: kids as [MovieClip, MovieClip] };
 }

@@ -5,9 +5,9 @@ import {
   attachChild,
   clipsPostOrder,
   clipsPreOrder,
-  currentConstructionContext,
   detachChild,
   isAttachedTo,
+  takeConstructionContext,
   type ConstructionContext,
 } from './internal';
 import { announceAdded, announceRemoved, Sprite } from './Sprite';
@@ -39,11 +39,16 @@ export class MovieClip extends Sprite {
 
   constructor() {
     super();
-    // Read once, at construction. Outside a context this is a one-frame empty clip.
-    this.ctx = currentConstructionContext();
-    // The root is built with the Stage_Object as parent, so `stage` works inside its constructor.
-    if (this.ctx?.rootParent) this._parent = this.ctx.rootParent;
-  }
+    // Read once, at construction (the active context is consumed). With none active, the Player's hooks may find
+    // the symbol of `new.target` or of its nearest registered ancestor (D39); otherwise this is a one-frame empty clip.
+    this.ctx = takeConstructionContext(new.target);
+    if (this.ctx !== null) {
+      this.ctx.instance = this;
+      // The root is built with the Stage_Object as parent, so `stage` works inside its constructor.
+      if (this.ctx.rootParent) this._parent = this.ctx.rootParent;
+      // Registers the node, sets the root state and builds frame 1: named children are bound before any derived code.
+      this.ctx.hooks.constructFrameOne(this);
+    }  }
 
   play(): void {
     this.isPlaying = true;

@@ -1660,6 +1660,11 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794555604576
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794556035748
       }
     ],
     "21.1 Build frame 1 in the `MovieClip` constructor": [
@@ -1667,6 +1672,11 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794554972831
+      },
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794556036388
       }
     ],
     "21.2 Method-value binds (constructor form, field form) and fields named like a child": [
@@ -1828,6 +1838,13 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794554978724
+      }
+    ],
+    "20. Translate: three small fixes (Requirement 30)": [
+      {
+        "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794556035873
       }
     ]
   }

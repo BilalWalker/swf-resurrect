@@ -16,6 +16,12 @@ export interface ClipHooks {
   childDetached(parent: DisplayObjectContainer, child: DisplayObject): void;
   applyMatrix(child: DisplayObject, matrix: DisplayListEntry['matrix']): void;
   applyColorTransform(child: DisplayObject, ct: DisplayListEntry['colorTransform']): void;
+  /**
+   * Called once by the MovieClip constructor, as soon as the instance exists (Requirement 24, D24): register the
+   * backend node, set the root state, then build frame 1 so that the named children are bound before any
+   * derived field initialiser or constructor statement runs.
+   */
+  constructFrameOne(mc: MovieClip): void;
 }
 
 /** Frame-script queue, as seen by a clip. ScriptQueue satisfies it. */
@@ -43,6 +49,36 @@ export interface ConstructionContext {
   cycle?: ClipCycle;
   /** The Stage_Object, set by the Player for the root clip only; MovieClip adopts it as its parent. */
   rootParent?: Stage;
+  /** The placement had an instance name (Requirement 28.2): the clip then takes no Default_Instance_Name. */
+  named: boolean;
+  /** Set by the MovieClip constructor as soon as the instance exists; read by the Player after a throw (21.3). */
+  instance: MovieClip | null;
+}
+
+/** Context for a MovieClip built by script (
+ew Cls()), found from the constructor chain; null when none. */
+export type ContextForConstructor = (newTarget: Function) => ConstructionContext | null;
+
+let contextForConstructor: ContextForConstructor | null = null;
+
+/** Installed by the Player when it is constructed (one movie per Player, D39); null removes it. */
+export function setContextForConstructor(provider: ContextForConstructor | null): void {
+  contextForConstructor = provider;
+}
+
+/**
+ * The context a MovieClip constructor consumes: the active one (taken, so that a 
+ew Cls() from script in a
+ * constructor body does not see it), else the one the Player finds for 
+ewTarget, else null.
+ */
+export function takeConstructionContext(newTarget: Function): ConstructionContext | null {
+  const active = current;
+  if (active !== null) {
+    current = null;
+    return active;
+  }
+  return contextForConstructor === null ? null : contextForConstructor(newTarget);
 }
 
 let current: ConstructionContext | null = null;

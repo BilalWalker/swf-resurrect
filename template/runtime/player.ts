@@ -6,6 +6,7 @@ import {
   clipsPreOrder,
   exitFrame,
   frameConstructed,
+  setContextForConstructor,
   setPointerPosition,
   withConstructionContext,
   type ClipCycle,
@@ -43,6 +44,7 @@ export interface PointerOutcome {
 
 const EPSILON_MS = 1e-9;
 const DEFAULT_MAX_CATCH_UP = 5;
+const ROOT_NAME = 'root1';
 
 /**
  * The Hit_Target for a hit object: its nearest ancestor-or-self that is a Sprite or MovieClip (the Shim's only
@@ -103,6 +105,7 @@ export class Player {
         childDetached: (parent, child) => this.detach(parent, child),
         applyMatrix: (child, m) => this.applyMatrix(child, m),
         applyColorTransform: (child, ct) => this.applyColor(child, ct),
+        constructFrameOne: (mc) => this.constructFrameOne(mc),
       };
       this.lastNow = this.clock.now();
 
@@ -110,6 +113,7 @@ export class Player {
       if (rootSymbol === undefined || rootSymbol.type !== 'sprite') {
         throw new Error(`Player: root symbol ${this.scene.rootSymbolId} is not a sprite`);
       }
+      this.installScriptConstruction();
       // The root is named before frame 1 builds its children or runs any script (Requirement 8.3).
       this.root = this.createClip(this.scene.rootSymbolId, rootSymbol, 'root1');
       this.initialBuild();
@@ -255,8 +259,16 @@ export class Player {
 
   // ---- instance creation ----
 
-  private createClip(symbolId: number, symbol: SpriteSymbol, instanceName?: string): MovieClip {
-    const ctx: ConstructionContext = { symbol, symbolId, scripts: this.scripts, hooks: this.hooks, cycle: this.cycle };
+  private createClip(symbolId: number, symbol: SpriteSymbol, instanceName?: string, named = instanceName !== undefined): MovieClip {
+    const ctx: ConstructionContext = {
+      symbol,
+      symbolId,
+      scripts: this.scripts,
+      hooks: this.hooks,
+      cycle: this.cycle,
+      named,
+      instance: null,
+    };
     // Only the root is created with an instance name; its parent is the Stage_Object, set before the constructor runs.
     if (instanceName !== undefined) ctx.rootParent = this.stage;
     let Cls: new () => MovieClip = MovieClip;
@@ -265,24 +277,61 @@ export class Player {
       if (linked !== undefined) Cls = linked as new () => MovieClip;
       else console.warn(`Player: class "${symbol.className}" is not in the registry; using MovieClip`);
     }
-    const mc = withConstructionContext(ctx, () => new Cls());
-    if (instanceName !== undefined) {
-      mc.name = instanceName;
-      // Only the root is created with an instance name; it is the stage root (Requirement 8.4).
+    // The MovieClip constructor registers the node and builds frame 1 (constructFrameOne), so the children are
+    // created and bound before any code of `Cls` runs. Events and frame-1 scripts wait until the whole tree exists
+    // (initialBuild, design G5b).
+    return withConstructionContext(ctx, () => new Cls());
+  }
+
+  /**
+   * Called by the MovieClip constructor (D24): registers the backend node, sets the root state for the root clip
+   * (its parent is already the Stage_Object), then renders frame 1, which creates the children and exposes the named
+   * ones. Nested children are created inside this call, so each child constructor ends before its parent's body.
+   */
+  private constructFrameOne(mc: MovieClip): void {
+    if (mc._parent === this.stage) {
+      mc.name = ROOT_NAME;
       mc._isStageRoot = true;
       attachRoot(this.stage, mc);
     }
     this.nodes.register(mc, this.backend.createContainer());
-    // Frame 1: creates and binds the children (named children are exposed as properties as they are made).
-    // Events and frame-1 scripts wait until the whole tree exists (initialBuild, design G5b).
     mc._renderFrame();
-    return mc;
   }
 
+  /**
+   * D39: the map from each registered constructor to the id of the symbol whose className is its registry key, and the
+   * provider for a MovieClip constructor that runs with no ConstructionContext (`new Cls()` from script).
+   */
+  private installScriptConstruction(): void {
+    const symbolOf = new Map<Function, number>();
+    for (const [key, ctor] of Object.entries(this.classRegistry)) {
+      for (const [id, sym] of Object.entries(this.scene.symbols)) {
+        if (sym.type === 'sprite' && sym.className === key) symbolOf.set(ctor, Number(id));
+      }
+    }
+    setContextForConstructor((newTarget) => {
+      for (let c: unknown = newTarget; typeof c === 'function'; c = Object.getPrototypeOf(c)) {
+        const id = symbolOf.get(c);
+        if (id === undefined) continue;
+        const symbol = this.scene.symbols[String(id)];
+        if (symbol === undefined || symbol.type !== 'sprite') return null;
+        return {
+          symbol,
+          symbolId: id,
+          scripts: this.scripts,
+          hooks: this.hooks,
+          cycle: this.cycle,
+          named: false,
+          instance: null,
+        };
+      }
+      return null;
+    });
+  }
   private createChild(entry: DisplayListEntry): DisplayObject {
     const symbol = this.scene.symbols[String(entry.symbolId)];
     if (symbol === undefined) throw new Error(`Player: unknown symbol ${entry.symbolId}`);
-    if (symbol.type === 'sprite') return this.createClip(entry.symbolId, symbol);
+    if (symbol.type === 'sprite') return this.createClip(entry.symbolId, symbol, undefined, entry.name !== '');
     const bounds = this.shapeBounds.get(entry.symbolId);
     if (bounds === undefined) throw new Error(`Player: no bounds for shape ${entry.symbolId}`);
     const shape = new ShapeObject(entry.symbolId, bounds);

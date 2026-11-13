@@ -42,3 +42,4 @@ Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handl
 | `Stage` (class with `addEventListener`, `removeEventListener`, `hasEventListener`, `dispatchEvent` only) | `Interactivity3.as:39` (decompiled copy line 38), `MainTimeline.as:47` |
 | `DisplayObject.stage` | `Interactivity3.as:39` (bare `stage` in the root constructor), `MainTimeline.as:47` (`click_mc.stage`) |
 | `ConstructionContext.rootParent`, `internal.attachRoot` | Support `DisplayObject.stage` inside the root constructor (`Interactivity3.as:39`) |
+| `ClipHooks.constructFrameOne`, `ConstructionContext.named` / `instance`, `internal.takeConstructionContext` / `setContextForConstructor` | Construction_Bind (internal API, not public): `Interactivity3.as:34` reads `joystick.x` in the constructor body, so the frame-1 children are bound in the `MovieClip` constructor; `new Cls()` from script finds its symbol through the Player |
