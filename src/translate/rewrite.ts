@@ -34,7 +34,7 @@ export interface RewriteOptions {
    * Receives every instance method of a translated class (own or of a translated superclass) that an
    * expression uses as a value, once per use, in source order (Requirement 22.13); used by the dry pass.
    */
-  onMethodValue?: (className: string, name: string) => void;
+  onMethodValue?: (className: string, name: string, inFieldInit: boolean) => void;
 }
 
 /** Right-hand sides of `is` / `instanceof` that JS `instanceof` gets wrong. */
@@ -91,7 +91,7 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
           options.onImportTarget?.(target);
         }
         if (ctx.member !== undefined && options.onMethodValue !== undefined) {
-          for (const name of rw.methodValues) options.onMethodValue(ctx.member.className, name);
+          for (const name of rw.methodValues) options.onMethodValue(ctx.member.className, name, ctx.member.fieldInit === true);
         }
         return rw.diags.length > 0 ? { text, diagnostics: rw.diags } : { text };
       } catch (e) {

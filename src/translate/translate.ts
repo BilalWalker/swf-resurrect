@@ -67,6 +67,16 @@ function constructorHook(tokens: readonly Token[], values: MethodValues): NonNul
 }
 
 /**
+ * Field form of the binds (design 21.2): the first instance member, so its initialiser runs right after
+ * `super` returns and before every other initialiser. Null for a class without binds.
+ */
+function bindsField(className: string, names: readonly string[]): string | null {
+  if (names.length === 0) return null;
+  const body = names.map((n) => `    this.${n} = this.${n}.bind(this);`).join('\n');
+  return `private readonly __binds_${className} = (() => {\n${body}\n  })();`;
+}
+
+/**
  * Head of a synthesised constructor (Requirement 22.13). A class with a base forwards its arguments, typed with
  * ConstructorParameters of the extends clause as written (...args: any[] gives TS2556).
  */
@@ -174,12 +184,15 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   // imported (the declaring class of an inherited static); when one is not bound yet the plan
   // is made again with those targets forced, and the rewriting pass uses the final plan.
   const values = new Map<string, string[]>();
+  // Classes in which an instance field initialiser reads a method value take the field form (design 21.2, D25).
+  const fieldForm = new Set<string>();
   const dryRewriter = createRewriter(nodes, {
     shimNames: options.shimNames, plan, tables, self: options.selfQualified,
-    onMethodValue: (cls, name) => {
+    onMethodValue: (cls, name, inFieldInit) => {
       const list = values.get(cls) ?? [];
       if (!list.includes(name)) list.push(name);
       values.set(cls, list);
+      if (inFieldInit) fieldForm.add(cls);
     },
   });
   emitTs(nodes, { source: src, tokens, rewriter: dryRewriter });
@@ -193,6 +206,10 @@ export function translateCore(source: string, options: TranslateOptions): Transl
     const key = name === selfSimple ? options.selfQualified : dot < 0 ? name : `${options.selfQualified.slice(0, dot)}.${name}`;
     bound.set(name, orderByDeclaration(tables, key, new Set(used)));
   }
+  // The constructor form is the default; the field form replaces it for a class that needs it.
+  const constructorBinds = new Map<string, string[]>();
+  const fieldBinds = new Map<string, string[]>();
+  for (const [name, list] of bound) (fieldForm.has(name) ? fieldBinds : constructorBinds).set(name, list);
   if ([...wanted].some((t) => !plan.imports.some((p) => p.target === t))) {
     plan = planFileImports({ ...planInput, forced: [...wanted].sort(cmp) });
   }
@@ -215,8 +232,10 @@ export function translateCore(source: string, options: TranslateOptions): Transl
     rewriter: createRewriter(nodes, rwOptions),
     hooks: {
       importLines: () => imports.lines,
-      constructorBody: constructorHook(tokens, bound),
+      constructorBody: constructorHook(tokens, constructorBinds),
       syntheticConstructorHead: forwardingHead,
+      firstInstanceMember: (cls: ClassNode) => bindsField(cls.name, fieldBinds.get(cls.name) ?? []),
+      childFieldNames: () => options.childNames ?? null,
     },
   });
   const diagnostics =

@@ -1,7 +1,7 @@
 /** Type-only definitions shared by the pure Transpiler files. No runtime code. */
 import type { MemberTables } from './memberTables';
 
-export type DiagnosticKind = 'unsupported-construct' | 'loose-type' | 'class-omitted' | 'unresolved-identifier';
+export type DiagnosticKind = 'unsupported-construct' | 'loose-type' | 'class-omitted' | 'unresolved-identifier' | 'child-field-initialiser';
 
 /** `line` is 1-based. */
 export interface Diagnostic {
@@ -21,6 +21,11 @@ export interface TranslateOptions {
   selfQualified: string;
   /** Qualified_Names of the other classes exported next to this file. */
   siblingClasses: ReadonlySet<string>;
+  /**
+   * Names of the frame-1 children of the symbol linked to this file's class (design 21.1, D38).
+   * A field of the class with one of these names is emitted with `declare`. Absent: the rule is off.
+   */
+  childNames?: ReadonlySet<string>;
   /** Injected parser (decision D4). */
   syntaxCheck: SyntaxCheck;
 }

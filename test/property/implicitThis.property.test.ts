@@ -9,7 +9,8 @@ import { tokenize } from "../../src/translate/tokenizer";
 import { tsSyntaxCheck } from "../../src/translate/tsSyntaxCheck";
 import { SHIM_MEMBER_TABLE } from "../../src/translate/shimMembers.generated";
 import { fcConfig } from "./config";
-import { fileFromSource, genChainCase, genMethodValueCase } from "./gen/genClassContext";
+import { fileFromSource, genChainCase, genFieldFormCase, genMethodValueCase } from "./gen/genClassContext";
+import { evalTranslated } from "../support/evalTranslated";
 
 /** Members of a Shim class and its chain with the class that declares each (nearest first). */
 function chainMembers(base: string): Array<{ name: string; owner: string }> {
@@ -281,6 +282,50 @@ describe("Property 44: Method values are bound once, after super, in declaration
           if (c.hasBase) expect(lines[ctor + 1]).toMatch(/^super\(/);
         }
         expect(run(c.sources, "C0").classes.find((x) => x.className === "C0")!.text).toBe(text);
+      }),
+      fcConfig,
+    );
+  });
+});
+
+describe("Property 46: A field initialiser sees the bound methods, and the bound function is one reference", () => {
+  /** **Validates: Requirements 22.13** */
+  it("field form: one bind per method in the first member, none in the constructor; every read is the same function", () => {
+    fc.assert(
+      fc.property(genFieldFormCase, (c) => {
+        const text = run([{ className: "Ticker", source: c.source }], "Ticker").classes.find((x) => x.className === "Ticker")!.text;
+        const lines = text.split("\n").map((l) => l.trim());
+        const found = lines
+          .map((l) => /^this\.(\w+) = this\.\1\.bind\(this\);$/.exec(l)?.[1])
+          .filter((n): n is string => n !== undefined);
+        expect(found).toEqual(c.expected);
+        // The binds sit in the first member, before every other member of the class.
+        expect(lines.findIndex((l) => l.startsWith("private readonly __binds_Ticker"))).toBe(1);
+        const ctor = lines.findIndex((l) => l.startsWith("public constructor(") || l.startsWith("constructor("));
+        if (c.hasCtor) expect(ctor).toBeGreaterThan(lines.findIndex((l) => l === "})();"));
+        else expect(ctor).toBe(-1);
+
+        const t = new (evalTranslated(text).Ticker)();
+        for (const n of c.inInit) {
+          expect(t[`init_${n}`]).toBe(t[n]);
+          expect(t[n].call(null)).toBe(t);
+        }
+        for (const n of c.inCtor) expect(t[`ctor_${n}`]).toBe(t[n]);
+        expect(run([{ className: "Ticker", source: c.source }], "Ticker").classes[0]!.text).toBe(text);
+      }),
+      fcConfig,
+    );
+  });
+
+  /** **Validates: Requirements 22.13** */
+  it("the same source with no initialiser read keeps the constructor form (Property 44 default)", () => {
+    fc.assert(
+      fc.property(genFieldFormCase, (c) => {
+        const src = c.source.replace(/:Function = m\d+;/g, ":Function;");
+        const text = run([{ className: "Ticker", source: src }], "Ticker").classes[0]!.text;
+        expect(text).not.toContain("__binds_");
+        const t = new (evalTranslated(text).Ticker)();
+        for (const n of c.inCtor) expect(t[`ctor_${n}`]).toBe(t[n]);
       }),
       fcConfig,
     );

@@ -135,3 +135,45 @@ export const genDottedAnnotationCase: fc.Arbitrary<DottedAnnotationCase> = fc
     const expected = [f, p, r, v, e].map(out);
     return { source, known: [...known], expected, resolved: names.filter((n) => knownSet.has(n)) };
   });
+
+
+export interface FieldFormCase {
+  /** AS3 source of `Ticker`, a class without a base, with methods m0..m{n-1}. */
+  source: string;
+  /** Methods read by an instance field initialiser (`init_<m>`). */
+  inInit: string[];
+  /** Methods read only by the constructor (`ctor_<m>`). */
+  inCtor: string[];
+  /** Every bound method, in declaration order. */
+  expected: string[];
+  hasCtor: boolean;
+}
+
+/**
+ * A class with 1 to 4 methods; a non-empty subset is read by instance field initialisers, another subset only by the
+ * constructor body. The class has a constructor when `inCtor` is non-empty or by choice.
+ */
+export const genFieldFormCase: fc.Arbitrary<FieldFormCase> = fc
+  .record({
+    count: fc.integer({ min: 1, max: 4 }),
+    initPick: fc.array(fc.boolean(), { minLength: 4, maxLength: 4 }),
+    ctorPick: fc.array(fc.boolean(), { minLength: 4, maxLength: 4 }),
+    ctorByChoice: fc.boolean(),
+    shuffle: fc.boolean(),
+  })
+  .map((r) => {
+    const names = Array.from({ length: r.count }, (_, i) => `m${i}`);
+    const inInit = names.filter((_, i) => r.initPick[i]);
+    if (inInit.length === 0) inInit.push(names[names.length - 1]!);
+    const inCtor = names.filter((n, i) => r.ctorPick[i] && !inInit.includes(n));
+    const hasCtor = inCtor.length > 0 || r.ctorByChoice;
+    const lines = ["package {", "  public class Ticker {"];
+    for (const n of inInit) lines.push(`    public var init_${n}:Function = ${n};`);
+    for (const n of inCtor) lines.push(`    public var ctor_${n}:Function;`);
+    if (hasCtor) lines.push(`    public function Ticker() { ${inCtor.map((n) => `ctor_${n} = ${n};`).join(" ")} }`);
+    for (const n of r.shuffle ? [...names].reverse() : names) lines.push(`    public function ${n}():Object { return this; }`);
+    lines.push("  }", "}", "");
+    const used = new Set([...inInit, ...inCtor]);
+    const order = r.shuffle ? [...names].reverse() : names;
+    return { source: lines.join("\n"), inInit, inCtor, expected: order.filter((n) => used.has(n)), hasCtor };
+  });

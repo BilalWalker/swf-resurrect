@@ -64,12 +64,28 @@ export function keyScriptPaths(relPaths: readonly string[]): { keyed: Array<{ qu
   return { keyed, skipped: skipped.sort(compareCodeUnits) };
 }
 
+/**
+ * For each symbol with a className, the instance names of its frame-1 placements (design 21.1, D38).
+ * The Pipeline builds it from Scene_JSON; a class without an entry has the rule off.
+ */
+export function childNamesByClass(scene: SceneJson): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const sym of Object.values(scene.symbols)) {
+    if (sym.type !== 'sprite' || sym.className === undefined) continue;
+    const names = out.get(sym.className) ?? new Set<string>();
+    for (const p of sym.frames[0] ?? []) if (p.name !== '') names.add(p.name);
+    out.set(sym.className, names);
+  }
+  return out;
+}
+
 /** Transpiles every source, then keeps the emit closure (Req 4.3). */
 export function planTranslate(
   sources: readonly ScriptSource[],
   scene: SceneJson,
   syntaxCheck: SyntaxCheck,
   skippedScripts: readonly string[] = [],
+  childNamesByClass?: ReadonlyMap<string, ReadonlySet<string>>,
 ): TranslateArtifact {
   const sorted = [...sources].sort((a, b) => compareCodeUnits(a.className, b.className));
   const siblingClasses: ReadonlySet<string> = new Set(sorted.map((s) => s.className));
@@ -90,6 +106,7 @@ export function planTranslate(
       tables,
       selfQualified: s.className,
       siblingClasses,
+      childNames: childNamesByClass?.get(s.className),
       syntaxCheck,
     });
     const info = r.classes.find((c) => c.name === simple) ?? r.classes[0];

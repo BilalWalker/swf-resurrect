@@ -10,6 +10,7 @@ import type { ClassOmission, LooseClass } from '../emit/classOmissions';
 import type { ClassPathEntry } from '../emit/classPaths';
 import type { EmitOptions, EmitResult } from '../emit/emit';
 import type { UnpackInput, UnpackResult } from '../unpack/unpack';
+import { childNamesByClass } from '../translate/planTranslate';
 import type { TranslateArtifact } from '../translate/planTranslate';
 import { buildReport, classStatus, serialiseReport, untranslatedCodeEntries } from '../translate/report';
 import type { TranslationReport } from '../translate/report';
@@ -25,7 +26,11 @@ export type { VerifyRequest, VerifySummary };
 export interface PipelineStages {
   unpack(i: UnpackInput): Promise<UnpackResult>;
   convert(u: UnpackResult): Promise<ConvertedArtifact>;
-  translate(u: UnpackResult, a: ConvertedArtifact): Promise<TranslateArtifact>;
+  translate(
+    u: UnpackResult,
+    a: ConvertedArtifact,
+    childNames?: ReadonlyMap<string, ReadonlySet<string>>,
+  ): Promise<TranslateArtifact>;
   emit(a: ConvertedArtifact, o: EmitOptions): Promise<EmitResult>;
   typeCheck(outputDir: string, files: readonly string[]): Promise<GateResult>;
   /** In-memory gate injected into Emit (design 19.4). When set and Emit returns its result, 	ypeCheck does not run. */
@@ -215,7 +220,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     io.out(`[convert] ok (${artifact.stats.svgWritten} svg written, ${artifact.stats.morphSkipped} morph skipped)\n`);
 
     stage = 'translate';
-    translated = await stages.translate(unpacked, artifact);
+    translated = await stages.translate(unpacked, artifact, childNamesByClass(artifact.scene));
     const available = new Set([...overridden, ...translated.classes.map((c) => c.className)]);
     unsupported = [
       ...artifact.unsupported,

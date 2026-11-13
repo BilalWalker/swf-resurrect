@@ -20,7 +20,11 @@ async function listAs(dir: string): Promise<string[]> {
   return out;
 }
 
-export async function translateStage(unpacked: UnpackResult, artifact: ConvertedArtifact): Promise<TranslateArtifact> {
+export async function translateStage(
+  unpacked: UnpackResult,
+  artifact: ConvertedArtifact,
+  childNames?: ReadonlyMap<string, ReadonlySet<string>>,
+): Promise<TranslateArtifact> {
   const dir = unpacked.scriptsDir;
   let paths: string[];
   try {
@@ -44,5 +48,5 @@ export async function translateStage(unpacked: UnpackResult, artifact: Converted
   if (skipped.length > 0) {
     console.warn(`translate: skipped ${skipped.length} script(s) with no valid class name: ${skipped.join(', ')}`);
   }
-  return planTranslate(sources, artifact.scene, tsSyntaxCheck, skipped);
+  return planTranslate(sources, artifact.scene, tsSyntaxCheck, skipped, childNames);
 }

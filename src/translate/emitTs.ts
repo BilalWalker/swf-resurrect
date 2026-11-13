@@ -49,6 +49,8 @@ export interface RewriteContext {
 
 export interface MemberContext {
   isStatic: boolean;
+  /** True for the initialiser of an instance field (it runs right after `super` returns). */
+  fieldInit?: boolean;
   /** Simple name of the enclosing class. */
   className: string;
 }
@@ -107,6 +109,13 @@ export interface EmitHooks {
   constructorBody?(cls: ClassNode, ctor: MethodNode | null): BodyItem[] | null;
   /** Signature line of a synthesised constructor, without the opening brace. Default: `constructor()`. */
   syntheticConstructorHead?(cls: ClassNode): string;
+  /**
+   * Text of a generated instance member placed first in the class body (may hold `\n`, with its own
+   * indentation relative to the member), or null for none. Used by the field form of method binds.
+   */
+  firstInstanceMember?(cls: ClassNode): string | null;
+  /** Names of the frame-1 children of the class's linked symbol; fields so named are not initialised. */
+  childFieldNames?(cls: ClassNode): ReadonlySet<string> | null;
 }
 
 export interface EmitInput {
@@ -379,6 +388,8 @@ class Emitter {
       synthAt = members.findIndex((m) => m.kind === 'method' || m.kind === 'accessor');
       if (synthAt < 0) synthAt = members.length;
     }
+    const first = this.hooks.firstInstanceMember?.(n) ?? null;
+    if (first !== null) this.push(d + 1, first);
     for (let i = 0; i <= members.length; i++) {
       if (i === synthAt && plan !== null) this.synthConstructor(plan, d + 1, n);
       if (i === members.length) break;
@@ -430,7 +441,7 @@ class Emitter {
     const mods = this.modifiers(n.modifiers, n.decl.isConst);
     const isStatic = n.modifiers.indexOf('static') >= 0;
     const savedMember = this.member;
-    this.member = this.curClass === null ? null : { isStatic, className: this.curClass.name };
+    this.member = this.curClass === null ? null : { isStatic, fieldInit: !isStatic, className: this.curClass.name };
     try {
       this.fieldDeclarators(n, mods, isStatic, d);
     } finally {
@@ -440,7 +451,20 @@ class Emitter {
   }
 
   private fieldDeclarators(n: FieldNode, mods: string, isStatic: boolean, d: number): void {
+    const childNames = this.curClass === null || isStatic ? null : this.hooks.childFieldNames?.(this.curClass) ?? null;
     for (const dc of n.decl.declarators) {
+      if (childNames !== null && childNames.has(dc.name) && !n.decl.isConst) {
+        // A field named like a frame-1 child must not overwrite the bound child (design 21.1, D38).
+        if (dc.init === null || this.isNullLiteral(dc.init)) {
+          this.push(d, `${mods}declare ${this.declaratorText(dc, 'field', null, true)};`);
+          continue;
+        }
+        this.diags.push({
+          kind: 'child-field-initialiser',
+          line: dc.line,
+          message: `field "${dc.name}" has the name of a timeline child and an initialiser; the initialiser overwrites the bound child`,
+        });
+      }
       let dflt: string | null = null;
       let declare = false;
       if (dc.init === null && !n.decl.isConst && this.rw.fieldDefault !== undefined) {
@@ -453,9 +477,16 @@ class Emitter {
     }
   }
 
-  private declaratorText(dc: Declarator, role: TypeRole, dflt: string | null = null): string {
+  /** True when the range is the single token `null` or `undefined`. */
+  private isNullLiteral(r: TokRange): boolean {
+    const sig = this.tokens.slice(r.from, r.to).filter((t) => t.kind !== 'comment');
+    return sig.length === 1 && sig[0].kind === 'id' && (sig[0].text === 'null' || sig[0].text === 'undefined');
+  }
+
+  private declaratorText(dc: Declarator, role: TypeRole, dflt: string | null = null, dropInit = false): string {
     const t = this.type(dc.type, dc.line, role);
     let s = dc.name + (t === '' ? '' : ': ' + t);
+    if (dropInit) return s;
     if (dc.init !== null) s += ' = ' + this.expr(dc.init);
     else if (dflt !== null) s += ' = ' + dflt;
     return s;

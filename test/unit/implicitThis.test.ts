@@ -11,6 +11,7 @@ import { planTranslate } from "../../src/translate/planTranslate";
 import { tokenize } from "../../src/translate/tokenizer";
 import { tsSyntaxCheck } from "../../src/translate/tsSyntaxCheck";
 import { typeCheckProject } from "../../src/translate/typeCheckGate";
+import { evalTranslated } from "../support/evalTranslated";
 import { fileFromSource } from "../property/gen/genClassContext";
 
 function env(files: Array<[string, string]>, self: string, over: Partial<ResolveEnv> = {}): ResolveEnv {
@@ -291,5 +292,82 @@ describe("forced imports and statement rollback", () => {
     const t = text("for (var i:int = mergeStyles(); int(); i++) {}");
     expect(t).toContain("// AS3:");
     expect(t).not.toMatch(/^import .*UIComponent/m);
+  });
+});
+// ---- field form of the binds (design 21.2, D25, Requirement 22.13) -----------------------------
+const TICKER_BODY =
+  "  public var listeners:Array = [];\n" +
+  "  public function hook(f:Function):int { listeners.push(f); return 1; }\n" +
+  "  public function unhook(f:Function):void { var i:int = listeners.indexOf(f); if (i >= 0) { listeners.splice(i, 1); } }\n" +
+  "  public function onTick():Object { return this; }\n";
+const ticker = (initField: string, ctorBody: string | null, head = "public class Ticker"): string =>
+  `package {\n${head} {\n${TICKER_BODY}${initField}\n${ctorBody === null ? "" : `  public function Ticker() { ${ctorBody} }\n`}}\n}\n`;
+const bareClass = (src: string): { text: string; exports: Record<string, any> } => {
+  const text = tr([{ className: "Ticker", source: src }], "Ticker").text;
+  return { text, exports: evalTranslated(text) };
+};
+
+describe("method-value binds: field form for a class whose initialiser reads a method", () => {
+  it("emits __binds_<Class> as the first instance member and no bind in the constructor", () => {
+    const { text } = bareClass(ticker("  public var reg:int = hook(onTick);", "var x:int = 1;"));
+    expect(text).toContain("private readonly __binds_Ticker = (() => {\n    this.onTick = this.onTick.bind(this);\n  })();");
+    expect(text.indexOf("__binds_Ticker")).toBeLessThan(text.indexOf("listeners"));
+    expect(text.match(/\.bind\(this\)/g)).toHaveLength(1);
+    expect(text).not.toMatch(/constructor\(\) \{[^}]*bind/);
+  });
+
+  it("gives a class without a constructor no constructor it did not declare, and no TS2556", () => {
+    const sources = [
+      { className: "Base", source: `package {\n${SPRITE}public class Base extends Sprite { public function Base(a:int, b:String) {} }\n}\n` },
+      { className: "Derived", source: "package {\npublic class Derived extends Base { public var reg:Object = hook(h);\npublic function hook(f:Function):Object { return f; }\npublic function h():void {} }\n}\n" },
+    ];
+    const derived = tr(sources, "Derived").text;
+    expect(derived).toContain("__binds_Derived");
+    expect(derived).not.toContain("constructor(");
+    const files = new Map(readTree(join(repoRoot, "template")));
+    const plan = planTranslate(sources, scene(["Derived"]), tsSyntaxCheck);
+    for (const c of plan.classes) files.set(`src/${c.className}.ts`, c.text);
+    const { errors } = typeCheckProject({ files, repoRoot });
+    expect(errors.filter((e) => e.code === 2556 || e.code === 2415)).toEqual([]);
+  });
+
+  it("takes the field form for a reference nested in an array literal of the initialiser", () => {
+    const { text } = bareClass(ticker("  public var nested:Array = [onTick];", null));
+    expect(text).toContain("__binds_Ticker");
+  });
+
+  it("keeps the constructor form when only a method body or the constructor reads the method", () => {
+    const { text } = bareClass(ticker("", "hook(onTick);"));
+    expect(text).not.toContain("__binds_");
+    expect(text).toMatch(/constructor\(\) \{\n\s+this\.onTick = this\.onTick\.bind\(this\);/);
+  });
+
+  it("is one reference: initialiser, constructor and later reads agree, this is the instance, remove matches", () => {
+    const { exports } = bareClass(
+      ticker("  public var viaInit:Function = onTick;\n  public var viaCtor:Function;", "viaCtor = onTick; hook(onTick);"),
+    );
+    const t = new exports.Ticker();
+    expect(t.viaInit).toBe(t.onTick);
+    expect(t.viaCtor).toBe(t.onTick);
+    expect(t.listeners[0]).toBe(t.onTick);
+    expect(t.onTick.call(null)).toBe(t);
+    t.unhook(t.onTick);
+    expect(t.listeners).toHaveLength(0);
+  });
+
+  it("the initialiser of the field form registers the very function that unhook removes", () => {
+    const { exports } = bareClass(ticker("  public var reg:int = hook(onTick);", null));
+    const t = new exports.Ticker();
+    expect(t.listeners).toHaveLength(1);
+    t.unhook(t.onTick);
+    expect(t.listeners).toHaveLength(0);
+  });
+
+  it("the constructor form gives the same identity and unhook result", () => {
+    const { exports } = bareClass(ticker("", "hook(onTick);"));
+    const t = new exports.Ticker();
+    expect(t.listeners[0]).toBe(t.onTick);
+    t.unhook(t.onTick);
+    expect(t.listeners).toHaveLength(0);
   });
 });
