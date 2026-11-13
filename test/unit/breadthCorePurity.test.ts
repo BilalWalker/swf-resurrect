@@ -52,11 +52,14 @@ describe("Core purity", () => {
 });
 
 describe("typescript-js imports", () => {
-  // The two production importers, plus one test that parses independently of tsSyntaxCheck on purpose.
+  // The two production importers, plus test files that parse independently of tsSyntaxCheck on purpose.
+  // test/support/evalTranslated.ts (21.2) is a test helper that transpiles translated code to run it; the
+  // tech.md rule concerns src/ modules, not test helpers.
   const ALLOWED = new Set([
     "src/translate/tsSyntaxCheck.ts",
     "src/translate/typeCheckGate.ts",
     "test/property/translateParse.test.ts",
+    "test/support/evalTranslated.ts",
   ]);
   const importRe = /(?:from\s*|import\s*\(?\s*|require\s*\(\s*)["']typescript-js["']/;
 
