@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "shim-table-and-sample-checks",
+      "description": "After the agent writes a file: a write under template/shim/ regenerates src/translate/shimMembers.generated.ts (the table Translate uses to resolve inherited Shim members), and a write under samples/ runs the provenance and licence checks. Other writes return at once. Shell command action, no credits.",
+      "trigger": "PostToolUse",
+      "matcher": "write",
+      "action": { "type": "command", "command": "node scripts/hooks/after-write.ts" },
+      "timeout": 120
+    }
+  ]
+}

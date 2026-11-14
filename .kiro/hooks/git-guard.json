@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "git-guard",
+      "description": "Before any shell command: block git commands that break .kiro/steering/git-workflow.md (push, add -A / add ., commit -a, --amend, rebase, reset --hard, clean, merge, cherry-pick, committing on main). The reasons go back to the agent. Shell command action, no credits.",
+      "trigger": "PreToolUse",
+      "matcher": "shell",
+      "action": { "type": "command", "command": "node scripts/hooks/git-guard.ts" },
+      "timeout": 15
+    }
+  ]
+}
