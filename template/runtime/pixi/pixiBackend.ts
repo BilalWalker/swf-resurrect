@@ -248,6 +248,27 @@ export class PixiBackend implements RenderBackend {
     return container;
   }
 
+  createClipGroup(): NodeHandle {
+    return this.track(new Container());
+  }
+
+  /**
+   * Clip group mask (design section 5, D4). Pixi 8.22.0 sources relied on, under node_modules/pixi.js/lib:
+   * - scene/container/container-mixins/effectsMixin.mjs:34-45 `set mask`: a Container value goes through
+   *   MaskEffectManager.getMaskEffect (rendering/mask/MaskEffectManager.mjs:25-34), which picks the first effect class
+   *   whose test accepts it; rendering/mask/stencil/StencilMask.mjs:39-41 accepts any Container (the stencil path).
+   * - rendering/mask/stencil/StencilMask.mjs:15-18 `init`: `includeInBuild = false` and `measurable = false` on the mask,
+   *   so a mask that is also a sibling in the scene graph is not collected as content.
+   * - rendering/mask/stencil/StencilMaskPipe.mjs:11-49 `push`: the mask container is collected once, between
+   *   pushMaskBegin and pushMaskEnd, with `includeInBuild` set back to false at :38; :76-80 draws it into the stencil
+   *   buffer with `colorMask.setMask(0)`, so its own pixels never reach the colour buffer; :81-87 `pushMaskEnd` sets
+   *   MASK_ACTIVE and re-enables colour (:87). The mask keeps its own transform because it is collected in the scene
+   *   graph (design section 5 measurement); `visible = false` would drop it from that collection, so it is never hidden.
+   */
+  setMask(group: NodeHandle, mask: NodeHandle | null): void {
+    (group as Container).mask = mask === null ? null : (mask as Container);
+  }
+
   addChildAt(parent: NodeHandle, child: NodeHandle, index: number): void {
     (parent as Container).addChildAt(child as Container, index);
   }

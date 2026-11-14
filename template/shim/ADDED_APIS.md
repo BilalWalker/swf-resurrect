@@ -53,3 +53,4 @@ Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handl
 | `Sprite.useHandCursor` (boolean, default true, stored only) | `BaseButton.as:48`, `Slider.as:393` (`track.useHandCursor = false`) |
 | `Event.formatToString(className, ...properties)` (instance method, as in Ruffle's `Event.as`; `Event.toString` uses it) | `ComponentEvent.as:29`, `SliderEvent.as:55` (bare call in an instance `toString`) |
 | `Event.clone(): Event` (instance method, as in Ruffle's `Event.as`: a new Event with the same type, bubbles and cancelable) | `ComponentEvent.as:32`, `SliderEvent.as:58` (`override clone(): Event`, local copy of `slider_component`) |
+| `ClipHooks.entryUpdated` (optional hook, internal) | Supports the Player's clip groups for the Scene_JSON `clipDepth` need (breadth Requirement 12): it tells the runtime which display-list entry describes each timeline child. No AS3 fixture line uses it (design section 11) |

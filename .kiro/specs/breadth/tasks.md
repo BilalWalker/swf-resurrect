@@ -597,12 +597,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend **Property 10** in `test/property/convertAccounting.property.test.ts` (filtered and blend-mode placements stay in the Scene_JSON, contribute exactly one `filter` or `blend-mode` entry each, and never count as drops), `test/unit/resolveTimeline.test.ts` (a filtered move without a character keeps the character id) and `test/unit/convertModel.test.ts`.
     - _Requirements: 13.1, 13.2, 13.3, 2.5_
 
-  - [-] 12.5 `computeClipLayout`
+  - [x] 12.5 `computeClipLayout`
     - Create `template/runtime/clipLayout.ts` with `ClipGroup` and `computeClipLayout(items)`; add it to the purity test.
     - Test: `test/property/masks.property.test.ts` (create), **Property 12: Mask classification and layout** (layout half: each non-mask item in at most one group, only when its depth is above the mask depth and not above `clipDepth`, member order kept, masks never members), with `test/property/gen/genSymbolGraph.ts` (create); unit rows in `test/unit/clipLayout.test.ts` (create: empty range, nested range, two masks).
     - _Requirements: 12.1, 12.2, 15.2, 15.5_
 
-  - [ ] 12.6 `createClipGroup`, `setMask`, Player reconcile, `ClipHooks.entryUpdated`
+  - [-] 12.6 `createClipGroup`, `setMask`, Player reconcile, `ClipHooks.entryUpdated`
     - `backend.ts`, `pixiBackend.ts` and `fakeBackend.ts` gain `createClipGroup()` and `setMask(group, mask)`; the mask node stays a visible sibling in the scene graph and is never hidden. `Player.reconcile(parent)` builds the layout from the parent's current-frame entries (a `WeakMap` updated by `ClipHooks.entryUpdated`, called from `MovieClip._renderFrame`), creates one group per mask range and applies the matrix of the current frame to the mask (Requirement 12.2). Check whether today's `buildHitView` includes the mask shape; if it does, exclude it and log that (a mask layer is not a hit target in Flash). Add the `ClipHooks.entryUpdated` row to `template/shim/ADDED_APIS.md`, saying it supports clip groups for the Scene_JSON `clipDepth` need (no AS3 fixture line uses it, as design section 11 states). No Convert output carries `clipDepth` yet (12.7), so existing samples are unchanged.
     - Test: `test/unit/player.test.ts` rows (a scene with a mask placement creates one group per range, the mask node is a visible sibling, the mask matrix follows the frame, the mask shape is not a hit target) and `test/e2e/render.e2e.test.ts` (Chromium: clip with a moving matrix, one mask shared by two targets goes through one group and stays correct after a move; skipped when Chromium is missing).
     - _Requirements: 12.1, 12.2, 12.5, 12.7_

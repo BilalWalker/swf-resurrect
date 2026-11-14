@@ -26,6 +26,7 @@ import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
+import { computeClipLayout } from './clipLayout';
 import { hasOffsets, stripAlphaAdd } from './colourMatrix';
 import { constructorSite, messageOf, type ErrorSink } from './errorReport';
 import { hitTestAll, resolveHitTarget, type TargetNode } from './hitTest';
@@ -52,6 +53,24 @@ export type PointerTarget = DisplayObject | Stage;
 export interface PointerOutcome {
   /** Set when a Pressed_Target existed and the Hit_Target at release was another object. */
   releaseOutside: { pressed: PointerTarget; hit: PointerTarget } | null;
+}
+
+/** The grouping of one parent's children that `planClipGroups` computed. */
+interface ClipPlan {
+  groupOf: Map<DisplayObject, number>;
+  maskOf: Map<DisplayObject, number>;
+  memberCounts: number[];
+  signature: string;
+}
+
+/** What `reconcileGrouped` built for one parent. */
+interface GroupedLayout {
+  children: DisplayObject[];
+  signature: string;
+  groupNodes: NodeHandle[];
+  masks: DisplayObject[];
+  /** A child was detached since the build; rebuild at the next reconcile. */
+  stale: boolean;
 }
 
 const EPSILON_MS = 1e-9;
@@ -133,6 +152,9 @@ export class Player {
         childDetached: (parent, child) => this.detach(parent, child),
         applyMatrix: (child, m) => this.applyMatrix(child, m),
         applyColorTransform: (child, ct) => this.applyColor(child, ct),
+        entryUpdated: (child, entry) => {
+          this.entries.set(child, entry);
+        },
         constructFrameOne: (mc) => this.constructFrameOne(mc),
       };
       this.lastNow = this.clock.now();
@@ -272,7 +294,7 @@ export class Player {
    */
   private pointerEntry(x: number, y: number, sync = true): PointerTarget {
     const cache = new Map<unknown, TargetView>();
-    const hits = hitTestAll(buildHitView(this.root), x, y).map((h) => targetViewOf(h.source, cache));
+    const hits = hitTestAll(buildHitView(this.root, (o) => this.maskObjects.has(o)), x, y).map((h) => targetViewOf(h.source, cache));
     const picked = resolveHitTarget(hits, this.stage);
     const target = picked === this.stage ? this.stage : ((picked as TargetView).source as DisplayObjectContainer);
     if (x !== this.pointerX || y !== this.pointerY) {
@@ -402,6 +424,13 @@ export class Player {
     const pNode = this.nodes.nodeOf(parent);
     if (pNode === undefined) return;
     const want = parent._children;
+    const plan = this.planClipGroups(want);
+    const grouped = this.layouts.get(parent);
+    if (plan !== null) {
+      this.reconcileGrouped(parent, pNode, want, plan, grouped);
+      return;
+    }
+    if (grouped !== undefined) this.dissolveGroups(parent, pNode, grouped);
     const have = this.attachedOrder.get(parent) ?? [];
     if (have.length === want.length && have.every((c, i) => c === want[i])) return;
     for (const c of have) {
@@ -421,6 +450,132 @@ export class Player {
       this.backend.addChildAt(pNode, n, i);
     });
     this.attachedOrder.set(parent, want.slice());
+  }
+
+  // ---- clip groups (breadth design section 5, D4) ----
+
+  /** The entry last given to each timeline child (`ClipHooks.entryUpdated`); script-added children have none. */
+  private readonly entries = new WeakMap<DisplayObject, DisplayListEntry>();
+  /** Parents whose children are laid out in clip groups; absent for a parent with no mask placement. */
+  private readonly layouts = new WeakMap<DisplayObject, GroupedLayout>();
+  /** The node that holds a child's node when that is a clip group instead of the parent's node. */
+  private readonly holders = new WeakMap<DisplayObject, NodeHandle>();
+  /** Mask placements: not hit targets (a mask layer is not one in Flash). */
+  private readonly maskObjects = new WeakSet<DisplayObject>();
+
+  /** The clip layout of `want`, or null when no child is a mask placement. Script-added children are ungrouped. */
+  private planClipGroups(want: readonly DisplayObject[]): ClipPlan | null {
+    const items: Array<{ depth: number; clipDepth?: number }> = [];
+    const itemChild: DisplayObject[] = [];
+    let anyMask = false;
+    for (const c of want) {
+      const e = this.entries.get(c);
+      if (e === undefined) continue;
+      items.push(e.clipDepth === undefined ? { depth: e.depth } : { depth: e.depth, clipDepth: e.clipDepth });
+      itemChild.push(c);
+      if (e.clipDepth !== undefined) anyMask = true;
+    }
+    if (!anyMask) return null;
+    const layout = computeClipLayout(items);
+    const groupOf = new Map<DisplayObject, number>();
+    const maskOf = new Map<DisplayObject, number>();
+    layout.groups.forEach((g, gi) => {
+      maskOf.set(itemChild[g.maskIndex]!, gi);
+      for (const m of g.memberIndices) groupOf.set(itemChild[m]!, gi);
+    });
+    const memberCounts = layout.groups.map((g) => g.memberIndices.length);
+    const signature = want.map((c) => `${groupOf.get(c) ?? -1}:${maskOf.get(c) ?? -1}`).join(',');
+    return { groupOf, maskOf, memberCounts, signature };
+  }
+
+  /**
+   * Lays out `want` as the parent's node children: each child in order, a mask as a plain visible sibling, and one clip
+   * group per mask range at the position of its first masked child (right after the mask when the range is empty).
+   * Rebuilt whole when the children or the grouping change; the mask nodes keep following their frame matrix on their own.
+   */
+  private reconcileGrouped(
+    parent: DisplayObjectContainer,
+    pNode: NodeHandle,
+    want: readonly DisplayObject[],
+    plan: ClipPlan,
+    prev: GroupedLayout | undefined,
+  ): void {
+    if (
+      prev !== undefined &&
+      !prev.stale &&
+      prev.signature === plan.signature &&
+      prev.children.length === want.length &&
+      prev.children.every((c, i) => c === want[i])
+    ) {
+      return;
+    }
+    if (prev !== undefined) this.dissolveGroups(parent, pNode, prev);
+    for (const c of this.attachedOrder.get(parent) ?? []) {
+      const n = this.nodes.nodeOf(c);
+      if (n !== undefined) this.backend.removeChild(pNode, n);
+    }
+    const groupNodes = plan.memberCounts.map(() => this.backend.createClipGroup());
+    const members = plan.memberCounts.map(() => 0);
+    const placed = new Set<number>();
+    const masks: DisplayObject[] = [];
+    const maskNodes: NodeHandle[] = [];
+    let top = 0;
+    for (const c of want) {
+      const n = this.nodeFor(c);
+      const gi = plan.groupOf.get(c);
+      if (gi !== undefined) {
+        if (!placed.has(gi)) {
+          placed.add(gi);
+          this.backend.addChildAt(pNode, groupNodes[gi]!, top++);
+        }
+        this.backend.addChildAt(groupNodes[gi]!, n, members[gi]!++);
+        this.holders.set(c, groupNodes[gi]!);
+        continue;
+      }
+      this.backend.addChildAt(pNode, n, top++);
+      this.holders.delete(c);
+      const mi = plan.maskOf.get(c);
+      if (mi === undefined) continue;
+      masks.push(c);
+      maskNodes[mi] = n;
+      this.maskObjects.add(c);
+      if (plan.memberCounts[mi] === 0) this.backend.addChildAt(pNode, groupNodes[mi]!, top++);
+    }
+    // The masks are in the scene graph now; a mask set earlier would see a detached node.
+    groupNodes.forEach((g, gi) => this.backend.setMask(g, maskNodes[gi]!));
+    this.attachedOrder.set(parent, want.slice());
+    this.layouts.set(parent, { children: want.slice(), signature: plan.signature, groupNodes, masks, stale: false });
+  }
+
+  /** Takes the children out of their clip groups, removes the groups and returns the parent to a flat child list. */
+  private dissolveGroups(parent: DisplayObjectContainer, pNode: NodeHandle, layout: GroupedLayout): void {
+    for (const c of layout.children) {
+      const n = this.nodes.nodeOf(c);
+      const holder = this.holders.get(c);
+      if (n !== undefined) this.backend.removeChild(holder ?? pNode, n);
+      this.holders.delete(c);
+    }
+    for (const g of layout.groupNodes) {
+      this.backend.setMask(g, null);
+      this.backend.removeChild(pNode, g);
+      this.backend.destroyNode(g);
+    }
+    for (const m of layout.masks) this.maskObjects.delete(m);
+    this.layouts.delete(parent);
+    this.attachedOrder.set(parent, []);
+  }
+
+  /** The node of `c`, created for a child added by script. */
+  private nodeFor(c: DisplayObject): NodeHandle {
+    let n = this.nodes.nodeOf(c);
+    if (n === undefined) {
+      n = this.backend.createContainer();
+      this.nodes.register(c, n);
+      this.backend.setTransform(n, { x: c.x, y: c.y, scaleX: c.scaleX, scaleY: c.scaleY, rotationDeg: c.rotation });
+      this.backend.setAlpha(n, c.alpha);
+      this.backend.setVisible(n, c.visible);
+    }
+    return n;
   }
 
   /** Reconciles node lists for the whole tree, then pushes script-changed properties. */
@@ -443,8 +598,16 @@ export class Player {
     const c = this.nodes.nodeOf(child);
     const order = this.attachedOrder.get(parent);
     if (order !== undefined) this.attachedOrder.set(parent, order.filter((o) => o !== child));
+    const layout = this.layouts.get(parent);
+    if (layout !== undefined) {
+      layout.children = layout.children.filter((o) => o !== child);
+      layout.stale = true;
+    }
+    this.maskObjects.delete(child);
     if (c === undefined) return;
-    if (p !== undefined) this.backend.removeChild(p, c);
+    const holder = this.holders.get(child);
+    this.holders.delete(child);
+    if (p !== undefined) this.backend.removeChild(holder ?? p, c);
     this.backend.destroyNode(c);
   }
 

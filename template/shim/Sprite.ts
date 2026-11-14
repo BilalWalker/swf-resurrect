@@ -202,6 +202,7 @@ export class Sprite extends DisplayObjectContainer {
     const ctx = this._ctx;
     if (ctx === null) return;
     const child = ctx.hooks.createChild(entry);
+    ctx.hooks.entryUpdated?.(child, entry);
     ctx.hooks.applyMatrix(child, entry.matrix);
     ctx.hooks.applyColorTransform(child, entry.colorTransform);
     const index = this._indexForDepth(entry.depth);

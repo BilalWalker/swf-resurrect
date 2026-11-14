@@ -339,4 +339,99 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
     expect(rgb(110, 50)).toEqual([255, 255, 255]); // inside the container box, between the two glyphs: unchanged
     expect(rgb(45, 50)).toEqual([255, 255, 255]);
   });
-});
+
+  // Clip groups (task 12.6): two red squares in one group, one blue square as the mask, a sibling of the group.
+  const square = (x1: number, y1: number, x2: number, y2: number, color: string): ShapeJson => ({
+    formatVersion: 1,
+    paths: [
+      {
+        contours: [{ outer: [['M', x1, y1], ['L', x2, y1], ['L', x2, y2], ['L', x1, y2], ['Z']], holes: [] }],
+        fill: { kind: 'solid', color, alpha: 1 },
+        stroke: null,
+      },
+    ],
+  });
+
+  type MaskPose = { x: number; y: number; scaleX: number; scaleY: number; rotationDeg: number };
+
+  /** Renders the mask scene once per pose of the mask node and returns an rgb reader for each. */
+  async function renderMasked(poses: MaskPose[], targetsX: number[]): Promise<Array<(x: number, y: number) => [number, number, number]>> {
+    const frames = await page!.evaluate(
+      async ({ poses: ps, targetsX: xs, w, h, red, blue }) => {
+        const T = (globalThis as unknown as { T: { Application: new () => any; PixiBackend: new () => any } }).T;
+        const app = new T.Application();
+        await app.init({ width: w, height: h, background: '#ffffff', antialias: false, resolution: 1, autoStart: false });
+        const backend = new T.PixiBackend();
+        await backend.loadShape(1, red, '');
+        await backend.loadShape(2, blue, '');
+        const root = backend.createContainer();
+        const maskNode = backend.createShape(2);
+        const group = backend.createClipGroup();
+        backend.addChildAt(root, maskNode, 0);
+        backend.addChildAt(root, group, 1);
+        xs.forEach((x: number, i: number) => {
+          const t = backend.createShape(1);
+          backend.setTransform(t, { x, y: 0, scaleX: 1, scaleY: 1, rotationDeg: 0 });
+          backend.addChildAt(group, t, i);
+        });
+        backend.setMask(group, maskNode);
+        app.stage.addChild(root);
+        const out: number[][] = [];
+        for (const pose of ps) {
+          backend.setTransform(maskNode, pose);
+          app.renderer.render(app.stage);
+          const copy = document.createElement('canvas');
+          copy.width = w;
+          copy.height = h;
+          const ctx = copy.getContext('2d')!;
+          ctx.drawImage(app.canvas as HTMLCanvasElement, 0, 0);
+          const px = ctx.getImageData(0, 0, w, h).data;
+          const r: number[] = [];
+          for (let i = 0; i < px.length; i += 4) r.push(px[i]!, px[i + 1]!, px[i + 2]!);
+          out.push(r);
+        }
+        app.destroy(true, { children: true });
+        return out;
+      },
+      { poses, targetsX, w: W, h: H, red: square(0, 0, 80, 80, '#ff0000'), blue: square(0, 0, 60, 60, '#0000ff') },
+    );
+    return frames.map((r) => (x, y) => {
+      const i = (y * W + x) * 3;
+      return [r[i]!, r[i + 1]!, r[i + 2]!];
+    });
+  }
+
+  const isRed = (c: [number, number, number]): boolean => c[0] > 200 && c[1] < 60 && c[2] < 60;
+  const isWhite = (c: [number, number, number]): boolean => c[0] > 240 && c[1] > 240 && c[2] > 240;
+  const hasBlue = (read: (x: number, y: number) => [number, number, number]): boolean => {
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (read(x, y)[2] > read(x, y)[0] + 100) return true;
+    return false;
+  };
+  const pose = (x: number, y: number, s = 1): MaskPose => ({ x, y, scaleX: s, scaleY: s, rotationDeg: 0 });
+
+  it('a clip group shows the target only inside the mask, which keeps its own matrix and is never drawn itself', async () => {
+    const [f1] = await renderMasked([pose(20, 10)], [0]);
+    expect(isRed(f1!(40, 40))).toBe(true); // inside the mask and the target
+    expect(isWhite(f1!(10, 40))).toBe(true); // target, left of the mask
+    expect(isWhite(f1!(40, 75))).toBe(true); // target, below the mask (mask ends at y 70)
+    expect(isWhite(f1!(100, 40))).toBe(true); // right of the target and the mask: background
+    expect(hasBlue(f1!)).toBe(false); // the mask's own fill is not content
+  });
+
+  it('one mask shared by two targets goes through one group and stays correct after it moves', async () => {
+    const [f1, f2, f3] = await renderMasked([pose(20, 10), pose(110, 5), pose(30, 20, 1.5)], [0, 100]);
+    // Frame 1: mask (20..80, 10..70) covers only the first target (0..80).
+    expect(isRed(f1!(40, 40))).toBe(true);
+    expect(isWhite(f1!(130, 40))).toBe(true);
+    // Frame 2: the mask moved to (110..170, 5..65): the first target is clipped away, the second shows; no stale area.
+    expect(isWhite(f2!(40, 40))).toBe(true);
+    expect(isRed(f2!(130, 40))).toBe(true);
+    expect(isWhite(f2!(130, 70))).toBe(true);
+    expect(isWhite(f2!(105, 40))).toBe(true);
+    // Frame 3: scaled 1.5 at (30,20): box (30..120, 20..110) clipped by the targets (y < 80).
+    expect(isRed(f3!(50, 50))).toBe(true);
+    expect(isRed(f3!(110, 50))).toBe(true);
+    expect(isWhite(f3!(110, 90))).toBe(true);
+    expect(isWhite(f3!(125, 50))).toBe(true);
+    for (const f of [f1!, f2!, f3!]) expect(hasBlue(f)).toBe(false);
+  });});

@@ -21,6 +21,13 @@ export interface RenderBackend {
   loadShape(symbolId: number, shape: ShapeJson, assetBase: string): Promise<ShapeBounds>;
   createContainer(): NodeHandle;
   createShape(symbolId: number): NodeHandle;
+  /** A plain container that holds the placements one mask covers (design section 5); it carries no transform of its own. */
+  createClipGroup(): NodeHandle;
+  /**
+   * Clips `group` to `mask`, or removes the clip with null. The mask node must be in the scene graph (a sibling of the
+   * group, same coordinate space); the backend draws it as a mask and never as content, and it stays visible.
+   */
+  setMask(group: NodeHandle, mask: NodeHandle | null): void;
   addChildAt(parent: NodeHandle, child: NodeHandle, index: number): void;
   removeChild(parent: NodeHandle, child: NodeHandle): void;
   setTransform(

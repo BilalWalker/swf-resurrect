@@ -4,7 +4,7 @@ import { assertShapeDrawn, DRAWN_FILLS, type DrawnFills, type ShapeJson } from '
 
 export interface FakeNode {
   id: number;
-  kind: 'container' | 'shape';
+  kind: 'container' | 'shape' | 'clipGroup';
   symbolId: number | null;
   children: FakeNode[];
   parent: FakeNode | null;
@@ -14,6 +14,8 @@ export interface FakeNode {
   colorMultiplier: [number, number, number, number] | null;
   /** The transform last given to setColorOffset; null when none or removed. */
   colorOffset: ColorTransform8 | null;
+  /** The node last given to setMask on this node; null when none or removed. */
+  mask: FakeNode | null;
   destroyed: boolean;
 }
 
@@ -46,6 +48,14 @@ export class FakeBackend implements RenderBackend {
 
   createShape(symbolId: number): FakeNode {
     return this.make('shape', symbolId);
+  }
+
+  createClipGroup(): FakeNode {
+    return this.make('clipGroup', null);
+  }
+
+  setMask(group: NodeHandle, mask: NodeHandle | null): void {
+    (group as FakeNode).mask = mask as FakeNode | null;
   }
 
   addChildAt(parent: NodeHandle, child: NodeHandle, index: number): void {
@@ -111,6 +121,7 @@ export class FakeBackend implements RenderBackend {
       visible: true,
       colorMultiplier: null,
       colorOffset: null,
+      mask: null,
       destroyed: false,
     };
     this.nodes.push(node);

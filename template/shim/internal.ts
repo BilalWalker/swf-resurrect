@@ -17,6 +17,12 @@ export interface ClipHooks {
   applyMatrix(child: DisplayObject, matrix: DisplayListEntry['matrix']): void;
   applyColorTransform(child: DisplayObject, ct: DisplayListEntry['colorTransform']): void;
   /**
+   * The display-list entry that now describes a timeline child: called when the child is created and on every render of
+   * a retained child. Supports the Player's clip groups (Scene_JSON `clipDepth`). Optional: a runtime without clip
+   * groups can leave it out.
+   */
+  entryUpdated?(child: DisplayObject, entry: DisplayListEntry): void;
+  /**
    * Called once by the Sprite constructor (which MovieClip inherits), as soon as the instance exists (Requirement 24,
    * D24): register the backend node, set the root state, then call buildFrameOne(sprite) so that the named children
    * are bound before any derived field initialiser or constructor statement runs.

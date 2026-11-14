@@ -115,6 +115,7 @@ export class MovieClip extends Sprite {
           this._expose(entry.name, old.child);
         }
         old.entry = entry;
+        ctx.hooks.entryUpdated?.(old.child, entry);
         continue;
       }
       if (old !== undefined) this._removeTimelineChild(entry.depth, old, announce && backward);

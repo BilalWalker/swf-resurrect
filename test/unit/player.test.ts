@@ -582,3 +582,98 @@ describe('Player.dispatchClick', () => {
     warn.mockRestore();
   });
 });
+
+describe('Player clip groups (breadth task 12.6)', () => {
+  const masked = (e: DisplayListEntry, clipDepth: number): DisplayListEntry => ({ ...e, clipDepth });
+  const kindsOf = (n: FakeNode): string[] => n.children.map((c) => c.kind);
+
+  it('creates one group per mask range, holding the masked nodes in depth order, and the mask is a visible sibling', () => {
+    // depth 1 mask over depths 2 and 3; depth 4 is above the range; a second mask at depth 5 covers depth 6.
+    const root = sprite([[masked(entry(1, 1), 3), entry(2, 1), entry(3, 1), entry(4, 1), masked(entry(5, 1), 6), entry(6, 1)]]);
+    const { backend, player } = setup(sceneOf(root));
+    const top = player.rootNode as FakeNode;
+    expect(kindsOf(top)).toEqual(['shape', 'clipGroup', 'shape', 'shape', 'clipGroup']);
+    const [mask1, group1, above, mask2, group2] = top.children;
+    expect(group1!.children.map((c) => c.symbolId)).toEqual([1, 1]);
+    expect(group1!.mask).toBe(mask1);
+    expect(group2!.children).toHaveLength(1);
+    expect(group2!.mask).toBe(mask2);
+    expect(above!.parent).toBe(top);
+    for (const m of [mask1!, mask2!]) {
+      expect(m.visible).toBe(true);
+      expect(m.parent).toBe(top);
+    }
+    expect(backend.liveNodes.filter((n) => n.kind === 'clipGroup')).toHaveLength(2);
+  });
+
+  it('gives a mask with an empty range its own group, so the mask is never drawn as content', () => {
+    const root = sprite([[masked(entry(1, 1), 1), entry(5, 1)]]);
+    const { player } = setup(sceneOf(root));
+    const top = player.rootNode as FakeNode;
+    expect(kindsOf(top)).toEqual(['shape', 'clipGroup', 'shape']);
+    expect(top.children[1]!.children).toHaveLength(0);
+    expect(top.children[1]!.mask).toBe(top.children[0]);
+  });
+
+  it('leaves a scene with no mask placement flat', () => {
+    const { backend, player } = setup(sceneOf(sprite([[entry(1, 1), entry(2, 1)]])));
+    expect(kindsOf(player.rootNode as FakeNode)).toEqual(['shape', 'shape']);
+    expect(backend.nodes.some((n) => n.kind === 'clipGroup')).toBe(false);
+  });
+
+  it('applies the matrix of the current frame to the mask and keeps one group across frames', () => {
+    const root = sprite([
+      [masked(entry(1, 1, 10, 0), 2), entry(2, 1)],
+      [masked(entry(1, 1, 30, 5), 2), entry(2, 1)],
+    ]);
+    const { backend, clock, player } = setup(sceneOf(root));
+    const top = player.rootNode as FakeNode;
+    const mask = top.children[0]!;
+    const group = top.children[1]!;
+    expect(mask.transform.x).toBe(10);
+    tick(clock, player, 100);
+    expect(top.children[0]).toBe(mask);
+    expect(top.children[1]).toBe(group);
+    expect(mask.transform).toMatchObject({ x: 30, y: 5 });
+    expect(group.mask).toBe(mask);
+    expect(backend.liveNodes.filter((n) => n.kind === 'clipGroup')).toHaveLength(1);
+  });
+
+  it('rebuilds the groups when the next frame drops the mask, and removes the group node', () => {
+    const root = sprite([[masked(entry(1, 1), 2), entry(2, 1)], [entry(2, 1)]]);
+    const { backend, clock, player } = setup(sceneOf(root));
+    tick(clock, player, 100);
+    const top = player.rootNode as FakeNode;
+    expect(kindsOf(top)).toEqual(['shape']);
+    expect(backend.liveNodes.filter((n) => n.kind === 'clipGroup')).toHaveLength(0);
+  });
+
+  describe('hit testing', () => {
+    function maskClickScene(withMask: boolean) {
+      let clicks = 0;
+      class Zone extends MovieClip {
+        constructor() {
+          super();
+          this.stop();
+          this.addEventListener(MouseEvent.CLICK, () => clicks++);
+        }
+      }
+      const maskEntry = entry(1, 2, 100, 0, 'zone');
+      const root = sprite([[withMask ? masked(maskEntry, 2) : maskEntry, entry(2, 1, 0, 0)]]);
+      const made = setup(sceneOf(root, { '2': sprite([[entry(1, 1)]], 'Zone') }), { Zone });
+      return { ...made, clicks: () => clicks };
+    }
+
+    it('a clip with no clipDepth is the Hit_Target at its position (control)', () => {
+      const { player, clicks } = maskClickScene(false);
+      player.dispatchClick(110, 10);
+      expect(clicks()).toBe(1);
+    });
+
+    it('a mask placement is not a hit target', () => {
+      const { player, clicks } = maskClickScene(true);
+      player.dispatchClick(110, 10);
+      expect(clicks()).toBe(0);
+    });
+  });
+});

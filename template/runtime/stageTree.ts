@@ -146,8 +146,12 @@ export interface HitView extends HitNode {
   children: HitView[];
 }
 
-export function buildHitView(obj: DisplayObject): HitView {
-  const kids = (obj as Partial<DisplayObjectContainer>)._children ?? [];
+/**
+ * `isMask` names the mask placements (Scene_JSON `clipDepth`): a mask layer is not a hit target in Flash, so the mask
+ * and everything below it are left out of the view.
+ */
+export function buildHitView(obj: DisplayObject, isMask: (o: DisplayObject) => boolean = () => false): HitView {
+  const kids = ((obj as Partial<DisplayObjectContainer>)._children ?? []).filter((k) => !isMask(k));
   const view: HitView = {
     source: obj,
     x: obj.x,
@@ -156,7 +160,7 @@ export function buildHitView(obj: DisplayObject): HitView {
     scaleY: obj.scaleY,
     rotation: obj.rotation,
     visible: obj.visible,
-    children: kids.map(buildHitView),
+    children: kids.map((k) => buildHitView(k, isMask)),
   };
   return obj instanceof ShapeObject ? { ...view, bounds: obj.bounds } : view;
 }
