@@ -560,12 +560,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/property/colourMatrix.property.test.ts` (create), **Property 8: The colour matrix equals the Flash formula** (including `stripAlphaAdd` and `hasAlphaAdd`).
     - _Requirements: 13.5, 13.6, 15.2, 15.5_
 
-  - [-] 11.7 `setColorOffset` in the backend and Player, and the Exact_Render measurement
+  - [x] 11.7 `setColorOffset` in the backend and Player, and the Exact_Render measurement
     - `backend.ts`, `pixiBackend.ts`, `fakeBackend.ts`: `setColorOffset(node, ct | null)` sets `node.filters = [filter]` and resets `tint` and colour alpha, `null` removes the filter; remove `warnColorOffsetsUnsupported`. `Player` calls it with the matrix of `stripAlphaAdd(ct)` when `hasOffsets(ct)` and `setColorMultiplier` otherwise; `template/src/main.ts` drops `hasColorOffsets`. Measure `acid-color-2` on a local copy under `.work/`: it must show 0 differing pixels (Exact_Render, Requirement 13.6); IF it does not, STOP and ask and keep the `colour-offset` limit (Requirement 13.7). Report the Overall_Match; the committed floor comes in sub-task 15.6.
     - Test: `test/unit/player.test.ts` (an offset colour transform calls `setColorOffset`, a multiplier-only transform calls `setColorMultiplier`) and `test/e2e/render.e2e.test.ts` (a synthetic one-sprite scene with `redAddTerm=255` read back through the filter shows the expected colour and leaves the box around the glyphs unchanged).
     - _Requirements: 13.5, 13.6, 13.7_
 
-  - [ ] 11.8 Measure the alpha add term and narrow the `colour-offset` limit
+  - [-] 11.8 Measure the alpha add term and narrow the `colour-offset` limit
     - Build, under `.work/`, swf2xml variants of `acid-color-2` (`alphaAddTerm=100`; `alphaMultTerm=128` with `alphaAddTerm=64`; `alphaMultTerm=0` with `alphaAddTerm=255`; the controls with no alpha add term), export each Reference_Frame, score the render with the real backend under the unchanged Verify_Tolerance, and record the differing pixels per variant in the commit message (Requirement 13.13; the design recorded 7389, 8335 and 10194). `src/verify/core/limits.ts` then produces `colour-offset` only for a placement with a non-zero alpha add term, with the message `approximated: alpha add term (alphaAddTerm N) is not drawn exactly`. IF a variant with a non-zero alpha add term is an Exact_Render, the limit is not recorded for it and the commit message says so. Delete the variants.
     - Test: extend **Property 9** in `test/property/visualLimits.property.test.ts` (`colour-offset` only for a non-zero alpha offset) and `test/unit/limits.test.ts`. The measurement itself is guarded by the `acid-color-2` Exact_Render assertion of sub-task 15.6.
     - _Requirements: 13.6, 13.7, 13.13, 2.4_

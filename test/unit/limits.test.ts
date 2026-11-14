@@ -8,6 +8,30 @@ const entry = (kind: string, id: number | undefined, message: string): Unsupport
   ({ kind, message, ...(id === undefined ? {} : { id }) }) as UnsupportedFeatureEntry;
 const OPEN = { allComparedFramesExact: false };
 
+const sceneWith = (ct: number[]): SceneJson =>
+  ({
+    ...scene,
+    symbols: { 3: { type: 'sprite', frames: [[{ depth: 2, symbolId: 5, matrix: [1, 0, 0, 1, 0, 0], colorTransform: ct, name: '' }]] } },
+  }) as unknown as SceneJson;
+describe('knownVisualLimits colour-offset', () => {
+  it.each([
+    ['RGB offsets only', [1, 1, 1, 1, 255, 10, 0, 0]],
+    ['positive alpha add, alpha multiplier 1 (measured exact)', [1, 1, 1, 1, 0, 0, 0, 100]],
+  ])('records nothing for %s', (_n, ct) => {
+    expect(knownVisualLimits(sceneWith(ct), [], OPEN)).toEqual([]);
+  });
+  it.each([
+    ['alpha multiplier 0.5, add 64', [1, 1, 1, 0.5, 0, 0, 0, 64], 64],
+    ['alpha multiplier 0, add 255', [1, 1, 1, 0, 0, 0, 0, 255], 255],
+    ['negative alpha add', [1, 1, 1, 1, 0, 0, 0, -20], -20],
+  ])('records a colour-offset limit for %s', (_n, ct, n) => {
+    const out = knownVisualLimits(sceneWith(ct), [], OPEN);
+    expect(out).toHaveLength(1);
+    expect(out[0]?.kind).toBe('colour-offset');
+    expect(out[0]?.id).toBe(3);
+    expect(out[0]?.message).toContain(`approximated: alpha add term (alphaAddTerm ${n}) is not drawn exactly`);
+  });
+});
 describe('knownVisualLimits kinds', () => {
   it.each(['gradient-fill', 'gradient-spread', 'gradient-focal', 'bitmap-fill', 'bitmap-smoothing', 'text-metrics', 'stroke-style', 'blend-mode'])(
     'keeps %s with id and message',

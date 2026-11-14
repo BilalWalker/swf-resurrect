@@ -251,13 +251,13 @@ export const FFDEC_XML = {
     blueMultTerm: 'blueMultTerm',
     /** Verified on FFDec 26.4.0 (tweendemo fixture lines 1123 "256", 1128 "252", 1334 "77"): as redMultTerm. */
     alphaMultTerm: 'alphaMultTerm',
-    /** UNVERIFIED: add-term names never occur in the fixtures (hasAddTerms="false" everywhere). */
+    /** Verified on FFDec 26.4.0 (`acid-color-2` swf2xml, redAddTerm="255", hasAddTerms="true"); not in the committed fixtures. */
     redAddTerm: 'redAddTerm',
-    /** UNVERIFIED */
+    /** Verified on FFDec 26.4.0 (`acid-color-2` swf2xml, greenAddTerm="255"). */
     greenAddTerm: 'greenAddTerm',
-    /** UNVERIFIED */
+    /** Verified on FFDec 26.4.0 (`acid-color-2` swf2xml, blueAddTerm="248"). */
     blueAddTerm: 'blueAddTerm',
-    /** UNVERIFIED */
+    /** Verified on FFDec 26.4.0 (`acid-color-2` swf2xml, alphaAddTerm="0" on all three placements; a nonzero value was written by xml2swf and read back by the pipeline in sub-task 11.8). */
     alphaAddTerm: 'alphaAddTerm',
   },
 

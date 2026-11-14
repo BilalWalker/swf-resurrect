@@ -58,7 +58,21 @@ function compareLimits(a: VisualLimit, b: VisualLimit): number {
 }
 
 /**
- * One entry per placement with a non-zero colour offset (`colour-offset`), one per skewed
+ * The backend draws the transform without its alpha add term (`stripAlphaAdd`). That is an
+ * Exact_Render only for a positive add term with an alpha multiplier of at least 1: on an opaque
+ * fill the Flash result clamps to the same opaque alpha (measured: `acid-color-2` with
+ * alphaAddTerm 100, 0 differing pixels). Any other non-zero add term differs (measured with
+ * alphaMultTerm 128 / alphaAddTerm 64 and alphaMultTerm 0 / alphaAddTerm 255; design section 4).
+ * Not measured: a placement whose fills are semi-transparent.
+ */
+function alphaAddNotDrawnExactly(ct: readonly number[]): boolean {
+  const add = ct[7] ?? 0;
+  if (add === 0) return false;
+  return !(add > 0 && (ct[3] ?? 1) >= 1);
+}
+
+/**
+ * One entry per placement with an alpha add term that is not drawn exactly (`colour-offset`), one per skewed
  * matrix (`skewed-matrix`) and one per unsupported-feature entry of a visually relevant kind.
  * 	ext-metrics entries are omitted when opts.allComparedFramesExact is true.
  * Duplicates by (kind, id, message) are removed; the result is sorted.
@@ -78,11 +92,11 @@ export function knownVisualLimits(
       for (const entry of frame) {
         const where = `sprite ${spriteId}, frame ${fi + 1}, depth ${entry.depth} (symbol ${entry.symbolId})`;
         const ct = entry.colorTransform;
-        if (ct[4] !== 0 || ct[5] !== 0 || ct[6] !== 0 || ct[7] !== 0) {
+        if (alphaAddNotDrawnExactly(ct)) {
           found.push({
             kind: 'colour-offset',
             id: spriteId,
-            message: `Colour offset is not rendered exactly: ${where}`,
+            message: `approximated: alpha add term (alphaAddTerm ${ct[7]}) is not drawn exactly: ${where}`,
           });
         }
         if (decomposeMatrix(entry.matrix).skewed) {

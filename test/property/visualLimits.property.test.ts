@@ -33,6 +33,24 @@ const expectedKeys = (es: UnsupportedFeatureEntry[], exact: boolean): string[] =
 };
 
 describe('Property 9: visual limits', () => {
+  it('produces colour-offset only for a non-zero alpha add term, never for RGB offsets or the alpha multiplier', () => {
+    const num = fc.integer({ min: -255, max: 255 });
+    fc.assert(
+      fc.property(num, num, num, fc.constantFrom(0, 0.5, 1, 2), num, (r, g, b, aMul, aAdd) => {
+        const s = {
+          ...scene,
+          symbols: { 1: { type: 'sprite', frames: [[{ depth: 1, symbolId: 2, matrix: [1, 0, 0, 1, 0, 0], colorTransform: [1, 1, 1, aMul, r, g, b, aAdd], name: '' }]] } },
+        } as unknown as SceneJson;
+        const limits = knownVisualLimits(s, [], { allComparedFramesExact: false }).filter((l) => l.kind === 'colour-offset');
+        if (aAdd === 0) expect(limits).toEqual([]);
+        else if (aAdd > 0 && aMul >= 1) expect(limits).toEqual([]);
+        else {
+          expect(limits).toHaveLength(1);
+          expect(limits[0]?.message).toContain(`alphaAddTerm ${aAdd}`);
+        }
+      }),
+    );
+  });
   it('has one limit per relevant entry, no duplicates, text-metrics omitted exactly when exact', () => {
     fc.assert(
       fc.property(fc.array(genEntry, { maxLength: 12 }), fc.boolean(), (es, exact) => {
