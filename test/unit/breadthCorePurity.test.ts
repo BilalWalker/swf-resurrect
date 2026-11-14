@@ -18,6 +18,7 @@ const CORE_FILES = [
   "template/runtime/errorReport.ts", // 22.1
   "template/runtime/shapeJson.ts", // 10.1
   "src/convert/pathData.ts", // 10.2
+  "src/convert/evenOdd.ts", // 10.3
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

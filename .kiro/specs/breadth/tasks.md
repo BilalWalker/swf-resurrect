@@ -468,12 +468,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/property/shapeJson.property.test.ts` (create), **Property 1: Shape_JSON round trip** and **Property 2: The validator names the failing field**, with `test/property/gen/genShapeJson.ts` (create). `test/unit/shapeJson.test.ts` (create): the initial state of `DRAWN_FILLS` is all false (pinned in the introducing commit) and `fillIsDrawn` for each fill kind.
     - _Requirements: 7.7, 7.10, 2.8, 15.1, 15.2, 15.5_
 
-  - [-] 10.2 Add `src/convert/pathData.ts`
+  - [x] 10.2 Add `src/convert/pathData.ts`
     - `parsePathD` (including implicit command repetition), `bakeCmds(cmds, matrix)` and `cmdsToD`. Add the file to the purity test.
     - Test: `test/property/pathData.property.test.ts` (create), **Property 6: Path baking composes, path data round-trips**.
     - _Requirements: 10.2, 7.7, 15.2, 15.5_
 
-  - [ ] 10.3 Add `src/convert/evenOdd.ts`
+  - [x] 10.3 Add `src/convert/evenOdd.ts`
     - `groupContours(subpaths)`: nesting depth of each subpath (bounding boxes first, then point-in-polygon on the on-curve points); even depths are outer contours, odd depths are holes of the smallest enclosing outer contour. Add the file to the purity test.
     - Test: `test/property/evenOdd.property.test.ts` (create), **Property 5: Contour grouping agrees with the even-odd rule** (brute-force model over sampled points), with `test/property/gen/genContours.ts` (create).
     - _Requirements: 8.1, 9.1, 10.2, 15.2, 15.5_
