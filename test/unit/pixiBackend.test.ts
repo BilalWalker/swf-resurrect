@@ -1,11 +1,11 @@
 /// <reference lib="dom" />
-// Sub-task 10.12 (the refused fill is a bitmap since 11.3 draws radial gradients): the loader path with the FakeBackend, and the PixiBackend refusal of undrawn fills.
+// Sub-task 10.12: the loader path with the FakeBackend, and the PixiBackend refusal of undrawn fills. Since 11.4 every fill kind\n// is drawn by default, so the refusal is tested with capabilities that draw nothing.
 // Validates: Requirements 2.8, 7.11, 13.8, 12.4
 import { describe, expect, it } from 'vitest';
 import { loadScene, SCENE_URL } from '../../template/runtime/loader';
 import { PixiBackend } from '../../template/runtime/pixi/pixiBackend';
 import type { SceneJson } from '../../template/runtime/scene';
-import { ShapeJsonError, type ShapeJson } from '../../template/runtime/shapeJson';
+import { ShapeJsonError, type DrawnFills, type ShapeJson } from '../../template/runtime/shapeJson';
 import { FakeBackend } from '../support/fakeBackend';
 
 const contours = [{ outer: [['M', 0, 0], ['L', 9, 0], ['L', 9, 9], ['Z']] as never, holes: [] }];
@@ -29,6 +29,8 @@ const gradientShape: ShapeJson = {
     },
   ],
 };
+
+const NO_FILLS: DrawnFills = { gradientLinear: false, gradientRadial: false, bitmap: false };
 
 const scene: SceneJson = {
   formatVersion: 2,
@@ -63,7 +65,7 @@ describe('loadScene with a drawable Shape_JSON', () => {
 
 describe('a fill that is not drawn is refused, never skipped', () => {
   it('the loader shows the field path and returns no scene (FakeBackend)', async () => {
-    const backend = new FakeBackend();
+    const backend = new FakeBackend(NO_FILLS);
     const result = await loadScene(fetcher(gradientShape), backend);
     expect(result).toBeNull();
     expect(backend.errors).toHaveLength(1);
@@ -73,8 +75,8 @@ describe('a fill that is not drawn is refused, never skipped', () => {
   });
 
   it('PixiBackend.loadShape throws a ShapeJsonError with the field path', async () => {
-    await expect(new PixiBackend().loadShape(1, gradientShape, 'assets/')).rejects.toThrow(ShapeJsonError);
-    await expect(new PixiBackend().loadShape(1, gradientShape, 'assets/')).rejects.toThrow(
+    await expect(new PixiBackend({ caps: NO_FILLS }).loadShape(1, gradientShape, 'assets/')).rejects.toThrow(ShapeJsonError);
+    await expect(new PixiBackend({ caps: NO_FILLS }).loadShape(1, gradientShape, 'assets/')).rejects.toThrow(
       'paths[1].fill: fill kind not drawn: bitmap',
     );
   });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadScene, SCENE_URL } from '../../template/runtime/loader';
+import { ASSET_BASE, loadScene, SCENE_URL } from '../../template/runtime/loader';
 import { ManualClock } from '../../template/runtime/clock';
 import { Player } from '../../template/runtime/player';
 import type { SceneJson } from '../../template/runtime/scene';
@@ -78,6 +78,27 @@ describe('loadScene', () => {
   });
 });
 
+describe('loadScene and bitmap fills (11.4)', () => {
+  it('passes the asset base the image path of a bitmap fill is relative to, and the fill reaches the backend', async () => {
+    const backend = new FakeBackend();
+    const bitmapShape = JSON.stringify({
+      formatVersion: 1,
+      paths: [
+        {
+          contours: [{ outer: [['M', 0, 0], ['L', 9, 0], ['L', 9, 9], ['Z']], holes: [] }],
+          fill: { kind: 'bitmap', image: 'images/5.png', matrix: [1, 0, 0, 1, 0, 0], smooth: false },
+          stroke: null,
+        },
+      ],
+    });
+    const files = { [SCENE_URL]: JSON.stringify(scene()), 'assets/1.shape.json': bitmapShape, 'assets/2.shape.json': EMPTY_SHAPE };
+    expect(await loadScene(fetcher(files), backend)).not.toBeNull();
+    expect(backend.assetBases).toEqual([ASSET_BASE, ASSET_BASE]);
+    expect(ASSET_BASE + 'images/5.png').toBe('assets/images/5.png');
+    expect(backend.fillKinds).toEqual(['bitmap']);
+    expect(backend.errors).toEqual([]);
+  });
+});
 describe('Player with an unloaded asset (6.8)', () => {
   it('skips the placement, renders the others and names the asset', () => {
     const backend = new FakeBackend();

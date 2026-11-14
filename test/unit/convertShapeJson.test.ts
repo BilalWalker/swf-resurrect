@@ -52,7 +52,7 @@ describe('convertModel writes Shape_JSON', () => {
     expect(b.unsupported).toEqual(a.unsupported);
   });
 
-  it('a bitmap fill becomes an Unsupported entry bitmap-fill with the shape id, and the fill is not drawn', () => {
+  it('a bitmap fill is drawn since 11.4: no bitmap-fill entry, the fill is in the Shape_JSON', () => {
     const svg =
       '<svg xmlns="http://www.w3.org/2000/svg" xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" width="9px" height="9px">' +
       '<g transform="matrix(1,0,0,1,0,0)">' +
@@ -75,9 +75,10 @@ describe('convertModel writes Shape_JSON', () => {
     };
     const r = convertModel(model);
     const limit = r.unsupported.filter((u) => u.kind === 'bitmap-fill');
-    expect(limit).toHaveLength(1);
-    expect(limit[0]?.id).toBe(7);
-    expect(parseShapeJson(r.shapeFiles[0]!.content).paths).toEqual([]);
+    expect(limit).toEqual([]);
+    const paths = parseShapeJson(r.shapeFiles[0]!.content).paths;
+    expect(paths).toHaveLength(1);
+    expect(paths[0]?.fill?.kind).toBe('bitmap');
     const sym = r.scene.symbols['7'];
     expect(sym?.type === 'shape' && sym.size).toEqual({ width: 9, height: 9 });
   });

@@ -72,10 +72,11 @@ export interface DrawnFills {
 }
 
 /**
- * What the committed drawing code in pixiBackend.ts draws. Starts all false; the drawing tasks flip their flag in the
- * commit that adds the drawing code and its tests (design section 2, decision D21).
+ * What the committed drawing code in pixiBackend.ts draws. Each drawing task flipped its flag in the commit that added
+ * the drawing code and its tests (design section 2, decision D21); with 11.4 all three are true, so no fill kind is
+ * refused by default. A caps argument still lets a caller ask for the refusal.
  */
-export const DRAWN_FILLS: DrawnFills = { gradientLinear: true, gradientRadial: true, bitmap: false };
+export const DRAWN_FILLS: DrawnFills = { gradientLinear: true, gradientRadial: true, bitmap: true };
 
 /** Solid: always. Gradient: by type. Bitmap: `caps.bitmap`. */
 export function fillIsDrawn(fill: ShapeFill, caps: DrawnFills): boolean {

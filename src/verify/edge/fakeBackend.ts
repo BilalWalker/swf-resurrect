@@ -1,5 +1,5 @@
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../../../template/runtime/backend';
-import { assertShapeDrawn, type ShapeJson } from '../../../template/runtime/shapeJson';
+import { assertShapeDrawn, DRAWN_FILLS, type DrawnFills, type ShapeJson } from '../../../template/runtime/shapeJson';
 
 export interface FakeNode {
   id: number;
@@ -19,10 +19,19 @@ export class FakeBackend implements RenderBackend {
   readonly nodes: FakeNode[] = [];
   readonly errors: string[] = [];
   readonly shapeBounds = new Map<number, ShapeBounds>();
+  /** The fill kind of every path fill received by loadShape, in call and path order ('solid', 'gradient', 'bitmap'). */
+  readonly fillKinds: string[] = [];
+  /** The assetBase of every loadShape call, in call order. */
+  readonly assetBases: string[] = [];
+
+  constructor(private readonly caps: DrawnFills = DRAWN_FILLS) {}
+
 
   /** Applies the same fill check as the Pixi backend; bounds come from shapeBounds (the Replay sets them from Scene_JSON). */
-  async loadShape(symbolId: number, shape: ShapeJson, _assetBase: string): Promise<ShapeBounds> {
-    assertShapeDrawn(shape);
+  async loadShape(symbolId: number, shape: ShapeJson, assetBase: string): Promise<ShapeBounds> {
+    this.assetBases.push(assetBase);
+    assertShapeDrawn(shape, this.caps);
+    for (const p of shape.paths) if (p.fill !== null) this.fillKinds.push(p.fill.kind);
     const bounds = this.shapeBounds.get(symbolId) ?? { x: 0, y: 0, width: 10, height: 10 };
     this.shapeBounds.set(symbolId, bounds);
     return bounds;

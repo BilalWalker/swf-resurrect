@@ -1,7 +1,7 @@
 // Draws synthetic Shape_JSON through the real PixiBackend in headless Chromium and reads the pixels back
 // (breadth task 11.1: stroke caps and joins). Skipped with a reason when Chromium is missing.
-// Task 11.2 adds the linear gradient. Later drawing tasks (bitmap fills, colour offsets) add their cases here.
-// Validates: Requirements 13.8, 13.9, 13.12, 8.1
+// Task 11.2 adds the linear gradient, 11.3 the radial one, 11.4 the bitmap fill. Later drawing tasks add their cases here.
+// Validates: Requirements 13.8, 13.9, 13.12, 8.1, 9.1, 9.4
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -83,6 +83,19 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
         const T = (globalThis as unknown as { T: { Application: new () => any; PixiBackend: new () => any } }).T;
         const app = new T.Application();
         await app.init({ width: w, height: h, background: '#ffffff', antialias: true, resolution: 1, autoStart: false });
+        // The image 	est:2x2 is made here: black, white / white, black (one texel each).
+        const cv = document.createElement('canvas');
+        cv.width = 2;
+        cv.height = 2;
+        const c2 = cv.getContext('2d')!;
+        c2.fillStyle = '#000000';
+        c2.fillRect(0, 0, 1, 1);
+        c2.fillRect(1, 1, 1, 1);
+        c2.fillStyle = '#ffffff';
+        c2.fillRect(1, 0, 1, 1);
+        c2.fillRect(0, 1, 1, 1);
+        const url = cv.toDataURL('image/png');
+        for (const p of s.paths) if (p.fill?.kind === 'bitmap' && p.fill.image === 'test:2x2') p.fill.image = url;
         const backend = new T.PixiBackend();
         await backend.loadShape(1, s, '');
         app.stage.addChild(backend.createShape(1));
@@ -253,5 +266,32 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
     const red = await renderRed(ramp('reflect', [10, 190]));
     expect(red(148, 50)).toBeGreaterThan(235);
     expect(red(175, 50)).toBeLessThan(red(155, 50));
+  });
+
+  // A 2x2 bitmap at scale 10 over a 40x40 square, repeating: texel (0,0) black, (1,0) white, (0,1) white, (1,1) black.
+  const bitmapShape = (smooth: boolean): ShapeJson => ({
+    formatVersion: 1,
+    paths: [
+      {
+        contours: [{ outer: [['M', 0, 0], ['L', 40, 0], ['L', 40, 40], ['L', 0, 40], ['Z']], holes: [] }],
+        fill: { kind: 'bitmap', image: 'test:2x2', matrix: [10, 0, 0, 10, 0, 0], smooth },
+        stroke: null,
+      },
+    ],
+  });
+
+  it('a non-smoothed bitmap fill draws hard texel edges and repeats', async () => {
+    const red = await renderRed(bitmapShape(false));
+    expect([red(5, 5), red(15, 5), red(5, 15), red(15, 15)]).toEqual([0, 255, 255, 0]);
+    expect([red(9, 5), red(10, 5)]).toEqual([0, 255]); // a hard edge between two texels
+    expect([red(25, 5), red(35, 5), red(25, 25)]).toEqual([0, 255, 0]); // repeats every 20 px
+    expect(red(45, 5)).toBe(255); // outside the shape: background
+  });
+
+  it('a smoothed bitmap fill interpolates between texels', async () => {
+    const red = await renderRed(bitmapShape(true));
+    expect(red(5, 5)).toBeLessThan(40);
+    expect(red(10, 5)).toBeGreaterThan(60);
+    expect(red(10, 5)).toBeLessThan(200);
   });
 });

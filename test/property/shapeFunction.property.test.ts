@@ -191,7 +191,7 @@ describe("svgToShapeJson drawn-fill capabilities", () => {
   });
 });
 
-// Feature: breadth, Property 42 with the committed DRAWN_FILLS (sub-task 11.2: only linear gradients are drawn)
+// Feature: breadth, Property 42 with the committed DRAWN_FILLS (sub-task 11.4: every fill kind is drawn, none is refused)
 describe("svgToShapeJson under the committed DRAWN_FILLS", () => {
   const head = '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
   const stops = '<stop offset="0" stop-color="#000000"/><stop offset="1" stop-color="#ffffff"/>';
@@ -205,7 +205,7 @@ describe("svgToShapeJson under the committed DRAWN_FILLS", () => {
     return `${head}<g transform="matrix(1,0,0,1,0,0)"><path d="M0 0 L9 0 9 9 Z" fill="url(#g0)"/></g><defs>${def}</defs></svg>`;
   };
   /** **Validates: Requirements 2.8, 8.1** */
-  it("a linear or radial gradient produces no limit and a bitmap exactly one bitmap-fill limit", () => {
+  it("a linear gradient, a radial gradient and a bitmap produce no limit and are kept; all-false caps leave a bitmap out with exactly one bitmap-fill limit", () => {
     const lin = svgToShapeJson(svgOf("linear"), "shape");
     expect(lin.limits).toEqual([]);
     expect(lin.shape.paths).toHaveLength(1);
@@ -214,8 +214,12 @@ describe("svgToShapeJson under the committed DRAWN_FILLS", () => {
     expect(rad.limits.filter((l) => l.kind === "gradient-fill")).toHaveLength(0);
     expect(rad.shape.paths).toHaveLength(1);
     const bmp = svgToShapeJson(svgOf("bitmap"), "shape");
-    expect(bmp.limits.filter((l) => l.kind === "bitmap-fill")).toHaveLength(1);
-    expect(bmp.shape.paths).toHaveLength(0);
+    expect(bmp.limits.filter((l) => l.kind === "bitmap-fill")).toHaveLength(0);
+    expect(bmp.shape.paths).toHaveLength(1);
+    expect(bmp.shape.paths[0]!.fill!.kind).toBe("bitmap");
+    const refused = svgToShapeJson(svgOf("bitmap"), "shape", { gradientLinear: false, gradientRadial: false, bitmap: false });
+    expect(refused.limits.filter((l) => l.kind === "bitmap-fill")).toHaveLength(1);
+    expect(refused.shape.paths).toHaveLength(0);
   });
 });
 

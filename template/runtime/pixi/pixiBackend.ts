@@ -1,7 +1,7 @@
-import { Container, FillGradient, Graphics, ImageSource, Matrix, Texture, type FillInput } from 'pixi.js';
+import { Container, FillGradient, FillPattern, Graphics, ImageSource, Matrix, Texture, type FillInput } from 'pixi.js';
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../backend';
 import { GRADIENT_HALF_EXTENT, GRADIENT_TEXTURE_SIZE } from '../gradientMatrix';
-import { assertFillDrawn, ShapeJsonError, type PathCmd, type ShapeFill, type ShapeJson, type ShapePath } from '../shapeJson';
+import { assertShapeDrawn, DRAWN_FILLS, ShapeJsonError, type DrawnFills, type PathCmd, type ShapeFill, type ShapeJson, type ShapePath } from '../shapeJson';
 
 /** Per-node values that combine into the Pixi alpha. */
 interface NodeState {
@@ -12,6 +12,8 @@ interface NodeState {
 export interface PixiBackendOptions {
   /** Where the error element is appended. Defaults to document.body. */
   errorHost?: HTMLElement;
+  /** The fill kinds this backend may draw; defaults to DRAWN_FILLS. A fill outside it is refused and named. */
+  caps?: DrawnFills;
 }
 
 const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -120,15 +122,62 @@ function radialGradient(fill: Extract<ShapeFill, { kind: 'gradient' }>): FillGra
   return grad;
 }
 
+/** The decoded textures of one shape, by image|smooth (see loadBitmapTextures). */
+type BitmapTextures = ReadonlyMap<string, Texture>;
+
+const bitmapKey = (image: string, smooth: boolean): string => `${image}|${smooth ? 'smooth' : 'nearest'}`;
+
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new ShapeJsonError(`bitmap fill: image failed to load: ${url}`));
+    img.src = url;
+  });
+}
+
+/**
+ * Loads the image of every bitmap fill of a shape from `assetBase + fill.image` through an HTMLImageElement. A failed
+ * load rejects with a ShapeJsonError naming the image; the loader shows it and does not start playback. Pixi 8.22.0
+ * sources relied on, under node_modules/pixi.js/lib/scene/graphics/shared:
+ * - fill/FillPattern.mjs:26-49: `new FillPattern(texture, 'repeat')` sets both address modes of the texture source
+ *   to `repeat` (:8-12, :44-48); `setTransform` (:55-64) copies the matrix into `transform`.
+ * - utils/convertFillInputToFillStyle.mjs:30-37 `handleFillPattern`: the style takes `value.texture` and
+ *   `value.transform` as `matrix` when `g.fill(pattern)` runs, so the transform is set before that call.
+ * - utils/generateTextureFillMatrix.mjs:10 and :43-44: the style matrix is inverted and the texture is scaled by
+ *   1 / source size, so the pattern transform maps texture PIXELS to shape space, the same convention as a SWF fill
+ *   matrix, with no further scaling here.
+ * - `scaleMode` of the ImageSource is 'nearest' when the SWF fill is not smoothed, 'linear' otherwise.
+ */
+async function loadBitmapTextures(shape: ShapeJson, assetBase: string): Promise<BitmapTextures> {
+  const out = new Map<string, Texture>();
+  for (const path of shape.paths) {
+    const fill = path.fill;
+    if (fill === null || fill.kind !== 'bitmap') continue;
+    const key = bitmapKey(fill.image, fill.smooth);
+    if (out.has(key)) continue;
+    const img = await loadImage(assetBase + fill.image);
+    out.set(key, new Texture({ source: new ImageSource({ resource: img, scaleMode: fill.smooth ? 'linear' : 'nearest' }) }));
+  }
+  return out;
+}
+
+function bitmapPattern(fill: Extract<ShapeFill, { kind: 'bitmap' }>, textures: BitmapTextures): FillPattern {
+  const texture = textures.get(bitmapKey(fill.image, fill.smooth));
+  if (texture === undefined) throw new ShapeJsonError(`bitmap fill: image not loaded: ${fill.image}`);
+  const pattern = new FillPattern(texture, 'repeat');
+  pattern.setTransform(new Matrix(...fill.matrix));
+  return pattern;
+}
+
 /** drawFill: the fill check first (no warn-and-skip), then the fill of one contour; holes are cut out of it. */
-function drawFill(g: Graphics, path: ShapePath, index: number): void {
+function drawFill(g: Graphics, path: ShapePath, textures: BitmapTextures): void {
   const fill = path.fill;
   if (fill === null) return;
-  assertFillDrawn(fill, `paths[${index}].fill`);
   let style: FillInput;
   if (fill.kind === 'solid') style = { color: fill.color, alpha: fill.alpha };
   else if (fill.kind === 'gradient') style = fill.type === 'linear' ? linearGradient(fill) : radialGradient(fill);
-  else throw new ShapeJsonError(`paths[${index}].fill: fill kind not drawn: ${fill.kind}`);
+  else style = bitmapPattern(fill, textures);
   for (const contour of path.contours) {
     tracePath(g, contour.outer);
     g.fill(style);
@@ -150,10 +199,10 @@ function drawStroke(g: Graphics, path: ShapePath): void {
 }
 
 /** Draws every path in order: its fill (outer contours with holes cut), then its stroke. */
-function drawShape(shape: ShapeJson): Graphics {
+function drawShape(shape: ShapeJson, textures: BitmapTextures): Graphics {
   const g = new Graphics();
-  shape.paths.forEach((path, i) => {
-    drawFill(g, path, i);
+  shape.paths.forEach((path) => {
+    drawFill(g, path, textures);
     drawStroke(g, path);
   });
   return g;
@@ -167,16 +216,19 @@ export class PixiBackend implements RenderBackend {
   private readonly templates = new Map<number, { graphics: Graphics }>();
   private readonly state = new WeakMap<Container, NodeState>();
   private readonly errorHost: HTMLElement | undefined;
+  private readonly caps: DrawnFills;
   private errorElement: HTMLElement | null = null;
   private warnedOffsets = false;
 
   constructor(options: PixiBackendOptions = {}) {
     this.errorHost = options.errorHost;
+    this.caps = options.caps ?? DRAWN_FILLS;
   }
 
-  async loadShape(symbolId: number, shape: ShapeJson, _assetBase: string): Promise<ShapeBounds> {
-    // Throws ShapeJsonError on a fill that is not drawn; the loader shows it and does not start playback.
-    const graphics = drawShape(shape);
+  async loadShape(symbolId: number, shape: ShapeJson, assetBase: string): Promise<ShapeBounds> {
+    // Throws ShapeJsonError on a fill that is not drawn or an image that does not load; the loader shows it and does not start playback.
+    assertShapeDrawn(shape, this.caps);
+    const graphics = drawShape(shape, await loadBitmapTextures(shape, assetBase));
     const b = graphics.getLocalBounds().rectangle;
     this.templates.set(symbolId, { graphics });
     return { x: b.x, y: b.y, width: b.width, height: b.height };

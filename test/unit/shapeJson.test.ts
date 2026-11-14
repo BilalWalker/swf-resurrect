@@ -28,8 +28,8 @@ const radial: ShapeFill = { ...linear, type: 'radial' } as ShapeFill;
 const bitmap: ShapeFill = { kind: 'bitmap', image: 'images/5.png', matrix: M, smooth: true };
 
 describe('DRAWN_FILLS', () => {
-  it('draws linear and radial gradients (11.3); bitmap fills stay refused', () => {
-    expect(DRAWN_FILLS).toEqual({ gradientLinear: true, gradientRadial: true, bitmap: false });
+  it('draws linear and radial gradients and bitmap fills (11.4): no fill kind is refused by default', () => {
+    expect(DRAWN_FILLS).toEqual({ gradientLinear: true, gradientRadial: true, bitmap: true });
   });
 });
 
@@ -60,8 +60,8 @@ describe('fillIsDrawn', () => {
     expect(fillIsDrawn(bitmap, { ...none, gradientLinear: true, gradientRadial: true })).toBe(false);
   });
 
-  it('draws both gradients but not the bitmap under the committed DRAWN_FILLS', () => {
-    expect([linear, radial, bitmap].map((f) => fillIsDrawn(f, DRAWN_FILLS))).toEqual([true, true, false]);
+  it('draws both gradients and the bitmap under the committed DRAWN_FILLS', () => {
+    expect([linear, radial, bitmap].map((f) => fillIsDrawn(f, DRAWN_FILLS))).toEqual([true, true, true]);
   });
 });
 
@@ -87,13 +87,12 @@ describe('parseShapeJson', () => {
 });
 
 describe('assertFillDrawn (the drawFill check, sub-task 10.12)', () => {
-  it('does not throw for a solid fill and names the field path and kind for the others', () => {
-    expect(() => assertFillDrawn(solid, 'paths[0].fill')).not.toThrow();
-    expect(() => assertFillDrawn(linear, 'paths[1].fill')).not.toThrow();
-    expect(() => assertFillDrawn(radial, 'paths[1].fill')).not.toThrow();
-    expect(() => assertFillDrawn(bitmap, 'paths[1].fill')).toThrow(ShapeJsonError);
-    expect(() => assertFillDrawn(bitmap, 'paths[2].fill')).toThrow('paths[2].fill: fill kind not drawn: bitmap');
-    expect(() => assertFillDrawn(bitmap, 'paths[3].fill')).toThrow('paths[3].fill: fill kind not drawn: bitmap');
+  it('does not throw for any fill kind by default, and names the field path and kind under caps that refuse it', () => {
+    const none: DrawnFills = { gradientLinear: false, gradientRadial: false, bitmap: false };
+    for (const f of [solid, linear, radial, bitmap]) expect(() => assertFillDrawn(f, 'paths[0].fill')).not.toThrow();
+    expect(() => assertFillDrawn(bitmap, 'paths[1].fill', none)).toThrow(ShapeJsonError);
+    expect(() => assertFillDrawn(bitmap, 'paths[2].fill', none)).toThrow('paths[2].fill: fill kind not drawn: bitmap');
+    expect(() => assertFillDrawn(solid, 'paths[3].fill', none)).not.toThrow();
   });
 
   it('follows the capabilities it is given', () => {
@@ -114,6 +113,8 @@ describe('assertFillDrawn (the drawFill check, sub-task 10.12)', () => {
         { contours, fill: bitmap, stroke: null },
       ],
     };
-    expect(() => assertShapeDrawn(shape)).toThrow('paths[2].fill: fill kind not drawn: bitmap');
+    expect(() => assertShapeDrawn(shape)).not.toThrow();
+    const none: DrawnFills = { gradientLinear: false, gradientRadial: false, bitmap: false };
+    expect(() => assertShapeDrawn(shape, none)).toThrow('paths[2].fill: fill kind not drawn: bitmap');
   });
 });

@@ -540,12 +540,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/property/gradientMatrix.property.test.ts` (create), **Property 7: The gradient matrix maps texture space onto the FFDec square**; extend `test/unit/shapeJson.test.ts` (`gradientLinear` true, the other two false) and `test/property/shapeFunction.property.test.ts` (Property 42 with the new constant: a linear gradient produces no limit, a radial one still produces exactly one); `test/e2e/render.e2e.test.ts` (a synthetic one-shape linear gradient scene draws the expected pixels).
     - _Requirements: 2.8, 8.1, 8.6, 15.2, 15.5_
 
-  - [-] 11.3 Radial gradients: own radial texture; flips `gradientRadial`
+  - [x] 11.3 Radial gradients: own radial texture; flips `gradientRadial`
     - For radial gradients build an own canvas gradient texture without the last-stop pre-fill (`createRadialGradient(128 + fx*k, 128 + fy*k, 0, 128, 128, 128)`, `k = 128 / 819.2`, `clamp-to-edge`) and assign it to `grad.texture`, so stop alpha is drawn correctly (Requirement 8.2). Set `DRAWN_FILLS.gradientRadial = true`. The `gradient-spread` and `gradient-focal` limits stay.
     - Test: extend `test/e2e/render.e2e.test.ts`: a synthetic one-shape scene with a radial gradient whose first stop has alpha 0 draws the transparent centre, not the last stop colour (pixel read-back); extend `test/unit/shapeJson.test.ts` (`gradientRadial` true) and Property 42. Measure `radial` and `gradients` on local copies under `.work/` and report the Overall_Match; the committed floors come in sub-task 15.3.
     - _Requirements: 2.8, 8.1, 8.2, 8.5_
 
-  - [ ] 11.4 Bitmap fills; flips `bitmap`
+  - [-] 11.4 Bitmap fills; flips `bitmap`
     - `pixiBackend.ts`: `new FillPattern(texture, 'repeat')` with `setTransform(new Matrix(...fill.matrix))`, texture `scaleMode = 'nearest'` when `smooth` is false, the image loaded from `assetBase + fill.image` through an `HTMLImageElement`. A load failure shows an on-page error and skips nothing silently (the fill is named by the page error and the scene does not start). `loader.ts` passes `assetBase`. `fakeBackend.ts` records the fill kinds it receives. Set `DRAWN_FILLS.bitmap = true`.
     - Test: extend `test/unit/loader.test.ts` (image path resolved from `assetBase`), `test/unit/shapeJson.test.ts` (`bitmap` true), `test/property/shapeFunction.property.test.ts` (Property 42) and `test/e2e/render.e2e.test.ts` (a synthetic scene with a 2x2 bitmap fill at scale 10 draws the expected pixels, nearest versus smooth).
     - _Requirements: 2.8, 9.1, 9.4_
