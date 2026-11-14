@@ -4,13 +4,23 @@
 // Built so far (sub-task 10.4): the wrapper, nested `<g transform>`, `<use xlink:href>` resolved to `<defs>`, solid
 // fills, one ShapePath per element in SVG order, holes through groupContours. A gradient or bitmap fill is returned as
 // exactly one Named_Limit and left out of the Shape_JSON (decision D21): their construction arrives with the drawing
-// tasks, so every such fill is a limit whatever `caps` says. Strokes are sub-task 10.5 and are not read yet.
+// tasks, so every such fill is a limit whatever `caps` says. Strokes (sub-task 10.5): cap, join, miter limit, width,
+// colour and alpha are read; a miter-clip join, a gradient stroke, an unresolved stroke paint and a dash array are each
+// returned as a `stroke-style` limit (decided F8). No limit is recorded for a cap (sub-task 11.1 measures caps).
 //
 // Elements that cannot be read at all (malformed XML, path data outside M L H V Q C Z, non-finite numbers) are
 // dropped without a limit: FFDec does not write them, and ShapeLimitKind has no kind for them.
 
 import { XMLParser } from 'fast-xml-parser';
-import { DRAWN_FILLS, type DrawnFills, type Mat6, type PathCmd, type ShapeJson, type ShapePath } from '../../template/runtime/shapeJson';
+import {
+  DRAWN_FILLS,
+  type DrawnFills,
+  type Mat6,
+  type PathCmd,
+  type ShapeJson,
+  type ShapePath,
+  type ShapeStroke,
+} from '../../template/runtime/shapeJson';
 import { groupContours } from './evenOdd';
 import { bakeCmds, parsePathD } from './pathData';
 
@@ -42,10 +52,32 @@ interface El {
   children: El[];
 }
 
-interface Inherited {
-  fill: string | undefined;
-  fillOpacity: string | undefined;
-}
+/** The presentation properties that SVG inherits and this function reads. */
+const INHERITED = [
+  'fill',
+  'fill-opacity',
+  'stroke',
+  'stroke-opacity',
+  'stroke-width',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'stroke-miterlimit',
+  'stroke-dasharray',
+] as const;
+
+type Inherited = Readonly<Record<(typeof INHERITED)[number], string | undefined>>;
+
+const NO_STYLE: Inherited = {
+  fill: undefined,
+  'fill-opacity': undefined,
+  stroke: undefined,
+  'stroke-opacity': undefined,
+  'stroke-width': undefined,
+  'stroke-linecap': undefined,
+  'stroke-linejoin': undefined,
+  'stroke-miterlimit': undefined,
+  'stroke-dasharray': undefined,
+};
 
 const IDENTITY: Mat6 = [1, 0, 0, 1, 0, 0];
 const MAX_DEPTH = 64;
@@ -236,18 +268,22 @@ class Builder {
   }
 
   private inherit(el: El, inh: Inherited): Inherited {
-    return { fill: prop(el, 'fill') ?? inh.fill, fillOpacity: prop(el, 'fill-opacity') ?? inh.fillOpacity };
+    const next: Record<string, string | undefined> = {};
+    for (const name of INHERITED) next[name] = prop(el, name) ?? inh[name];
+    return next as Inherited;
   }
 
   private path(el: El, m: Mat6, inh: Inherited): void {
     const own = this.inherit(el, inh);
     const paint = own.fill ?? '#000000';
-    if (paint === 'none') return; // stroke-only element: strokes are sub-task 10.5
-    const solid = hexColor(paint);
-    if (solid === null) {
-      this.undrawnFill(el, paint);
-      return;
+    let fill: ShapePath['fill'] = null;
+    if (paint !== 'none') {
+      const solid = hexColor(paint);
+      if (solid === null) this.undrawnFill(el, paint);
+      else fill = { kind: 'solid', color: solid, alpha: alphaOf(own['fill-opacity']) };
     }
+    const stroke = this.strokeOf(own, m);
+    if (fill === null && stroke === null) return;
     const d = el.attrs.d;
     if (d === undefined) return;
     let cmds: PathCmd[];
@@ -263,11 +299,49 @@ class Builder {
       else subpaths[subpaths.length - 1]?.push(c);
     }
     if (subpaths.length === 0) return;
-    this.paths.push({
-      contours: groupContours(subpaths),
-      fill: { kind: 'solid', color: solid, alpha: alphaOf(own.fillOpacity) },
-      stroke: null,
-    });
+    // A path without a fill keeps every subpath as its own outer contour (design section 2).
+    const contours = fill === null ? subpaths.map((outer) => ({ outer, holes: [] })) : groupContours(subpaths);
+    this.paths.push({ contours, fill, stroke });
+  }
+
+  /** The stroke of a path, or null. Records a `stroke-style` limit for every part it cannot keep as written. */
+  private strokeOf(st: Inherited, m: Mat6): ShapeStroke | null {
+    const paint = st.stroke;
+    if (paint === undefined || paint === 'none') return null;
+    const color = hexColor(paint);
+    if (color === null) {
+      this.limits.push({
+        kind: 'stroke-style',
+        message: urlId(paint) !== null ? 'gradient stroke is not drawn' : 'stroke paint is not resolved and is not drawn',
+      });
+      return null;
+    }
+    const dash = st['stroke-dasharray'];
+    if (dash !== undefined && dash !== 'none' && dash !== '') {
+      this.limits.push({ kind: 'stroke-style', message: 'approximated: dash array is not drawn, the stroke is solid' });
+    }
+    const joinText = st['stroke-linejoin'];
+    let join: ShapeStroke['join'] = 'miter';
+    if (joinText === 'round' || joinText === 'bevel' || joinText === 'miter') join = joinText;
+    else if (joinText !== undefined) {
+      // F8: Pixi has no miter-clip join; it is drawn as miter. Any other unknown spelling is read the same way.
+      this.limits.push({ kind: 'stroke-style', message: `approximated: ${joinText} join is drawn as miter` });
+    }
+    const capText = st['stroke-linecap'];
+    const cap: ShapeStroke['cap'] = capText === 'round' || capText === 'square' ? capText : 'butt';
+    const limit = Number(st['stroke-miterlimit'] ?? 4);
+    const miterLimit = Number.isFinite(limit) ? Math.max(1, limit) : 4;
+    const w = Number(st['stroke-width'] ?? 1);
+    const scale = Math.sqrt(Math.abs(m[0] * m[3] - m[1] * m[2])); // strokes scale with the baked transform
+    const width = Number.isFinite(w) && w >= 0 ? w * scale : scale;
+    return {
+      color,
+      alpha: alphaOf(st['stroke-opacity']),
+      width: Number.isFinite(width) ? width + 0 : 1,
+      cap,
+      join,
+      miterLimit: miterLimit + 0,
+    };
   }
 
   /** D21: one Named_Limit per gradient or bitmap fill, numbered by position among those fills of the shape. */
@@ -312,6 +386,6 @@ export function svgToShapeJson(svg: string, _kind: 'shape' | 'text', caps: Drawn
   const ids: Record<string, El> = Object.create(null) as Record<string, El>;
   indexIds(root, ids);
   const b = new Builder(ids);
-  b.walk(root, IDENTITY, { fill: undefined, fillOpacity: undefined }, 0, []);
+  b.walk(root, IDENTITY, NO_STYLE, 0, []);
   return { shape: { formatVersion: 1, paths: b.paths }, images: [], limits: sortLimits(b.limits) };
 }

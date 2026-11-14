@@ -41,3 +41,45 @@ describe("svgToShapeJson", () => {
     );
   });
 });
+
+// Feature: breadth, Property 4: No part is dropped without a Named_Limit
+describe("svgToShapeJson strokes", () => {
+  const head = '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
+  const variants = [
+    { attrs: 'stroke="#102030"', limit: null },
+    { attrs: 'stroke="#102030" stroke-linejoin="miter-clip"', limit: "approximated: miter-clip join is drawn as miter" },
+    { attrs: 'stroke="url(#gradient1)"', limit: "gradient stroke is not drawn" },
+    { attrs: 'stroke="#102030" stroke-dasharray="4 2"', limit: "approximated: dash array is not drawn, the stroke is solid" },
+    { attrs: 'stroke="red"', limit: "stroke paint is not resolved and is not drawn" },
+  ] as const;
+  const dropped = (attrs: string): boolean => attrs.includes("url(") || attrs.includes("red");
+  /** **Validates: Requirements 13.8, 13.9, 13.11, 2.1, 2.5, 2.6, 7.9** */
+  it("every stroke is kept or named by a stroke-style limit, and a plain stroke names nothing", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(fc.constantFrom(...variants), fc.constantFrom("butt", "round", "square"), fc.constantFrom("miter", "round", "bevel")), {
+          minLength: 1,
+          maxLength: 6,
+        }),
+        (items) => {
+          const els = items
+            .map(([v, cap, join]) => {
+              const a = v.attrs.includes("stroke-linejoin") ? v.attrs : `${v.attrs} stroke-linejoin="${join}"`;
+              return `<path d="M0 0 L9 0 9 9 Z" fill="none" ${a} stroke-linecap="${cap}" stroke-width="3"/>`;
+            })
+            .join("");
+          const { shape, limits } = svgToShapeJson(`${head}<g transform="matrix(1,0,0,1,0,0)">${els}</g></svg>`, "shape");
+          expect(() => validateShapeJson(shape)).not.toThrow();
+          const kept = items.filter(([v]) => !dropped(v.attrs)).length;
+          expect(shape.paths.filter((p) => p.stroke !== null)).toHaveLength(kept);
+          expect(shape.paths).toHaveLength(kept);
+          const messages = limits.filter((l) => l.kind === "stroke-style").map((l) => l.message);
+          expect(limits.every((l) => l.kind === "stroke-style")).toBe(true);
+          const expected = [...new Set(items.flatMap(([v]) => (v.limit === null ? [] : [v.limit])))].sort();
+          expect(messages).toEqual(expected);
+        },
+      ),
+      fcConfig,
+    );
+  });
+});

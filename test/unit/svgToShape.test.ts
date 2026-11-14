@@ -8,13 +8,26 @@ const fixture = (sample: string, id: number): string => readFileSync(`test/fixtu
 describe("svgToShapeJson on the clickgoto and tweendemo fixtures", () => {
   for (const sample of ["clickgoto", "tweendemo"]) {
     for (const id of [1, 2, 4, 5]) {
-      it(`${sample} shape ${id}: one solid rectangle, wrapper not applied, no limit`, () => {
+      it(`${sample} shape ${id}: a solid rectangle and its outline, wrapper not applied, no limit`, () => {
         const svg = fixture(sample, id);
         const { shape, images, limits } = svgToShapeJson(svg, "shape");
         validateShapeJson(shape);
         expect(images).toEqual([]);
         expect(limits).toEqual([]);
-        expect(shape.paths).toHaveLength(1);
+        const outline = /stroke="(#[0-9a-f]{6})" stroke-linecap="(\w+)" stroke-linejoin="(\w+)" stroke-width="([0-9.]+)"/.exec(svg);
+        expect(shape.paths).toHaveLength(outline === null ? 1 : 2);
+        if (outline !== null) {
+          // FFDec writes the outline as its own element: the builder keeps it as a second, stroke-only path.
+          expect(shape.paths[1]!.fill).toBeNull();
+          expect(shape.paths[1]!.stroke).toEqual({
+            color: outline[1],
+            alpha: 1,
+            width: Number(outline[4]),
+            cap: outline[2],
+            join: outline[3],
+            miterLimit: 4,
+          });
+        }
         const p = shape.paths[0]!;
         const fill = /<path d="([^"]*)" fill="(#[0-9a-f]{6})"/.exec(svg)!;
         expect(p.fill).toEqual({ kind: "solid", color: fill[2], alpha: 1 });
@@ -90,5 +103,66 @@ describe("svgToShapeJson on synthetic input", () => {
 
   it("returns an empty Shape_JSON for text that is not an SVG", () => {
     expect(svgToShapeJson("not xml <<", "shape")).toEqual({ shape: { formatVersion: 1, paths: [] }, images: [], limits: [] });
+  });
+});
+
+describe("svgToShapeJson strokes", () => {
+  const head =
+    '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
+  const one = (attrs: string, wrapped = '<g transform="matrix(1,0,0,1,0,0)">') =>
+    svgToShapeJson(`${head}${wrapped}<path d="M0 0 L10 0 10 10" fill="none" ${attrs}/></g></svg>`, "shape");
+
+  for (const cap of ["butt", "round", "square"] as const) {
+    it(`maps stroke-linecap ${cap} and records no limit`, () => {
+      const { shape, limits } = one(`stroke="#ff0000" stroke-width="4" stroke-linecap="${cap}"`);
+      expect(limits).toEqual([]);
+      expect(shape.paths[0]!.stroke).toEqual({ color: "#ff0000", alpha: 1, width: 4, cap, join: "miter", miterLimit: 4 });
+      expect(shape.paths[0]!.fill).toBeNull();
+    });
+  }
+  for (const join of ["miter", "round", "bevel"] as const) {
+    it(`maps stroke-linejoin ${join} and records no limit`, () => {
+      const { shape, limits } = one(`stroke="#00ff00" stroke-linejoin="${join}" stroke-miterlimit="2.5"`);
+      expect(limits).toEqual([]);
+      expect(shape.paths[0]!.stroke).toMatchObject({ join, miterLimit: 2.5, cap: "butt", width: 1 });
+    });
+  }
+  it("maps miter-clip to miter and records one approximated stroke-style limit", () => {
+    const { shape, limits } = one('stroke="#000000" stroke-linejoin="miter-clip" stroke-miterlimit="2.0"');
+    expect(shape.paths[0]!.stroke).toMatchObject({ join: "miter", miterLimit: 2 });
+    expect(limits).toEqual([{ kind: "stroke-style", message: "approximated: miter-clip join is drawn as miter" }]);
+  });
+  it("writes the SVG default miter limit 4 and reads stroke-opacity", () => {
+    const { shape } = one('stroke="#abc" stroke-opacity="0.25"');
+    expect(shape.paths[0]!.stroke).toMatchObject({ color: "#aabbcc", alpha: 0.25, miterLimit: 4 });
+  });
+  it("keeps a gradient stroke as no stroke with a limit, and a dash array as a solid stroke with a limit", () => {
+    const g = one('stroke="url(#gradient1)"');
+    expect(g.shape.paths).toEqual([]);
+    expect(g.limits).toEqual([{ kind: "stroke-style", message: "gradient stroke is not drawn" }]);
+    const d = one('stroke="#000000" stroke-dasharray="3 1"');
+    expect(d.shape.paths[0]!.stroke).not.toBeNull();
+    expect(d.limits.map((l) => l.kind)).toEqual(["stroke-style"]);
+  });
+  it("gives a path with a fill and a stroke one ShapePath with both, and scales the width by the baked matrix", () => {
+    const svg =
+      head +
+      '<g transform="matrix(1,0,0,1,5,5)"><g transform="matrix(2,0,0,2,0,0)">' +
+      '<path d="M0 0 L9 0 9 9 Z" fill="#112233" stroke="#445566" stroke-width="3"/></g></g></svg>';
+    const { shape } = svgToShapeJson(svg, "shape");
+    expect(shape.paths).toHaveLength(1);
+    expect(shape.paths[0]!.fill).toMatchObject({ kind: "solid", color: "#112233" });
+    expect(shape.paths[0]!.stroke).toMatchObject({ color: "#445566", width: 6 });
+  });
+  it("keeps the stroke of a path whose gradient fill is not drawn", () => {
+    const svg =
+      head +
+      '<g transform="matrix(1,0,0,1,0,0)"><linearGradient id="gradient1"><stop offset="0" stop-color="#000000"/><stop offset="1" stop-color="#ffffff"/></linearGradient>' +
+      '<path d="M0 0 L9 0 9 9 Z" fill="url(#gradient1)" stroke="#010203"/></g></svg>';
+    const { shape, limits } = svgToShapeJson(svg, "shape");
+    expect(shape.paths).toHaveLength(1);
+    expect(shape.paths[0]!.fill).toBeNull();
+    expect(shape.paths[0]!.stroke).toMatchObject({ color: "#010203" });
+    expect(limits.map((l) => l.kind)).toEqual(["gradient-fill"]);
   });
 });

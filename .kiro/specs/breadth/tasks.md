@@ -483,7 +483,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/property/shapeFunction.property.test.ts` (create), **Property 3: The Shape_Function is deterministic, total and valid** (two calls equal, never throws, passes `validateShapeJson`, limits sorted by `(kind, message)` without duplicates), with `test/property/gen/genFfdecSvg.ts` (create). `test/unit/svgToShape.test.ts` (create): the SVGs of the `clickgoto` and `tweendemo` fixtures and an inline `<use>` glyph sample.
     - _Requirements: 7.7, 7.8, 7.9, 2.7, 10.2, 15.5_
 
-  - [ ] 10.5 Strokes: cap, join, miter limit and the stroke limits
+  - [x] 10.5 Strokes: cap, join, miter limit and the stroke limits
     - Map `stroke-linecap` and `stroke-linejoin` to `cap` and `join`, and `stroke-miterlimit` to `miterLimit` (always written; the SVG default is 4). Decided F8: `miter-clip` maps to `miter` and records a `stroke-style` limit whose message says `approximated: miter-clip join is drawn as miter (shape N)`. A gradient stroke is kept as no stroke with a `stroke-style` limit; a dash array records `stroke-style`. No limit is recorded for a cap: sub-task 11.1 measures caps on wide open strokes before any cap limit or floor is set.
     - Test: extend `test/property/shapeFunction.property.test.ts` with **Property 4: No part is dropped without a Named_Limit** (unresolved paint, `miter-clip`, gradient stroke, dash array) and `test/unit/svgToShape.test.ts` rows for every cap and join spelling.
     - _Requirements: 13.8, 13.9, 13.11, 2.1, 2.5, 2.6, 7.9, 15.5_
