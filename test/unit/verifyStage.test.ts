@@ -77,3 +77,44 @@ describe('verifyStage behaviour and tick_rate', () => {
     expect(r.behaviour.replay.inputNotes).toEqual([]);
   });
 });
+
+describe('verifyStage text-metrics limit follows the frame outcomes', () => {
+  const solid = (r: number, g: number): { width: number; height: number; data: Uint8Array } => {
+    const data = new Uint8Array(4 * 4 * 4);
+    for (let i = 0; i < 16; i++) data.set([r, g, 0, 255], i * 4);
+    return { width: 4, height: 4, data };
+  };
+  async function limitKinds(rendered: ReturnType<typeof solid> | null): Promise<string[]> {
+    const deps: Partial<VerifyDeps> = {
+      exportReferenceFrames: async () => new Map([[1, solid(255, 0)]]) as never,
+      buildProject: async () => ({ distDir: root, dispose: async () => undefined }),
+      renderFrames: async () => new Map(rendered === null ? [] : [[1, rendered]]) as never,
+    };
+    await verifyStage({
+      swfPath: join(root, 'x.swf'),
+      jarPath: 'none',
+      outputDir: join(root, 'out'),
+      projectDir: join(root, 'out'),
+      scene: { formatVersion: 2, stage: { width: 4, height: 4, backgroundColor: '#ffffff', frameRate: 30 }, rootSymbolId: 0, symbols: {} } as never,
+      unsupported: [
+        { kind: 'text-metrics', id: 3, message: 'm' },
+        { kind: 'gradient-fill', id: 4, message: 'g' },
+      ] as never,
+      translationReport: { formatVersion: 1, typeCheck: 'skipped', classes: [], omittedClasses: [], otherErrors: [], classPaths: [] } as never,
+      sampleName: 's',
+      referenceDir: null,
+      deps,
+    });
+    const report = JSON.parse(await readFile(join(root, 'out', 'fidelity-report.json'), 'utf8'));
+    return report.visual.knownVisualLimits.map((l: { kind: string }) => l.kind);
+  }
+  it('omits text-metrics when every compared frame is exact', async () => {
+    expect(await limitKinds(solid(255, 0))).toEqual(['gradient-fill']);
+  });
+  it('keeps text-metrics when a compared frame differs', async () => {
+    expect(await limitKinds(solid(0, 255))).toEqual(['gradient-fill', 'text-metrics']);
+  });
+  it('keeps text-metrics when no frame was compared', async () => {
+    expect(await limitKinds(null)).toEqual(['gradient-fill', 'text-metrics']);
+  });
+});

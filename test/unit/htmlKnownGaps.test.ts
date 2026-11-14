@@ -112,3 +112,17 @@ describe('html known behaviour gaps', () => {
     expect(renderFidelityHtml(compared(undefined))).toContain('<h3>Caught errors (0)</h3>');
   });
 });
+
+describe('html known visual limits', () => {
+  it('prints the new kinds generically and escapes id-less and id messages', () => {
+    const r = baseReport({ status: 'not-compared', reason: 'no-reference-trace', knownBehaviourGaps: [] } as never);
+    (r.visual as { knownVisualLimits: unknown[] }).knownVisualLimits = [
+      { kind: 'gradient-fill', id: 7, message: 'a<b>&c' },
+      { kind: 'text-metrics', message: 'x"y' },
+    ];
+    const html = renderFidelityHtml(r);
+    expect(html).toContain('<li>gradient-fill (id 7): a&lt;b&gt;&amp;c</li>');
+    expect(html).toContain('<li>text-metrics: x&quot;y</li>');
+    expect(html).not.toContain('<b>');
+  });
+});

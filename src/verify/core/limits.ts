@@ -6,7 +6,18 @@ import type { UnsupportedFeatureEntry } from '../../pipeline/unsupported';
 
 /** Re-exported by report.ts. */
 export interface VisualLimit {
-  kind: 'colour-offset' | 'skewed-matrix' | 'unsupported-feature';
+  kind:
+    | 'colour-offset'
+    | 'skewed-matrix'
+    | 'unsupported-feature'
+    | 'gradient-fill'
+    | 'gradient-spread'
+    | 'gradient-focal'
+    | 'bitmap-fill'
+    | 'bitmap-smoothing'
+    | 'text-metrics'
+    | 'stroke-style'
+    | 'blend-mode';
   id?: number;
   message: string;
 }
@@ -20,6 +31,21 @@ const LIMITED_KINDS: ReadonlySet<string> = new Set([
   'morph-shape',
 ]);
 
+/** Unsupported kinds that become a limit of the same kind (id and message kept). */
+const OWN_KINDS: ReadonlySet<string> = new Set([
+  'gradient-fill',
+  'gradient-spread',
+  'gradient-focal',
+  'bitmap-fill',
+  'bitmap-smoothing',
+  'text-metrics',
+  'stroke-style',
+  'blend-mode',
+]);
+export interface LimitOptions {
+  /** True when every compared frame matched exactly; 	ext-metrics entries are then omitted. */
+  allComparedFramesExact: boolean;
+}
 function cmpStr(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0; // UTF-16 code unit order
 }
@@ -34,11 +60,13 @@ function compareLimits(a: VisualLimit, b: VisualLimit): number {
 /**
  * One entry per placement with a non-zero colour offset (`colour-offset`), one per skewed
  * matrix (`skewed-matrix`) and one per unsupported-feature entry of a visually relevant kind.
+ * 	ext-metrics entries are omitted when opts.allComparedFramesExact is true.
  * Duplicates by (kind, id, message) are removed; the result is sorted.
  */
 export function knownVisualLimits(
   scene: SceneJson,
   unsupported: readonly UnsupportedFeatureEntry[],
+  opts: LimitOptions,
 ): VisualLimit[] {
   const found: VisualLimit[] = [];
 
@@ -69,8 +97,13 @@ export function knownVisualLimits(
   }
 
   for (const u of unsupported) {
-    if (!LIMITED_KINDS.has(u.kind)) continue;
-    const limit: VisualLimit = { kind: 'unsupported-feature', message: u.message };
+    const own = OWN_KINDS.has(u.kind);
+    if (!own && !LIMITED_KINDS.has(u.kind)) continue;
+    if (u.kind === 'text-metrics' && opts.allComparedFramesExact) continue;
+    const limit: VisualLimit = {
+      kind: own ? (u.kind as VisualLimit['kind']) : 'unsupported-feature',
+      message: u.message,
+    };
     if (u.id !== undefined) limit.id = u.id;
     found.push(limit);
   }

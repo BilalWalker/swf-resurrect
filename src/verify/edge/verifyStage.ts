@@ -226,7 +226,7 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
     tools: { ffdec: FFDEC_VERSION, playwright: PLAYWRIGHT_VERSION, pngjs: PNGJS_VERSION },
     frameSample: sample,
     frames: [...outcomes.values()],
-    limits: knownVisualLimits(req.scene, req.unsupported),
+    limits: knownVisualLimits(req.scene, req.unsupported, { allComparedFramesExact: allComparedFramesExact([...outcomes.values()]) }),
     behaviour,
     knownBehaviourGaps: KNOWN_BEHAVIOUR_GAPS,
     problems,
@@ -248,6 +248,16 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
   };
 }
 
+/** True when at least one frame was compared and every compared frame has no differing pixel. */
+function allComparedFramesExact(frames: readonly FrameOutcome[]): boolean {
+  let compared = 0;
+  for (const f of frames) {
+    if (f.status !== 'compared') continue;
+    compared++;
+    if (f.differingPixels !== 0) return false;
+  }
+  return compared > 0;
+}
 async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Problem[]): Promise<BehaviourInput> {
   const dir = req.referenceDir === null ? null : resolve(req.referenceDir);
   const traceText = await readOptional(dir === null ? null : join(dir, 'output.txt'));

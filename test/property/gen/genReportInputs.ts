@@ -36,13 +36,26 @@ const genNotCompared: fc.Arbitrary<FrameOutcome> = fc.record({
 
 const genFrames = fc.array(fc.oneof(genCompared, genNotCompared), { maxLength: 12 });
 
+const limitKinds = [
+  'colour-offset' as const,
+  'skewed-matrix' as const,
+  'unsupported-feature' as const,
+  'gradient-fill' as const,
+  'gradient-spread' as const,
+  'gradient-focal' as const,
+  'bitmap-fill' as const,
+  'bitmap-smoothing' as const,
+  'text-metrics' as const,
+  'stroke-style' as const,
+  'blend-mode' as const,
+];
 const genLimit: fc.Arbitrary<VisualLimit> = fc.oneof(
   fc.record({
-    kind: fc.constantFrom('colour-offset' as const, 'skewed-matrix' as const, 'unsupported-feature' as const),
+    kind: fc.constantFrom(...limitKinds),
     message: text,
   }),
   fc.record({
-    kind: fc.constantFrom('colour-offset' as const, 'skewed-matrix' as const, 'unsupported-feature' as const),
+    kind: fc.constantFrom(...limitKinds),
     id: fc.integer({ min: 0, max: 50 }),
     message: text,
   }),
