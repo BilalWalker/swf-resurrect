@@ -38,6 +38,8 @@ export interface UnsupportedRow {
 }
 
 export interface ResultSummary {
+  /** Stage size in pixels from the fidelity report, for the preview frames' aspect ratio. */
+  stage: { width: number; height: number } | null;
   overallMatch: ScoreSummary | null;
   traceScore: ScoreSummary | null;
   classCounts: ClassCounts | null;
@@ -144,7 +146,11 @@ export function summariseResults(fidelity: unknown, translation: unknown, unsupp
   const t = obj(translation);
   const u = obj(unsupported);
   const classes = t === null ? null : classesOf(t);
+  const st = obj(f?.stage);
+  const w = num(st?.width);
+  const h = num(st?.height);
   return {
+    stage: w !== null && h !== null && w > 0 && h > 0 ? { width: w, height: h } : null,
     overallMatch: f === null ? null : visualScore(f),
     traceScore: f === null ? null : behaviourScore(f),
     classCounts: classes?.counts ?? null,

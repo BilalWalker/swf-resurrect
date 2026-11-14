@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { summariseResults } from '../../web/server/results';
 
 const fidelityCompared = {
+  stage: { width: 550, height: 400 },
   visual: {
     status: 'compared',
     overallMatch: 100,
@@ -27,6 +28,7 @@ describe('summariseResults', () => {
     const r = summariseResults(fidelityCompared, translation, {
       entries: [{ kind: 'filter', id: 7, message: 'Drop shadow filter ignored' }],
     });
+    expect(r.stage).toEqual({ width: 550, height: 400 });
     expect(r.overallMatch).toEqual({ value: 100, reasons: [], basis: '3 of 3 sampled frames compared' });
     expect(r.traceScore).toEqual({ value: 100, reasons: [], basis: '676 of 676 reference trace lines matched' });
     expect(r.classCounts).toEqual({ total: 3, clean: 1, loose: 1, unsupported: 1, omitted: 1, overridden: 0, typeErrors: 2 });
@@ -68,13 +70,15 @@ describe('summariseResults', () => {
 
   it('survives missing and malformed files', () => {
     expect(summariseResults(undefined, undefined, undefined)).toEqual({
+      stage: null,
       overallMatch: null,
       traceScore: null,
       classCounts: null,
       classes: [],
       unsupported: null,
     });
-    const r = summariseResults({ visual: [], behaviour: 'x' }, { classes: 'nope' }, { entries: [null, 3] });
+    const r = summariseResults({ stage: { width: 0, height: 'x' }, visual: [], behaviour: 'x' }, { classes: 'nope' }, { entries: [null, 3] });
+    expect(r.stage).toBeNull();
     expect(r.overallMatch).toBeNull();
     expect(r.traceScore).toBeNull();
     expect(r.classCounts?.total).toBe(0);
