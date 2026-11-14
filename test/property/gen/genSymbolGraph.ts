@@ -49,3 +49,27 @@ export const genThrowingGraph: fc.Arbitrary<ThrowingGraph> = fc.record({
   tree: genSymbolGraph,
   flags: fc.array(genFlags, { minLength: 40, maxLength: 40 }),
 });
+
+/** A child for the clip layout: a depth and, for a mask, a `clipDepth` of at least that depth. */
+export interface ClipItem {
+  depth: number;
+  clipDepth?: number;
+}
+
+/** Generator for Property 12 (layout half): strictly ascending depths, about a third of them masks. */
+export const genClipItems: fc.Arbitrary<ClipItem[]> = fc
+  .array(
+    fc.record({
+      gap: fc.integer({ min: 1, max: 3 }),
+      isMask: fc.boolean(),
+      span: fc.integer({ min: 0, max: 8 }),
+    }),
+    { maxLength: 12 },
+  )
+  .map((rows) => {
+    let depth = 0;
+    return rows.map((r) => {
+      depth += r.gap;
+      return r.isMask ? { depth, clipDepth: depth + r.span } : { depth };
+    });
+  });

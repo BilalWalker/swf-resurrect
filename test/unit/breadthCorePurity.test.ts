@@ -22,6 +22,7 @@ const CORE_FILES = [
   "src/convert/svgToShape.ts", // 10.4
   "template/runtime/gradientMatrix.ts", // 11.2
   "template/runtime/colourMatrix.ts", // 11.6
+  "template/runtime/clipLayout.ts", // 12.5
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

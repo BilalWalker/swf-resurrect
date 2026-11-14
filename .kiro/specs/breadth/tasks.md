@@ -592,12 +592,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/ffdecXmlVerifiedNames.test.ts` rows for the observed names only, using a dump excerpt.
     - _Requirements: 13.3, 13.4_
 
-  - [-] 12.4 Keep filtered and blend-mode placements and record the limit
+  - [x] 12.4 Keep filtered and blend-mode placements and record the limit
     - `PlaceOp` gets `hasBlendMode`; `resolveTimeline.ts` no longer calls `drop(depth, 'filter')`: the placement is processed like an unfiltered one and adds a `KeptPlacementLimit` (sprite, frame, depth, character id, kind `filter` or `blend-mode`; two entries when it has both). `DroppedPlacement.kind` loses `'filter'`. `convertModel` turns each entry into an Unsupported entry with the messages `filter list is not drawn; the character is drawn without it (character N)` and `blend mode is not drawn; the character is drawn normally (character N)`. A move without a character uses the character at that depth. The Runtime needs no change.
     - Test: extend **Property 10** in `test/property/convertAccounting.property.test.ts` (filtered and blend-mode placements stay in the Scene_JSON, contribute exactly one `filter` or `blend-mode` entry each, and never count as drops), `test/unit/resolveTimeline.test.ts` (a filtered move without a character keeps the character id) and `test/unit/convertModel.test.ts`.
     - _Requirements: 13.1, 13.2, 13.3, 2.5_
 
-  - [ ] 12.5 `computeClipLayout`
+  - [-] 12.5 `computeClipLayout`
     - Create `template/runtime/clipLayout.ts` with `ClipGroup` and `computeClipLayout(items)`; add it to the purity test.
     - Test: `test/property/masks.property.test.ts` (create), **Property 12: Mask classification and layout** (layout half: each non-mask item in at most one group, only when its depth is above the mask depth and not above `clipDepth`, member order kept, masks never members), with `test/property/gen/genSymbolGraph.ts` (create); unit rows in `test/unit/clipLayout.test.ts` (create: empty range, nested range, two masks).
     - _Requirements: 12.1, 12.2, 15.2, 15.5_
