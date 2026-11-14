@@ -1,6 +1,6 @@
-import { Container, FillGradient, Graphics, Matrix, type FillInput } from 'pixi.js';
+import { Container, FillGradient, Graphics, ImageSource, Matrix, Texture, type FillInput } from 'pixi.js';
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../backend';
-import { GRADIENT_HALF_EXTENT } from '../gradientMatrix';
+import { GRADIENT_HALF_EXTENT, GRADIENT_TEXTURE_SIZE } from '../gradientMatrix';
 import { assertFillDrawn, ShapeJsonError, type PathCmd, type ShapeFill, type ShapeJson, type ShapePath } from '../shapeJson';
 
 /** Per-node values that combine into the Pixi alpha. */
@@ -74,6 +74,52 @@ function linearGradient(fill: Extract<ShapeFill, { kind: 'gradient' }>): FillGra
   return grad;
 }
 
+/**
+ * The Pixi fill for a radial gradient. Same transform path as `linearGradient`; the texture is replaced. Pixi 8.22.0
+ * sources relied on, under node_modules/pixi.js/lib/scene/graphics/shared:
+ * - fill/FillGradient.mjs:129-174 `buildRadialGradient`: with centre and outerCentre (0, 0), innerRadius 0 and
+ *   outerRadius 819.2 the transform is scale(1/scale) then translate(-819.2, -819.2) (:166-173, 'global'), where
+ *   scale = textureSize / (2 * 819.2) (:140): the texture-to-FFDec-square map of gradientMatrix.ts ('radial').
+ * - fill/FillGradient.mjs:152-153: Pixi first fills the whole texture with the LAST stop colour, opaque to the
+ *   gradient's own alpha, and :154-159 draws the gradient over it. A first stop with alpha 0 then shows the last
+ *   stop colour in the centre, not transparency (Requirement 8.2). So the texture is replaced by an own canvas drawn
+ *   without that pre-fill; `texture` is public and `buildGradient` returns early once it is set (:130).
+ * - fill/FillGradient.mjs:160-165: the texture is an `ImageSource` with `addressMode: wrapMode` (clamp-to-edge for pad).
+ * - The canvas gradient is `createRadialGradient(128 + fx*k, 128 + fy*k, 0, 128, 128, 128)`, k = 128 / 819.2: the focal
+ *   point of the SWF gradient in texture pixels, the circle of radius 819.2 in texture pixels 128.
+ */
+function radialGradient(fill: Extract<ShapeFill, { kind: 'gradient' }>): FillGradient {
+  const grad = new FillGradient({
+    type: 'radial',
+    center: { x: 0, y: 0 },
+    outerCenter: { x: 0, y: 0 },
+    innerRadius: 0,
+    outerRadius: GRADIENT_HALF_EXTENT,
+    textureSpace: 'global',
+    colorStops: fill.stops.map((s) => ({ offset: s.offset, color: stopColor(s.color, s.alpha) })),
+    wrapMode: WRAP_MODE[fill.spread],
+  });
+  grad.buildGradient();
+  const size = GRADIENT_TEXTURE_SIZE;
+  const half = size / 2;
+  const k = half / GRADIENT_HALF_EXTENT;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (ctx === null) throw new ShapeJsonError('radial gradient: no 2d canvas context');
+  const fx = fill.focal?.x ?? 0;
+  const fy = fill.focal?.y ?? 0;
+  const g2 = ctx.createRadialGradient(half + fx * k, half + fy * k, 0, half, half, half);
+  for (const s of fill.stops) g2.addColorStop(s.offset, stopColor(s.color, s.alpha));
+  ctx.fillStyle = g2;
+  ctx.fillRect(0, 0, size, size);
+  grad.texture?.destroy(true);
+  grad.texture = new Texture({ source: new ImageSource({ resource: canvas, addressMode: WRAP_MODE[fill.spread] }) });
+  grad.transform = new Matrix(...fill.matrix).append(grad.transform!);
+  return grad;
+}
+
 /** drawFill: the fill check first (no warn-and-skip), then the fill of one contour; holes are cut out of it. */
 function drawFill(g: Graphics, path: ShapePath, index: number): void {
   const fill = path.fill;
@@ -81,7 +127,7 @@ function drawFill(g: Graphics, path: ShapePath, index: number): void {
   assertFillDrawn(fill, `paths[${index}].fill`);
   let style: FillInput;
   if (fill.kind === 'solid') style = { color: fill.color, alpha: fill.alpha };
-  else if (fill.kind === 'gradient' && fill.type === 'linear') style = linearGradient(fill);
+  else if (fill.kind === 'gradient') style = fill.type === 'linear' ? linearGradient(fill) : radialGradient(fill);
   else throw new ShapeJsonError(`paths[${index}].fill: fill kind not drawn: ${fill.kind}`);
   for (const contour of path.contours) {
     tracePath(g, contour.outer);

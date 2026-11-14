@@ -195,19 +195,27 @@ describe("svgToShapeJson drawn-fill capabilities", () => {
 describe("svgToShapeJson under the committed DRAWN_FILLS", () => {
   const head = '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
   const stops = '<stop offset="0" stop-color="#000000"/><stop offset="1" stop-color="#ffffff"/>';
-  const svgOf = (kind: "linear" | "radial"): string => {
-    const def = kind === "linear" ? `<linearGradient id="g0">${stops}</linearGradient>` : `<radialGradient id="g0" cx="0" cy="0" r="819.2">${stops}</radialGradient>`;
+  const svgOf = (kind: "linear" | "radial" | "bitmap"): string => {
+    const def =
+      kind === "linear"
+        ? `<linearGradient id="g0">${stops}</linearGradient>`
+        : kind === "radial"
+          ? `<radialGradient id="g0" cx="0" cy="0" r="819.2">${stops}</radialGradient>`
+          : '<pattern id="g0" ffdec:fill-bitmapId="5"><image xlink:href="data:image/PNG;base64,AAAA"/></pattern>';
     return `${head}<g transform="matrix(1,0,0,1,0,0)"><path d="M0 0 L9 0 9 9 Z" fill="url(#g0)"/></g><defs>${def}</defs></svg>`;
   };
   /** **Validates: Requirements 2.8, 8.1** */
-  it("a linear gradient produces no limit and a radial one exactly one gradient-fill limit", () => {
+  it("a linear or radial gradient produces no limit and a bitmap exactly one bitmap-fill limit", () => {
     const lin = svgToShapeJson(svgOf("linear"), "shape");
     expect(lin.limits).toEqual([]);
     expect(lin.shape.paths).toHaveLength(1);
     expect(lin.shape.paths[0]!.fill!.kind).toBe("gradient");
     const rad = svgToShapeJson(svgOf("radial"), "shape");
-    expect(rad.limits.filter((l) => l.kind === "gradient-fill")).toHaveLength(1);
-    expect(rad.shape.paths).toHaveLength(0);
+    expect(rad.limits.filter((l) => l.kind === "gradient-fill")).toHaveLength(0);
+    expect(rad.shape.paths).toHaveLength(1);
+    const bmp = svgToShapeJson(svgOf("bitmap"), "shape");
+    expect(bmp.limits.filter((l) => l.kind === "bitmap-fill")).toHaveLength(1);
+    expect(bmp.shape.paths).toHaveLength(0);
   });
 });
 

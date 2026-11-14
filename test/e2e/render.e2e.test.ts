@@ -209,6 +209,46 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
     expect(red(75, 50)).toBeLessThan(red(125, 50));
   });
 
+  // A radial gradient of radius 50 around (100, 50): transparent black at the centre, opaque black at the rim.
+  // Pixi alone would pre-fill its texture with the last stop (opaque black), so the centre would be black (Requirement 8.2).
+  const radialShape = (focal?: { x: number; y: number }): ShapeJson => ({
+    formatVersion: 1,
+    paths: [
+      {
+        contours: [{ outer: [['M', 10, 0], ['L', 190, 0], ['L', 190, 100], ['L', 10, 100], ['Z']], holes: [] }],
+        fill: {
+          kind: 'gradient',
+          type: 'radial',
+          matrix: [50 / 819.2, 0, 0, 50 / 819.2, 100, 50],
+          stops: [
+            { offset: 0, color: '#000000', alpha: 0 },
+            { offset: 1, color: '#000000', alpha: 1 },
+          ],
+          spread: 'pad',
+          ...(focal === undefined ? {} : { focal }),
+        },
+        stroke: null,
+      },
+    ],
+  });
+
+  it('a radial gradient with a transparent first stop draws a transparent centre, growing opaque to the rim', async () => {
+    const red = await renderRed(radialShape());
+    expect(red(100, 50)).toBeGreaterThan(245); // centre: stop alpha 0 shows the white background
+    expect(red(100 + 25, 50)).toBeGreaterThan(100); // half way: about half covered
+    expect(red(100 + 25, 50)).toBeLessThan(160);
+    expect(red(100 + 45, 50)).toBeLessThan(40); // near the rim
+    expect(red(100, 50 + 45)).toBeLessThan(40);
+    expect(red(100 + 80, 50)).toBeLessThan(4); // beyond the rim: clamped to the last stop (opaque black)
+  });
+
+  it('a focal point moves the transparent spot toward it', async () => {
+    // focal x 409.6 is half the radius (819.2): the spot sits at x 125.
+    const red = await renderRed(radialShape({ x: 409.6, y: 0 }));
+    expect(red(125, 50)).toBeGreaterThan(245);
+    expect(red(75, 50)).toBeLessThan(red(125, 50));
+  });
+
   it('a reflected linear gradient mirrors past the end', async () => {
     const red = await renderRed(ramp('reflect', [10, 190]));
     expect(red(148, 50)).toBeGreaterThan(235);
