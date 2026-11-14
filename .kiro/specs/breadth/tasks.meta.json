@@ -1066,6 +1066,16 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794554982202
+      },
+      {
+        "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794585959708
+      },
+      {
+        "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794586106457
       }
     ],
     "11.1 Stroke styles measured on wide open strokes": [
@@ -1078,6 +1088,11 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794554982451
+      },
+      {
+        "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794586111225
       }
     ],
     "11.2 Linear gradients: `gradientTextureMatrix` and `FillGradient` drawing; flips `gradientLinear`": [
@@ -2141,6 +2156,13 @@
         "executionId": "5c652523-dc21-4638-9080-06ba4b34f63d",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794566895353
+      }
+    ],
+    "10. Runtime: Shape_JSON render path (Shape_JSON, Shape_Function, Scene_JSON v2, limit kinds)": [
+      {
+        "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794586106894
       }
     ]
   }

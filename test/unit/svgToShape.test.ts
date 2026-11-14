@@ -127,6 +127,15 @@ describe("svgToShapeJson strokes", () => {
       expect(shape.paths[0]!.stroke).toMatchObject({ join, miterLimit: 2.5, cap: "butt", width: 1 });
     });
   }
+  it("writes every cap and join spelling to ShapeStroke with miterLimit always set (11.1)", () => {
+    for (const cap of ["butt", "round", "square"] as const) {
+      for (const join of ["miter", "round", "bevel"] as const) {
+        const { shape, limits } = one(`stroke="#000000" stroke-width="10" stroke-linecap="${cap}" stroke-linejoin="${join}"`);
+        expect(limits).toEqual([]);
+        expect(shape.paths[0]!.stroke).toEqual({ color: "#000000", alpha: 1, width: 10, cap, join, miterLimit: 4 });
+      }
+    }
+  });
   it("maps miter-clip to miter and records one approximated stroke-style limit", () => {
     const { shape, limits } = one('stroke="#000000" stroke-linejoin="miter-clip" stroke-miterlimit="2.0"');
     expect(shape.paths[0]!.stroke).toMatchObject({ join: "miter", miterLimit: 2 });
