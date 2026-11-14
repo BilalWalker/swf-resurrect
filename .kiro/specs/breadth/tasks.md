@@ -575,7 +575,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Evidence is the recorded CC measurement; it is guarded by `test/unit/clickgotoReplay.test.ts` and `test/e2e/overallMatch.e2e.test.ts`.
     - _Requirements: 1.6, 1.7_
 
-- [ ] 12. Convert: static and dynamic text, filters, blend modes and masks
+- [x] 12. Convert: static and dynamic text, filters, blend modes and masks
   - Commit area: `Convert` (the commit also changes Unpack and the Runtime clip groups; the message names them). Read design sections 5, 6 and 7. Verification V2 (sub-tasks 12.6 and 12.7 change `template/`), plus CC. Decided F2, F7. `TextField` stays out of this spec; dynamic text stays a Named_Limit (Requirement 11).
   - [x] 12.1 Export `texts/<id>.svg`
     - `src/unpack/unpack.ts`: the second FFDec call becomes `-format text:svg -export shape,script,symbolClass,text <workDir> <swf>`; `UnpackResult` gains `textsDir`; `texts` joins the expected exports. `src/convert/readUnpacked.ts` reads `texts/<id>.svg` for each id in `staticTextIds` into `textAssets`; a missing, empty or invalid file records `{ kind: 'text' }` with the id and the placements are dropped (Requirement 10.4). The empty-group SVG that FFDec writes for a `DefineEditTextTag` is not read (F7).
@@ -612,14 +612,14 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend `test/property/masks.property.test.ts` (**Property 12**, classification half, brute-force model) and `test/unit/masks.test.ts` (create: shape mask, sprite mask, nested clip, empty range).
     - _Requirements: 12.1, 12.3, 12.4, 12.7, 15.2, 15.5_
 
-  - [-] 12.8 Measure and update the mask-dependent expectations
+  - [x] 12.8 Measure and update the mask-dependent expectations
     - Update `test/unit/resolveTimeline.test.ts`, `test/property/resolveTimeline.test.ts` and `test/unit/convertModel.test.ts` where they expected `clipDepth` placements to be dropped. Record the Overall_Match of the local smoke `clipDepth` before and after (84.09 for frames 1 and 2 before; 92.05 over four frames) and of `mask_reapply` and `3_joystick` (local copies under `.work/`); `3_joystick` and `mask_reapply` must be at least their value before this sub-task (Requirement 12.6). State that `clipDepth` has no Score_Floor because it is not committed. Delete the copies. Record CC.
     - Test: extend `test/unit/convertModel.test.ts` (a mask entry kept with `clipDepth`, a non-trivial mask recorded as `mask`) and `test/unit/resolveTimeline.test.ts`. The measurement is guarded by the floors of sub-tasks 16.3 and 17.3.
     - _Requirements: 12.3, 12.6, 13.10, 1.6_
 
 - [ ] 13. Pipeline: residual attribution (Requirement 21)
   - Commit area: `Pipeline`. Read design section 17. Verification V1. The tool built here is used by every admission sub-task.
-  - [ ] 13.1 Add `src/verify/core/regions.ts`
+  - [-] 13.1 Add `src/verify/core/regions.ts`
     - `clusterDiffRegions(mask, width, height)` (8-connected components of the `FrameDiff.mask`, ids in raster order of each region's first pixel, `RangeError` when the length differs) and `regionTable(regions, maxRows)` (rows in id order plus an omitted aggregate, so the pixel counts always add up). The file is covered by the purity glob of `src/verify/core/*.ts`; add it to the explicit list too.
     - Test: `test/property/regions.property.test.ts` (create), **Property 26: Region clustering partitions the mask deterministically**.
     - _Requirements: 21.1, 21.4, 15.5_

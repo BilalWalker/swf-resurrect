@@ -24,6 +24,7 @@ const CORE_FILES = [
   "template/runtime/colourMatrix.ts", // 11.6
   "template/runtime/clipLayout.ts", // 12.5
   "src/convert/masks.ts", // 12.7
+  "src/verify/core/regions.ts", // 13.1
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

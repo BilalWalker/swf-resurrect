@@ -15,6 +15,10 @@
     "10.3 Add `src/convert/evenOdd.ts`": {
       "status": "passed",
       "lastRunTimestamp": 1794571676211
+    },
+    "13.1 Add `src/verify/core/regions.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1794593171446
     }
   },
   "executionHistory": {
@@ -1445,6 +1449,11 @@
         "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794592851996
+      },
+      {
+        "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794593095898
       }
     ],
     "13.1 Add `src/verify/core/regions.ts`": [
@@ -1457,6 +1466,11 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794554986019
+      },
+      {
+        "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794593096717
       }
     ],
     "13.2 Add `src/verify/core/residual.ts`": [
@@ -2330,6 +2344,13 @@
         "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794590300621
+      }
+    ],
+    "12. Convert: static and dynamic text, filters, blend modes and masks": [
+      {
+        "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794593096054
       }
     ]
   }
