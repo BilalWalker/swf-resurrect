@@ -86,6 +86,7 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
     nMorph: fc.integer({ min: 0, max: 2 }),
     nText: fc.integer({ min: 0, max: 2 }),
     nStaticText: fc.integer({ min: 0, max: 2 }),
+    staticTextDrawn: fc.boolean(),
     nButton: fc.integer({ min: 0, max: 2 }),
     nSound: fc.integer({ min: 0, max: 1 }),
     nVideo: fc.integer({ min: 0, max: 1 }),
@@ -116,6 +117,9 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
     const soundIds = Array.from({ length: g.nSound }, () => next++);
     const videoIds = Array.from({ length: g.nVideo }, () => next++);
     const bitmapIds = Array.from({ length: g.nBitmap }, () => next++);
+    const textAssets: ShapeAssetModel[] = g.staticTextDrawn
+      ? staticTextIds.map((id, i) => ({ id, svg: g.svgs[(i + 3) % 5], origin: { x: id, y: id + 1 } }))
+      : [];
     const base = [...shapeIds, ...morphIds, ...textIds, ...staticTextIds, ...buttonIds, ...soundIds, ...videoIds, ...bitmapIds];
 
     const shapeAssets: ShapeAssetModel[] = shapeIds.map((id, i) => ({
@@ -156,7 +160,7 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
       staticTextIds,
       bitmapIds,
       shapeAssets,
-      textAssets: [],
+      textAssets,
       symbolClasses,
       classSources,
       unsupported,

@@ -577,12 +577,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 12. Convert: static and dynamic text, filters, blend modes and masks
   - Commit area: `Convert` (the commit also changes Unpack and the Runtime clip groups; the message names them). Read design sections 5, 6 and 7. Verification V2 (sub-tasks 12.6 and 12.7 change `template/`), plus CC. Decided F2, F7. `TextField` stays out of this spec; dynamic text stays a Named_Limit (Requirement 11).
-  - [-] 12.1 Export `texts/<id>.svg`
+  - [x] 12.1 Export `texts/<id>.svg`
     - `src/unpack/unpack.ts`: the second FFDec call becomes `-format text:svg -export shape,script,symbolClass,text <workDir> <swf>`; `UnpackResult` gains `textsDir`; `texts` joins the expected exports. `src/convert/readUnpacked.ts` reads `texts/<id>.svg` for each id in `staticTextIds` into `textAssets`; a missing, empty or invalid file records `{ kind: 'text' }` with the id and the placements are dropped (Requirement 10.4). The empty-group SVG that FFDec writes for a `DefineEditTextTag` is not read (F7).
     - Test: extend `test/unit/unpack.test.ts` (the argument vector contains `-format text:svg`, `texts` is expected) and `test/unit/readUnpacked.test.ts` (text assets, a missing file, an empty edit-text SVG ignored).
     - _Requirements: 10.1, 10.4_
 
-  - [ ] 12.2 Static text as a shape symbol; dynamic text dropped with a limit
+  - [-] 12.2 Static text as a shape symbol; dynamic text dropped with a limit
     - `convertModel` builds a `shape` symbol from each static-text asset with `svgToShapeJson(raw, 'text')` exactly like a shape, with `size` and `origin`; placements are kept. It records one `text-metrics` entry per static-text shape (message `glyph shapes come from the embedded font outlines; the original font hinting is not reproduced`). Dynamic text placements are dropped with kind `text` and the message `dynamic text (DefineEditText) is not rendered`. `TextField` is not added to the Shim (Requirement 11.3), and the Translate stage keeps reporting `TextField` members as before (Requirement 11.2).
     - Test: extend **Property 10** in `test/property/convertAccounting.property.test.ts` (static text drawn, not dropped) and `test/unit/convertModel.test.ts` (static text symbol, `text-metrics` entry, dynamic text drop, a `TextField` member still produces the existing diagnostic); extend `genTagsModel.ts`; `test/unit/convertTextDeterminism.test.ts` (create): two Convert runs over a model with static text give byte-identical `*.shape.json`.
     - _Requirements: 5.3, 10.2, 10.3, 10.5, 11.1, 11.2, 11.3, 11.4, 9.2_

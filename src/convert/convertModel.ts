@@ -151,12 +151,10 @@ export function convertModel(model: TagsModel): ConvertResult {
   const symbols: Record<string, ShapeSymbol | SpriteSymbol> = {};
   const shapeFiles: ShapeFile[] = [];
   const images = new Map<number, ImageFile>();
-  for (const id of shapeIds) {
-    if (morphSet.has(id)) continue;
-    const asset = assetById.get(id);
-    if (asset === undefined || asset.svg === null) throw new ShapeExportError(id, 'missing');
+  const addShape = (id: number, asset: TagsModel['shapeAssets'][number], kind: 'shape' | 'text', label: string): void => {
+    if (asset.svg === null) throw new ShapeExportError(id, 'missing');
     if (asset.svg === '') throw new ShapeExportError(id, 'empty');
-    const built = svgToShapeJson(asset.svg.replace(/\r\n?/g, '\n'), 'shape');
+    const built = svgToShapeJson(asset.svg.replace(/\r\n?/g, '\n'), kind);
     shapeFiles.push({ fileName: `${id}.shape.json`, content: printShapeJson(built.shape) });
     for (const img of built.images) {
       if (!images.has(img.bitmapId)) {
@@ -166,9 +164,9 @@ export function convertModel(model: TagsModel): ConvertResult {
     for (const limit of built.limits) unsupported.push({ kind: limit.kind, id, message: limit.message });
     const w = /\bwidth="([\d.]+)px"/.exec(asset.svg);
     const h = /\bheight="([\d.]+)px"/.exec(asset.svg);
-    if (w === null || h === null) warnings.push(`shape ${id}: no px width or height in SVG; using size 0 x 0`);
+    if (w === null || h === null) warnings.push(`${label} ${id}: no px width or height in SVG; using size 0 x 0`);
     if (asset.origin === null) {
-      warnings.push(`shape ${id}: no origin wrapper found in SVG; using (0, 0)`);
+      warnings.push(`${label} ${id}: no origin wrapper found in SVG; using (0, 0)`);
     }
     const x = asset.origin?.x ?? 0;
     const y = asset.origin?.y ?? 0;
@@ -178,6 +176,25 @@ export function convertModel(model: TagsModel): ConvertResult {
       origin: { x: x === 0 ? 0 : x, y: y === 0 ? 0 : y },
       size: { width: w === null ? 0 : Number(w[1]), height: h === null ? 0 : Number(h[1]) },
     };
+  };
+  for (const id of shapeIds) {
+    if (morphSet.has(id)) continue;
+    addShape(id, assetById.get(id) ?? { id, svg: null, origin: null }, 'shape', 'shape');
+  }
+  // Static text: a shape symbol built from texts/<id>.svg like a shape (Requirement 10.2, 10.3).
+  const textDrawn = new Set<number>();
+  for (const asset of [...(model.textAssets ?? [])].sort((a, b) => a.id - b.id)) {
+    if (!isId(asset.id)) malformed(`invalid text asset id ${String(asset.id)}`);
+    if (textDrawn.has(asset.id) || symbols[String(asset.id)] !== undefined || spriteById.has(asset.id) || asset.id === 0) {
+      malformed(`character id ${asset.id} defined twice`);
+    }
+    addShape(asset.id, asset, 'text', 'text');
+    textDrawn.add(asset.id);
+    unsupported.push({
+      kind: 'text-metrics',
+      id: asset.id,
+      message: 'glyph shapes come from the embedded font outlines; the original font hinting is not reproduced',
+    });
   }
 
   // Unsupported observations and morph shapes.
@@ -200,8 +217,11 @@ export function convertModel(model: TagsModel): ConvertResult {
     unsupported.push(entry);
   }
 
-  // Static text is dropped as kind text until Task 12 draws it; DefineBits characters are never placed directly.
-  for (const id of model.staticTextIds ?? []) if (!unsupportedChars.has(id)) unsupportedChars.set(id, 'text');
+  // Static text without a readable asset is dropped as kind text (the reader already recorded why); drawn text is kept.
+  // DefineBits characters are never placed directly.
+  for (const id of model.staticTextIds ?? []) {
+    if (!textDrawn.has(id) && !unsupportedChars.has(id)) unsupportedChars.set(id, 'text');
+  }
   const bitmapSet = new Set<number>();
   for (const id of model.bitmapIds ?? []) {
     if (unsupportedChars.has(id)) continue;

@@ -12,7 +12,8 @@ function droppedIds(m: TagsModel): Set<number> {
   const sprites = new Set(m.sprites.map((s) => s.id));
   const ids = new Set<number>();
   for (const id of m.morphShapeIds) ids.add(id);
-  for (const id of m.staticTextIds) ids.add(id);
+  const drawnText = new Set(m.textAssets.map((a) => a.id));
+  for (const id of m.staticTextIds) if (!drawnText.has(id)) ids.add(id);
   for (const id of m.bitmapIds) ids.add(id);
   for (const o of m.unsupported) if (o.characterId !== undefined) ids.add(o.characterId);
   for (const id of [...ids]) if (shapes.has(id) || sprites.has(id)) ids.delete(id);
@@ -41,6 +42,22 @@ describe("Property 10: Convert never aborts on a defined character and counts ev
         for (const d of drops) {
           expect(d.context).toMatchObject({ spriteId: expect.any(Number), frame: expect.any(Number), depth: expect.any(Number) });
         }
+      }),
+      fcConfig,
+    );
+  });
+
+  /** **Validates: Requirements 10.2, 10.3, 10.5** */
+  it("draws static text as a shape symbol with one text-metrics entry and no drop", () => {
+    fc.assert(
+      fc.property(genTagsModel, (model) => {
+        const r = convertModel(model);
+        for (const a of model.textAssets) {
+          expect(r.scene.symbols[String(a.id)]).toMatchObject({ type: "shape", file: `${a.id}.shape.json` });
+          expect(r.shapeFiles.some((f) => f.fileName === `${a.id}.shape.json`)).toBe(true);
+        }
+        const metrics = r.unsupported.filter((u) => u.kind === "text-metrics");
+        expect(metrics.map((u) => u.id).sort((x, y) => (x ?? 0) - (y ?? 0))).toEqual(model.textAssets.map((a) => a.id).sort((x, y) => x - y));
       }),
       fcConfig,
     );

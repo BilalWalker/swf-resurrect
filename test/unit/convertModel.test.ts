@@ -85,6 +85,54 @@ describe('convertModel', () => {
     expect(drops.find((d) => d.kind === 'bitmap-fill')?.message).toContain('DefineBits character placed directly');
   });
 
+  it('draws static text as a shape symbol and records one text-metrics entry', () => {
+    const textSvg = '<svg width="40px" height="12px"><g transform="matrix(1,0,0,1,-9.35,-0.4)"><path d="M0 0 L5 5"/></g></svg>';
+    const model = modelWith([place(1, 1), place(2, 2)], {
+      staticTextIds: [2],
+      textAssets: [{ id: 2, svg: textSvg, origin: { x: -9.35, y: -0.4 } }],
+    });
+    const r = convertModel(model);
+    expect(r.scene.symbols['2']).toEqual({
+      type: 'shape',
+      file: '2.shape.json',
+      origin: { x: -9.35, y: -0.4 },
+      size: { width: 40, height: 12 },
+    });
+    expect(r.shapeFiles.map((f) => f.fileName)).toEqual(['1.shape.json', '2.shape.json']);
+    expect((r.scene.symbols['0'] as SpriteSymbol).frames[0].map((e) => e.symbolId)).toEqual([1, 2]);
+    expect(r.unsupported.filter((u) => u.context !== undefined)).toEqual([]);
+    expect(r.unsupported.filter((u) => u.kind === 'text-metrics')).toEqual([
+      {
+        kind: 'text-metrics',
+        id: 2,
+        message: 'glyph shapes come from the embedded font outlines; the original font hinting is not reproduced',
+      },
+    ]);
+  });
+
+  it('drops dynamic text placements with the DefineEditText message', () => {
+    const model = modelWith([place(1, 1), place(2, 2)], {
+      unsupported: [
+        {
+          kind: 'text',
+          tagName: 'DefineEditTextTag',
+          characterId: 2,
+          message: 'dynamic text (DefineEditText) is not rendered',
+        },
+      ],
+    });
+    const r = convertModel(model);
+    expect((r.scene.symbols['0'] as SpriteSymbol).frames[0].map((e) => e.symbolId)).toEqual([1]);
+    const texts = r.unsupported.filter((u) => u.kind === 'text');
+    expect(texts.some((u) => u.context === undefined && u.message === 'dynamic text (DefineEditText) is not rendered')).toBe(true);
+    expect(texts.filter((u) => u.context !== undefined)).toHaveLength(1);
+  });
+
+  it('keeps TextField out of the Shim, so a TextField member stays a type-check diagnostic (11.3)', async () => {
+    const shim = await import('../../template/shim');
+    expect(Object.keys(shim)).not.toContain('TextField');
+  });
+
   it('still throws UnknownSymbolError for an id nobody defines', () => {
     expect(() => convertModel(modelWith([place(1, 77)], {}))).toThrow(UnknownSymbolError);
   });
