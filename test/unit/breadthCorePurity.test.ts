@@ -21,6 +21,7 @@ const CORE_FILES = [
   "src/convert/evenOdd.ts", // 10.3
   "src/convert/svgToShape.ts", // 10.4
   "template/runtime/gradientMatrix.ts", // 11.2
+  "template/runtime/colourMatrix.ts", // 11.6
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

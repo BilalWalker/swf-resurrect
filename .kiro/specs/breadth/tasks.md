@@ -550,12 +550,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend `test/unit/loader.test.ts` (image path resolved from `assetBase`), `test/unit/shapeJson.test.ts` (`bitmap` true), `test/property/shapeFunction.property.test.ts` (Property 42) and `test/e2e/render.e2e.test.ts` (a synthetic scene with a 2x2 bitmap fill at scale 10 draws the expected pixels, nearest versus smooth).
     - _Requirements: 2.8, 9.1, 9.4_
 
-  - [-] 11.5 Emit copies image assets
+  - [x] 11.5 Emit copies image assets
     - Confirm that `src/emit/emit.ts` and the `vite build` of the emitted project copy `assets/images/*` into the project and into `dist`, and that the dev server serves them.
     - Test: extend `test/unit/emit.test.ts` and `test/unit/buildProject.test.ts` with a fixture holding `images/5.png`: the file is present in the emitted project and in `dist/assets/images`.
     - _Requirements: 9.2_
 
-  - [ ] 11.6 `colourMatrix`, `hasOffsets`, `stripAlphaAdd`, `hasAlphaAdd`
+  - [-] 11.6 `colourMatrix`, `hasOffsets`, `stripAlphaAdd`, `hasAlphaAdd`
     - Create `template/runtime/colourMatrix.ts` as in design section 4 (row-major 4x5, offsets divided by 255; `colourMatrix` keeps the full Flash formula; `stripAlphaAdd` returns the transform with the alpha add term replaced by 0; `hasAlphaAdd`). Add the file to the purity test.
     - Test: `test/property/colourMatrix.property.test.ts` (create), **Property 8: The colour matrix equals the Flash formula** (including `stripAlphaAdd` and `hasAlphaAdd`).
     - _Requirements: 13.5, 13.6, 15.2, 15.5_
