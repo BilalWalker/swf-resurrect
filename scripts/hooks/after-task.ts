@@ -1,4 +1,4 @@
-// Kiro hook runner (Post Task Execution): checks the commits of the current wip branch and
+// Kiro hook runner (Post Task Execution, trigger `PostTaskExec`): checks the commits of the current wip branch and
 // the staged files against .kiro/steering/git-workflow.md, right after a spec task ends.
 // Read-only. Problems go to stderr with exit 1 so the agent sees them; a clean result prints
 // one line. Runs on plain Node: `node scripts/hooks/after-task.ts`.

@@ -4,7 +4,7 @@
     {
       "name": "task-commit-hygiene",
       "description": "After each spec task: check the commits of the current wip branch (subject form and length, known area, body present, no BOM, no attribution lines, no emoji) and that nothing under tools/, node_modules/, out/, .work/ or dist/ is committed or staged. Read-only. Shell command action, no credits.",
-      "trigger": "PostTaskExecution",
+      "trigger": "PostTaskExec",
       "action": { "type": "command", "command": "node scripts/hooks/after-task.ts" },
       "timeout": 30
     }

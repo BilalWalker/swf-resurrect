@@ -200,7 +200,7 @@ describe('.kiro/hooks files', () => {
     for (const hook of doc.hooks) {
       expect(typeof hook.name).toBe('string');
       expect(typeof hook.description).toBe('string');
-      expect(['PreToolUse', 'PostToolUse', 'PostTaskExecution']).toContain(hook.trigger);
+      expect(['PreToolUse', 'PostToolUse', 'PostTaskExec']).toContain(hook.trigger);
       // Command actions run locally and use no credits; an agent action would start a new agent loop.
       expect(hook.action.type).toBe('command');
       const script = /^node (scripts\/hooks\/[\w-]+\.ts)$/.exec(hook.action.command)?.[1];
