@@ -29,6 +29,13 @@ for (const hash of hashes) {
 const staged = (git('diff', '--cached', '--name-only') ?? '').split('\n').filter((f) => f !== '');
 for (const f of forbiddenPaths(staged)) problems.push(`staged: ${f} must never be committed`);
 
+// The after-write hook regenerates the Shim member table silently (Kiro does not pass the output of a
+// successful Post Tool Use command hook on to the agent), so an uncommitted table is reported here.
+const table = 'src/translate/shimMembers.generated.ts';
+if ((git('status', '--porcelain', '--', table) ?? '').trim() !== '') {
+  problems.push(`${table} was regenerated but is not committed: commit it with the Shim change that caused it`);
+}
+
 if (problems.length > 0) {
   process.stderr.write(
     `Commit hygiene (.kiro/hooks/task-hygiene.json) found ${problems.length} problem(s):\n` +

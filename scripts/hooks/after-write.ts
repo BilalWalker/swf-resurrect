@@ -2,9 +2,10 @@
 // what the agent just wrote. Runs on plain Node: `node scripts/hooks/after-write.ts`.
 //  - a write under template/shim/ regenerates src/translate/shimMembers.generated.ts;
 //  - a write under samples/ runs the provenance and licence checks.
-// Anything else exits at once. Output on stdout is added to the agent's context.
+// Anything else exits at once. Measured in Kiro IDE: the hook runs after fs_write and delete_file, but
+// the output of a successful run does not reach the agent, so after-task.ts reports an uncommitted table.
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { mentionsPathUnder, parseHookInput } from './lib.ts';
 
 let stdin = '';
@@ -26,6 +27,25 @@ function run(label: string, command: string): boolean {
     return false;
   }
 }
+
+/** One line per run in .work/hooks/after-write.log (gitignored), so a silent run can be told from no run. */
+function log(entry: Record<string, unknown>): void {
+  try {
+    mkdirSync('.work/hooks', { recursive: true });
+    appendFileSync('.work/hooks/after-write.log', JSON.stringify({ time: new Date().toISOString(), ...entry }) + '\n');
+  } catch {
+    // Logging must never fail the hook.
+  }
+}
+const event = (input ?? {}) as Record<string, unknown>;
+const toolInput = event.tool_input;
+log({
+  event: event.hook_event_name ?? null,
+  tool: event.tool_name ?? null,
+  inputKeys: typeof toolInput === 'object' && toolInput !== null ? Object.keys(toolInput) : typeof toolInput,
+  shim: mentionsPathUnder(input, 'template/shim'),
+  samples: mentionsPathUnder(input, 'samples'),
+});
 
 let ok = true;
 if (mentionsPathUnder(input, 'template/shim')) {

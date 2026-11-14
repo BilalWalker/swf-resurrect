@@ -35,8 +35,8 @@ All three are shell command hooks: they run locally and use no credits.
   `cherry-pick`, switching to `main`, and any commit while on `main`. When it blocks you, do not
   look for another way to run the same thing: the rule is in `git-workflow.md`.
 - **shim-table-and-sample-checks** (after you write a file). A write under `template/shim/`
-  regenerates `src/translate/shimMembers.generated.ts`; stage the regenerated file with the Shim
-  change. A write under `samples/` runs the provenance and licence checks.
+  regenerates `src/translate/shimMembers.generated.ts`. It runs silently, so after a Shim edit check
+  `git status` and stage the regenerated file with the Shim change; the task hook reports it if you forget. A write under `samples/` runs the provenance and licence checks.
 - **task-commit-hygiene** (after a spec task). Lints the commits of the wip branch and the staged
   files. If it reports a problem in a commit, do not amend: fix forward where possible and tell
   the user.
