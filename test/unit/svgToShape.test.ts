@@ -166,3 +166,115 @@ describe("svgToShapeJson strokes", () => {
     expect(limits.map((l) => l.kind)).toEqual(["gradient-fill"]);
   });
 });
+
+describe("svgToShapeJson gradients", () => {
+  const head =
+    '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
+  const ALL = { gradientLinear: true, gradientRadial: true, bitmap: true };
+  const NONE = { gradientLinear: false, gradientRadial: false, bitmap: false };
+  const doc = (defs: string, body: string) =>
+    `${head}<g transform="matrix(1.0, 0.0, 0.0, 1.0, 5.0, 6.0)">${body}</g><defs>${defs}</defs></svg>`;
+  const stops3 =
+    '<stop offset="0.0" stop-color="#ff0000" stop-opacity="0.5"/><stop offset="0.5" stop-color="#00ff00"/><stop offset="1.0" stop-color="#0000ff"/>';
+  const linear = (spread: string) =>
+    `<linearGradient gradientTransform="matrix(0.0, -0.0079, 0.0079, 0.0, 1.5, 6.5)" gradientUnits="userSpaceOnUse" id="gradient0" spreadMethod="${spread}" x1="-819.2" x2="819.2">${stops3}</linearGradient>`;
+  const radial = (spread: string, focal: string) =>
+    `<radialGradient cx="0" cy="0" ${focal} gradientTransform="matrix(0.02, 0.0, 0.0, 0.02, 40.0, 30.0)" gradientUnits="userSpaceOnUse" id="gradient0" r="819.2" spreadMethod="${spread}">${stops3}</radialGradient>`;
+  const body = '<path d="M0 0 L9 0 9 9 Z" fill="url(#gradient0)" fill-rule="evenodd" stroke="none"/>';
+
+  it("converts a linear gradient: matrix, spread, stop alpha (absent is 1) and no focal", () => {
+    const { shape, limits } = svgToShapeJson(doc(linear("pad"), body), "shape", ALL);
+    validateShapeJson(shape);
+    expect(limits).toEqual([]);
+    expect(shape.paths).toHaveLength(1);
+    expect(shape.paths[0]!.fill).toEqual({
+      kind: "gradient",
+      type: "linear",
+      matrix: [0, -0.0079, 0.0079, 0, 1.5, 6.5],
+      stops: [
+        { offset: 0, color: "#ff0000", alpha: 0.5 },
+        { offset: 0.5, color: "#00ff00", alpha: 1 },
+        { offset: 1, color: "#0000ff", alpha: 1 },
+      ],
+      spread: "pad",
+    });
+  });
+
+  it("keeps a linear gradient with reflect or repeat and records nothing", () => {
+    for (const spread of ["reflect", "repeat"] as const) {
+      const { shape, limits } = svgToShapeJson(doc(linear(spread), body), "shape", ALL);
+      expect(limits).toEqual([]);
+      expect(shape.paths[0]!.fill).toMatchObject({ kind: "gradient", type: "linear", spread });
+    }
+  });
+
+  it("converts a radial gradient and records nothing for pad without a focal point", () => {
+    const { shape, limits } = svgToShapeJson(doc(radial("pad", ""), body), "shape", ALL);
+    expect(limits).toEqual([]);
+    expect(shape.paths[0]!.fill).toMatchObject({ kind: "gradient", type: "radial", spread: "pad" });
+    expect((shape.paths[0]!.fill as { focal?: unknown }).focal).toBeUndefined();
+    expect(shape.paths[0]!.fill).toMatchObject({ matrix: [0.02, 0, 0, 0.02, 40, 30] });
+  });
+
+  it("a radial gradient with another spread records gradient-spread and is kept", () => {
+    const { shape, limits } = svgToShapeJson(doc(radial("reflect", ""), body), "shape", ALL);
+    expect(shape.paths).toHaveLength(1);
+    expect(limits).toEqual([
+      { kind: "gradient-spread", message: "radial gradient with spreadMethod reflect is not drawn" },
+    ]);
+  });
+
+  it("a radial gradient with a focal point records an approximated gradient-focal and keeps the focal point", () => {
+    const { shape, limits } = svgToShapeJson(doc(radial("pad", 'fx="300.5" fy="-20"'), body), "shape", ALL);
+    expect(shape.paths[0]!.fill).toMatchObject({ focal: { x: 300.5, y: -20 } });
+    expect(limits).toHaveLength(1);
+    expect(limits[0]!.kind).toBe("gradient-focal");
+    expect(limits[0]!.message.startsWith("approximated: ")).toBe(true);
+  });
+
+  it("a focal point on the centre is not a focal point", () => {
+    const { shape, limits } = svgToShapeJson(doc(radial("pad", 'fx="0" fy="0"'), body), "shape", ALL);
+    expect(limits).toEqual([]);
+    expect((shape.paths[0]!.fill as { focal?: unknown }).focal).toBeUndefined();
+  });
+
+  it("with the default all-false caps every gradient is left out and named once", () => {
+    const two = body + body.replace("M0 0", "M1 1");
+    for (const caps of [undefined, NONE]) {
+      const { shape, limits } = svgToShapeJson(doc(linear("pad"), two), "shape", caps);
+      expect(shape.paths).toEqual([]);
+      expect(limits).toEqual([
+        { kind: "gradient-fill", message: "gradient fill 1 is not drawn (linear, 3 stops)" },
+        { kind: "gradient-fill", message: "gradient fill 2 is not drawn (linear, 3 stops)" },
+      ]);
+    }
+  });
+
+  it("the flag decides by gradient type, and the ordinal counts drawn fills too", () => {
+    const defs = linear("pad") + radial("pad", "").replace('id="gradient0"', 'id="gradient1"');
+    const two = body + body.replace("gradient0", "gradient1");
+    const lin = svgToShapeJson(doc(defs, two), "shape", { ...NONE, gradientLinear: true });
+    expect(lin.shape.paths).toHaveLength(1);
+    expect(lin.shape.paths[0]!.fill).toMatchObject({ type: "linear" });
+    expect(lin.limits).toEqual([{ kind: "gradient-fill", message: "gradient fill 2 is not drawn (radial, 3 stops)" }]);
+    const rad = svgToShapeJson(doc(defs, two), "shape", { ...NONE, gradientRadial: true });
+    expect(rad.shape.paths[0]!.fill).toMatchObject({ type: "radial" });
+    expect(rad.limits).toEqual([{ kind: "gradient-fill", message: "gradient fill 1 is not drawn (linear, 3 stops)" }]);
+  });
+
+  it("an undrawn gradient fill on a path with a stroke keeps the stroke", () => {
+    const withStroke = '<path d="M0 0 L9 0 9 9 Z" fill="url(#gradient0)" stroke="#010203" stroke-width="2"/>';
+    const { shape, limits } = svgToShapeJson(doc(linear("pad"), withStroke), "shape");
+    expect(shape.paths).toHaveLength(1);
+    expect(shape.paths[0]!.fill).toBeNull();
+    expect(shape.paths[0]!.stroke).toMatchObject({ color: "#010203" });
+    expect(limits.map((l) => l.kind)).toEqual(["gradient-fill"]);
+  });
+
+  it("a gradient with fewer than two stops is named, not drawn", () => {
+    const one = '<linearGradient id="gradient0"><stop offset="0" stop-color="#000000"/></linearGradient>';
+    const { shape, limits } = svgToShapeJson(doc(one, body), "shape", ALL);
+    expect(shape.paths).toEqual([]);
+    expect(limits.map((l) => l.kind)).toEqual(["gradient-fill"]);
+  });
+});

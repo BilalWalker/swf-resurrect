@@ -2,9 +2,10 @@
 // randomness or locale call (Requirement 15.2). A pure function of its three inputs.
 //
 // Built so far (sub-task 10.4): the wrapper, nested `<g transform>`, `<use xlink:href>` resolved to `<defs>`, solid
-// fills, one ShapePath per element in SVG order, holes through groupContours. A gradient or bitmap fill is returned as
-// exactly one Named_Limit and left out of the Shape_JSON (decision D21): their construction arrives with the drawing
-// tasks, so every such fill is a limit whatever `caps` says. Strokes (sub-task 10.5): cap, join, miter limit, width,
+// fills, one ShapePath per element in SVG order, holes through groupContours. Gradients (sub-task 10.6): built from
+// gradientTransform, spreadMethod, stop-opacity and fx/fy; one that `fillIsDrawn(fill, caps)` rejects is left out of the
+// Shape_JSON and returned as exactly one Named_Limit (decision D21). Bitmap fills are built by sub-task 10.7, so each is
+// a limit whatever `caps` says. Strokes (sub-task 10.5): cap, join, miter limit, width,
 // colour and alpha are read; a miter-clip join, a gradient stroke, an unresolved stroke paint and a dash array are each
 // returned as a `stroke-style` limit (decided F8). No limit is recorded for a cap (sub-task 11.1 measures caps).
 //
@@ -15,6 +16,8 @@ import { XMLParser } from 'fast-xml-parser';
 import {
   DRAWN_FILLS,
   type DrawnFills,
+  fillIsDrawn,
+  type GradientStop,
   type Mat6,
   type PathCmd,
   type ShapeJson,
@@ -219,10 +222,13 @@ function urlId(paint: string): string | null {
 class Builder {
   readonly paths: ShapePath[] = [];
   readonly limits: ShapeLimit[] = [];
-  private undrawn = 0;
+  private fills = 0; // gradient and bitmap fills seen so far in this shape, drawn or not (the 1-based ordinal)
   private wrapperSeen = false;
 
-  constructor(private readonly ids: Record<string, El>) {}
+  constructor(
+    private readonly ids: Record<string, El>,
+    private readonly caps: DrawnFills,
+  ) {}
 
   walk(el: El, m: Mat6, inh: Inherited, depth: number, useStack: readonly string[]): void {
     if (depth > MAX_DEPTH || NON_RENDERED.has(el.tag)) return;
@@ -279,7 +285,7 @@ class Builder {
     let fill: ShapePath['fill'] = null;
     if (paint !== 'none') {
       const solid = hexColor(paint);
-      if (solid === null) this.undrawnFill(el, paint);
+      if (solid === null) fill = this.nonSolidFill(el, paint, m);
       else fill = { kind: 'solid', color: solid, alpha: alphaOf(own['fill-opacity']) };
     }
     const stroke = this.strokeOf(own, m);
@@ -344,10 +350,75 @@ class Builder {
     };
   }
 
+  /**
+   * A fill that is not a solid colour. A gradient that `fillIsDrawn` accepts is returned (with its finer limits); every
+   * other gradient or bitmap fill is returned as null and named by exactly one Named_Limit (decision D21). Bitmap
+   * fills are built by sub-task 10.7; until then each one is named whatever `caps` says.
+   */
+  private nonSolidFill(el: El, paint: string, m: Mat6): ShapePath['fill'] {
+    this.fills++;
+    const n = this.fills;
+    const id = urlId(paint);
+    const target = id === null ? undefined : this.ids[id];
+    if (target !== undefined && (target.tag === 'linearGradient' || target.tag === 'radialGradient')) {
+      const g = this.gradient(target, m);
+      if (g !== null && fillIsDrawn(g, this.caps)) {
+        this.gradientLimits(g);
+        return g;
+      }
+    }
+    this.undrawnFill(el, paint, n);
+    return null;
+  }
+
+  /** The gradient as Shape_JSON, or null when it has fewer than two readable stops or a bad matrix. */
+  private gradient(g: El, m: Mat6): Extract<ShapePath['fill'], { kind: 'gradient' }> | null {
+    const stops: GradientStop[] = [];
+    for (const s of g.children) {
+      if (s.tag !== 'stop') continue;
+      const color = hexColor(prop(s, 'stop-color') ?? '#000000');
+      const offset = Number(s.attrs.offset ?? 0);
+      if (color === null || !Number.isFinite(offset)) return null;
+      stops.push({ offset: Math.min(1, Math.max(0, offset)) + 0, color, alpha: alphaOf(prop(s, 'stop-opacity')) });
+    }
+    if (stops.length < 2) return null;
+    // Array.prototype.sort is stable, so equal offsets keep their SVG order.
+    stops.sort((a, b) => a.offset - b.offset);
+    // FFDec writes the SWF gradient square (x1/x2 = -819.2/819.2, r = 819.2) and puts the placement in
+    // gradientTransform, so the transform is the whole matrix. The enclosing baked transform comes first.
+    const matrix = mul(m, parseTransform(g.attrs.gradientTransform)).map((v) => v + 0) as Mat6;
+    if (matrix.some((v) => !Number.isFinite(v))) return null;
+    const sm = g.attrs.spreadMethod;
+    const spread: 'pad' | 'reflect' | 'repeat' = sm === 'reflect' || sm === 'repeat' ? sm : 'pad';
+    const type = g.tag === 'radialGradient' ? 'radial' : 'linear';
+    const out: Extract<ShapePath['fill'], { kind: 'gradient' }> = { kind: 'gradient', type, matrix, stops, spread };
+    if (type === 'radial' && g.attrs.fx !== undefined) {
+      const fx = Number(g.attrs.fx);
+      const fy = Number(g.attrs.fy ?? g.attrs.fx);
+      const cx = Number(g.attrs.cx ?? 0);
+      const cy = Number(g.attrs.cy ?? 0);
+      // A focal point on the centre is a plain radial gradient.
+      if (Number.isFinite(fx) && Number.isFinite(fy) && (fx !== cx || fy !== cy)) out.focal = { x: fx + 0, y: fy + 0 };
+    }
+    return out;
+  }
+
+  /** The finer limits of a drawn radial gradient (design 2, Requirement 8.4). Linear gradients record nothing. */
+  private gradientLimits(g: Extract<ShapePath['fill'], { kind: 'gradient' }>): void {
+    if (g.type !== 'radial') return;
+    if (g.spread !== 'pad') {
+      this.limits.push({ kind: 'gradient-spread', message: `radial gradient with spreadMethod ${g.spread} is not drawn` });
+    }
+    if (g.focal !== undefined) {
+      this.limits.push({
+        kind: 'gradient-focal',
+        message: 'approximated: radial gradient focal point is drawn by the canvas gradient and not verified',
+      });
+    }
+  }
+
   /** D21: one Named_Limit per gradient or bitmap fill, numbered by position among those fills of the shape. */
-  private undrawnFill(el: El, paint: string): void {
-    this.undrawn++;
-    const n = this.undrawn;
+  private undrawnFill(el: El, paint: string, n: number): void {
     const id = urlId(paint);
     const target = id === null ? undefined : this.ids[id];
     if (target !== undefined && (target.tag === 'linearGradient' || target.tag === 'radialGradient')) {
@@ -375,17 +446,16 @@ function sortLimits(limits: ShapeLimit[]): ShapeLimit[] {
 
 /**
  * Converts one FFDec SVG. Deterministic and total: it never throws, the Shape_JSON it returns is valid, and `limits`
- * is sorted by (kind, message) without duplicates. `caps` is what the backend draws; see the header for why it does not
- * change the result yet.
+ * is sorted by (kind, message) without duplicates. `caps` is what the backend draws: a gradient it does not draw is left
+ * out and named (decision D21).
  */
 export function svgToShapeJson(svg: string, _kind: 'shape' | 'text', caps: DrawnFills = DRAWN_FILLS): ShapeBuild {
-  void caps;
   const root = parseSvg(svg);
   const empty: ShapeBuild = { shape: { formatVersion: 1, paths: [] }, images: [], limits: [] };
   if (root === null) return empty;
   const ids: Record<string, El> = Object.create(null) as Record<string, El>;
   indexIds(root, ids);
-  const b = new Builder(ids);
+  const b = new Builder(ids, caps);
   b.walk(root, IDENTITY, NO_STYLE, 0, []);
   return { shape: { formatVersion: 1, paths: b.paths }, images: [], limits: sortLimits(b.limits) };
 }

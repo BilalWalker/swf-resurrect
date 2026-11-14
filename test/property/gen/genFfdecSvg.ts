@@ -29,6 +29,8 @@ const paint = fc.oneof(
   { arbitrary: colour.map((c) => `fill="${c}"`), weight: 5 },
   { arbitrary: fc.constant('fill="url(#gradient1)"'), weight: 1 },
   { arbitrary: fc.constant('fill="url(#gradient2)"'), weight: 1 },
+  { arbitrary: fc.constant('fill="url(#gradient3)"'), weight: 1 },
+  { arbitrary: fc.constant('fill="url(#gradient4)"'), weight: 1 },
   { arbitrary: fc.constant('style="fill:url(#PatternID_1_1)"'), weight: 1 },
   { arbitrary: fc.constant('fill="url(#missing)"'), weight: 1 },
   { arbitrary: fc.constant('fill="none"'), weight: 1 },
@@ -56,6 +58,8 @@ const defs = [
   '<g id="glyph_b"><path d="M0 0 L5 0 5 5 0 5 Z M1 1 L1 4 4 4 4 1 Z" fill="#102030"/></g>',
   '<linearGradient id="gradient1" gradientUnits="userSpaceOnUse" x1="-819.2" x2="819.2" gradientTransform="matrix(0.01, 0, 0, 0.01, 0, 0)" spreadMethod="pad"><stop offset="0" stop-color="#ff0000"/><stop offset="1" stop-color="#0000ff" stop-opacity="0.5"/></linearGradient>',
   '<radialGradient id="gradient2" cx="0" cy="0" r="819.2" spreadMethod="reflect"><stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#888888"/><stop offset="1" stop-color="#000000"/></radialGradient>',
+  '<radialGradient id="gradient3" cx="0" cy="0" r="819.2" fx="200" fy="-100" gradientTransform="matrix(0.02, 0, 0, 0.02, 3, 4)" spreadMethod="pad"><stop offset="0" stop-color="#ffffff" stop-opacity="0.8"/><stop offset="1" stop-color="#000000"/></radialGradient>',
+  '<linearGradient id="gradient4" x1="-819.2" x2="819.2" gradientTransform="matrix(0.01, 0, 0, 0.01, 0, 0)" spreadMethod="repeat"><stop offset="1" stop-color="#00ff00"/><stop offset="0" stop-color="#ff00ff"/></linearGradient>',
   "</defs>",
 ].join("");
 

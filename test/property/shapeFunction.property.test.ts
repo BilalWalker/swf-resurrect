@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { svgToShapeJson } from "../../src/convert/svgToShape";
-import { printShapeJson, validateShapeJson } from "../../template/runtime/shapeJson";
+import { type DrawnFills, printShapeJson, validateShapeJson } from "../../template/runtime/shapeJson";
 import { fcConfig } from "./config";
 import { genAnyText, genFfdecSvg } from "./gen/genFfdecSvg";
 // Idempotence (Requirement 7.8) does not apply to the Shape_Function: its output form (Shape_JSON) differs from its
@@ -79,6 +79,72 @@ describe("svgToShapeJson strokes", () => {
           expect(messages).toEqual(expected);
         },
       ),
+      fcConfig,
+    );
+  });
+});
+
+describe("svgToShapeJson radial gradients", () => {
+  const head = '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
+  const ALL: DrawnFills = { gradientLinear: true, gradientRadial: true, bitmap: true };
+  const stops = '<stop offset="0" stop-color="#000000"/><stop offset="1" stop-color="#ffffff"/>';
+  /** **Validates: Requirements 8.3, 8.4, 2.4, 7.9** */
+  it("a drawn radial gradient names gradient-spread for a spread other than pad and gradient-focal for a focal point, once each", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(fc.constantFrom("pad", "reflect", "repeat"), fc.boolean(), fc.constantFrom("radial", "linear")), { minLength: 1, maxLength: 6 }),
+        (items) => {
+          const defs = items
+            .map(([spread, focal, type], i) =>
+              type === "radial"
+                ? `<radialGradient id="g${i}" cx="0" cy="0" r="819.2" ${focal ? 'fx="100" fy="50"' : ""} spreadMethod="${spread}">${stops}</radialGradient>`
+                : `<linearGradient id="g${i}" spreadMethod="${spread}">${stops}</linearGradient>`,
+            )
+            .join("");
+          const body = items.map((_, i) => `<path d="M0 0 L9 0 9 9 Z" fill="url(#g${i})"/>`).join("");
+          const { shape, limits } = svgToShapeJson(`${head}<g transform="matrix(1,0,0,1,0,0)">${body}</g><defs>${defs}</defs></svg>`, "shape", ALL);
+          expect(shape.paths).toHaveLength(items.length);
+          const radials = items.filter(([, , t]) => t === "radial");
+          const kinds = limits.map((l) => l.kind);
+          expect(kinds.includes("gradient-spread")).toBe(radials.some(([s]) => s !== "pad"));
+          expect(kinds.includes("gradient-focal")).toBe(radials.some(([, f]) => f));
+          expect(kinds.filter((k) => k !== "gradient-spread" && k !== "gradient-focal")).toEqual([]);
+          for (const l of limits.filter((x) => x.kind === "gradient-focal")) expect(l.message.startsWith("approximated: ")).toBe(true);
+        },
+      ),
+      fcConfig,
+    );
+  });
+});
+
+// Feature: breadth, Property 42: Every gradient and bitmap fill is drawn or named exactly once
+describe("svgToShapeJson drawn-fill capabilities", () => {
+  const capSets: DrawnFills[] = [];
+  for (const gradientLinear of [false, true]) for (const gradientRadial of [false, true]) for (const bitmap of [false, true]) capSets.push({ gradientLinear, gradientRadial, bitmap });
+  const named = (limits: Array<{ kind: string; message: string }>) => limits.filter((l) => l.kind === "gradient-fill" || l.kind === "bitmap-fill");
+  const ordinal = (message: string) => message.replace(/^(gradient|bitmap) fill (\d+) .*$/, "$2");
+  /** **Validates: Requirements 2.8, 2.9, 2.4** */
+  it("for every capability set, drawn plus named equals the fills of the all-false run, and no fill is both", () => {
+    fc.assert(
+      fc.property(genFfdecSvg, (svg) => {
+        const base = svgToShapeJson(svg, "shape", { gradientLinear: false, gradientRadial: false, bitmap: false });
+        expect(base.shape.paths.some((p) => p.fill !== null && p.fill.kind !== "solid")).toBe(false);
+        const total = named(base.limits).length;
+        const allOrdinals = new Set(named(base.limits).map((l) => ordinal(l.message)));
+        expect(allOrdinals.size).toBe(total);
+        for (const caps of capSets) {
+          const out = svgToShapeJson(svg, "shape", caps);
+          const drawn = out.shape.paths.filter((p) => p.fill !== null && p.fill.kind !== "solid");
+          const n = named(out.limits);
+          expect(drawn.length + n.length).toBe(total);
+          for (const p of drawn) {
+            const f = p.fill!;
+            expect(f.kind === "gradient" ? (f.type === "linear" ? caps.gradientLinear : caps.gradientRadial) : caps.bitmap).toBe(true);
+          }
+          for (const l of n) expect(allOrdinals.has(ordinal(l.message))).toBe(true);
+          expect(new Set(n.map((l) => ordinal(l.message))).size).toBe(n.length);
+        }
+      }),
       fcConfig,
     );
   });
