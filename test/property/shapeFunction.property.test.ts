@@ -42,6 +42,47 @@ describe("svgToShapeJson", () => {
   });
 });
 
+// Feature: breadth, Property 3 (order clause): the limits do not depend on attribute or stroke order
+describe("svgToShapeJson limit order", () => {
+  const head = '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
+  const limited = [
+    'stroke="#102030" stroke-linejoin="miter-clip"',
+    'stroke="url(#gradient1)"',
+    'stroke="#102030" stroke-dasharray="4 2"',
+    'stroke="red"',
+    'stroke="#102030" stroke-linejoin="arcs"',
+  ];
+  const build = (items: string[][]): string =>
+    `${head}<g transform="matrix(1,0,0,1,0,0)">${items.map((attrs) => `<path ${attrs.join(" ")}/>`).join("")}</g></svg>`;
+  /** **Validates: Requirements 2.7, 7.9** */
+  it("permuting the attributes, or the order of the elements, gives the same limits", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.constantFrom(...limited), { minLength: 1, maxLength: 6 }).chain((specs) =>
+          fc.tuple(
+            fc.constant(specs),
+            fc.array(fc.nat(), { minLength: 6, maxLength: 6 }),
+            fc.array(fc.nat(), { minLength: 6, maxLength: 6 }),
+          ),
+        ),
+        ([specs, keysA, keysB]) => {
+          const attrsOf = (spec: string): string[] => ['d="M0 0 L9 0 9 9 Z"', 'fill="none"', 'stroke-width="3"', ...spec.split(/ (?=stroke)/)];
+          const shuffle = <T>(xs: T[], keys: number[]): T[] =>
+            xs.map((x, i) => [x, keys[i % keys.length]! * 31 + i] as const).sort((a, b) => a[1] - b[1]).map(([x]) => x);
+          const base = svgToShapeJson(build(specs.map(attrsOf)), "shape").limits;
+          const permutedAttrs = svgToShapeJson(build(specs.map((s) => shuffle(attrsOf(s), keysA))), "shape").limits;
+          const permutedElements = svgToShapeJson(build(shuffle(specs, keysB).map(attrsOf)), "shape").limits;
+          expect(permutedAttrs).toEqual(base);
+          expect(permutedElements).toEqual(base);
+          const keys = base.map((l) => `${l.kind}\u0000${l.message}`);
+          expect(new Set(keys).size).toBe(keys.length);
+        },
+      ),
+      fcConfig,
+    );
+  });
+});
+
 // Feature: breadth, Property 4: No part is dropped without a Named_Limit
 describe("svgToShapeJson strokes", () => {
   const head = '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';

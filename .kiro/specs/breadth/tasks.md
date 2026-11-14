@@ -498,7 +498,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: add **Property 19: Bitmap assets are deterministic** to `test/property/shapeFunction.property.test.ts`; extend **Property 4** for `bitmap-fill` and `bitmap-smoothing` and **Property 42** for bitmap fills; unit rows in `test/unit/svgToShape.test.ts`; `test/unit/svgToShapeDeterminism.test.ts` (create): two runs on SVGs with bitmap patterns give byte-identical printed Shape_JSON and image bytes.
     - _Requirements: 2.8, 2.9, 9.1, 9.2, 9.3, 9.4, 7.7, 15.5_
 
-  - [ ] 10.8 Named_Limit order
+  - [x] 10.8 Named_Limit order
     - Ensure `limits` are totally ordered and de-duplicated, and that the same SVG with its attributes permuted yields the same list.
     - Test: the order clause of **Property 3** in `test/property/shapeFunction.property.test.ts`, and `test/unit/svgToShape.test.ts`.
     - _Requirements: 2.7, 7.9_

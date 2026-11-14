@@ -350,3 +350,27 @@ describe("svgToShapeJson bitmap fills", () => {
     expect(images[1]!.bytes).toEqual(new Uint8Array([7, 7, 7]));
   });
 });
+
+describe("svgToShapeJson limit order", () => {
+  const head =
+    '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
+  const wrap = (body: string): string => `${head}<g transform="matrix(1,0,0,1,0,0)">${body}</g></svg>`;
+
+  it("sorts by kind then message and drops repeats", () => {
+    const dash = '<path d="M0 0 L9 0" fill="none" stroke="#000000" stroke-dasharray="4 2"/>';
+    const clip = '<path d="M0 0 L9 0" fill="none" stroke="#000000" stroke-linejoin="miter-clip"/>';
+    const { limits } = svgToShapeJson(wrap(`${dash}${clip}${dash}${clip}`), "shape");
+    expect(limits.map((l) => l.message)).toEqual([
+      "approximated: dash array is not drawn, the stroke is solid",
+      "approximated: miter-clip join is drawn as miter",
+    ]);
+    expect(limits.every((l) => l.kind === "stroke-style")).toBe(true);
+  });
+
+  it("gives the same list when the attributes of an element are reordered", () => {
+    const a = '<path d="M0 0 L9 0" fill="none" stroke="#000000" stroke-dasharray="4 2" stroke-linejoin="miter-clip"/>';
+    const b = '<path stroke-linejoin="miter-clip" stroke-dasharray="4 2" stroke="#000000" fill="none" d="M0 0 L9 0"/>';
+    expect(svgToShapeJson(wrap(b), "shape").limits).toEqual(svgToShapeJson(wrap(a), "shape").limits);
+    expect(svgToShapeJson(wrap(a), "shape").limits).toHaveLength(2);
+  });
+});
