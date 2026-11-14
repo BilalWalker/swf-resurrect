@@ -1,7 +1,7 @@
 // Draws synthetic Shape_JSON through the real PixiBackend in headless Chromium and reads the pixels back
 // (breadth task 11.1: stroke caps and joins). Skipped with a reason when Chromium is missing.
-// Later drawing tasks (gradients, bitmap fills, colour offsets) add their cases here.
-// Validates: Requirements 13.8, 13.9, 13.12
+// Task 11.2 adds the linear gradient. Later drawing tasks (bitmap fills, colour offsets) add their cases here.
+// Validates: Requirements 13.8, 13.9, 13.12, 8.1
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -77,7 +77,7 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
   }, 30_000);
 
   /** Renders the shape on a white W x H stage and returns a `dark(x, y)` reader (red channel below 128). */
-  async function render(shape: ShapeJson): Promise<(x: number, y: number) => boolean> {
+  async function renderRed(shape: ShapeJson): Promise<(x: number, y: number) => number> {
     const data = await page!.evaluate(
       async ({ shape: s, w, h }) => {
         const T = (globalThis as unknown as { T: { Application: new () => any; PixiBackend: new () => any } }).T;
@@ -102,7 +102,12 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
       { shape, w: W, h: H },
     );
     expect(data.width).toBe(W);
-    return (x, y) => data.r[y * W + x]! < 128;
+    return (x, y) => data.r[y * W + x]!;
+  }
+
+  async function render(shape: ShapeJson): Promise<(x: number, y: number) => boolean> {
+    const red = await renderRed(shape);
+    return (x, y) => red(x, y) < 128;
   }
 
   /** Bounding box of the dark pixels. */
@@ -169,5 +174,44 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
     const round = await render(strokeShape(corner, 'butt', 'round', 20));
     expect(round(107, 75)).toBe(true);
     expect(bevel(107, 75)).toBe(false);
+  });
+
+  // A linear gradient from black (x 50) to white (x 150) over a rectangle: the FFDec square (x -819.2..819.2) is
+  // mapped by the matrix [50/819.2 0 0 1 100 0]. The red channel must follow the ramp, not the last stop colour.
+  const ramp = (spread: 'pad' | 'reflect' | 'repeat', rect: [number, number]): ShapeJson => ({
+    formatVersion: 1,
+    paths: [
+      {
+        contours: [{ outer: [['M', rect[0], 20], ['L', rect[1], 20], ['L', rect[1], 80], ['L', rect[0], 80], ['Z']], holes: [] }],
+        fill: {
+          kind: 'gradient',
+          type: 'linear',
+          matrix: [50 / 819.2, 0, 0, 1, 100, 0],
+          stops: [
+            { offset: 0, color: '#000000', alpha: 1 },
+            { offset: 1, color: '#ffffff', alpha: 1 },
+          ],
+          spread,
+        },
+        stroke: null,
+      },
+    ],
+  });
+
+  it('a linear gradient follows its matrix: black at the start, mid grey in the middle, white at the end', async () => {
+    const red = await renderRed(ramp('pad', [10, 190]));
+    expect(red(5, 50)).toBe(255); // outside the shape: background
+    expect(red(20, 50)).toBe(0); // before the start of the gradient: clamped to the first stop
+    expect(red(52, 50)).toBeLessThan(20);
+    expect(Math.abs(red(100, 50) - 128)).toBeLessThanOrEqual(6);
+    expect(red(148, 50)).toBeGreaterThan(235);
+    expect(red(180, 50)).toBe(255); // after the end: clamped to the last stop
+    expect(red(75, 50)).toBeLessThan(red(125, 50));
+  });
+
+  it('a reflected linear gradient mirrors past the end', async () => {
+    const red = await renderRed(ramp('reflect', [10, 190]));
+    expect(red(148, 50)).toBeGreaterThan(235);
+    expect(red(175, 50)).toBeLessThan(red(155, 50));
   });
 });

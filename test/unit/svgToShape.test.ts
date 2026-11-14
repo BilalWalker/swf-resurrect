@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { svgToShapeJson } from "../../src/convert/svgToShape";
 import { validateShapeJson } from "../../template/runtime/shapeJson";
+/** The capability set that draws nothing: the committed DRAWN_FILLS draws linear gradients since 11.2. */
+const NO_FILLS = { gradientLinear: false, gradientRadial: false, bitmap: false };
 
 const fixture = (sample: string, id: number): string => readFileSync(`test/fixtures/${sample}/shapes/${id}.svg`, "utf8");
 
@@ -93,7 +95,7 @@ describe("svgToShapeJson on synthetic input", () => {
       '<path d="M0 0 L9 0 9 9 Z" style="fill:url(#PatternID_9_1)"/>' +
       '<path d="M0 0 L9 0 9 9 Z" fill="#123456"/>' +
       "</g></svg>";
-    const { shape, limits } = svgToShapeJson(svg, "shape");
+    const { shape, limits } = svgToShapeJson(svg, "shape", NO_FILLS);
     expect(shape.paths).toHaveLength(1);
     expect(limits).toEqual([
       { kind: "bitmap-fill", message: "bitmap fill 2 is not drawn (image 5)" },
@@ -168,7 +170,7 @@ describe("svgToShapeJson strokes", () => {
       head +
       '<g transform="matrix(1,0,0,1,0,0)"><linearGradient id="gradient1"><stop offset="0" stop-color="#000000"/><stop offset="1" stop-color="#ffffff"/></linearGradient>' +
       '<path d="M0 0 L9 0 9 9 Z" fill="url(#gradient1)" stroke="#010203"/></g></svg>';
-    const { shape, limits } = svgToShapeJson(svg, "shape");
+    const { shape, limits } = svgToShapeJson(svg, "shape", NO_FILLS);
     expect(shape.paths).toHaveLength(1);
     expect(shape.paths[0]!.fill).toBeNull();
     expect(shape.paths[0]!.stroke).toMatchObject({ color: "#010203" });
@@ -249,7 +251,7 @@ describe("svgToShapeJson gradients", () => {
 
   it("with the default all-false caps every gradient is left out and named once", () => {
     const two = body + body.replace("M0 0", "M1 1");
-    for (const caps of [undefined, NONE]) {
+    for (const caps of [NONE]) {
       const { shape, limits } = svgToShapeJson(doc(linear("pad"), two), "shape", caps);
       expect(shape.paths).toEqual([]);
       expect(limits).toEqual([
@@ -273,7 +275,7 @@ describe("svgToShapeJson gradients", () => {
 
   it("an undrawn gradient fill on a path with a stroke keeps the stroke", () => {
     const withStroke = '<path d="M0 0 L9 0 9 9 Z" fill="url(#gradient0)" stroke="#010203" stroke-width="2"/>';
-    const { shape, limits } = svgToShapeJson(doc(linear("pad"), withStroke), "shape");
+    const { shape, limits } = svgToShapeJson(doc(linear("pad"), withStroke), "shape", NO_FILLS);
     expect(shape.paths).toHaveLength(1);
     expect(shape.paths[0]!.fill).toBeNull();
     expect(shape.paths[0]!.stroke).toMatchObject({ color: "#010203" });

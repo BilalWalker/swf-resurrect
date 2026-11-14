@@ -1,5 +1,5 @@
 /// <reference lib="dom" />
-// Sub-task 10.12: the loader path with the FakeBackend, and the PixiBackend refusal of undrawn fills.
+// Sub-task 10.12 (the refused fill is radial since 11.2 draws linear gradients): the loader path with the FakeBackend, and the PixiBackend refusal of undrawn fills.
 // Validates: Requirements 2.8, 7.11, 13.8, 12.4
 import { describe, expect, it } from 'vitest';
 import { loadScene, SCENE_URL } from '../../template/runtime/loader';
@@ -21,7 +21,7 @@ const gradientShape: ShapeJson = {
       contours,
       fill: {
         kind: 'gradient',
-        type: 'linear',
+        type: 'radial',
         matrix: [1, 0, 0, 1, 0, 0],
         stops: [
           { offset: 0, color: '#000000', alpha: 1 },
@@ -72,14 +72,14 @@ describe('a fill that is not drawn is refused, never skipped', () => {
     expect(result).toBeNull();
     expect(backend.errors).toHaveLength(1);
     expect(backend.errors[0]).toContain('1.shape.json');
-    expect(backend.errors[0]).toContain('paths[1].fill: fill kind not drawn: gradient-linear');
+    expect(backend.errors[0]).toContain('paths[1].fill: fill kind not drawn: gradient-radial');
     expect(backend.nodes).toHaveLength(0);
   });
 
   it('PixiBackend.loadShape throws a ShapeJsonError with the field path', async () => {
     await expect(new PixiBackend().loadShape(1, gradientShape, 'assets/')).rejects.toThrow(ShapeJsonError);
     await expect(new PixiBackend().loadShape(1, gradientShape, 'assets/')).rejects.toThrow(
-      'paths[1].fill: fill kind not drawn: gradient-linear',
+      'paths[1].fill: fill kind not drawn: gradient-radial',
     );
   });
 });

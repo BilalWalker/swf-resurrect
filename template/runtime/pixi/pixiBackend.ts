@@ -1,6 +1,7 @@
-import { Container, Graphics } from 'pixi.js';
+import { Container, FillGradient, Graphics, Matrix, type FillInput } from 'pixi.js';
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../backend';
-import { assertFillDrawn, ShapeJsonError, type PathCmd, type ShapeJson, type ShapePath } from '../shapeJson';
+import { GRADIENT_HALF_EXTENT } from '../gradientMatrix';
+import { assertFillDrawn, ShapeJsonError, type PathCmd, type ShapeFill, type ShapeJson, type ShapePath } from '../shapeJson';
 
 /** Per-node values that combine into the Pixi alpha. */
 interface NodeState {
@@ -37,16 +38,54 @@ function tracePath(g: Graphics, cmds: readonly PathCmd[]): void {
   }
 }
 
+const WRAP_MODE = { pad: 'clamp-to-edge', reflect: 'mirror-repeat', repeat: 'repeat' } as const;
+
+/** '#rrggbb' and an alpha in 0..1 as '#rrggbbaa', which Pixi's Color reads. */
+function stopColor(color: string, alpha: number): string {
+  return color + Math.round(clamp01(alpha) * 255).toString(16).padStart(2, '0');
+}
+
+/**
+ * The Pixi fill for a linear gradient (design section 3, "Gradient matrix"). Pixi 8.22.0 sources relied on, under
+ * node_modules/pixi.js/lib/scene/graphics/shared:
+ * - fill/FillGradient.mjs:33 and :97: `wrapMode` is the texture address mode (pad: clamp-to-edge, reflect:
+ *   mirror-repeat, repeat: repeat); :45 `textureSpace`: with 'global' the start/end points are in shape space, not in
+ *   0..1 of the shape bounds (:106 scales by the texture size only for 'local').
+ * - fill/FillGradient.mjs:66-109 `buildLinearGradient`: the texture is textureSize x 1 (:90, createLinearGradient
+ *   along x) and `transform` (:103-109) maps texture pixels to start/end. With start (-819.2, 0) and end (819.2, 0)
+ *   that transform is the texture-to-FFDec-square map of gradientMatrix.ts.
+ * - fill/FillGradient.mjs:116-119 `buildGradient` builds the texture and the transform; `texture` and `transform`
+ *   are public (pixi.js.d.ts:25662, :25664).
+ * - utils/convertFillInputToFillStyle.mjs:38-44 `handleFillGradient` copies `value.transform` into the fill style when
+ *   `g.fill(grad)` runs, so the replacement below must happen before that call.
+ * - maths/matrix/Matrix.mjs:355 `append(m)` computes `this x m`: the FFDec matrix is the receiver.
+ */
+function linearGradient(fill: Extract<ShapeFill, { kind: 'gradient' }>): FillGradient {
+  const grad = new FillGradient({
+    type: 'linear',
+    start: { x: -GRADIENT_HALF_EXTENT, y: 0 },
+    end: { x: GRADIENT_HALF_EXTENT, y: 0 },
+    textureSpace: 'global',
+    colorStops: fill.stops.map((s) => ({ offset: s.offset, color: stopColor(s.color, s.alpha) })),
+    wrapMode: WRAP_MODE[fill.spread],
+  });
+  grad.buildGradient();
+  grad.transform = new Matrix(...fill.matrix).append(grad.transform);
+  return grad;
+}
+
 /** drawFill: the fill check first (no warn-and-skip), then the fill of one contour; holes are cut out of it. */
 function drawFill(g: Graphics, path: ShapePath, index: number): void {
   const fill = path.fill;
   if (fill === null) return;
   assertFillDrawn(fill, `paths[${index}].fill`);
-  // Gradient and bitmap drawing arrives with the commit that flips their DRAWN_FILLS flag.
-  if (fill.kind !== 'solid') throw new ShapeJsonError(`paths[${index}].fill: fill kind not drawn: ${fill.kind}`);
+  let style: FillInput;
+  if (fill.kind === 'solid') style = { color: fill.color, alpha: fill.alpha };
+  else if (fill.kind === 'gradient' && fill.type === 'linear') style = linearGradient(fill);
+  else throw new ShapeJsonError(`paths[${index}].fill: fill kind not drawn: ${fill.kind}`);
   for (const contour of path.contours) {
     tracePath(g, contour.outer);
-    g.fill({ color: fill.color, alpha: fill.alpha });
+    g.fill(style);
     for (const hole of contour.holes) {
       tracePath(g, hole);
       g.cut();

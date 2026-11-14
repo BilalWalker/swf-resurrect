@@ -56,7 +56,7 @@ describe('convertModel writes Shape_JSON', () => {
     const svg =
       '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="9px" height="9px">' +
       '<g transform="matrix(1,0,0,1,0,0)">' +
-      '<linearGradient id="gradient1"><stop offset="0" stop-color="#000000"/><stop offset="1" stop-color="#ffffff"/></linearGradient>' +
+      '<radialGradient id="gradient1" cx="0" cy="0" r="819.2"><stop offset="0" stop-color="#000000"/><stop offset="1" stop-color="#ffffff"/></radialGradient>' +
       '<path d="M0 0 L9 0 9 9 Z" fill="url(#gradient1)"/></g></svg>';
     const model: TagsModel = {
       xmlVersion: { major: 4, minor: 2 },

@@ -75,7 +75,7 @@ export interface DrawnFills {
  * What the committed drawing code in pixiBackend.ts draws. Starts all false; the drawing tasks flip their flag in the
  * commit that adds the drawing code and its tests (design section 2, decision D21).
  */
-export const DRAWN_FILLS: DrawnFills = { gradientLinear: false, gradientRadial: false, bitmap: false };
+export const DRAWN_FILLS: DrawnFills = { gradientLinear: true, gradientRadial: false, bitmap: false };
 
 /** Solid: always. Gradient: by type. Bitmap: `caps.bitmap`. */
 export function fillIsDrawn(fill: ShapeFill, caps: DrawnFills): boolean {
