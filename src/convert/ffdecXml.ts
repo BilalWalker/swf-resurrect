@@ -463,6 +463,7 @@ function parsePlace(item: PNode, kind: string, ctx: ParseCtx): TimelineOp | unde
     if (cd !== undefined) op.clipDepth = cd;
   }
   if (attrBool(attrs, p.flagHasFilterList)) op.hasFilters = true;
+  if (attrBool(attrs, p.flagHasBlendMode)) op.hasBlendMode = true;
   return op;
 }
 

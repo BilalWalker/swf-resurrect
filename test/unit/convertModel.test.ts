@@ -85,6 +85,29 @@ describe('convertModel', () => {
     expect(drops.find((d) => d.kind === 'bitmap-fill')?.message).toContain('DefineBits character placed directly');
   });
 
+  it('keeps filtered and blend-mode placements and names the limit with the character id', () => {
+    const model = modelWith(
+      [
+        place(1, 1),
+        { kind: 'place', depth: 2, characterId: 1, move: false, hasFilters: true },
+        { kind: 'place', depth: 3, characterId: 1, move: false, hasBlendMode: true },
+        { kind: 'place', depth: 4, characterId: 1, move: false, hasFilters: true, hasBlendMode: true },
+      ],
+      {},
+    );
+    const r = convertModel(model);
+    expect((r.scene.symbols['0'] as SpriteSymbol).frames[0].map((e) => e.depth)).toEqual([1, 2, 3, 4]);
+    const filter = 'filter list is not drawn; the character is drawn without it (character 1)';
+    const blend = 'blend mode is not drawn; the character is drawn normally (character 1)';
+    const kept = r.unsupported.filter((u) => u.context !== undefined).map((u) => [u.kind, u.id, u.message, u.context?.depth]);
+    expect(kept).toEqual([
+      ['blend-mode', 1, blend, 3],
+      ['blend-mode', 1, blend, 4],
+      ['filter', 1, filter, 2],
+      ['filter', 1, filter, 4],
+    ]);
+  });
+
   it('draws static text as a shape symbol and records one text-metrics entry', () => {
     const textSvg = '<svg width="40px" height="12px"><g transform="matrix(1,0,0,1,-9.35,-0.4)"><path d="M0 0 L5 5"/></g></svg>';
     const model = modelWith([place(1, 1), place(2, 2)], {

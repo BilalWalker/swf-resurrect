@@ -64,7 +64,7 @@ describe('resolveTimeline', () => {
     expect(e.warnings.length).toBe(2);
   });
 
-  it('drops unsupported characters, masks and filters and reports them once', () => {
+  it('drops unsupported characters and masks and reports them once', () => {
     const r = run(
       [
         { kind: 'place', depth: 1, characterId: 40, move: false },
@@ -81,10 +81,25 @@ describe('resolveTimeline', () => {
     expect(r.droppedPlacements).toEqual([
       { spriteId: 6, frame: 1, depth: 1, kind: 'text', characterId: 40 },
       { spriteId: 6, frame: 1, depth: 2, kind: 'mask' },
-      { spriteId: 6, frame: 1, depth: 3, kind: 'filter' },
     ]);
-    expect(r.frames[0]!.map((e) => e.depth)).toEqual([4]);
-    expect(r.frames[1]!.map((e) => e.depth)).toEqual([4]);
+    expect(r.frames[0]!.map((e) => e.depth)).toEqual([3, 4]);
+    expect(r.frames[1]!.map((e) => e.depth)).toEqual([3, 4]);
+    expect(r.keptWithLimit).toEqual([{ spriteId: 6, frame: 1, depth: 3, characterId: 2, kind: 'filter' }]);
+  });
+
+  it('keeps a filtered move without a character and uses the character at that depth', () => {
+    const r = run([
+      { kind: 'place', depth: 1, characterId: 7, move: false },
+      show,
+      { kind: 'place', depth: 1, move: true, matrix: m(20, 20), hasFilters: true, hasBlendMode: true },
+      show,
+    ]);
+    expect(r.droppedPlacements).toEqual([]);
+    expect(r.frames[1]!.map((e) => e.symbolId)).toEqual([7]);
+    expect(r.keptWithLimit).toEqual([
+      { spriteId: 6, frame: 2, depth: 1, characterId: 7, kind: 'blend-mode' },
+      { spriteId: 6, frame: 2, depth: 1, characterId: 7, kind: 'filter' },
+    ]);
   });
 
   it('throws MalformedFrameDataError for fatal cases', () => {

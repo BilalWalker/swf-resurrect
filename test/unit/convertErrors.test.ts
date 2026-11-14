@@ -160,13 +160,12 @@ describe('convertModel unsupported reporting', () => {
         ['button', 0, 1, 4],
         ['video', 0, 1, 5],
         ['mask', 0, 1, 6],
-        ['filter', 0, 1, 7],
         ['morph-shape', 0, 1, 8],
       ]),
     );
     expect(r.stats.morphSkipped).toBe(1);
-    // Only the supported shape remains on the stage.
-    expect(r.scene.symbols['0']).toMatchObject({ frames: [[{ depth: 1, symbolId: 1 }]] });
+    // The supported shape and the filtered placement remain on the stage.
+    expect(r.scene.symbols['0']).toMatchObject({ frames: [[{ depth: 1, symbolId: 1 }, { depth: 7, symbolId: 1 }]] });
     expect(r.shapeFiles.map((f) => f.fileName)).toEqual(['1.shape.json']);
   });
 

@@ -20,14 +20,24 @@ export interface DroppedPlacement {
   spriteId: number;
   frame: number; // 1-based
   depth: number;
-  kind: UnsupportedKind; // 'mask' | 'filter' | kind of the unsupported character
-  characterId?: number; // set when the drop is due to the character, not to a mask or filter
+  kind: UnsupportedKind; // 'mask' | kind of the unsupported character
+  characterId?: number; // set when the drop is due to the character, not to a mask
+}
+
+/** A placement that stays in the display list although it carries a filter list or a blend mode (not drawn). */
+export interface KeptPlacementLimit {
+  spriteId: number;
+  frame: number; // 1-based
+  depth: number;
+  characterId: number; // the placed character; for a move without character, the character at that depth
+  kind: 'filter' | 'blend-mode';
 }
 
 export interface ResolvedTimeline {
   frames: DisplayListEntry[][];
   labels: Array<{ name: string; frame: number }>;
   droppedPlacements: DroppedPlacement[];
+  keptWithLimit: KeptPlacementLimit[];
   warnings: string[];
 }
 
@@ -83,6 +93,7 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
   const labels: Array<{ name: string; frame: number }> = [];
   const seenLabels = new Set<string>();
   const droppedPlacements: DroppedPlacement[] = [];
+  const keptWithLimit: KeptPlacementLimit[] = [];
   const warnings: string[] = [];
   let pendingLabels: string[] = [];
   let frame = 1;
@@ -144,10 +155,6 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
         drop(depth, 'mask');
         continue;
       }
-      if (op.hasFilters) {
-        drop(depth, 'filter');
-        continue;
-      }
       if (hasChar) {
         const kind = unsupported.get(op.characterId as number);
         if (kind !== undefined) {
@@ -186,6 +193,13 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
           name: op.name ?? prev.name,
         });
       }
+
+      // The placement stays; the filter list and the blend mode are not drawn (Requirement 13.3).
+      if (op.hasBlendMode || op.hasFilters) {
+        const characterId = (state.get(depth) as Placed).symbolId;
+        if (op.hasBlendMode) keptWithLimit.push({ spriteId, frame, depth, characterId, kind: 'blend-mode' });
+        if (op.hasFilters) keptWithLimit.push({ spriteId, frame, depth, characterId, kind: 'filter' });
+      }
     }
   }
 
@@ -203,5 +217,5 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
   }
 
   labels.sort((x, y) => (x.frame !== y.frame ? x.frame - y.frame : x.name < y.name ? -1 : x.name > y.name ? 1 : 0));
-  return { frames, labels, droppedPlacements, warnings };
+  return { frames, labels, droppedPlacements, keptWithLimit, warnings };
 }

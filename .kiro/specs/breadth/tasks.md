@@ -587,12 +587,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend **Property 10** in `test/property/convertAccounting.property.test.ts` (static text drawn, not dropped) and `test/unit/convertModel.test.ts` (static text symbol, `text-metrics` entry, dynamic text drop, a `TextField` member still produces the existing diagnostic); extend `genTagsModel.ts`; `test/unit/convertTextDeterminism.test.ts` (create): two Convert runs over a model with static text give byte-identical `*.shape.json`.
     - _Requirements: 5.3, 10.2, 10.3, 10.5, 11.1, 11.2, 11.3, 11.4, 9.2_
 
-  - [-] 12.3 XML names for filters and blend modes
+  - [x] 12.3 XML names for filters and blend modes
     - Download `visual/blend_modes/add/test.swf` under `.work/` (not committed), run FFDec `-swf2xml`, and record the `PlaceObject3Tag` filter flag (`placeFlagHasFilterList`), the blend-mode flag and the blend-mode value attribute in `FFDEC_XML`; names seen lose their `UNVERIFIED` mark. IF an attribute name cannot be observed on a placement that uses it, STOP and ask before relying on it (Requirement 13.4, git workflow). Delete the download.
     - Test: `test/unit/ffdecXmlVerifiedNames.test.ts` rows for the observed names only, using a dump excerpt.
     - _Requirements: 13.3, 13.4_
 
-  - [ ] 12.4 Keep filtered and blend-mode placements and record the limit
+  - [-] 12.4 Keep filtered and blend-mode placements and record the limit
     - `PlaceOp` gets `hasBlendMode`; `resolveTimeline.ts` no longer calls `drop(depth, 'filter')`: the placement is processed like an unfiltered one and adds a `KeptPlacementLimit` (sprite, frame, depth, character id, kind `filter` or `blend-mode`; two entries when it has both). `DroppedPlacement.kind` loses `'filter'`. `convertModel` turns each entry into an Unsupported entry with the messages `filter list is not drawn; the character is drawn without it (character N)` and `blend mode is not drawn; the character is drawn normally (character N)`. A move without a character uses the character at that depth. The Runtime needs no change.
     - Test: extend **Property 10** in `test/property/convertAccounting.property.test.ts` (filtered and blend-mode placements stay in the Scene_JSON, contribute exactly one `filter` or `blend-mode` entry each, and never count as drops), `test/unit/resolveTimeline.test.ts` (a filtered move without a character keeps the character id) and `test/unit/convertModel.test.ts`.
     - _Requirements: 13.1, 13.2, 13.3, 2.5_

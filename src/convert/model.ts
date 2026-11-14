@@ -38,6 +38,7 @@ export type TimelineOp =
       name?: string;
       clipDepth?: number;
       hasFilters?: boolean;
+      hasBlendMode?: boolean;
     }
   | { kind: 'remove'; depth: number; characterId?: number }
   | { kind: 'label'; name: string }

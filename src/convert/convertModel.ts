@@ -254,6 +254,17 @@ export function convertModel(model: TagsModel): ConvertResult {
         context: { spriteId: d.spriteId, frame: d.frame, depth: d.depth },
       });
     }
+    for (const k of r.keptWithLimit) {
+      unsupported.push({
+        kind: k.kind,
+        id: k.characterId,
+        message:
+          k.kind === 'filter'
+            ? `filter list is not drawn; the character is drawn without it (character ${k.characterId})`
+            : `blend mode is not drawn; the character is drawn normally (character ${k.characterId})`,
+        context: { spriteId: k.spriteId, frame: k.frame, depth: k.depth },
+      });
+    }
     const sprite: SpriteSymbol = {
       type: 'sprite',
       frameCount: r.frames.length,

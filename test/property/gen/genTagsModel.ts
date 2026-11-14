@@ -23,7 +23,7 @@ const genMatrix = fc.record({
 });
 
 interface FrameStep {
-  placements: Array<{ depth: number; pick: number; matrix: MatrixModel | undefined; name: string }>;
+  placements: Array<{ depth: number; pick: number; matrix: MatrixModel | undefined; name: string; filter: boolean; blend: boolean }>;
   label: string | undefined;
 }
 
@@ -34,6 +34,8 @@ const genFrameStep: fc.Arbitrary<FrameStep> = fc.record({
       pick: fc.nat({ max: 1000 }),
       matrix: fc.option(genMatrix, { nil: undefined }),
       name: fc.constantFrom(...INSTANCE_NAMES),
+      filter: fc.boolean(),
+      blend: fc.boolean(),
     }),
     { maxLength: 3, selector: (p) => p.depth },
   ),
@@ -67,6 +69,8 @@ function toOps(frames: FrameStep[], candidates: number[]): TimelineOp[] {
           move: false,
           matrix: p.matrix,
           name: p.name === "" ? undefined : p.name,
+          ...(p.filter ? { hasFilters: true } : {}),
+          ...(p.blend ? { hasBlendMode: true } : {}),
         });
         placedAt.add(p.depth);
       }
