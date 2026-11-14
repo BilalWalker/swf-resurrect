@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "swf-inspector": {
+      "command": "npx",
+      "args": ["tsx", "mcp/swf-inspector/main.ts"],
+      "disabled": false,
+      "autoApprove": [
+        "swf_summary",
+        "swf_find_tags",
+        "swf_list_classes",
+        "swf_class_source",
+        "swf_reference_frame",
+        "fidelity_summary"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@0.0.85", "--headless", "--isolated"],
+      "disabled": false,
+      "autoApprove": ["browser_navigate", "browser_snapshot", "browser_take_screenshot", "browser_console_messages"]
+    }
+  }
+}
