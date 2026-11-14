@@ -10,7 +10,8 @@
     "pipeline": "tsx src/pipeline/cli.ts",
     "gen:shim-members": "tsx scripts/gen-shim-members.ts",
     "mcp:swf-inspector": "tsx mcp/swf-inspector/main.ts",
-    "typecheck:web": "tsc --noEmit -p tsconfig.web.json"
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "web:start": "tsx web/server/main.ts"
   },
   "devDependencies": {
     "@ruffle-rs/ruffle": "0.7.1",
