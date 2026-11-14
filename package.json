@@ -12,6 +12,7 @@
     "mcp:swf-inspector": "tsx mcp/swf-inspector/main.ts"
   },
   "devDependencies": {
+    "@ruffle-rs/ruffle": "0.7.1",
     "@types/node": "26.6.6",
     "fast-check": "4.10.2",
     "fast-xml-parser": "5.12.0",
