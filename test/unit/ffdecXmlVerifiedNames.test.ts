@@ -124,7 +124,18 @@ describe('12.3 filter and blend-mode names observed on Ruffle 4a8d396 dumps (FFD
     expect(filterPlacement.includes(`${p.flagHasBlendMode}="false"`)).toBe(true);
     expect(filterChild.includes(`<${p.surfaceFilterList}>`)).toBe(true);
   });
-  it('the clip depth value attribute stays UNVERIFIED (not observed)', () => {
-    expect(blendPlacement.includes(`${FFDEC_XML.place.clipDepth}="`)).toBe(false);
+});
+describe('12.7 clip depth value attribute observed on Ruffle 4a8d396 dumps (FFDec 26.4.0)', () => {
+  // Excerpt: tests/tests/swfs/visual/simple_shapes/masks/test.swf, -swf2xml line 45 (attributes trimmed to the ones used).
+  const maskPlacement =
+    '<item type="PlaceObject2Tag" characterId="1" clipDepth="11" depth="1" placeFlagHasCharacter="true" placeFlagHasClipDepth="true" placeFlagHasMatrix="true" placeFlagMove="false">';
+  // Excerpt: tests/tests/swfs/from_shumway/3_joystick/test.swf, line 931.
+  const joystickMask =
+    '<item type="PlaceObject2Tag" characterId="11" clipDepth="33" depth="16" placeFlagHasClipDepth="true" placeFlagHasMatrix="true" placeFlagMove="false">';
+  it('the value attribute sits next to the flag set to true', () => {
+    const p = FFDEC_XML.place;
+    expect(maskPlacement.includes(`${p.flagHasClipDepth}="true"`)).toBe(true);
+    expect(maskPlacement.includes(`${p.clipDepth}="11"`)).toBe(true);
+    expect(joystickMask.includes(`${p.clipDepth}="33"`)).toBe(true);
   });
 });

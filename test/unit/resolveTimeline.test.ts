@@ -64,7 +64,7 @@ describe('resolveTimeline', () => {
     expect(e.warnings.length).toBe(2);
   });
 
-  it('drops unsupported characters and masks and reports them once', () => {
+  it('drops unsupported characters, keeps a mask with its clipDepth and reports the drop once', () => {
     const r = run(
       [
         { kind: 'place', depth: 1, characterId: 40, move: false },
@@ -80,10 +80,11 @@ describe('resolveTimeline', () => {
     );
     expect(r.droppedPlacements).toEqual([
       { spriteId: 6, frame: 1, depth: 1, kind: 'text', characterId: 40 },
-      { spriteId: 6, frame: 1, depth: 2, kind: 'mask' },
     ]);
-    expect(r.frames[0]!.map((e) => e.depth)).toEqual([3, 4]);
-    expect(r.frames[1]!.map((e) => e.depth)).toEqual([3, 4]);
+    expect(r.frames[0]!.map((e) => e.depth)).toEqual([2, 3, 4]);
+    expect(r.frames[0]![0]!.clipDepth).toBe(5);
+    expect(r.frames[1]!.map((e) => e.depth)).toEqual([2, 3, 4]);
+    expect(r.frames[1]![0]!.clipDepth).toBe(5);
     expect(r.keptWithLimit).toEqual([{ spriteId: 6, frame: 1, depth: 3, characterId: 2, kind: 'filter' }]);
   });
 

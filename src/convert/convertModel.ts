@@ -7,7 +7,9 @@ import { sortUnsupported } from '../pipeline/unsupported';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
 import { MalformedFrameDataError, ShapeExportError, SymbolCycleError, UnknownSymbolError } from './errors';
 import type { TagsModel, TimelineModel, UnsupportedKind } from './model';
+import { resolveMasks } from './masks';
 import { resolveTimeline } from './resolveTimeline';
+import type { DroppedPlacement } from './resolveTimeline';
 import { svgToShapeJson } from './svgToShape';
 
 export interface ShapeFile {
@@ -235,6 +237,20 @@ export function convertModel(model: TagsModel): ConvertResult {
     timelines.push([id, spriteById.get(id) as TimelineModel]);
   }
   const edges = new Map<number, number[]>();
+  const recordDropped = (d: DroppedPlacement): void => {
+    const id = d.spriteId;
+    const where = `${d.kind} at depth ${d.depth} in ${id === 0 ? 'root timeline' : `sprite ${id}`}, frame ${d.frame}`;
+    unsupported.push({
+      kind: d.kind,
+      message:
+        d.kind === 'mask'
+          ? `mask is not drawn; the masked content is drawn without the mask (${where}, character ${d.characterId ?? -1})`
+          : d.kind === 'bitmap-fill' && bitmapSet.has(d.characterId ?? -1)
+            ? `placement dropped: DefineBits character placed directly (${where})`
+            : `placement dropped: ${where}`,
+      context: { spriteId: d.spriteId, frame: d.frame, depth: d.depth },
+    });
+  };
   for (const [id, t] of timelines) {
     const r = resolveTimeline({
       spriteId: id,
@@ -243,17 +259,7 @@ export function convertModel(model: TagsModel): ConvertResult {
       unsupportedCharacters: unsupportedChars,
     });
     warnings.push(...r.warnings);
-    for (const d of r.droppedPlacements) {
-      const where = `${d.kind} at depth ${d.depth} in ${id === 0 ? 'root timeline' : `sprite ${id}`}, frame ${d.frame}`;
-      unsupported.push({
-        kind: d.kind,
-        message:
-          d.kind === 'bitmap-fill' && bitmapSet.has(d.characterId ?? -1)
-            ? `placement dropped: DefineBits character placed directly (${where})`
-            : `placement dropped: ${where}`,
-        context: { spriteId: d.spriteId, frame: d.frame, depth: d.depth },
-      });
-    }
+    for (const d of r.droppedPlacements) recordDropped(d);
     for (const k of r.keptWithLimit) {
       unsupported.push({
         kind: k.kind,
@@ -286,6 +292,17 @@ export function convertModel(model: TagsModel): ConvertResult {
       }
     });
     edges.set(id, [...targets].sort((a, b) => a - b));
+  }
+
+  // Masks: classification needs the whole symbol graph, so it runs after every timeline exists. Every decision is
+  // made against the unresolved symbols, then applied (Requirement 12.3).
+  const resolved = timelines.map(([id]) => {
+    const sprite = symbols[String(id)] as SpriteSymbol;
+    return { sprite, ...resolveMasks(id, sprite.frames, symbols) };
+  });
+  for (const m of resolved) {
+    m.sprite.frames = m.frames;
+    for (const d of m.dropped) recordDropped(d);
   }
 
   // Cycle check (iterative-free DFS; depth is bounded by the sprite count).

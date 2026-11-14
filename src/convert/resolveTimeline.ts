@@ -20,8 +20,8 @@ export interface DroppedPlacement {
   spriteId: number;
   frame: number; // 1-based
   depth: number;
-  kind: UnsupportedKind; // 'mask' | kind of the unsupported character
-  characterId?: number; // set when the drop is due to the character, not to a mask
+  kind: UnsupportedKind; // kind of the unsupported character; mask is added by resolveMasks
+  characterId?: number; // set when the drop is due to the character; for a mask, the mask character
 }
 
 /** A placement that stays in the display list although it carries a filter list or a blend mode (not drawn). */
@@ -46,6 +46,8 @@ interface Placed {
   matrix: MatrixModel;
   colorTransform: ColorTransformModel;
   name: string;
+  /** Set on a mask placement; kept on the resolved entry (Requirement 12.1). */
+  clipDepth?: number;
 }
 
 const IDENTITY_MATRIX: MatrixModel = { a: 1, b: 0, c: 0, d: 1, txTwips: 0, tyTwips: 0 };
@@ -78,7 +80,9 @@ function toEntry(depth: number, p: Placed): DisplayListEntry {
     norm(p.colorTransform.add[2]),
     norm(p.colorTransform.add[3]),
   ];
-  return { depth, symbolId: p.symbolId, matrix, colorTransform, name: p.name };
+  const entry: DisplayListEntry = { depth, symbolId: p.symbolId, matrix, colorTransform, name: p.name };
+  if (p.clipDepth !== undefined) entry.clipDepth = p.clipDepth;
+  return entry;
 }
 
 export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
@@ -151,9 +155,8 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
 
       if (op.move && !hasChar && droppedDepths.has(depth)) continue;
 
-      if (op.clipDepth !== undefined) {
-        drop(depth, 'mask');
-        continue;
+      if (op.clipDepth !== undefined && !(Number.isSafeInteger(op.clipDepth) && op.clipDepth >= depth)) {
+        bad(`invalid clip depth ${String(op.clipDepth)} at depth ${depth}`);
       }
       if (hasChar) {
         const kind = unsupported.get(op.characterId as number);
@@ -173,6 +176,7 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
           matrix: op.matrix ?? IDENTITY_MATRIX,
           colorTransform: op.colorTransform ?? IDENTITY_CT,
           name: op.name ?? '',
+          clipDepth: op.clipDepth,
         });
       } else if (hasChar) {
         if (!old && !droppedDepths.has(depth)) bad(`move with character at empty depth ${depth}`);
@@ -182,6 +186,7 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
           matrix: op.matrix ?? old?.matrix ?? IDENTITY_MATRIX,
           colorTransform: op.colorTransform ?? old?.colorTransform ?? IDENTITY_CT,
           name: op.name ?? old?.name ?? '',
+          clipDepth: op.clipDepth ?? old?.clipDepth,
         });
       } else {
         if (!old) bad(`move at empty depth ${depth}`);
@@ -191,6 +196,7 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
           matrix: op.matrix ?? prev.matrix,
           colorTransform: op.colorTransform ?? prev.colorTransform,
           name: op.name ?? prev.name,
+          clipDepth: op.clipDepth ?? prev.clipDepth,
         });
       }
 

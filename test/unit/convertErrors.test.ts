@@ -149,7 +149,7 @@ describe('convertModel unsupported reporting', () => {
     });
     const r = convertModel(m);
     const kinds = new Set(r.unsupported.map((u) => u.kind));
-    for (const k of ['text', 'sound', 'button', 'video', 'mask', 'filter', 'morph-shape'] as const) {
+    for (const k of ['text', 'sound', 'button', 'video', 'filter', 'morph-shape'] as const) {
       expect(kinds.has(k), k).toBe(true);
     }
     const dropped = r.unsupported.filter((u) => u.context).map((u) => [u.kind, u.context?.spriteId, u.context?.frame, u.context?.depth]);
@@ -159,13 +159,12 @@ describe('convertModel unsupported reporting', () => {
         ['sound', 0, 1, 3],
         ['button', 0, 1, 4],
         ['video', 0, 1, 5],
-        ['mask', 0, 1, 6],
         ['morph-shape', 0, 1, 8],
       ]),
     );
     expect(r.stats.morphSkipped).toBe(1);
-    // The supported shape and the filtered placement remain on the stage.
-    expect(r.scene.symbols['0']).toMatchObject({ frames: [[{ depth: 1, symbolId: 1 }, { depth: 7, symbolId: 1 }]] });
+    // The supported shape, the trivial mask (kept with clipDepth) and the filtered placement remain on the stage.
+    expect(r.scene.symbols['0']).toMatchObject({ frames: [[{ depth: 1, symbolId: 1 }, { depth: 6, symbolId: 1, clipDepth: 9 }, { depth: 7, symbolId: 1 }]] });
     expect(r.shapeFiles.map((f) => f.fileName)).toEqual(['1.shape.json']);
   });
 

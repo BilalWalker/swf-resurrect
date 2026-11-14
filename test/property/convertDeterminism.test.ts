@@ -47,6 +47,7 @@ describe("Purity guard for converter files", () => {
   const files = [
     "src/convert/convertModel.ts",
     "src/convert/resolveTimeline.ts",
+    "src/convert/masks.ts",
     "src/convert/sceneJson.ts",
     "src/emit/planEmit.ts",
   ].filter((f) => existsSync(f));

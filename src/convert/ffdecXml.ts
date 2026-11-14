@@ -195,9 +195,9 @@ export const FFDEC_XML = {
     flagHasColorTransform: 'placeFlagHasColorTransform',
     /** Verified on FFDec 26.4.0 (line 81). */
     flagHasName: 'placeFlagHasName',
-    /** Verified on FFDec 26.4.0 (line 81): flag only. The clip depth VALUE attribute `clipDepth` is UNVERIFIED. */
+    /** Verified on FFDec 26.4.0 (line 81, and Ruffle 4a8d396 visual/simple_shapes/masks): the flag. */
     flagHasClipDepth: 'placeFlagHasClipDepth',
-    /** UNVERIFIED (not in sample; FFDec field name). */
+    /** Verified on FFDec 26.4.0 (Ruffle 4a8d396, visual/simple_shapes/masks, line 45: PlaceObject2Tag characterId=1 clipDepth=11 depth=1 ... placeFlagHasClipDepth=true; also from_shumway/3_joystick, clipDepth=33 depth=16). */
     clipDepth: 'clipDepth',
     /** Verified on FFDec 26.4.0 (line 81): flag on PlaceObject2Tag. Ratio is not used by the pipeline. */
     flagHasRatio: 'placeFlagHasRatio',
