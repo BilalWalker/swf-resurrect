@@ -545,12 +545,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend `test/e2e/render.e2e.test.ts`: a synthetic one-shape scene with a radial gradient whose first stop has alpha 0 draws the transparent centre, not the last stop colour (pixel read-back); extend `test/unit/shapeJson.test.ts` (`gradientRadial` true) and Property 42. Measure `radial` and `gradients` on local copies under `.work/` and report the Overall_Match; the committed floors come in sub-task 15.3.
     - _Requirements: 2.8, 8.1, 8.2, 8.5_
 
-  - [-] 11.4 Bitmap fills; flips `bitmap`
+  - [x] 11.4 Bitmap fills; flips `bitmap`
     - `pixiBackend.ts`: `new FillPattern(texture, 'repeat')` with `setTransform(new Matrix(...fill.matrix))`, texture `scaleMode = 'nearest'` when `smooth` is false, the image loaded from `assetBase + fill.image` through an `HTMLImageElement`. A load failure shows an on-page error and skips nothing silently (the fill is named by the page error and the scene does not start). `loader.ts` passes `assetBase`. `fakeBackend.ts` records the fill kinds it receives. Set `DRAWN_FILLS.bitmap = true`.
     - Test: extend `test/unit/loader.test.ts` (image path resolved from `assetBase`), `test/unit/shapeJson.test.ts` (`bitmap` true), `test/property/shapeFunction.property.test.ts` (Property 42) and `test/e2e/render.e2e.test.ts` (a synthetic scene with a 2x2 bitmap fill at scale 10 draws the expected pixels, nearest versus smooth).
     - _Requirements: 2.8, 9.1, 9.4_
 
-  - [ ] 11.5 Emit copies image assets
+  - [-] 11.5 Emit copies image assets
     - Confirm that `src/emit/emit.ts` and the `vite build` of the emitted project copy `assets/images/*` into the project and into `dist`, and that the dev server serves them.
     - Test: extend `test/unit/emit.test.ts` and `test/unit/buildProject.test.ts` with a fixture holding `images/5.png`: the file is present in the emitted project and in `dist/assets/images`.
     - _Requirements: 9.2_

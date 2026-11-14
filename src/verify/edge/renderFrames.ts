@@ -12,11 +12,14 @@ const ORIGIN = 'http://verify.local';
 /** Per-frame outcome: an image, or the sanitised reason it could not be rendered. */
 export type RenderedFrame = RgbaImage | { renderFailed: string };
 
-const MIME: Readonly<Record<string, string>> = {
+/** Served types; `.png` and `.jpg` are the only bitmap extensions Shape_JSON allows (`images/<id>.png|jpg`). */
+export const MIME: Readonly<Record<string, string>> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
   '.css': 'text/css; charset=utf-8',
   '.map': 'application/json; charset=utf-8',
 };
