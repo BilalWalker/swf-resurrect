@@ -180,8 +180,17 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
     if (!m) return sendError(res, 404, 'Not found');
     const job = jobs.get(m[1]);
     if (job === undefined) return sendError(res, 404, 'No such job');
-    if (!isGet) return sendError(res, 405, 'Method not allowed');
     const rest = m[2] ?? '';
+    if (rest === 'rerun' && method === 'POST') {
+      req.resume();
+      try {
+        return sendJson(res, 202, await jobs.rerun(job));
+      } catch (err) {
+        if (err instanceof SubmitError) return sendError(res, err.status, err.message);
+        throw err;
+      }
+    }
+    if (!isGet) return sendError(res, 405, 'Method not allowed');
     const dirs = jobs.dirs(job);
 
     if (rest === '') return sendJson(res, 200, jobs.summary(job));

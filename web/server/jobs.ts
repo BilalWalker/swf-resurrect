@@ -256,6 +256,18 @@ export class JobManager {
     return this.submit({ name: displayName(rawName), source: 'upload', sample: null, sha256: sha, swfPath: '', bytes }, rerun);
   }
 
+  /** Runs the same SWF again, bypassing the cache. */
+  async rerun(job: Job): Promise<{ id: string; cached: boolean }> {
+    if (job.source === 'sample' && job.sample !== null) return this.submitSample(job.sample, true);
+    let bytes: Buffer;
+    try {
+      bytes = await readFile(job.swfPath);
+    } catch {
+      throw new SubmitError(410, 'The uploaded SWF of this job is no longer on the server. Upload it again.');
+    }
+    return this.submitUpload(bytes, job.name, true);
+  }
+
   private async submit(
     s: { name: string; source: 'sample' | 'upload'; sample: string | null; sha256: string; swfPath: string; bytes: Buffer | null },
     rerun: boolean,
