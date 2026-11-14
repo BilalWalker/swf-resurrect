@@ -2,7 +2,7 @@
 // Every failure of FFDec, the browser or the Replay is a recorded Problem; only a failed write throws.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import type { SceneJson } from '../../../template/runtime/scene';
 import type { UnsupportedFeatureEntry } from '../../pipeline/unsupported';
 import type { TranslationReport } from '../../translate/report';
@@ -10,6 +10,9 @@ import { KNOWN_BEHAVIOUR_GAPS } from '../core/constants';
 import { selectFrames } from '../core/frameSample';
 import { buildInputNotes, formatInputNotes } from '../core/inputNotes';
 import { knownVisualLimits } from '../core/limits';
+import { clusterDiffRegions, regionTable } from '../core/regions';
+import { attributeRegions, residualLimits, validateResidualRegister } from '../core/residual';
+import type { Attribution, ResidualRegister } from '../core/residual';
 import { buildDiffImage, compareImages, flattenOnto } from '../core/pixelDiff';
 import type { Rgb, RgbaImage } from '../core/pixelDiff';
 import { planReplay, parseNumFrames, parseTickOptions } from '../core/replayPlan';
@@ -138,6 +141,10 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
     problems.push({ kind: reason, frame, detail: sanitizeDetail(detail) });
   };
 
+  // The residual register sits next to the reference directory (design 17); absent means none.
+  const register = await loadRegister(req, stage, problems);
+  const attributions: Attribution[] = [];
+
   // 1. Reference frames (FFDec).
   let references = new Map<number, ReferenceFrame>();
   const ffdecDir = await mkdtemp(join(tmpdir(), 'swf-verify-ref-'));
@@ -199,6 +206,8 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
         continue;
       }
       const v = diff.value;
+      const regions = clusterDiffRegions(v.mask, ref.width, ref.height);
+      attributions.push(...attributeRegions(n, regions, register));
       await mkdir(framesDir, { recursive: true });
       await writeFile(framePath(framesDir, n, 'reference'), encodePng(ref));
       await writeFile(framePath(framesDir, n, 'rendered'), encodePng(img));
@@ -209,6 +218,7 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
         matchPercent: v.matchHundredths / 100,
         differingPixels: v.differingPixels,
         totalPixels: v.totalPixels,
+        regions: regionTable(regions, MAX_REGION_ROWS),
       });
     }
   } finally {
@@ -219,6 +229,8 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
   const behaviour = await runBehaviour(req, deps, problems);
 
   // 5. Report.
+  const unattributed = attributions.filter((a) => a.entry === null);
+  if (register !== null) problems.push(...unattributedProblems(unattributed));
   const report = buildFidelityReport({
     sample: req.sampleName,
     stage,
@@ -226,7 +238,15 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
     tools: { ffdec: FFDEC_VERSION, playwright: PLAYWRIGHT_VERSION, pngjs: PNGJS_VERSION },
     frameSample: sample,
     frames: [...outcomes.values()],
-    limits: knownVisualLimits(req.scene, req.unsupported, { allComparedFramesExact: allComparedFramesExact([...outcomes.values()]) }),
+    limits: [
+      ...knownVisualLimits(req.scene, req.unsupported, { allComparedFramesExact: allComparedFramesExact([...outcomes.values()]) }),
+      ...residualLimits(attributions),
+    ],
+    residual: {
+      regions: attributions.length,
+      attributed: attributions.length - unattributed.length,
+      unattributed: unattributed.length,
+    },
     behaviour,
     knownBehaviourGaps: KNOWN_BEHAVIOUR_GAPS,
     problems,
@@ -246,6 +266,47 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
     jsonPath,
     htmlPath,
   };
+}
+
+const MAX_REGION_ROWS = 200;
+const MAX_UNATTRIBUTED_PROBLEMS = 50;
+
+/** One Problem per unattributed region (in frame, region order), then one summary for the rest. */
+function unattributedProblems(list: readonly Attribution[]): Problem[] {
+  const out: Problem[] = list.slice(0, MAX_UNATTRIBUTED_PROBLEMS).map((a) => {
+    const b = a.region.bbox;
+    return {
+      kind: 'unattributed-region' as const,
+      frame: a.frame,
+      index: a.region.id,
+      detail: `bbox ${b.x0},${b.y0}-${b.x1},${b.y1}; ${a.region.pixels} px`,
+    };
+  });
+  const rest = list.slice(MAX_UNATTRIBUTED_PROBLEMS);
+  if (rest.length > 0) {
+    const pixels = rest.reduce((s, a) => s + a.region.pixels, 0);
+    out.push({ kind: 'unattributed-region', detail: `${rest.length} more regions; ${pixels} px` });
+  }
+  return out;
+}
+
+/** The register next to the reference directory, or null: absent, or invalid (then a Problem; never thrown). */
+async function loadRegister(
+  req: VerifyRequest,
+  stage: { width: number; height: number },
+  problems: Problem[],
+): Promise<ResidualRegister | null> {
+  if (req.referenceDir === null) return null;
+  const text = await readOptional(join(dirname(resolve(req.referenceDir)), 'residual-causes.json'));
+  if (text === null) return null;
+  try {
+    const parsed: unknown = JSON.parse(text);
+    validateResidualRegister(parsed, stage);
+    return parsed;
+  } catch (err) {
+    problems.push({ kind: 'residual-register-invalid', detail: describe(err) });
+    return null;
+  }
 }
 
 /** True when at least one frame was compared and every compared frame has no differing pixel. */

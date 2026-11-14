@@ -13,12 +13,26 @@ const frameNo = fc.integer({ min: 1, max: 60 });
 const text = fc.string({ maxLength: 20 });
 const hex = fc.integer({ min: 0, max: 0xffffff }).map((n) => `#${n.toString(16).padStart(6, '0')}`);
 
+const genRegionTable = fc.record({
+  rows: fc.array(
+    fc.record({
+      id: fc.integer({ min: 1, max: 50 }),
+      bbox: fc.record({ x0: fc.nat(100), y0: fc.nat(100), x1: fc.nat(100), y1: fc.nat(100) }),
+      pixels: fc.integer({ min: 1, max: 500 }),
+      first: fc.record({ x: fc.nat(100), y: fc.nat(100) }),
+    }),
+    { maxLength: 4 },
+  ),
+  omitted: fc.record({ regions: fc.nat(20), pixels: fc.nat(500) }),
+});
+
 const genCompared: fc.Arbitrary<FrameOutcome> = fc
   .record({
     frame: frameNo,
     hundredths: fc.integer({ min: 0, max: 10000 }),
     differingPixels: fc.integer({ min: 0, max: 5000 }),
     totalPixels: fc.integer({ min: 1, max: 100000 }),
+    regions: fc.option(genRegionTable, { nil: undefined }),
   })
   .map((r) => ({
     frame: r.frame,
@@ -26,6 +40,7 @@ const genCompared: fc.Arbitrary<FrameOutcome> = fc
     matchPercent: r.hundredths / 100,
     differingPixels: r.differingPixels,
     totalPixels: r.totalPixels,
+    ...(r.regions === undefined ? {} : { regions: r.regions }),
   }));
 
 const genNotCompared: fc.Arbitrary<FrameOutcome> = fc.record({
@@ -119,6 +134,8 @@ const problemKinds: ProblemKind[] = [
   'unpaired-mouse-event',
   'unused-input',
   'replay-error',
+  'unattributed-region',
+  'residual-register-invalid',
 ];
 
 const genProblem: fc.Arbitrary<Problem> = fc
@@ -165,6 +182,10 @@ export const genReportInputs: fc.Arbitrary<FidelityInputs> = fc.record({
   frameSample: fc.array(frameNo, { maxLength: 8 }),
   frames: genFrames,
   limits: fc.array(genLimit, { maxLength: 6 }),
+  residual: fc.option(
+    fc.record({ regions: fc.nat(30), attributed: fc.nat(30), unattributed: fc.nat(30) }),
+    { nil: undefined },
+  ),
   behaviour: genBehaviour,
   knownBehaviourGaps: fc.array(fc.string({ maxLength: 12 }), { maxLength: 4 }),
   problems: fc.array(genProblem, { maxLength: 8 }),

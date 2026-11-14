@@ -2,7 +2,7 @@
 // Pure: no node:* imports, no clock, no randomness, no locale-dependent calls.
 // No script, no external resource, inline style only, images by relative path.
 import type { InputNote } from './inputNotes';
-import type { CaughtErrorsSummary, FidelityReport, VisualFrame } from './report';
+import type { CaughtErrorsSummary, FidelityReport, RegionTable, VisualFrame } from './report';
 
 /** Escapes & < > " ' (in that order of concern: & first via single pass). */
 export function escapeHtml(text: string): string {
@@ -55,6 +55,20 @@ function frameState(f: Extract<VisualFrame, { status: 'compared' }>): string {
     : `<span class="bad">DIFFERENCES (${f.differingPixels} pixels)</span>`;
 }
 
+function regionsTable(frame: number, t: RegionTable | undefined): string {
+  if (t === undefined || (t.rows.length === 0 && t.omitted.regions === 0)) return '';
+  const rows = t.rows.map(
+    (r) => `<tr><td>${r.id}</td><td>${r.bbox.x0},${r.bbox.y0}-${r.bbox.x1},${r.bbox.y1}</td><td>${r.pixels}</td></tr>`,
+  );
+  if (t.omitted.regions > 0) {
+    rows.push(`<tr><td colspan="2">${t.omitted.regions} more regions</td><td>${t.omitted.pixels}</td></tr>`);
+  }
+  return (
+    `<table>\n<caption>Differing regions of frame ${frame}</caption>\n` +
+    `<tr><th scope="col">Region</th><th scope="col">Box</th><th scope="col">Pixels</th></tr>\n${rows.join('\n')}\n</table>\n`
+  );
+}
+
 function summarySection(r: FidelityReport): string {
   const b = r.behaviour;
   const rows: string[] = [];
@@ -99,7 +113,8 @@ function visualSection(r: FidelityReport): string {
         `<div class="frame">\n<p>Frame ${n}: ${pct(f.matchPercent)} ${frameState(f)}</p>\n` +
           `<figure>${img(f.images.reference, 'reference')}<figcaption>Reference</figcaption></figure>\n` +
           `<figure>${img(f.images.rendered, 'rendered')}<figcaption>Rendered</figcaption></figure>\n` +
-          `<figure>${img(f.images.diff, 'pixel difference')}<figcaption>Pixel difference</figcaption></figure>\n</div>`,
+          `<figure>${img(f.images.diff, 'pixel difference')}<figcaption>Pixel difference</figcaption></figure>\n` +
+          `${regionsTable(n, f.regions)}</div>`,
       );
     } else {
       notCompared.push(`<li>Frame ${f.frame}: not compared (${e(f.reason)})</li>`);
@@ -107,6 +122,12 @@ function visualSection(r: FidelityReport): string {
   }
   if (notCompared.length > 0) {
     parts.push('<h3>Frames not compared</h3>', `<ul>\n${notCompared.join('\n')}\n</ul>`);
+  }
+  const res = r.visual.residual;
+  if (res !== undefined) {
+    parts.push(
+      `<p>Differing regions: ${res.regions}, attributed: ${res.attributed}, unattributed: ${res.unattributed}</p>`,
+    );
   }
   parts.push('<h3>Known visual limits</h3>');
   if (r.visual.knownVisualLimits.length === 0) {

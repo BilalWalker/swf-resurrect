@@ -6,6 +6,7 @@ import { AA_TOLERANCE, FORMAT_VERSION } from './constants';
 import type { InputNote } from './inputNotes';
 import type { VisualLimit } from './limits';
 import { meanHundredths } from './pixelDiff';
+import type { DiffRegion } from './regions';
 import { sanitizeDetail } from './sanitize';
 import type { Divergence, TraceComparison, TraceLine } from './traceCompare';
 
@@ -20,7 +21,9 @@ export type ProblemKind =
   | 'unused-input'
   | 'replay-error'
   | 'runtime-error'
-  | 'runtime-error-overflow';
+  | 'runtime-error-overflow'
+  | 'unattributed-region'
+  | 'residual-register-invalid';
 
 export interface Problem {
   kind: ProblemKind;
@@ -30,8 +33,21 @@ export interface Problem {
   detail?: string;
 }
 
+/** The differing regions of a compared frame: rows in id order plus the aggregate of the omitted ones (design 17). */
+export interface RegionTable {
+  rows: DiffRegion[];
+  omitted: { regions: number; pixels: number };
+}
+
+/** visual.residual: every differing region is attributed to a register entry or not (Requirement 21.3). */
+export interface ResidualCounts {
+  regions: number;
+  attributed: number;
+  unattributed: number;
+}
+
 export type FrameOutcome =
-  | { frame: number; status: 'compared'; matchPercent: number; differingPixels: number; totalPixels: number }
+  | { frame: number; status: 'compared'; matchPercent: number; differingPixels: number; totalPixels: number; regions?: RegionTable }
   | { frame: number; status: 'not-compared'; reason: 'reference-unavailable' | 'size-mismatch' | 'render-failed' };
 
 export type BehaviourInput =
@@ -63,6 +79,8 @@ export interface FidelityInputs {
   frameSample: readonly number[];
   frames: ReadonlyArray<FrameOutcome>; // any order; the builder sorts
   limits: readonly VisualLimit[];
+  /** Counts over all compared frames; zeros when absent. */
+  residual?: ResidualCounts;
   behaviour: BehaviourInput;
   knownBehaviourGaps: readonly string[]; // KNOWN_BEHAVIOUR_GAPS
   problems: readonly Problem[];
@@ -83,6 +101,7 @@ export type VisualFrame =
       differingPixels: number;
       totalPixels: number;
       images: FrameImages;
+      regions?: RegionTable;
     }
   | { frame: number; status: 'not-compared'; reason: 'reference-unavailable' | 'size-mismatch' | 'render-failed' };
 
@@ -119,6 +138,7 @@ export interface FidelityReport {
     notComparedFrames: number;
     overallMatch: number | null;
     knownVisualLimits: VisualLimit[];
+    residual: ResidualCounts;
   };
   behaviour: BehaviourReport;
   problems: Problem[];
@@ -163,6 +183,13 @@ function cleanProblem(p: Problem): Problem {
   return out;
 }
 
+function cloneRegions(t: RegionTable): RegionTable {
+  return {
+    rows: t.rows.map((r) => ({ id: r.id, bbox: { ...r.bbox }, pixels: r.pixels, first: { ...r.first } })),
+    omitted: { regions: t.omitted.regions, pixels: t.omitted.pixels },
+  };
+}
+
 function buildBehaviour(b: BehaviourInput, gaps: string[]): BehaviourReport {
   if (b.status === 'not-compared') {
     return { status: 'not-compared', reason: b.reason, knownBehaviourGaps: gaps };
@@ -199,6 +226,7 @@ export function buildFidelityReport(i: FidelityInputs): FidelityReport {
   const frames: VisualFrame[] = sortedFrames.map((f) =>
     f.status === 'compared'
       ? {
+          ...(f.regions === undefined ? {} : { regions: cloneRegions(f.regions) }),
           frame: f.frame,
           status: 'compared',
           matchPercent: f.matchPercent,
@@ -250,6 +278,7 @@ export function buildFidelityReport(i: FidelityInputs): FidelityReport {
       notComparedFrames: frames.length - comparedFrames,
       overallMatch: comparedFrames > 0 ? meanHundredths(comparedPercents) / 100 : null,
       knownVisualLimits: limits,
+      residual: i.residual === undefined ? { regions: 0, attributed: 0, unattributed: 0 } : { ...i.residual },
     },
     behaviour: buildBehaviour(i.behaviour, gaps),
     problems: i.problems.map(cleanProblem).sort(compareProblems),

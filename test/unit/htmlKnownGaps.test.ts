@@ -126,3 +126,29 @@ describe('html known visual limits', () => {
     expect(html).not.toContain('<b>');
   });
 });
+describe('html residual regions', () => {
+  it('prints the regions table per frame and the three counts, escaped', () => {
+    const report = baseReport({ status: 'not-compared', reason: 'no-reference-trace', knownBehaviourGaps: [] } as never);
+    (report.visual as unknown as Record<string, unknown>)['residual'] = { regions: 3, attributed: 1, unattributed: 2 };
+    (report.visual as unknown as Record<string, unknown>)['frames'] = [
+      {
+        frame: 2,
+        status: 'compared',
+        matchPercent: 99.5,
+        differingPixels: 5,
+        totalPixels: 100,
+        images: { reference: 'a<b.png', rendered: 'r.png', diff: 'd.png' },
+        regions: {
+          rows: [{ id: 1, bbox: { x0: 0, y0: 1, x1: 2, y1: 3 }, pixels: 4, first: { x: 0, y: 1 } }],
+          omitted: { regions: 2, pixels: 1 },
+        },
+      },
+    ];
+    const html = renderFidelityHtml(report);
+    expect(html).toContain('Differing regions: 3, attributed: 1, unattributed: 2');
+    expect(html).toContain('<caption>Differing regions of frame 2</caption>');
+    expect(html).toContain('<tr><td>1</td><td>0,1-2,3</td><td>4</td></tr>');
+    expect(html).toContain('<tr><td colspan="2">2 more regions</td><td>1</td></tr>');
+    expect(html).toContain('a&lt;b.png');
+  });
+});

@@ -624,12 +624,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/property/regions.property.test.ts` (create), **Property 26: Region clustering partitions the mask deterministically**.
     - _Requirements: 21.1, 21.4, 15.5_
 
-  - [-] 13.2 Add `src/verify/core/residual.ts`
+  - [x] 13.2 Add `src/verify/core/residual.ts`
     - `ResidualRegister`, `ResidualEntry`, `validateResidualRegister` (kind pattern, box inside the stage, integer frame, `message` non-empty and not `unknown`, `not examined`, `todo` or `tbd` in any letter case), `attributeRegions(frame, regions, register)` (the containing entry of the same frame with the smallest box area, ties by `(kind, message)`) and `residualLimits(attributions)`. Add the kind `residual-difference` to `VisualLimit.kind` in `limits.ts`.
     - Test: `test/property/residual.property.test.ts` (create), **Property 27: Residual attribution is total and independent of the register's order**; `test/unit/residual.test.ts` (create): the example register of the design Data Models section parses.
     - _Requirements: 21.2, 21.3, 21.7, 15.5_
 
-  - [ ] 13.3 Wire the Verify_Stage, the HTML and the residual floor test
+  - [-] 13.3 Wire the Verify_Stage, the HTML and the residual floor test
     - `verifyStage` clusters the mask after `compareImages` for each frame, reads `samples/<name>/residual-causes.json` from `dirname(referenceDir)` when present, adds `visual.frames[n].regions` (additive), `visual.residual: { regions, attributed, unattributed }`, `residualLimits` in `knownVisualLimits`, and an `unattributed-region` Problem for each unattributed region only when a register exists (at most 50, then one summary problem); an invalid register gives a `residual-register-invalid` Problem and never throws. `html.ts` prints the regions table per frame and the three counts. Create `test/e2e/residual.e2e.test.ts` with an `it.each` over the admitted samples whose Overall_Match is below 100 (an empty list until Task 15) asserting `visual.residual.unattributed === 0`.
     - Test: extend `test/unit/residual.test.ts` (an `unattributed-region` Problem appears only when a register exists; counts), `test/unit/verifyStage.test.ts`, `test/unit/htmlKnownGaps.test.ts` and `test/property/fidelityDeterminism.property.test.ts` generators.
     - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.7_
