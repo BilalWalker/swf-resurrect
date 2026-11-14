@@ -31,12 +31,13 @@ afterEach(() => {
 });
 
 describe('convertStage', () => {
-  it('writes SVGs ascending by id and scene.json last, with no temp file left', async () => {
+  it('writes Shape_JSON files ascending by id and scene.json last, with no temp file left', async () => {
     const artifact = await convertStage(setup());
     const assets = join(artifact.stagingDir, 'assets');
-    expect(artifact.svgPaths.map((p) => p.slice(assets.length + 1))).toEqual(['1.svg', '2.svg', '4.svg', '5.svg']);
+    expect(artifact.shapePaths.map((p) => p.slice(assets.length + 1))).toEqual(['1.shape.json', '2.shape.json', '4.shape.json', '5.shape.json']);
     expect(artifact.scenePath).toBe(join(assets, 'scene.json'));
-    expect(readdirSync(assets).sort()).toEqual(['1.svg', '2.svg', '4.svg', '5.svg', 'scene.json']);
+    expect(readdirSync(assets).sort()).toEqual(['1.shape.json', '2.shape.json', '4.shape.json', '5.shape.json', 'scene.json']);
+    expect(artifact.imagePaths).toEqual([]);
     expect(JSON.parse(readFileSync(artifact.scenePath, 'utf8')).symbols).toBeDefined();
   });
 

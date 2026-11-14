@@ -1,6 +1,6 @@
 import { Container, Graphics } from 'pixi.js';
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../backend';
-import { flattenSvgWrapper } from '../svgFlatten';
+import { assertFillDrawn, ShapeJsonError, type PathCmd, type ShapeJson, type ShapePath } from '../shapeJson';
 
 /** Per-node values that combine into the Pixi alpha. */
 interface NodeState {
@@ -15,6 +15,64 @@ export interface PixiBackendOptions {
 
 const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
 
+function tracePath(g: Graphics, cmds: readonly PathCmd[]): void {
+  for (const c of cmds) {
+    switch (c[0]) {
+      case 'M':
+        g.moveTo(c[1], c[2]);
+        break;
+      case 'L':
+        g.lineTo(c[1], c[2]);
+        break;
+      case 'Q':
+        g.quadraticCurveTo(c[1], c[2], c[3], c[4]);
+        break;
+      case 'C':
+        g.bezierCurveTo(c[1], c[2], c[3], c[4], c[5], c[6]);
+        break;
+      case 'Z':
+        g.closePath();
+        break;
+    }
+  }
+}
+
+/** drawFill: the fill check first (no warn-and-skip), then the fill of one contour; holes are cut out of it. */
+function drawFill(g: Graphics, path: ShapePath, index: number): void {
+  const fill = path.fill;
+  if (fill === null) return;
+  assertFillDrawn(fill, `paths[${index}].fill`);
+  // Gradient and bitmap drawing arrives with the commit that flips their DRAWN_FILLS flag.
+  if (fill.kind !== 'solid') throw new ShapeJsonError(`paths[${index}].fill: fill kind not drawn: ${fill.kind}`);
+  for (const contour of path.contours) {
+    tracePath(g, contour.outer);
+    g.fill({ color: fill.color, alpha: fill.alpha });
+    for (const hole of contour.holes) {
+      tracePath(g, hole);
+      g.cut();
+    }
+  }
+}
+
+function drawStroke(g: Graphics, path: ShapePath): void {
+  const s = path.stroke;
+  if (s === null) return;
+  for (const contour of path.contours) {
+    tracePath(g, contour.outer);
+    for (const hole of contour.holes) tracePath(g, hole);
+    g.stroke({ width: s.width, color: s.color, alpha: s.alpha, cap: s.cap, join: s.join, miterLimit: s.miterLimit });
+  }
+}
+
+/** Draws every path in order: its fill (outer contours with holes cut), then its stroke. */
+function drawShape(shape: ShapeJson): Graphics {
+  const g = new Graphics();
+  shape.paths.forEach((path, i) => {
+    drawFill(g, path, i);
+    drawStroke(g, path);
+  });
+  return g;
+}
 /**
  * PixiJS 8.22 implementation of RenderBackend. The only file importing pixi.js.
  * Stage creation and pointer wiring belong to the boot code; this class owns
@@ -31,23 +89,13 @@ export class PixiBackend implements RenderBackend {
     this.errorHost = options.errorHost;
   }
 
-  async loadShape(
-    symbolId: number,
-    svgText: string,
-    origin: { x: number; y: number },
-  ): Promise<ShapeBounds> {
-    try {
-      // Flatten the FFDec wrapper so paths are in shape-origin space whether or not Pixi honours it.
-      const graphics = new Graphics().svg(flattenSvgWrapper(svgText));
-      const b = graphics.getLocalBounds().rectangle;
-      this.templates.set(symbolId, { graphics });
-      return { x: b.x, y: b.y, width: b.width, height: b.height };
-    } catch (err) {
-      this.showError(`SVG asset ${symbolId}.svg failed to load`);
-      throw err instanceof Error ? err : new Error(String(err));
-    }
+  async loadShape(symbolId: number, shape: ShapeJson, _assetBase: string): Promise<ShapeBounds> {
+    // Throws ShapeJsonError on a fill that is not drawn; the loader shows it and does not start playback.
+    const graphics = drawShape(shape);
+    const b = graphics.getLocalBounds().rectangle;
+    this.templates.set(symbolId, { graphics });
+    return { x: b.x, y: b.y, width: b.width, height: b.height };
   }
-
   createContainer(): NodeHandle {
     return this.track(new Container());
   }

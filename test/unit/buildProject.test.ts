@@ -21,11 +21,11 @@ describe('buildProject (clickgoto fixture)', () => {
     await project?.dispose();
   });
 
-  it('keeps index.html and copies assets/scene.json and the SVGs into dist', async () => {
+  it('keeps index.html and copies assets/scene.json and the shape files into dist', async () => {
     expect(existsSync(resolve(built.distDir, 'index.html'))).toBe(true);
     const scene = JSON.parse(await readFile(resolve(built.distDir, 'assets/scene.json'), 'utf8'));
     expect(scene).toHaveProperty('symbols');
     const files = await readdir(resolve(built.distDir, 'assets'));
-    expect(files.some((f) => f.endsWith('.svg'))).toBe(true);
+    expect(files.some((f) => f.endsWith('.shape.json'))).toBe(true);
   });
 });

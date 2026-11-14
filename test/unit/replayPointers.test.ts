@@ -21,7 +21,7 @@ const placement = (symbolId: number, tx: number, name: string) => ({
 
 // Two 40 x 30 buttons: `a` at x 0..40 and `b` at x 100..140. Empty space everywhere else.
 const scene = {
-  formatVersion: 1,
+  formatVersion: 2,
   stage: { width: 200, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
   rootSymbolId: 0,
   symbols: {
@@ -31,7 +31,7 @@ const scene = {
       frames: [[placement(2, 0, 'a'), placement(2, 100, 'b')]],
       labels: [],
     },
-    '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+    '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 40, height: 30 } },
     '2': {
       type: 'sprite',
       className: 'Btn',
@@ -42,7 +42,8 @@ const scene = {
   },
 };
 
-const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="40px" height="30px"><path d="M0 0 L40 0 40 30 0 30 Z"/></svg>';
+const shapeJson =
+  '{"formatVersion":1,"paths":[{"contours":[{"outer":[["M",0,0],["L",40,0],["L",40,30],["L",0,30],["Z"]],"holes":[]}],"fill":{"kind":"solid","color":"#000000","alpha":1},"stroke":null}]}';
 
 const classesTs = `
 import { MovieClip } from '../shim/MovieClip';
@@ -85,7 +86,7 @@ describe('Replay pointer events', () => {
     await mkdir(resolve(tempDir, 'assets'), { recursive: true });
     await mkdir(resolve(tempDir, 'src'), { recursive: true });
     await writeFile(resolve(tempDir, 'assets/scene.json'), JSON.stringify(scene), 'utf8');
-    await writeFile(resolve(tempDir, 'assets/1.svg'), svg, 'utf8');
+    await writeFile(resolve(tempDir, 'assets/1.shape.json'), shapeJson, 'utf8');
     await writeFile(resolve(tempDir, 'src/classes.ts'), classesTs, 'utf8');
   });
 

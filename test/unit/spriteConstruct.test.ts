@@ -27,7 +27,7 @@ const clip = (frames: DisplayListEntry[][], className?: string): SpriteSymbol =>
 
 function rig(symbols: SceneJson['symbols'], registry: Record<string, new () => Sprite>): { player: Player; clock: ManualClock } {
   const scene: SceneJson = {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
     rootSymbolId: 0,
     symbols,

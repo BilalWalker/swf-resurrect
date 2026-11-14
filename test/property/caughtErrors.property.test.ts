@@ -88,7 +88,7 @@ function run(tree: SymbolNode, flags: ThrowFlags[], replace: boolean): Run {
     symbols[String(id)] = sym;
   }
   const scene: SceneJson = {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: { width: 100, height: 100, backgroundColor: "#ffffff", frameRate: 10 },
     rootSymbolId: 0,
     symbols,

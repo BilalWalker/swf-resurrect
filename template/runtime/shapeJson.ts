@@ -89,6 +89,27 @@ export function fillIsDrawn(fill: ShapeFill, caps: DrawnFills): boolean {
   }
 }
 
+/** The name of a fill kind in error messages: `solid`, `gradient-linear`, `gradient-radial`, `bitmap`. */
+export function fillKindName(fill: ShapeFill): string {
+  return fill.kind === 'gradient' ? `gradient-${fill.type}` : fill.kind;
+}
+
+/**
+ * The check every backend runs before it draws a fill: throws `ShapeJsonError('<path>: fill kind not drawn: <kind>')` when
+ * `fillIsDrawn(fill, caps)` is false. There is no warn-and-skip state (decision D21). `path` is the field path of the
+ * fill, e.g. `paths[2].fill`.
+ */
+export function assertFillDrawn(fill: ShapeFill, path: string, caps: DrawnFills = DRAWN_FILLS): void {
+  if (!fillIsDrawn(fill, caps)) throw new ShapeJsonError(`${path}: fill kind not drawn: ${fillKindName(fill)}`);
+}
+
+/** Runs `assertFillDrawn` on every fill of a shape, in path order. */
+export function assertShapeDrawn(shape: ShapeJson, caps: DrawnFills = DRAWN_FILLS): void {
+  shape.paths.forEach((p, i) => {
+    if (p.fill !== null) assertFillDrawn(p.fill, `paths[${i}].fill`, caps);
+  });
+}
+
 // ---- validation ---------------------------------------------------------------------------------------------
 
 const COLOR = /^#[0-9a-f]{6}$/;

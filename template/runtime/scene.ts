@@ -6,8 +6,9 @@ export type ColorTransform8 = [number, number, number, number, number, number, n
 
 export interface ShapeSymbol {
   type: 'shape';
-  file: string; // "<id>.svg"
+  file: string; // "<id>.shape.json"
   origin: { x: number; y: number };
+  size: { width: number; height: number }; // SVG width/height in px; bounds are (-origin.x, -origin.y, width, height)
 }
 
 export interface DisplayListEntry {
@@ -16,6 +17,7 @@ export interface DisplayListEntry {
   matrix: Matrix6; // a b c d tx ty; tx, ty in px
   colorTransform: ColorTransform8; // rMul gMul bMul aMul rAdd gAdd bAdd aAdd
   name: string; // "" = no instance name
+  clipDepth?: number; // only on a mask placement; integer >= depth
 }
 
 export interface SpriteSymbol {
@@ -27,7 +29,7 @@ export interface SpriteSymbol {
 }
 
 export interface SceneJson {
-  formatVersion: 1;
+  formatVersion: 2;
   stage: { width: number; height: number; backgroundColor: string; frameRate: number };
   rootSymbolId: number;
   symbols: Record<string, ShapeSymbol | SpriteSymbol>;
@@ -71,7 +73,7 @@ function checkNumberTuple(v: unknown, length: number, path: string): void {
 
 export function validateScene(scene: unknown): asserts scene is SceneJson {
   if (!isRecord(scene)) fail('scene', 'must be an object');
-  if (scene.formatVersion !== 1) fail('formatVersion', 'must be 1');
+  if (scene.formatVersion !== 2) fail('formatVersion', 'must be 2');
 
   const stage = scene.stage;
   if (!isRecord(stage)) fail('stage', 'must be an object');
@@ -94,11 +96,16 @@ export function validateScene(scene: unknown): asserts scene is SceneJson {
     if (!isRecord(sym)) fail(sp, 'must be an object');
 
     if (sym.type === 'shape') {
-      if (sym.file !== `${key}.svg`) fail(`${sp}.file`, `must equal "${key}.svg"`);
+      if (sym.file !== `${key}.shape.json`) fail(`${sp}.file`, `must equal "${key}.shape.json"`);
       const origin = sym.origin;
       if (!isRecord(origin)) fail(`${sp}.origin`, 'must be an object');
       checkNumber(origin.x, `${sp}.origin.x`);
       checkNumber(origin.y, `${sp}.origin.y`);
+      const size = sym.size;
+      if (!isRecord(size)) fail(`${sp}.size`, 'must be an object');
+      for (const dim of ['width', 'height'] as const) {
+        if (checkNumber(size[dim], `${sp}.size.${dim}`) < 0) fail(`${sp}.size.${dim}`, 'must be >= 0');
+      }
     } else if (sym.type === 'sprite') {
       if (sym.className !== undefined && typeof sym.className !== 'string') {
         fail(`${sp}.className`, 'must be a string when present');
@@ -127,6 +134,7 @@ export function validateScene(scene: unknown): asserts scene is SceneJson {
           checkNumberTuple(entry.matrix, 6, `${ep}.matrix`);
           checkNumberTuple(entry.colorTransform, 8, `${ep}.colorTransform`);
           if (typeof entry.name !== 'string') fail(`${ep}.name`, 'must be a string');
+          if (entry.clipDepth !== undefined) checkInt(entry.clipDepth, `${ep}.clipDepth`, depth);
         });
       });
       const labels = sym.labels;

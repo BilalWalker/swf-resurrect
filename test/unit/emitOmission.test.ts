@@ -22,12 +22,12 @@ const sprite = (className?: string) => ({
   frames: [[{ depth: 1, symbolId: 1, matrix: m, colorTransform: ct, name: '' }]],
 });
 const scene: SceneJson = {
-  formatVersion: 1,
+  formatVersion: 2,
   stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 24 },
   rootSymbolId: 0,
   symbols: {
     '0': sprite(),
-    '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+    '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
     '2': sprite('Broken'),
     '3': sprite('Loose'),
     '4': sprite('Thrower'),
@@ -83,8 +83,8 @@ async function run(
   await mkdir(join(tpl, 'src'), { recursive: true });
   await writeFile(join(tpl, 'src', 'main.ts'), mainText);
   await writeFile(join(tpl, 'tsconfig.json'), await readFile(join(REPO_ROOT, 'template', 'tsconfig.json'), 'utf8'));
-  const svg = join(root, '1.svg');
-  await writeFile(svg, '<svg/>\n');
+  const svg = join(root, '1.shape.json');
+  await writeFile(svg, '{"formatVersion":1,"paths":[]}\n');
   let gateRuns = 0;
   const gate = (files: ReadonlyMap<string, string>): GateResult => {
     gateRuns++;
@@ -94,7 +94,7 @@ async function run(
     {
       stagingDir: root,
       scenePath: join(root, 'scene.json'),
-      svgPaths: [svg],
+      shapePaths: [svg], imagePaths: [],
       scene,
       unsupported: [],
       stats: { svgWritten: 1, morphSkipped: 0, declaredShapes: 1 },

@@ -69,7 +69,7 @@ describe('Stage_Object', () => {
     }
     const rootSym: SpriteSymbol = { type: 'sprite', frameCount: 1, frames: [[]], labels: [], className: 'Main' };
     const scene: SceneJson = {
-      formatVersion: 1,
+      formatVersion: 2,
       stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
       rootSymbolId: 0,
       symbols: { '0': rootSym },
@@ -86,7 +86,7 @@ describe('Stage_Object', () => {
   it('a pointer entry over empty space is delivered to the Stage_Object listener and not to a root clip listener', () => {
     const rootSym: SpriteSymbol = { type: 'sprite', frameCount: 1, frames: [[]], labels: [] };
     const scene: SceneJson = {
-      formatVersion: 1,
+      formatVersion: 2,
       stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
       rootSymbolId: 0,
       symbols: { '0': rootSym },

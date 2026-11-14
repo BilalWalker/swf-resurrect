@@ -22,8 +22,18 @@ const colorTransform: fc.Arbitrary<ColorTransform8> = fc.tuple(
 
 const shapeSymbol = (id: number): fc.Arbitrary<ShapeSymbol> =>
   fc
-    .record({ x: finite, y: finite })
-    .map((origin) => ({ type: "shape", file: `${id}.svg`, origin }));
+    .record({
+      x: finite,
+      y: finite,
+      width: fc.double({ min: 0, max: 1e6, noNaN: true }).map((n) => (Object.is(n, -0) ? 0 : n)),
+      height: fc.double({ min: 0, max: 1e6, noNaN: true }).map((n) => (Object.is(n, -0) ? 0 : n)),
+    })
+    .map(({ x, y, width, height }) => ({
+      type: "shape",
+      file: `${id}.shape.json`,
+      origin: { x, y },
+      size: { width, height },
+    }));
 
 function frameArb(targets: number[]): fc.Arbitrary<DisplayListEntry[]> {
   const entry = fc.record({
@@ -31,12 +41,13 @@ function frameArb(targets: number[]): fc.Arbitrary<DisplayListEntry[]> {
     matrix,
     colorTransform,
     name: text,
+    clipSpan: fc.option(fc.nat(50), { nil: undefined }),
   });
   return fc
     .uniqueArray(fc.integer({ min: -1000, max: 1000 }), { maxLength: 4 })
     .map((d) => d.sort((a, b) => a - b))
     .chain((depths) =>
-      fc.tuple(...depths.map((depth) => entry.map((e) => ({ depth, ...e })))),
+      fc.tuple(...depths.map((depth) => entry.map(({ clipSpan, ...e }): DisplayListEntry => (clipSpan === undefined ? { depth, ...e } : { depth, ...e, clipDepth: depth + clipSpan })))),
     );
 }
 
@@ -93,6 +104,6 @@ export const genScene: fc.Arbitrary<SceneJson> = fc
       }),
       symbols: fc.tuple(...parts).map((ps) => Object.fromEntries(ps)),
     }).map(
-      ({ stage, symbols }): SceneJson => ({ formatVersion: 1, stage, rootSymbolId: 0, symbols }),
+      ({ stage, symbols }): SceneJson => ({ formatVersion: 2, stage, rootSymbolId: 0, symbols }),
     );
   });

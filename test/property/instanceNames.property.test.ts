@@ -83,9 +83,9 @@ describe("Property 51: Default instance names follow depth-first creation order"
         };
         const rootFrame = kids.map((c, i) => entryFor(c, i + 1, i).entry);
         symbols["0"] = { type: "sprite", frameCount: 1, frames: [rootFrame], labels: [] };
-        symbols["1"] = { type: "shape", file: "1.svg", origin: { x: 0, y: 0 } };
+        symbols["1"] = { type: "shape", file: "1.shape.json", origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } };
         const player = new Player({
-          scene: { formatVersion: 1, stage: { width: 10, height: 10, backgroundColor: "#ffffff", frameRate: 10 }, rootSymbolId: 0, symbols } as SceneJson,
+          scene: { formatVersion: 2, stage: { width: 10, height: 10, backgroundColor: "#ffffff", frameRate: 10 }, rootSymbolId: 0, symbols } as SceneJson,
           backend: new FakeBackend(),
           clock: new ManualClock(),
           classRegistry: {},

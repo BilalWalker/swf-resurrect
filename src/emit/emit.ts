@@ -3,7 +3,7 @@ import { access, mkdir, readdir, readFile, realpath, rm, rmdir, writeFile } from
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
 import { serialiseScene } from '../convert/sceneJson';
-import type { SvgFile } from '../convert/convertModel';
+import type { ShapeFile } from '../convert/convertModel';
 import { EmitWriteError, OutputDirNotEmptyError, UnsafeForceTargetError } from './errors';
 import { checkForceTarget } from './forceSafety';
 import type { TranslatedClass } from '../translate/planTranslate';
@@ -165,9 +165,9 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     if (refusal !== null) throw new UnsafeForceTargetError(outputDir, refusal);
   }
 
-  const svgFiles: SvgFile[] = [];
-  for (const path of artifact.svgPaths) {
-    svgFiles.push({ fileName: basename(path), content: await readFile(path, 'utf8') });
+  const shapeFiles: ShapeFile[] = [];
+  for (const path of artifact.shapePaths) {
+    shapeFiles.push({ fileName: basename(path), content: await readFile(path, 'utf8') });
   }
   const planInput = {
     scene: artifact.scene,
@@ -180,7 +180,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     options.gate === undefined ? null : options.gate(new Map(files.map((f) => [f.path, f.content])));
 
   // Gate first: plan with the full registry, check it, decide, and plan again only if a class cannot load.
-  let planned = planEmitDetailed(planInput, svgFiles);
+  let planned = planEmitDetailed(planInput, shapeFiles);
   let gate = runGate(planned.files);
   // The guard reads the planned final text (after the import lines are resolved), the text that is written.
   const problems: TranslationProblem[] = [];
@@ -203,7 +203,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
   const gateErrors = gate?.errors ?? [];
   const omissions = decideClassOmissions(gateErrors, omissionClasses, linked);
   if (omissions.some((o) => o.reason.kind !== 'missing-source')) {
-    planned = planEmitDetailed(planInput, svgFiles, new Set(omissions.map((o) => o.className)));
+    planned = planEmitDetailed(planInput, shapeFiles, new Set(omissions.map((o) => o.className)));
     gate = runGate(planned.files);
   }
   const loose = gate === null ? [] : looseClasses(gate.errors, omissionClasses, omissions);
@@ -226,6 +226,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
 
   const write = options.writeFile ?? ((p: string, c: string) => writeFile(p, c, 'utf8'));
   const writtenFiles: string[] = [];
+  const imageFiles: string[] = [];
   const createdTops: string[] = []; // topmost directory each mkdir created in this run
   let failing = outputDir;
   try {
@@ -238,11 +239,23 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
       writtenFiles.push(target); // before the write: a failed write may leave a partial file
       await write(target, file.content);
     }
+    // Bitmap bytes are copied as they are (never through a string): assets/images/<bitmapId>.<ext>.
+    for (const path of artifact.imagePaths) {
+      const rel = `assets/images/${basename(path)}`;
+      const target = join(outputDir, ...rel.split('/'));
+      failing = target;
+      const top = await topMissingDir(dirname(target));
+      if (top !== null) createdTops.push(top);
+      await mkdir(dirname(target), { recursive: true });
+      writtenFiles.push(target);
+      await writeFile(target, await readFile(path));
+      imageFiles.push(rel);
+    }
   } catch (err) {
     await cleanupRun(writtenFiles, createdTops);
     throw new EmitWriteError(failing, err);
   }
-  return { outputDir, files: plan.map((f) => f.path), warnings: planned.warnings, omissions, loose, classPaths: planned.classPaths, gate, problems };
+  return { outputDir, files: [...plan.map((f) => f.path), ...imageFiles].sort(byCodeUnit), warnings: planned.warnings, omissions, loose, classPaths: planned.classPaths, gate, problems };
 }
 
 function linkedSymbols(scene: SceneJson): LinkedSymbol[] {

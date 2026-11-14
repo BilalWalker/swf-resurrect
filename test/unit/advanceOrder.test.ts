@@ -27,10 +27,10 @@ describe('advance order (G5)', () => {
     const parent = sprite([[entry(1, 3, 'kid')], [entry(1, 3, 'kid')]]);
     const root = sprite([[entry(1, 2)]]);
     const scene: SceneJson = {
-      formatVersion: 1,
+      formatVersion: 2,
       stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
       rootSymbolId: 0,
-      symbols: { '0': root, '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } }, '2': parent, '3': child },
+      symbols: { '0': root, '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } }, '2': parent, '3': child },
     };
     const clock = new ManualClock();
     const player = new Player({

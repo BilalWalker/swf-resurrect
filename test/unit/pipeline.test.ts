@@ -31,7 +31,7 @@ function makeArtifact(): ConvertedArtifact {
   return {
     stagingDir: '',
     scenePath: '',
-    svgPaths: [],
+    shapePaths: [], imagePaths: [],
     scene: {
       formatVersion: 1,
       stage: { width: 10, height: 10, backgroundColor: '#ffffff', frameRate: 24 },

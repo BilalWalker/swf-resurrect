@@ -1,4 +1,5 @@
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../../../template/runtime/backend';
+import { assertShapeDrawn, type ShapeJson } from '../../../template/runtime/shapeJson';
 
 export interface FakeNode {
   id: number;
@@ -19,8 +20,10 @@ export class FakeBackend implements RenderBackend {
   readonly errors: string[] = [];
   readonly shapeBounds = new Map<number, ShapeBounds>();
 
-  async loadShape(symbolId: number, _svgText: string, origin: { x: number; y: number }): Promise<ShapeBounds> {
-    const bounds = this.shapeBounds.get(symbolId) ?? { x: -origin.x, y: -origin.y, width: 10, height: 10 };
+  /** Applies the same fill check as the Pixi backend; bounds come from shapeBounds (the Replay sets them from Scene_JSON). */
+  async loadShape(symbolId: number, shape: ShapeJson, _assetBase: string): Promise<ShapeBounds> {
+    assertShapeDrawn(shape);
+    const bounds = this.shapeBounds.get(symbolId) ?? { x: 0, y: 0, width: 10, height: 10 };
     this.shapeBounds.set(symbolId, bounds);
     return bounds;
   }

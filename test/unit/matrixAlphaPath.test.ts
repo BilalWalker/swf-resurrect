@@ -9,7 +9,7 @@ const ID: ColorTransform8 = [1, 1, 1, 1, 0, 0, 0, 0];
 
 function sceneWith(m1: Matrix6, ct1: ColorTransform8, m2: Matrix6, ct2: ColorTransform8): SceneJson {
   return {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 10 },
     rootSymbolId: 0,
     symbols: {
@@ -22,7 +22,7 @@ function sceneWith(m1: Matrix6, ct1: ColorTransform8, m2: Matrix6, ct2: ColorTra
           [{ depth: 1, symbolId: 1, matrix: m2, colorTransform: ct2, name: '' }],
         ],
       },
-      '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+      '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
     },
   };
 }

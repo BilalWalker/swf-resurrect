@@ -31,7 +31,7 @@ class StoppedClip extends MovieClip {
 
 /** Builds the scene for a spec tree. Every clip gets its own symbol; children sit on every parent frame. */
 function buildScene(root: ClipSpec, frameRate: number): { scene: SceneJson; specs: Map<number, ClipSpec> } {
-  const symbols: SceneJson['symbols'] = { '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } } };
+  const symbols: SceneJson['symbols'] = { '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } } };
   const specs = new Map<number, ClipSpec>();
   let nextId = 10;
   const add = (spec: ClipSpec, id: number): void => {
@@ -49,7 +49,7 @@ function buildScene(root: ClipSpec, frameRate: number): { scene: SceneJson; spec
   add(root, 0);
   return {
     scene: {
-      formatVersion: 1,
+      formatVersion: 2,
       stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate },
       rootSymbolId: 0,
       symbols,

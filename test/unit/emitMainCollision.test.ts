@@ -26,7 +26,7 @@ function readTemplates(dir = join(repoRoot, 'template'), prefix = ''): TemplateF
 
 const sprite = (className: string) => ({ type: 'sprite' as const, className, frameCount: 1, labels: [], frames: [[]] });
 const sceneOf = (...names: string[]): SceneJson => ({
-  formatVersion: 1,
+  formatVersion: 2,
   stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
   rootSymbolId: 0,
   symbols: Object.fromEntries(names.map((n, i) => [String(i), sprite(n)])),

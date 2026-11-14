@@ -231,7 +231,7 @@ describe('dotted type annotation through plan, emit and the real gate (Requireme
       { className: 'lib.util.Helper', source: src('lib.util', '', 'Helper {}') },
     ];
     const sc: SceneJson = {
-      formatVersion: 1,
+      formatVersion: 2,
       stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
       rootSymbolId: 0,
       symbols: { '0': { type: 'sprite', className: 'app.Main', frameCount: 1, labels: [], frames: [[]] } },
@@ -277,7 +277,7 @@ describe('two-package fixture through plan, emit and the real gate (Requirement 
     ];
     const sprite = (className: string) => ({ type: 'sprite' as const, className, frameCount: 1, labels: [], frames: [[]] });
     const sc: SceneJson = {
-      formatVersion: 1,
+      formatVersion: 2,
       stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
       rootSymbolId: 0,
       symbols: { '0': sprite('test_fla.MainTimeline'), '1': sprite('app.sub.Other') },

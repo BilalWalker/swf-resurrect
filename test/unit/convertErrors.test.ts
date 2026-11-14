@@ -166,7 +166,7 @@ describe('convertModel unsupported reporting', () => {
     expect(r.stats.morphSkipped).toBe(1);
     // Only the supported shape remains on the stage.
     expect(r.scene.symbols['0']).toMatchObject({ frames: [[{ depth: 1, symbolId: 1 }]] });
-    expect(r.svgFiles.map((f) => f.fileName)).toEqual(['1.svg']);
+    expect(r.shapeFiles.map((f) => f.fileName)).toEqual(['1.shape.json']);
   });
 
   it('reports an unbound instance name (8.7)', () => {

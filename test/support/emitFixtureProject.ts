@@ -3,7 +3,7 @@
 
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { convertModel } from '../../src/convert/convertModel';
 import { readDumpHeader } from '../../src/convert/ffdecXml';
@@ -62,11 +62,18 @@ export async function emitFixtureProject(
     const stagingDir = resolve(tempDir, 'staging');
     const assetsDir = resolve(stagingDir, 'assets');
     await mkdir(assetsDir, { recursive: true });
-    const svgPaths: string[] = [];
-    for (const file of converted.svgFiles) {
+    const shapePaths: string[] = [];
+    for (const file of converted.shapeFiles) {
       const path = resolve(assetsDir, file.fileName);
       await writeFile(path, file.content, 'utf8');
-      svgPaths.push(path);
+      shapePaths.push(path);
+    }
+    const imagePaths: string[] = [];
+    for (const file of converted.imageFiles) {
+      const path = resolve(assetsDir, ...file.fileName.split('/'));
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(path, file.bytes);
+      imagePaths.push(path);
     }
     const scenePath = resolve(assetsDir, 'scene.json');
     await writeFile(scenePath, serialiseScene(converted.scene), 'utf8');
@@ -74,7 +81,8 @@ export async function emitFixtureProject(
     const convertedArtifact: ConvertedArtifact = {
       stagingDir,
       scenePath,
-      svgPaths,
+      shapePaths,
+      imagePaths,
       scene: converted.scene,
       unsupported: converted.unsupported,
       stats: converted.stats,

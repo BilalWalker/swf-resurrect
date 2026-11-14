@@ -258,7 +258,7 @@ function sceneFor(classNames: readonly string[]): SceneJson {
     symbols[String(i + 1)] = { type: "sprite", className, frameCount: 1, labels: [], frames: [[]] };
   });
   return {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: { width: 10, height: 10, backgroundColor: "#ffffff", frameRate: 24 },
     rootSymbolId: 0,
     symbols: { "0": { type: "sprite", frameCount: 1, labels: [], frames: [[]] }, ...symbols },

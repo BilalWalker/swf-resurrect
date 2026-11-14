@@ -11,7 +11,7 @@ import { FakeBackend } from "../support/fakeBackend";
 
 function scene(className?: string): SceneJson {
   return {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: { width: 100, height: 100, backgroundColor: "#ffffff", frameRate: 10 },
     rootSymbolId: 0,
     symbols: {
@@ -88,7 +88,7 @@ describe("default instance names", () => {
   const shape = (id: number) => ({ type: "shape", file: `${id}.svg`, origin: { x: 0, y: 0 } }) as const;
   const play = (symbols: Record<string, any>): Player =>
     new Player({
-      scene: { formatVersion: 1, stage: { width: 100, height: 100, backgroundColor: "#ffffff", frameRate: 10 }, rootSymbolId: 0, symbols } as SceneJson,
+      scene: { formatVersion: 2, stage: { width: 100, height: 100, backgroundColor: "#ffffff", frameRate: 10 }, rootSymbolId: 0, symbols } as SceneJson,
       backend: new FakeBackend(),
       clock: new ManualClock(),
       classRegistry: {},

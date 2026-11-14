@@ -27,7 +27,7 @@ const clip = (frames: DisplayListEntry[][], className?: string): SpriteSymbol =>
 
 function play(symbols: SceneJson['symbols'], registry: Record<string, new () => MovieClip>): Player {
   const scene: SceneJson = {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
     rootSymbolId: 0,
     symbols,
@@ -183,7 +183,7 @@ describe('Construction_Bind: fixture classes through translate() (Requirement 24
 
   it('Main: maskee1.mask = mask1 runs at tick 0', async () => {
     const symbols = scene('Main', ['mask1', 'maskee1']);
-    const sc: SceneJson = { formatVersion: 1, stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 }, rootSymbolId: 0, symbols };
+    const sc: SceneJson = { formatVersion: 2, stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 }, rootSymbolId: 0, symbols };
     const plan = planTranslate([{ className: 'Main', source: fixture('Main') }], sc, tsSyntaxCheck, [], childNamesByClass(sc));
     const text = plan.classes.find((c) => c.className === 'Main')!.text;
     const Main = evalTranslated(text, { '../shim': await shimModule() }).Main as new () => MovieClip;
@@ -195,7 +195,7 @@ describe('Construction_Bind: fixture classes through translate() (Requirement 24
 
   it('code.Interactivity3: initx = joystick.x runs at tick 0 and the listeners fire', async () => {
     const symbols = scene('code.Interactivity3', ['joystick']);
-    const sc: SceneJson = { formatVersion: 1, stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 }, rootSymbolId: 0, symbols };
+    const sc: SceneJson = { formatVersion: 2, stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 }, rootSymbolId: 0, symbols };
     const plan = planTranslate([{ className: 'code.Interactivity3', source: fixture('Interactivity3') }], sc, tsSyntaxCheck, [], childNamesByClass(sc));
     const text = plan.classes.find((c) => c.className === 'code.Interactivity3')!.text;
     const Cls = evalTranslated(text, { '../../shim': await shimModule() }).Interactivity3 as new () => MovieClip;

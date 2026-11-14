@@ -100,7 +100,7 @@ const BUTTON = `package fl.controls
 `;
 
 const sc: SceneJson = {
-  formatVersion: 1,
+  formatVersion: 2,
   stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
   rootSymbolId: 0,
   symbols: { '0': { type: 'sprite', className: 'fl.controls.Button', frameCount: 1, labels: [], frames: [[]] } },

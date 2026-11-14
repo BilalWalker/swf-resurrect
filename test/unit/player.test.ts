@@ -21,10 +21,10 @@ function sprite(frames: DisplayListEntry[][], className?: string): SpriteSymbol 
 
 function sceneOf(root: SpriteSymbol, extra: SceneJson['symbols'] = {}, frameRate = 10): SceneJson {
   return {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate },
     rootSymbolId: 0,
-    symbols: { '0': root, '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } }, ...extra },
+    symbols: { '0': root, '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } }, ...extra },
   };
 }
 
@@ -192,7 +192,7 @@ describe('Player display list', () => {
     tick(clock, player, 100);
     expect(backend.nodes.filter((n) => n.kind === 'shape')).toHaveLength(0);
     expect(backend.errors).toHaveLength(1);
-    expect(backend.errors[0]).toContain('1.svg');
+    expect(backend.errors[0]).toContain('1.shape.json');
   });
 });
 
@@ -495,7 +495,7 @@ describe('Player.dispatchClick', () => {
     const root = sprite([[entry(1, 2, 10, 10, 'btn')]]);
     const scene = sceneOf(root, {
       '2': sprite([[entry(1, 1)], [entry(1, 3)]], 'Swapper'),
-      '3': { type: 'shape', file: '3.svg', origin: { x: 0, y: 0 } },
+      '3': { type: 'shape', file: '3.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
     });
     const { player } = setup(scene, { Swapper }, [1, 3]);
     const btn = (player.root as unknown as { btn: MovieClip }).btn;

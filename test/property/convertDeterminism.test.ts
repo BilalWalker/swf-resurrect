@@ -12,7 +12,7 @@ function observe(model: TagsModel): string {
   const r = convertModel(model);
   return JSON.stringify({
     scene: serialiseScene(r.scene),
-    svg: r.svgFiles.map((f) => [f.fileName, f.content]),
+    svg: r.shapeFiles.map((f) => [f.fileName, f.content]),
     unsupported: serialiseUnsupported(r.unsupported),
     warnings: r.warnings,
     stats: r.stats,

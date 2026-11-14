@@ -8,7 +8,6 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { ShapeBounds } from '../../../template/runtime/backend';
 import type { ReplayPlan } from '../core/replayPlan';
-import { svgShapeBounds } from '../core/svgBounds';
 import { formatTraceCall, splitTraceLines } from '../core/traceFormat';
 import { FakeBackend } from './fakeBackend';
 
@@ -66,15 +65,15 @@ async function main(): Promise<void> {
 
     const readText = (rel: string): string => readFileSync(resolve(projectDir, rel), 'utf8');
 
-    // Shape bounds from the SVGs, before loadScene, so FakeBackend.loadShape returns them.
+    // Shape bounds from Scene_JSON size and origin, before loadScene, so FakeBackend.loadShape returns them.
     const backend = new FakeBackend();
     const rawScene = JSON.parse(readText('assets/scene.json')) as {
-      symbols: Record<string, { type: string; file?: string; origin?: { x: number; y: number } }>;
+      symbols: Record<string, { type: string; origin?: { x: number; y: number }; size?: { width: number; height: number } }>;
     };
     for (const [key, sym] of Object.entries(rawScene.symbols)) {
-      if (sym.type !== 'shape' || sym.file === undefined || sym.origin === undefined) continue;
-      const b = svgShapeBounds(readText(`assets/${sym.file}`), sym.origin);
-      if (b !== null) backend.shapeBounds.set(Number(key), b as ShapeBounds);
+      if (sym.type !== 'shape' || sym.origin === undefined || sym.size === undefined) continue;
+      const b: ShapeBounds = { x: -sym.origin.x, y: -sym.origin.y, width: sym.size.width, height: sym.size.height };
+      backend.shapeBounds.set(Number(key), b);
     }
 
     const loaded = await loaderMod.loadScene(async (url: string) => readText(url), backend);

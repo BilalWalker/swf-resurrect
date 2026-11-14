@@ -503,22 +503,22 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: the order clause of **Property 3** in `test/property/shapeFunction.property.test.ts`, and `test/unit/svgToShape.test.ts`.
     - _Requirements: 2.7, 7.9_
 
-  - [-] 10.9 Known_Visual_Limit kinds and the `allComparedFramesExact` option
+  - [x] 10.9 Known_Visual_Limit kinds and the `allComparedFramesExact` option
     - `src/verify/core/limits.ts`: `VisualLimit.kind` gains `gradient-fill`, `gradient-spread`, `gradient-focal`, `bitmap-fill`, `bitmap-smoothing`, `text-metrics`, `stroke-style`, `blend-mode`; an Unsupported entry of one of these kinds becomes a limit of the same kind with id and message kept; `text`, `button`, `filter`, `mask`, `video`, `morph-shape` stay `unsupported-feature`. `knownVisualLimits` gains `opts: { allComparedFramesExact: boolean }` and omits every `text-metrics` entry when it is true. Dedupe and order stay `(kind, id, message)`. `src/verify/edge/verifyStage.ts` computes `allComparedFramesExact` from the frame outcomes before building the limits; `html.ts` prints the new kinds generically and escaped. The `colour-offset` rule is not narrowed here (sub-task 11.8 does); the `residual-difference` kind is added in Task 13.
     - Test: `test/property/visualLimits.property.test.ts` (create), **Property 9: Visual limits are complete, ordered and deduplicated** (one limit per entry of a visually relevant kind including `gradient-fill` and `bitmap-fill`, no duplicate `(kind, id, message)`, permutation invariance, `text-metrics` omitted exactly when exact); `test/unit/limits.test.ts` (create), `test/unit/htmlKnownGaps.test.ts` rows (escaping) and `test/unit/verifyStage.test.ts` (flag computed from outcomes); extend the generators of `test/property/fidelityDeterminism.property.test.ts` through `genReportInputs.ts`.
     - _Requirements: 2.2, 2.3, 2.4, 2.7, 2.8, 10.5, 13.10, 15.5_
 
-  - [ ] 10.10 Scene_JSON v2
+  - [x] 10.10 Scene_JSON v2
     - `template/runtime/scene.ts`: `formatVersion` 2, shape `file` `<id>.shape.json`, shape `size`, optional integer `clipDepth >= depth`; `validateScene` accepts only 2. In this sub-task update `test/property/gen/genScene.ts`, `test/property/sceneRoundTrip.test.ts`, `test/unit/sceneJson.test.ts`, `test/unit/loader.test.ts`, `test/unit/pixiShapeOrigin.test.ts` and the `clickgoto` fixture `expected-scene.json`.
     - Test: **Property 13: Scene_JSON v2 round trip** in `test/property/sceneRoundTrip.test.ts`; unit rows in `test/unit/sceneJson.test.ts` for a `clipDepth` below the entry depth, a non-integer `clipDepth` and a `formatVersion` of 1, rejected with the field path.
     - _Requirements: 12.4, 12.5, 15.5_
 
-  - [ ] 10.11 Convert writes Shape_JSON and records the limits
+  - [x] 10.11 Convert writes Shape_JSON and records the limits
     - `src/convert/convertModel.ts` runs `svgToShapeJson` for every shape asset, adds the returned limits to `unsupported` with the shape id, takes `size` from the SVG `width` and `height`, collects images by `bitmapId`. `src/convert/writeConverted.ts` writes `<id>.shape.json` (canonical text) and `images/<bitmapId>.<ext>`; Emit copies `images/` and no longer writes `<id>.svg`. Everything is sorted by numeric id. The `gradient-fill` and `bitmap-fill` limits appear in the Unsupported_Feature_List of the run.
     - Test: update `test/unit/convertModel.test.ts`, `test/unit/writeConverted.test.ts`, `test/unit/emit.test.ts`; create `test/unit/convertShapeJson.test.ts` on the `clickgoto` and `tweendemo` fixtures (file names, `size`, empty `images`, byte-identical output on two runs) and a row with a synthetic SVG holding a gradient fill (an Unsupported entry `gradient-fill` with the shape id).
     - _Requirements: 2.8, 7.9, 9.2_
 
-  - [ ] 10.12 Backend draws Shape_JSON (solid fills, strokes, holes) and refuses undrawn fills
+  - [x] 10.12 Backend draws Shape_JSON (solid fills, strokes, holes) and refuses undrawn fills
     - `template/runtime/backend.ts` `loadShape(symbolId, shape, assetBase)`; `template/runtime/loader.ts` loads `<id>.shape.json` through `parseShapeJson`; `template/runtime/pixi/pixiBackend.ts` draws each path per contour: `outer`, `fill`, each hole drawn and `cut()`, `stroke({ width, color, alpha, cap, join, miterLimit })`. `drawFill` checks `fillIsDrawn(fill, DRAWN_FILLS)` and throws `ShapeJsonError('<path>: fill kind not drawn: <kind>')`; `loadScene` shows the error and does not start playback; there is no `console.warn`-only skip. `src/verify/edge/fakeBackend.ts` accepts the new `loadShape` and applies the same check. `src/verify/edge/replayRunner.ts` takes shape bounds from Scene_JSON `size` and `origin`; delete `src/verify/core/svgBounds.ts` and move its test rows to a Scene_JSON `size` test in `test/unit/sceneSize.test.ts` (create).
     - Test: `test/unit/pixiBackend.test.ts` (create) with the `FakeBackend` for the loader path and a hand-made Shape_JSON with a gradient fill that is refused with the field path; `test/unit/shapeJson.test.ts` (the `drawFill` check); `test/unit/clickgotoReplay.test.ts` and `test/unit/clickOracle.test.ts` stay green unchanged.
     - _Requirements: 2.8, 7.11, 13.8, 12.4_

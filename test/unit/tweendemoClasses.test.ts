@@ -42,14 +42,9 @@ async function load(sample: Sample): Promise<Loaded> {
 
 function boundsFromSvgs(result: ConvertResult): Map<number, ShapeBounds> {
   const out = new Map<number, ShapeBounds>();
-  for (const f of result.svgFiles) {
-    const id = parseInt(f.fileName, 10);
-    const sym = result.scene.symbols[String(id)];
-    if (sym?.type !== 'shape') continue;
-    const w = /\bwidth="([\d.]+)px"/.exec(f.content);
-    const h = /\bheight="([\d.]+)px"/.exec(f.content);
-    if (!w || !h) throw new Error(`no size in ${f.fileName}`);
-    out.set(id, { x: -sym.origin.x, y: -sym.origin.y, width: Number(w[1]), height: Number(h[1]) });
+  for (const [key, sym] of Object.entries(result.scene.symbols)) {
+    if (sym.type !== 'shape') continue;
+    out.set(Number(key), { x: -sym.origin.x, y: -sym.origin.y, width: sym.size.width, height: sym.size.height });
   }
   return out;
 }

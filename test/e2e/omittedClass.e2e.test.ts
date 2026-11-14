@@ -39,17 +39,17 @@ const sprite = (frames: number[], className?: string) => ({
   frames: [frames.map((id, i) => ({ depth: i + 1, symbolId: id, matrix: m, colorTransform: ct, name: '' }))],
 });
 const scene = (className: string): SceneJson => ({
-  formatVersion: 1,
+  formatVersion: 2,
   stage: { width: 60, height: 40, backgroundColor: '#ffffff', frameRate: 24 },
   rootSymbolId: 0,
   symbols: {
     '0': sprite([2]),
-    '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+    '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 20, height: 20 } },
     '2': sprite([1], className),
   },
 });
-const SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><rect width="20" height="20" fill="#ff0000"/></svg>\n';
+const SHAPE_JSON =
+  '{"formatVersion":1,"paths":[{"contours":[{"outer":[["M",0,0],["L",20,0],["L",20,20],["L",0,20],["Z"]],"holes":[]}],"fill":{"kind":"solid","color":"#ff0000","alpha":1},"stroke":null}]}\n';
 
 const tc = (className: string, text: string): TranslatedClass => ({
   className,
@@ -73,8 +73,8 @@ describe.skipIf(reason !== null)(`emitted project with a non-loading or loose cl
     tempRoot = tempRoot === '' ? await mkdtemp(resolve(repoRoot, '.work', 'omitted-class-')) : tempRoot;
     const staging = join(tempRoot, name, 'staging');
     await mkdir(join(staging, 'assets'), { recursive: true });
-    const svg = join(staging, 'assets', '1.svg');
-    await writeFile(svg, SVG);
+    const svg = join(staging, 'assets', '1.shape.json');
+    await writeFile(svg, SHAPE_JSON);
     const sc = scene(cls.className);
     const scenePath = join(staging, 'assets', 'scene.json');
     await writeFile(scenePath, JSON.stringify(sc));
@@ -82,7 +82,7 @@ describe.skipIf(reason !== null)(`emitted project with a non-loading or loose cl
       {
         stagingDir: staging,
         scenePath,
-        svgPaths: [svg],
+        shapePaths: [svg], imagePaths: [],
         scene: sc,
         unsupported: [],
         stats: { svgWritten: 1, morphSkipped: 0, declaredShapes: 1 },

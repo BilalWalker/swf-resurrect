@@ -2,21 +2,28 @@
 // No fs, child_process, clock, randomness or locale-dependent calls.
 import { validateScene } from '../../template/runtime/scene';
 import type { DisplayListEntry, SceneJson, ShapeSymbol, SpriteSymbol } from '../../template/runtime/scene';
-import { flattenSvgWrapper } from '../../template/runtime/svgFlatten';
+import { printShapeJson } from '../../template/runtime/shapeJson';
 import { sortUnsupported } from '../pipeline/unsupported';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
 import { MalformedFrameDataError, ShapeExportError, SymbolCycleError, UnknownSymbolError } from './errors';
 import type { TagsModel, TimelineModel, UnsupportedKind } from './model';
 import { resolveTimeline } from './resolveTimeline';
+import { svgToShapeJson } from './svgToShape';
 
-export interface SvgFile {
-  fileName: string; // "<id>.svg"
-  content: string;
+export interface ShapeFile {
+  fileName: string; // "<id>.shape.json"
+  content: string; // canonical Shape_JSON text
+}
+
+export interface ImageFile {
+  fileName: string; // "images/<bitmapId>.<ext>"
+  bytes: Uint8Array;
 }
 
 export interface ConvertResult {
   scene: SceneJson;
-  svgFiles: SvgFile[]; // sorted by numeric id
+  shapeFiles: ShapeFile[]; // sorted by numeric id
+  imageFiles: ImageFile[]; // sorted by bitmap id
   unsupported: UnsupportedFeatureEntry[]; // sorted, total order
   warnings: string[]; // sorted
   stats: { svgWritten: number; morphSkipped: number; declaredShapes: number };
@@ -142,13 +149,24 @@ export function convertModel(model: TagsModel): ConvertResult {
 
   // Shapes.
   const symbols: Record<string, ShapeSymbol | SpriteSymbol> = {};
-  const svgFiles: SvgFile[] = [];
+  const shapeFiles: ShapeFile[] = [];
+  const images = new Map<number, ImageFile>();
   for (const id of shapeIds) {
     if (morphSet.has(id)) continue;
     const asset = assetById.get(id);
     if (asset === undefined || asset.svg === null) throw new ShapeExportError(id, 'missing');
     if (asset.svg === '') throw new ShapeExportError(id, 'empty');
-    svgFiles.push({ fileName: `${id}.svg`, content: flattenSvgWrapper(asset.svg.replace(/\r\n?/g, '\n')) });
+    const built = svgToShapeJson(asset.svg.replace(/\r\n?/g, '\n'), 'shape');
+    shapeFiles.push({ fileName: `${id}.shape.json`, content: printShapeJson(built.shape) });
+    for (const img of built.images) {
+      if (!images.has(img.bitmapId)) {
+        images.set(img.bitmapId, { fileName: `images/${img.bitmapId}.${img.ext}`, bytes: img.bytes });
+      }
+    }
+    for (const limit of built.limits) unsupported.push({ kind: limit.kind, id, message: limit.message });
+    const w = /\bwidth="([\d.]+)px"/.exec(asset.svg);
+    const h = /\bheight="([\d.]+)px"/.exec(asset.svg);
+    if (w === null || h === null) warnings.push(`shape ${id}: no px width or height in SVG; using size 0 x 0`);
     if (asset.origin === null) {
       warnings.push(`shape ${id}: no origin wrapper found in SVG; using (0, 0)`);
     }
@@ -156,8 +174,9 @@ export function convertModel(model: TagsModel): ConvertResult {
     const y = asset.origin?.y ?? 0;
     symbols[String(id)] = {
       type: 'shape',
-      file: `${id}.svg`,
+      file: `${id}.shape.json`,
       origin: { x: x === 0 ? 0 : x, y: y === 0 ? 0 : y },
+      size: { width: w === null ? 0 : Number(w[1]), height: h === null ? 0 : Number(h[1]) },
     };
   }
 
@@ -282,7 +301,7 @@ export function convertModel(model: TagsModel): ConvertResult {
   }
 
   const scene: SceneJson = {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: {
       width: model.header.widthPx,
       height: model.header.heightPx,
@@ -294,12 +313,14 @@ export function convertModel(model: TagsModel): ConvertResult {
   };
   validateScene(scene);
 
-  svgFiles.sort((a, b) => parseInt(a.fileName, 10) - parseInt(b.fileName, 10));
+  shapeFiles.sort((a, b) => parseInt(a.fileName, 10) - parseInt(b.fileName, 10));
+  const imageFiles = [...images.entries()].sort((a, b) => a[0] - b[0]).map((e) => e[1]);
   return {
     scene,
-    svgFiles,
+    shapeFiles,
+    imageFiles,
     unsupported: sortUnsupported(unsupported),
     warnings: [...warnings].sort(cmpStr),
-    stats: { svgWritten: svgFiles.length, morphSkipped: morphIds.length, declaredShapes: shapeIds.length + morphIds.length },
+    stats: { svgWritten: shapeFiles.length, morphSkipped: morphIds.length, declaredShapes: shapeIds.length + morphIds.length },
   };
 }

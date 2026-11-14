@@ -52,7 +52,7 @@ describe('emit --force', () => {
 
   async function setup(outputDir: string, force: boolean, extra: Partial<{ cwd: string; swfPath: string }> = {}) {
     const scene: SceneJson = {
-      formatVersion: 1,
+      formatVersion: 2,
       stage: { width: 10, height: 10, backgroundColor: '#ffffff', frameRate: 24 },
       rootSymbolId: 0,
       symbols: { '0': { type: 'sprite', frameCount: 1, labels: [], frames: [[]] } },
@@ -62,7 +62,7 @@ describe('emit --force', () => {
     const artifact: ConvertedArtifact = {
       stagingDir: staging,
       scenePath: join(staging, 'scene.json'),
-      svgPaths: [],
+      shapePaths: [], imagePaths: [],
       scene,
       unsupported: [],
       stats: { svgWritten: 0, morphSkipped: 0, declaredShapes: 0 },

@@ -24,12 +24,12 @@ const sprite = (className: string) => ({
   frames: [[{ depth: 1, symbolId: 1, matrix: m, colorTransform: ct, name: '' }]],
 });
 const scene: SceneJson = {
-  formatVersion: 1,
+  formatVersion: 2,
   stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
   rootSymbolId: 0,
   symbols: {
     '0': sprite('MainTimeline'),
-    '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+    '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
     '2': sprite('LeftButton'),
     '4': sprite('RightButton'),
   },
@@ -126,13 +126,13 @@ describe('planEmit with translated classes', () => {
       await mkdir(hw, { recursive: true });
       await mkdir(tpl, { recursive: true });
       await writeFile(join(hw, '.gitkeep'), '');
-      const svg = join(root, '1.svg');
-      await writeFile(svg, '<svg/>\n');
+      const svg = join(root, '1.shape.json');
+      await writeFile(svg, '{"formatVersion":1,"paths":[]}\n');
       const out = join(root, 'out');
       const artifact = {
         stagingDir: root,
         scenePath: join(root, 'scene.json'),
-        svgPaths: [svg],
+        shapePaths: [svg], imagePaths: [],
         scene,
         unsupported: [],
         stats: { svgWritten: 1, morphSkipped: 0, declaredShapes: 1 },

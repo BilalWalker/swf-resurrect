@@ -18,7 +18,7 @@ const identity: [number, number, number, number, number, number] = [1, 0, 0, 1, 
 const noCt: [number, number, number, number, number, number, number, number] = [1, 1, 1, 1, 0, 0, 0, 0];
 
 const scene: SceneJson = {
-  formatVersion: 1,
+  formatVersion: 2,
   stage: { width: 550, height: 400, backgroundColor: '#ffffff', frameRate: 24 },
   rootSymbolId: 0,
   symbols: {
@@ -28,7 +28,7 @@ const scene: SceneJson = {
       labels: [],
       frames: [[{ depth: 1, symbolId: 3, matrix: identity, colorTransform: noCt, name: 'l_button' }]],
     },
-    '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+    '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
     '3': {
       type: 'sprite',
       className: 'LeftButton',
@@ -56,13 +56,13 @@ const input: EmitInput = {
     { className: 'LeftButton', fileName: 'LeftButton.ts', source: 'left\r\n' },
   ],
 };
-const svgs = [{ fileName: '1.svg', content: '<svg/>\r\n' }];
+const svgs = [{ fileName: '1.shape.json', content: '{"formatVersion":1,"paths":[]}\r\n' }];
 
 describe('planEmit', () => {
   it('produces the expected sorted paths', () => {
     const paths = planEmit(input, svgs).map((f) => f.path);
     expect(paths).toEqual([
-      'assets/1.svg',
+      'assets/1.shape.json',
       'assets/scene.json',
       'index.html',
       'package.json',
@@ -148,12 +148,12 @@ describe('emit', () => {
   async function artifact(): Promise<ConvertedArtifact> {
     const assets = join(root, 'staging', 'assets');
     await mkdir(assets, { recursive: true });
-    const svg = join(assets, '1.svg');
-    await writeFile(svg, '<svg/>\n', 'utf8');
+    const svg = join(assets, '1.shape.json');
+    await writeFile(svg, '{"formatVersion":1,"paths":[]}\n', 'utf8');
     return {
       stagingDir: join(root, 'staging'),
       scenePath: join(assets, 'scene.json'),
-      svgPaths: [svg],
+      shapePaths: [svg], imagePaths: [],
       scene,
       unsupported: [],
       stats: { svgWritten: 1, morphSkipped: 0, declaredShapes: 1 },
@@ -180,7 +180,7 @@ describe('emit', () => {
     const out = join(root, 'out', 'nested');
     const result = await emit(await artifact(), await options(out));
     expect(result.files).toEqual([
-      'assets/1.svg',
+      'assets/1.shape.json',
       'assets/scene.json',
       'index.html',
       'package.json',
@@ -188,6 +188,19 @@ describe('emit', () => {
     ]);
     expect(await readFile(join(out, 'src', 'classes.ts'), 'utf8')).not.toContain('STATIC');
     expect(await readFile(join(out, 'assets', 'scene.json'), 'utf8')).toBe(serialiseScene(scene));
+  });
+
+  it('copies images/<bitmapId>.<ext> byte for byte into assets/images and lists them', async () => {
+    const bytes = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff, 0x80]);
+    const staged = join(root, 'staging', 'assets', 'images');
+    await mkdir(staged, { recursive: true });
+    const png = join(staged, '5.png');
+    await writeFile(png, bytes);
+    const out = join(root, 'out-img');
+    const art = { ...(await artifact()), imagePaths: [png] };
+    const result = await emit(art, await options(out));
+    expect(result.files).toContain('assets/images/5.png');
+    expect(new Uint8Array(await readFile(join(out, 'assets', 'images', '5.png')))).toEqual(bytes);
   });
 
   it('walks the override directory recursively and matches a/b/Cls.ts to a.b.Cls', async () => {

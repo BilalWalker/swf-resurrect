@@ -14,7 +14,7 @@ function entry(depth: number, symbolId: number, name = '') {
 
 function scene(): SceneJson {
   return {
-    formatVersion: 1,
+    formatVersion: 2,
     stage: { width: 100, height: 100, backgroundColor: '#ffffff', frameRate: 10 },
     rootSymbolId: 0,
     symbols: {
@@ -24,11 +24,13 @@ function scene(): SceneJson {
         frames: [[entry(1, 1, 'a'), entry(2, 2, 'b')]],
         labels: [],
       },
-      '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
-      '2': { type: 'shape', file: '2.svg', origin: { x: 0, y: 0 } },
+      '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
+      '2': { type: 'shape', file: '2.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
     },
   };
 }
+
+const EMPTY_SHAPE = JSON.stringify({ formatVersion: 1, paths: [] });
 
 function fetcher(files: Record<string, string>) {
   return async (url: string): Promise<string> => {
@@ -58,17 +60,17 @@ describe('loadScene', () => {
 
   it('names the asset and returns no scene when an SVG fails to load (6.7)', async () => {
     const backend = new FakeBackend();
-    const files = { [SCENE_URL]: JSON.stringify(scene()), 'assets/1.svg': '<svg/>' };
+    const files = { [SCENE_URL]: JSON.stringify(scene()), 'assets/1.shape.json': EMPTY_SHAPE };
     const result = await loadScene(fetcher(files), backend);
     expect(result).toBeNull();
     expect(backend.errors).toHaveLength(1);
-    expect(backend.errors[0]).toContain('2.svg');
+    expect(backend.errors[0]).toContain('2.shape.json');
     expect(backend.nodes).toHaveLength(0);
   });
 
   it('returns scene and bounds when everything loads', async () => {
     const backend = new FakeBackend();
-    const files = { [SCENE_URL]: JSON.stringify(scene()), 'assets/1.svg': '<svg/>', 'assets/2.svg': '<svg/>' };
+    const files = { [SCENE_URL]: JSON.stringify(scene()), 'assets/1.shape.json': EMPTY_SHAPE, 'assets/2.shape.json': EMPTY_SHAPE };
     const result = await loadScene(fetcher(files), backend);
     expect(result).not.toBeNull();
     expect([...(result?.shapeBounds.keys() ?? [])].sort()).toEqual([1, 2]);
@@ -90,7 +92,7 @@ describe('Player with an unloaded asset (6.8)', () => {
     expect(player.root.numChildren).toBe(1);
     expect(backend.liveNodes.filter((n) => n.kind === 'shape').map((n) => n.symbolId)).toEqual([1]);
     expect(backend.errors).toHaveLength(1);
-    expect(backend.errors[0]).toContain('2.svg');
+    expect(backend.errors[0]).toContain('2.shape.json');
   });
 });
 

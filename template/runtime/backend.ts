@@ -1,3 +1,5 @@
+import type { ShapeJson } from './shapeJson';
+
 /** Opaque handle to a backend display node. */
 export type NodeHandle = unknown;
 
@@ -11,7 +13,11 @@ export interface ShapeBounds {
 
 /** The only surface the PixiJS adapter implements. */
 export interface RenderBackend {
-  loadShape(symbolId: number, svgText: string, origin: { x: number; y: number }): Promise<ShapeBounds>;
+  /**
+   * Builds the drawing of a shape from its Shape_JSON. assetBase is the URL prefix of the assets ("assets/"); an image
+   * path of a bitmap fill is relative to it. Throws ShapeJsonError on a fill whose kind is not in DRAWN_FILLS.
+   */
+  loadShape(symbolId: number, shape: ShapeJson, assetBase: string): Promise<ShapeBounds>;
   createContainer(): NodeHandle;
   createShape(symbolId: number): NodeHandle;
   addChildAt(parent: NodeHandle, child: NodeHandle, index: number): void;

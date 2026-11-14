@@ -1,6 +1,6 @@
 // Pure emit planning: no node:fs, no clock, no randomness. Same input, same plan.
 import type { SceneJson } from '../../template/runtime/scene';
-import type { SvgFile } from '../convert/convertModel';
+import type { ShapeFile } from '../convert/convertModel';
 import type { TranslatedClass } from '../translate/planTranslate';
 import { canonicalClassPath, parseQualifiedName, relativeSpecifier } from '../convert/qualifiedName';
 import type { QualifiedName } from '../convert/qualifiedName';
@@ -102,7 +102,7 @@ export function buildClassesTs(
 
 export function planEmitDetailed(
   input: EmitInput,
-  svgContents: SvgFile[],
+  shapeContents: ShapeFile[],
   omitted: ReadonlySet<QualifiedName> = new Set(),
 ): PlanEmitResult {
   const files = new Map<string, string>();
@@ -132,7 +132,7 @@ export function planEmitDetailed(
 
   files.set(PACKAGE_PATH, buildPackageJson());
   files.set('assets/scene.json', lf(input.sceneJson));
-  for (const svg of svgContents) files.set(`assets/${svg.fileName}`, lf(svg.content));
+  for (const shape of shapeContents) files.set(`assets/${shape.fileName}`, lf(shape.content));
 
   // Class paths: every other planned file is reserved, so a class never takes its name.
   const choices = planClassPaths(names, [...files.keys(), CLASSES_PATH]);
@@ -155,6 +155,6 @@ export function planEmitDetailed(
   };
 }
 
-export function planEmit(input: EmitInput, svgContents: SvgFile[]): EmittedFile[] {
-  return planEmitDetailed(input, svgContents).files;
+export function planEmit(input: EmitInput, shapeContents: ShapeFile[]): EmittedFile[] {
+  return planEmitDetailed(input, shapeContents).files;
 }

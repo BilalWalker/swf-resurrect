@@ -49,12 +49,12 @@ describe('Property 24: Events bubble through the Stage_Object and stage hits rea
       name: '',
     });
     const scene: SceneJson = {
-      formatVersion: 1,
+      formatVersion: 2,
       stage: { width: 300, height: 300, backgroundColor: '#ffffff', frameRate: 10 },
       rootSymbolId: 0,
       symbols: {
         '0': { type: 'sprite', frameCount: 1, frames: [[at(1, 0), at(2, 100)]], labels: [] },
-        '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+        '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
       },
     };
     const types = ['mouseMove', 'mouseDown', 'mouseUp', 'click'] as const;

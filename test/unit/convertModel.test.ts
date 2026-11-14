@@ -25,8 +25,8 @@ describe('convertModel', () => {
     const result = convertModel(model);
 
     expect(Object.keys(result.scene.symbols).sort()).toEqual(['0', '1', '2', '3', '4', '5', '6']);
-    expect(result.svgFiles.map((f) => f.fileName)).toEqual(['1.svg', '2.svg', '4.svg', '5.svg']);
-    expect(result.svgFiles.every((f) => !f.content.includes('\r'))).toBe(true);
+    expect(result.shapeFiles.map((f) => f.fileName)).toEqual(['1.shape.json', '2.shape.json', '4.shape.json', '5.shape.json']);
+    expect(result.shapeFiles.every((f) => !f.content.includes('\r'))).toBe(true);
 
     const root = result.scene.symbols['0'] as SpriteSymbol;
     expect(root.className).toBe('MainTimeline');

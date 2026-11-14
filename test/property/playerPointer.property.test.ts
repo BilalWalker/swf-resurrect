@@ -22,13 +22,13 @@ const at = (depth: number, tx: number, ty: number): DisplayListEntry => ({
 // Three clips, each holding one 40 x 30 shape: A at (0,0), B (above A) at (20,10), C at (100,0). The Hit_Target of a
 // hit shape is its clip (the nearest Sprite/MovieClip), never the shape itself.
 const SCENE: SceneJson = {
-  formatVersion: 1,
+  formatVersion: 2,
   stage: { width: 300, height: 300, backgroundColor: '#ffffff', frameRate: 10 },
   rootSymbolId: 0,
   symbols: {
     '0': { type: 'sprite', frameCount: 1, frames: [[at(1, 0, 0), at(2, 20, 10), at(3, 100, 0)]], labels: [] },
     '2': { type: 'sprite', frameCount: 1, frames: [[{ ...at(1, 0, 0), symbolId: 1 }]], labels: [] },
-    '1': { type: 'shape', file: '1.svg', origin: { x: 0, y: 0 } },
+    '1': { type: 'shape', file: '1.shape.json', origin: { x: 0, y: 0 }, size: { width: 10, height: 10 } },
   },
 };
 

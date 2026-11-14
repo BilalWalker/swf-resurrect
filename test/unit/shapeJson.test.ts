@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assertFillDrawn,
+  assertShapeDrawn,
   DRAWN_FILLS,
   fillIsDrawn,
   parseShapeJson,
@@ -81,5 +83,35 @@ describe('parseShapeJson', () => {
       '{"formatVersion":1,"paths":[{"contours":[{"outer":[["M",0,1],["Z"]],"holes":[]}],"fill":{"kind":"solid","color":"#ff0000","alpha":1},"stroke":null}]}',
     );
     expect(printShapeJson(parseShapeJson(text))).toBe(text);
+  });
+});
+
+describe('assertFillDrawn (the drawFill check, sub-task 10.12)', () => {
+  it('does not throw for a solid fill and names the field path and kind for the others', () => {
+    expect(() => assertFillDrawn(solid, 'paths[0].fill')).not.toThrow();
+    expect(() => assertFillDrawn(linear, 'paths[1].fill')).toThrow(ShapeJsonError);
+    expect(() => assertFillDrawn(linear, 'paths[1].fill')).toThrow('paths[1].fill: fill kind not drawn: gradient-linear');
+    expect(() => assertFillDrawn(radial, 'paths[2].fill')).toThrow('paths[2].fill: fill kind not drawn: gradient-radial');
+    expect(() => assertFillDrawn(bitmap, 'paths[3].fill')).toThrow('paths[3].fill: fill kind not drawn: bitmap');
+  });
+
+  it('follows the capabilities it is given', () => {
+    const caps: DrawnFills = { gradientLinear: true, gradientRadial: false, bitmap: true };
+    expect(() => assertFillDrawn(linear, 'f', caps)).not.toThrow();
+    expect(() => assertFillDrawn(bitmap, 'f', caps)).not.toThrow();
+    expect(() => assertFillDrawn(radial, 'f', caps)).toThrow('f: fill kind not drawn: gradient-radial');
+  });
+
+  it('assertShapeDrawn reports the first undrawn fill by path index and ignores paths without a fill', () => {
+    const contours = [{ outer: [['M', 0, 0], ['Z']] as never, holes: [] }];
+    const shape = {
+      formatVersion: 1 as const,
+      paths: [
+        { contours, fill: solid, stroke: null },
+        { contours, fill: null, stroke: null },
+        { contours, fill: radial, stroke: null },
+      ],
+    };
+    expect(() => assertShapeDrawn(shape)).toThrow('paths[2].fill: fill kind not drawn: gradient-radial');
   });
 });

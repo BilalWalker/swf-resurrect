@@ -15,8 +15,8 @@ describe("Scene_JSON round trip", () => {
     );
   });
 
-  // Feature: vertical-slice, Property 1: Scene_JSON round trip
-  // **Validates: Requirements 4.6, 10.1**
+  // Feature: breadth, Property 13: Scene_JSON v2 round trip (size on shapes, optional clipDepth on entries)
+  // **Validates: Requirements 12.4, 12.5, 15.5**
   it("serialise, parse, deep-equal; second serialise is byte-identical", () => {
     fc.assert(
       fc.property(genScene, (scene) => {

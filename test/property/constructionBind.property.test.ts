@@ -59,7 +59,7 @@ describe("Construction_Bind", () => {
           symbols[String(node.id)] = sym;
         }
         const scene: SceneJson = {
-          formatVersion: 1,
+          formatVersion: 2,
           stage: { width: 100, height: 100, backgroundColor: "#ffffff", frameRate: 10 },
           rootSymbolId: 0,
           symbols,

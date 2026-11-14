@@ -1,5 +1,5 @@
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "rootSymbolId": 0,
   "stage": {
     "backgroundColor": "#ffffff",
@@ -161,18 +161,26 @@
       "type": "sprite"
     },
     "1": {
-      "file": "1.svg",
+      "file": "1.shape.json",
       "origin": {
         "x": 42.5,
         "y": 40.5
       },
+      "size": {
+        "height": 81,
+        "width": 85
+      },
       "type": "shape"
     },
     "2": {
-      "file": "2.svg",
+      "file": "2.shape.json",
       "origin": {
         "x": 42.5,
         "y": 40.5
+      },
+      "size": {
+        "height": 81,
+        "width": 85
       },
       "type": "shape"
     },
@@ -235,18 +243,26 @@
       "type": "sprite"
     },
     "4": {
-      "file": "4.svg",
+      "file": "4.shape.json",
       "origin": {
         "x": 39,
         "y": 38
       },
+      "size": {
+        "height": 76,
+        "width": 78
+      },
       "type": "shape"
     },
     "5": {
-      "file": "5.svg",
+      "file": "5.shape.json",
       "origin": {
         "x": 39,
         "y": 38
+      },
+      "size": {
+        "height": 76,
+        "width": 78
       },
       "type": "shape"
     },

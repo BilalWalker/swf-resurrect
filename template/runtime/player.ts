@@ -496,7 +496,7 @@ export class Player {
     if (this.shapeBounds.has(entry.symbolId)) return true;
     if (!this.reportedMissing.has(entry.symbolId)) {
       this.reportedMissing.add(entry.symbolId);
-      this.backend.showError(`SVG asset ${target.file} is not loaded; entries using it are skipped`);
+      this.backend.showError(`Shape asset ${target.file} is not loaded; entries using it are skipped`);
     }
     return false;
   }

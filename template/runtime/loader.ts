@@ -1,7 +1,9 @@
 import type { RenderBackend, ShapeBounds } from './backend';
 import { parseScene, type SceneJson } from './scene';
+import { parseShapeJson } from './shapeJson';
 
 export const SCENE_URL = 'assets/scene.json';
+export const ASSET_BASE = 'assets/';
 
 export interface LoadedScene {
   scene: SceneJson;
@@ -18,7 +20,7 @@ function describe(err: unknown): string {
 /**
  * Loads Scene_JSON and every shape asset.
  * Returns null after showing an error through the backend when anything fails:
- * invalid or unreachable Scene_JSON (Req 6.6) or a failed SVG load (Req 6.7).
+ * invalid or unreachable Scene_JSON (Req 6.6) or a failed or refused shape load (Req 6.7).
  * The caller must not start playback on null.
  */
 export async function loadScene(fetchText: FetchText, backend: RenderBackend): Promise<LoadedScene | null> {
@@ -35,10 +37,10 @@ export async function loadScene(fetchText: FetchText, backend: RenderBackend): P
     if (sym.type !== 'shape') continue;
     const id = Number(key);
     try {
-      const svg = await fetchText(`assets/${sym.file}`);
-      shapeBounds.set(id, await backend.loadShape(id, svg, sym.origin));
+      const shape = parseShapeJson(await fetchText(`${ASSET_BASE}${sym.file}`));
+      shapeBounds.set(id, await backend.loadShape(id, shape, ASSET_BASE));
     } catch (err) {
-      backend.showError(`SVG asset ${sym.file} failed to load: ${describe(err)}`);
+      backend.showError(`Shape asset ${sym.file} failed to load: ${describe(err)}`);
       return null;
     }
   }
