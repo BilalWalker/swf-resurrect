@@ -278,3 +278,75 @@ describe("svgToShapeJson gradients", () => {
     expect(limits.map((l) => l.kind)).toEqual(["gradient-fill"]);
   });
 });
+
+describe("svgToShapeJson bitmap fills", () => {
+  const head =
+    '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
+  const ALL = { gradientLinear: true, gradientRadial: true, bitmap: true };
+  // "AQID" is the bytes 1, 2, 3.
+  const pattern = (id: number, href: string, extra = "", tf = 'patternTransform="matrix(0.05, 0, 0, 0.05, 2, 3)"') =>
+    `<pattern id="PatternID_9_${id}" ffdec:fill-bitmapId="${id}" ${tf} ${extra}><image xlink:href="${href}"/></pattern>`;
+  const doc = (inner: string, pathAttrs = 'style="fill:url(#PatternID_9_5)"') =>
+    `${head}<g transform="matrix(1,0,0,1,0,0)">${inner}<path d="M0 0 L9 0 9 9 Z" ${pathAttrs}/></g></svg>`;
+
+  it("builds a bitmap fill with the baked pattern matrix, the image path and decoded bytes", () => {
+    const { shape, images, limits } = svgToShapeJson(doc(pattern(5, "data:image/PNG;base64,AQID")), "shape", ALL);
+    expect(limits).toEqual([]);
+    expect(shape.paths[0]!.fill).toEqual({ kind: "bitmap", image: "images/5.png", matrix: [0.05, 0, 0, 0.05, 2, 3], smooth: true });
+    expect(images).toEqual([{ bitmapId: 5, ext: "png", bytes: new Uint8Array([1, 2, 3]) }]);
+  });
+
+  for (const mime of ["jpeg", "jpg", "JPEG"]) {
+    it(`maps mime ${mime} to jpg`, () => {
+      const { shape, images } = svgToShapeJson(doc(pattern(5, `data:image/${mime};base64,AQID`)), "shape", ALL);
+      expect(shape.paths[0]!.fill).toMatchObject({ image: "images/5.jpg" });
+      expect(images[0]!.ext).toBe("jpg");
+    });
+  }
+
+  const smoothing: Array<[string, boolean]> = [
+    ["image-rendering:optimizeSpeed;image-rendering:pixelated", false],
+    ["image-rendering:pixelated", false],
+    ["image-rendering:optimizeQuality", true],
+  ];
+  for (const [style, smooth] of smoothing) {
+    it(`reads ${style} as smooth ${smooth} without a limit`, () => {
+      const { shape, limits } = svgToShapeJson(doc(pattern(5, "data:image/PNG;base64,AQID", `style="${style}"`)), "shape", ALL);
+      expect(shape.paths[0]!.fill).toMatchObject({ smooth });
+      expect(limits).toEqual([]);
+    });
+  }
+
+  it("draws a bitmap with any other image-rendering value smoothed and records bitmap-smoothing", () => {
+    const { shape, limits } = svgToShapeJson(doc(pattern(5, "data:image/PNG;base64,AQID", 'style="image-rendering:crisp-edges"')), "shape", ALL);
+    expect(shape.paths[0]!.fill).toMatchObject({ smooth: true });
+    expect(limits.map((l) => l.kind)).toEqual(["bitmap-smoothing"]);
+  });
+
+  it("returns exactly one bitmap-fill limit and no image when caps.bitmap is false", () => {
+    const { shape, images, limits } = svgToShapeJson(doc(pattern(5, "data:image/PNG;base64,AQID")), "shape", { ...ALL, bitmap: false });
+    expect(shape.paths).toEqual([]);
+    expect(images).toEqual([]);
+    expect(limits).toEqual([{ kind: "bitmap-fill", message: "bitmap fill 1 is not drawn (image 5)" }]);
+  });
+
+  it("names a pattern that is missing, has no readable bytes or has an unknown mime", () => {
+    for (const inner of ["", pattern(5, "data:image/PNG;base64,"), pattern(5, "data:image/gif;base64,AQID"), pattern(5, "http://x/y.png")]) {
+      const { shape, images, limits } = svgToShapeJson(doc(inner), "shape", ALL);
+      expect(shape.paths).toEqual([]);
+      expect(images).toEqual([]);
+      expect(limits.map((l) => l.kind)).toEqual(["bitmap-fill"]);
+    }
+  });
+
+  it("sorts images by bitmapId and keeps one entry per id", () => {
+    const body =
+      pattern(7, "data:image/PNG;base64,BwcH") +
+      pattern(5, "data:image/PNG;base64,AQID") +
+      '<path d="M0 0 L9 0 9 9 Z" style="fill:url(#PatternID_9_7)"/>' +
+      '<path d="M0 0 L9 0 9 9 Z" style="fill:url(#PatternID_9_7)"/>';
+    const { images } = svgToShapeJson(doc(body), "shape", ALL);
+    expect(images.map((i) => i.bitmapId)).toEqual([5, 7]);
+    expect(images[1]!.bytes).toEqual(new Uint8Array([7, 7, 7]));
+  });
+});

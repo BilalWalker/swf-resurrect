@@ -149,3 +149,67 @@ describe("svgToShapeJson drawn-fill capabilities", () => {
     );
   });
 });
+
+// Feature: breadth, Property 19: Bitmap assets are deterministic
+// Feature: breadth, Property 4: No part is dropped without a Named_Limit (bitmap-fill, bitmap-smoothing)
+describe("svgToShapeJson bitmap assets", () => {
+  const head = '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
+  const ALL: DrawnFills = { gradientLinear: true, gradientRadial: true, bitmap: true };
+  const b64 = (bytes: number[]): string => btoa(String.fromCharCode(...bytes));
+  const genBitmap = fc.record({
+    id: fc.integer({ min: 0, max: 12 }),
+    mime: fc.constantFrom("PNG", "png", "JPEG", "jpeg", "jpg"),
+    bytes: fc.array(fc.integer({ min: 0, max: 255 }), { minLength: 1, maxLength: 40 }),
+    rendering: fc.constantFrom("", "image-rendering:optimizeQuality", "image-rendering:optimizeSpeed;image-rendering:pixelated", "image-rendering:crisp-edges"),
+  });
+  const build = (items: Array<{ id: number; mime: string; bytes: number[]; rendering: string }>): string => {
+    const pats = items
+      .map((b, i) => `<pattern id="PatternID_1_${i}" ffdec:fill-bitmapId="${b.id}" patternTransform="matrix(0.05, 0, 0, 0.05, ${i}, 0)" style="${b.rendering}"><image xlink:href="data:image/${b.mime};base64,${b64(b.bytes)}"/></pattern>`)
+      .join("");
+    const paths = items.map((_, i) => `<path d="M0 0 L9 0 9 9 Z" style="fill:url(#PatternID_1_${i})"/>`).join("");
+    return `${head}<g transform="matrix(1,0,0,1,0,0)">${pats}${paths}</g></svg>`;
+  };
+
+  /** **Validates: Requirements 9.2** */
+  it("images are sorted by bitmapId, one per id, carry the decoded bytes, and two builds are identical", () => {
+    fc.assert(
+      fc.property(fc.array(genBitmap, { minLength: 1, maxLength: 6 }), (items) => {
+        const svg = build(items);
+        const a = svgToShapeJson(svg, "shape", ALL);
+        const b = svgToShapeJson(svg, "shape", ALL);
+        expect(b).toEqual(a);
+        expect(printShapeJson(b.shape)).toBe(printShapeJson(a.shape));
+        const ids = a.images.map((i) => i.bitmapId);
+        expect(ids).toEqual([...new Set(items.map((i) => i.id))].sort((x, y) => x - y));
+        for (const img of a.images) {
+          const first = items.find((i) => i.id === img.bitmapId)!;
+          expect(Array.from(img.bytes)).toEqual(first.bytes);
+          expect(img.ext).toBe(first.mime.toLowerCase() === "png" ? "png" : "jpg");
+        }
+      }),
+      fcConfig,
+    );
+  });
+
+  /** **Validates: Requirements 9.3, 9.4, 7.9, 2.8, 2.9** */
+  it("every bitmap fill is drawn or named once, and an unknown image-rendering value is named", () => {
+    fc.assert(
+      fc.property(fc.array(genBitmap, { minLength: 1, maxLength: 6 }), fc.boolean(), (items, bitmap) => {
+        const out = svgToShapeJson(build(items), "shape", { ...ALL, bitmap });
+        const fillLimits = out.limits.filter((l) => l.kind === "bitmap-fill");
+        if (bitmap) {
+          expect(out.shape.paths).toHaveLength(items.length);
+          expect(fillLimits).toEqual([]);
+          const unknown = items.some((i) => i.rendering === "image-rendering:crisp-edges");
+          expect(out.limits.some((l) => l.kind === "bitmap-smoothing")).toBe(unknown);
+        } else {
+          expect(out.shape.paths).toEqual([]);
+          expect(out.images).toEqual([]);
+          expect(fillLimits).toHaveLength(items.length);
+          expect(out.limits.every((l) => l.kind === "bitmap-fill")).toBe(true);
+        }
+      }),
+      fcConfig,
+    );
+  });
+});

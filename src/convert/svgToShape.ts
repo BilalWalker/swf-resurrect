@@ -4,8 +4,9 @@
 // Built so far (sub-task 10.4): the wrapper, nested `<g transform>`, `<use xlink:href>` resolved to `<defs>`, solid
 // fills, one ShapePath per element in SVG order, holes through groupContours. Gradients (sub-task 10.6): built from
 // gradientTransform, spreadMethod, stop-opacity and fx/fy; one that `fillIsDrawn(fill, caps)` rejects is left out of the
-// Shape_JSON and returned as exactly one Named_Limit (decision D21). Bitmap fills are built by sub-task 10.7, so each is
-// a limit whatever `caps` says. Strokes (sub-task 10.5): cap, join, miter limit, width,
+// Shape_JSON and returned as exactly one Named_Limit (decision D21). Bitmap fills (sub-task 10.7): the pattern supplies
+// patternTransform, the decoded bytes (never re-encoded) and `ffdec:fill-bitmapId`; `images` is sorted by bitmapId with
+// one entry per id; with `caps.bitmap` false the fill is a limit. Strokes (sub-task 10.5): cap, join, miter limit, width,
 // colour and alpha are read; a miter-clip join, a gradient stroke, an unresolved stroke paint and a dash array are each
 // returned as a `stroke-style` limit (decided F8). No limit is recorded for a cap (sub-task 11.1 measures caps).
 //
@@ -217,11 +218,48 @@ function urlId(paint: string): string | null {
   return m === null ? null : m[1]!;
 }
 
+/** Every `image-rendering` value an element declares, in order (a style may repeat the property as FFDec does). */
+function imageRendering(el: El): string[] {
+  const out: string[] = [];
+  const style = el.attrs.style;
+  if (style !== undefined) {
+    for (const decl of style.split(';')) {
+      const i = decl.indexOf(':');
+      if (i > 0 && decl.slice(0, i).trim() === 'image-rendering') out.push(decl.slice(i + 1).trim());
+    }
+  }
+  const a = el.attrs['image-rendering'];
+  if (a !== undefined) out.push(a.trim());
+  return out;
+}
+
+/** Decodes `data:image/<mime>;base64,<data>`. Null for any other form, an unknown mime or empty bytes. */
+function decodeDataUrl(href: string | undefined): { ext: 'png' | 'jpg'; bytes: Uint8Array } | null {
+  if (href === undefined) return null;
+  const m = /^\s*data:image\/([A-Za-z0-9.+-]+)\s*;\s*base64\s*,([\s\S]*)$/.exec(href);
+  if (m === null) return null;
+  const mime = m[1]!.toLowerCase();
+  const ext = mime === 'png' ? 'png' : mime === 'jpeg' || mime === 'jpg' ? 'jpg' : null;
+  if (ext === null) return null;
+  let bin: string;
+  try {
+    bin = atob(m[2]!.replace(/\s+/g, ''));
+  } catch {
+    return null;
+  }
+  if (bin.length === 0) return null;
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return { ext, bytes };
+}
+
 // ---- the builder ----------------------------------------------------------------------------------------------
 
 class Builder {
   readonly paths: ShapePath[] = [];
   readonly limits: ShapeLimit[] = [];
+  /** Images of the bitmap fills that were drawn, by bitmap id (the first bytes seen for an id win). */
+  readonly images = new Map<number, { ext: 'png' | 'jpg'; bytes: Uint8Array }>();
   private fills = 0; // gradient and bitmap fills seen so far in this shape, drawn or not (the 1-based ordinal)
   private wrapperSeen = false;
 
@@ -352,8 +390,7 @@ class Builder {
 
   /**
    * A fill that is not a solid colour. A gradient that `fillIsDrawn` accepts is returned (with its finer limits); every
-   * other gradient or bitmap fill is returned as null and named by exactly one Named_Limit (decision D21). Bitmap
-   * fills are built by sub-task 10.7; until then each one is named whatever `caps` says.
+   * other gradient or bitmap fill is returned as null and named by exactly one Named_Limit (decision D21).
    */
   private nonSolidFill(el: El, paint: string, m: Mat6): ShapePath['fill'] {
     this.fills++;
@@ -367,8 +404,61 @@ class Builder {
         return g;
       }
     }
+    if (target !== undefined && target.tag === 'pattern') {
+      const b = this.bitmap(el, target, m);
+      if (b !== null && fillIsDrawn(b.fill, this.caps)) {
+        if (!this.images.has(b.id)) this.images.set(b.id, b.image);
+        for (const v of b.unknownSmoothing) {
+          this.limits.push({ kind: 'bitmap-smoothing', message: `approximated: image-rendering ${v} is drawn smoothed (bitmap fill ${n})` });
+        }
+        return b.fill;
+      }
+    }
     this.undrawnFill(el, paint, n);
     return null;
+  }
+
+  /** The bitmap fill of a pattern, or null when the bitmap id or the image bytes cannot be read. */
+  private bitmap(
+    el: El,
+    pattern: El,
+    m: Mat6,
+  ): {
+    fill: Extract<ShapePath['fill'], { kind: 'bitmap' }>;
+    id: number;
+    image: { ext: 'png' | 'jpg'; bytes: Uint8Array };
+    unknownSmoothing: string[];
+  } | null {
+    const idText = pattern.attrs['ffdec:fill-bitmapId'] ?? el.attrs['ffdec:fill-bitmapId'];
+    if (idText === undefined || !/^[0-9]+$/.test(idText)) return null;
+    const id = Number(idText);
+    if (!Number.isSafeInteger(id)) return null;
+    const imageEl = pattern.children.find((c) => c.tag === 'image');
+    if (imageEl === undefined) return null;
+    const image = decodeDataUrl(imageEl.attrs['xlink:href'] ?? imageEl.attrs.href);
+    if (image === null) return null;
+    const matrix = mul(m, parseTransform(pattern.attrs.patternTransform)).map((v) => v + 0) as Mat6;
+    if (matrix.some((v) => !Number.isFinite(v))) return null;
+    let smooth = true;
+    const unknownSmoothing: string[] = [];
+    let decided = false;
+    for (const v of [...imageRendering(el), ...imageRendering(pattern), ...imageRendering(imageEl)]) {
+      if (v === 'optimizeSpeed' || v === 'pixelated') {
+        if (!decided) smooth = false;
+        decided = true;
+      } else if (v === 'optimizeQuality') {
+        if (!decided) smooth = true;
+        decided = true;
+      } else if (!unknownSmoothing.includes(v)) {
+        unknownSmoothing.push(v);
+      }
+    }
+    return {
+      fill: { kind: 'bitmap', image: `images/${id}.${image.ext}`, matrix, smooth },
+      id,
+      image,
+      unknownSmoothing,
+    };
   }
 
   /** The gradient as Shape_JSON, or null when it has fewer than two readable stops or a bad matrix. */
@@ -426,8 +516,9 @@ class Builder {
       const type = target.tag === 'linearGradient' ? 'linear' : 'radial';
       this.limits.push({ kind: 'gradient-fill', message: `gradient fill ${n} is not drawn (${type}, ${stops} stops)` });
     } else if (target !== undefined && target.tag === 'pattern') {
-      const image = el.attrs['ffdec:fill-bitmapId'] ?? target.attrs['ffdec:fill-bitmapId'];
-      const label = image !== undefined && /^[0-9]+$/.test(image) ? `image ${image}` : 'image unknown';
+      const image = target.attrs['ffdec:fill-bitmapId'] ?? el.attrs['ffdec:fill-bitmapId'];
+      const readable = image !== undefined && /^[0-9]+$/.test(image);
+      const label = !readable ? 'image unknown' : this.bitmap(el, target, IDENTITY) === null ? `image ${image}, bytes missing` : `image ${image}`;
       this.limits.push({ kind: 'bitmap-fill', message: `bitmap fill ${n} is not drawn (${label})` });
     } else if (id !== null && id.startsWith('PatternID')) {
       this.limits.push({ kind: 'bitmap-fill', message: `bitmap fill ${n} is not drawn (pattern unresolved)` });
@@ -457,5 +548,6 @@ export function svgToShapeJson(svg: string, _kind: 'shape' | 'text', caps: Drawn
   indexIds(root, ids);
   const b = new Builder(ids, caps);
   b.walk(root, IDENTITY, NO_STYLE, 0, []);
-  return { shape: { formatVersion: 1, paths: b.paths }, images: [], limits: sortLimits(b.limits) };
+  const images = [...b.images.entries()].sort((x, y) => x[0] - y[0]).map(([bitmapId, v]) => ({ bitmapId, ext: v.ext, bytes: v.bytes }));
+  return { shape: { formatVersion: 1, paths: b.paths }, images, limits: sortLimits(b.limits) };
 }
