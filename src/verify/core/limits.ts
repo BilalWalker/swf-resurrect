@@ -17,7 +17,8 @@ export interface VisualLimit {
     | 'bitmap-smoothing'
     | 'text-metrics'
     | 'stroke-style'
-    | 'blend-mode';
+    | 'blend-mode'
+    | 'residual-difference';
   id?: number;
   message: string;
 }

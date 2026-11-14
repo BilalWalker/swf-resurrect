@@ -48,6 +48,7 @@ const limitKinds = [
   'text-metrics' as const,
   'stroke-style' as const,
   'blend-mode' as const,
+  'residual-difference' as const,
 ];
 const genLimit: fc.Arbitrary<VisualLimit> = fc.oneof(
   fc.record({

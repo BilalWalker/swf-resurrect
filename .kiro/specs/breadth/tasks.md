@@ -619,12 +619,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 13. Pipeline: residual attribution (Requirement 21)
   - Commit area: `Pipeline`. Read design section 17. Verification V1. The tool built here is used by every admission sub-task.
-  - [-] 13.1 Add `src/verify/core/regions.ts`
+  - [x] 13.1 Add `src/verify/core/regions.ts`
     - `clusterDiffRegions(mask, width, height)` (8-connected components of the `FrameDiff.mask`, ids in raster order of each region's first pixel, `RangeError` when the length differs) and `regionTable(regions, maxRows)` (rows in id order plus an omitted aggregate, so the pixel counts always add up). The file is covered by the purity glob of `src/verify/core/*.ts`; add it to the explicit list too.
     - Test: `test/property/regions.property.test.ts` (create), **Property 26: Region clustering partitions the mask deterministically**.
     - _Requirements: 21.1, 21.4, 15.5_
 
-  - [ ] 13.2 Add `src/verify/core/residual.ts`
+  - [-] 13.2 Add `src/verify/core/residual.ts`
     - `ResidualRegister`, `ResidualEntry`, `validateResidualRegister` (kind pattern, box inside the stage, integer frame, `message` non-empty and not `unknown`, `not examined`, `todo` or `tbd` in any letter case), `attributeRegions(frame, regions, register)` (the containing entry of the same frame with the smallest box area, ties by `(kind, message)`) and `residualLimits(attributions)`. Add the kind `residual-difference` to `VisualLimit.kind` in `limits.ts`.
     - Test: `test/property/residual.property.test.ts` (create), **Property 27: Residual attribution is total and independent of the register's order**; `test/unit/residual.test.ts` (create): the example register of the design Data Models section parses.
     - _Requirements: 21.2, 21.3, 21.7, 15.5_
