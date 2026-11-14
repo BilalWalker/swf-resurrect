@@ -108,6 +108,29 @@ describe('convertModel', () => {
     ]);
   });
 
+  it('keeps a trivial mask placement with its clipDepth and records no mask limit', () => {
+    const model = modelWith([{ kind: 'place', depth: 1, characterId: 1, move: false, clipDepth: 3 }, place(2, 1)], {});
+    const r = convertModel(model);
+    expect((r.scene.symbols['0'] as SpriteSymbol).frames[0].map((e) => [e.depth, e.clipDepth])).toEqual([
+      [1, 3],
+      [2, undefined],
+    ]);
+    expect(r.unsupported.filter((u) => u.kind === 'mask')).toEqual([]);
+  });
+
+  it('removes a non-trivial mask and records it as a mask limit', () => {
+    // Sprite 2 holds a nested sprite entry, so it is not a Trivial_Mask.
+    const model = modelWith([{ kind: 'place', depth: 1, characterId: 2, move: false, clipDepth: 3 }, place(2, 1)], {
+      sprites: [{ id: 2, declaredFrameCount: 1, ops: [place(1, 3), { kind: 'showFrame' }] }, { id: 3, declaredFrameCount: 1, ops: [place(1, 1), { kind: 'showFrame' }] }],
+    });
+    const r = convertModel(model);
+    expect((r.scene.symbols['0'] as SpriteSymbol).frames[0].map((e) => e.depth)).toEqual([2]);
+    const masks = r.unsupported.filter((u) => u.kind === 'mask');
+    expect(masks).toHaveLength(1);
+    expect(masks[0]?.message).toContain('mask is not drawn; the masked content is drawn without the mask');
+    expect(masks[0]?.context).toEqual({ spriteId: 0, frame: 1, depth: 1 });
+  });
+
   it('draws static text as a shape symbol and records one text-metrics entry', () => {
     const textSvg = '<svg width="40px" height="12px"><g transform="matrix(1,0,0,1,-9.35,-0.4)"><path d="M0 0 L5 5"/></g></svg>';
     const model = modelWith([place(1, 1), place(2, 2)], {

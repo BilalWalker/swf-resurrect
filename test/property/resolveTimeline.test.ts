@@ -93,4 +93,20 @@ describe("resolveTimeline", () => {
       fcConfig,
     );
   });
+
+  // Feature: breadth, Property 12 (resolver half): a placement with clipDepth is kept, never dropped as a mask
+  // **Validates: Requirements 12.3**
+  it("keeps placements that carry clipDepth, so the display lists still equal the replay and no mask is dropped", () => {
+    fc.assert(
+      fc.property(genTimelineOps, (plain) => {
+        const ops = plain.map((op) => (op.kind === "place" && !op.move ? { ...op, clipDepth: op.depth + 2 } : op));
+        const out = resolveTimeline({ spriteId: 0, ops, declaredFrameCount: null, unsupportedCharacters: UNSUPPORTED_CHARACTERS });
+        const ref = replay(plain);
+        expect(out.frames.map((f) => f.map(({ clipDepth: _c, ...row }) => row))).toEqual(ref.frames);
+        expect(out.droppedPlacements.some((d) => d.kind === "mask")).toBe(false);
+        for (const f of out.frames) for (const e of f) if (e.clipDepth !== undefined) expect(e.clipDepth).toBeGreaterThanOrEqual(e.depth);
+      }),
+      fcConfig,
+    );
+  });
 });

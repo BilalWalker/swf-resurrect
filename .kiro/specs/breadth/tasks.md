@@ -607,12 +607,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/player.test.ts` rows (a scene with a mask placement creates one group per range, the mask node is a visible sibling, the mask matrix follows the frame, the mask shape is not a hit target) and `test/e2e/render.e2e.test.ts` (Chromium: clip with a moving matrix, one mask shared by two targets goes through one group and stays correct after a move; skipped when Chromium is missing).
     - _Requirements: 12.1, 12.2, 12.5, 12.7_
 
-  - [-] 12.7 `classifyMask` and `resolveMasks`: keep Trivial_Mask placements, drop the others with a Named_Limit
+  - [x] 12.7 `classifyMask` and `resolveMasks`: keep Trivial_Mask placements, drop the others with a Named_Limit
     - Read design section 5 (Convert). Create `src/convert/masks.ts` with `classifyMask(symbolId, symbols)` (trivial for a shape; for a sprite whose every frame holds only shape entries with identity colour transform and no `clipDepth`) and `resolveMasks(spriteId, frames, symbols)` (a non-trivial mask is removed and recorded as kind `mask` with the message that the masked content is drawn without the mask; a trivial one is kept with `clipDepth`). `src/convert/resolveTimeline.ts` keeps `clipDepth` on the resolved entry instead of dropping the placement; `convertModel` runs `resolveMasks` after all timelines exist. Add the file to the purity test. `DisplayObject.mask` is not added to the Shim (Requirement 12.7).
     - Test: extend `test/property/masks.property.test.ts` (**Property 12**, classification half, brute-force model) and `test/unit/masks.test.ts` (create: shape mask, sprite mask, nested clip, empty range).
     - _Requirements: 12.1, 12.3, 12.4, 12.7, 15.2, 15.5_
 
-  - [ ] 12.8 Measure and update the mask-dependent expectations
+  - [-] 12.8 Measure and update the mask-dependent expectations
     - Update `test/unit/resolveTimeline.test.ts`, `test/property/resolveTimeline.test.ts` and `test/unit/convertModel.test.ts` where they expected `clipDepth` placements to be dropped. Record the Overall_Match of the local smoke `clipDepth` before and after (84.09 for frames 1 and 2 before; 92.05 over four frames) and of `mask_reapply` and `3_joystick` (local copies under `.work/`); `3_joystick` and `mask_reapply` must be at least their value before this sub-task (Requirement 12.6). State that `clipDepth` has no Score_Floor because it is not committed. Delete the copies. Record CC.
     - Test: extend `test/unit/convertModel.test.ts` (a mask entry kept with `clipDepth`, a non-trivial mask recorded as `mask`) and `test/unit/resolveTimeline.test.ts`. The measurement is guarded by the floors of sub-tasks 16.3 and 17.3.
     - _Requirements: 12.3, 12.6, 13.10, 1.6_
