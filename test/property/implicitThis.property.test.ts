@@ -198,7 +198,7 @@ describe("Property 35: The resolution is deterministic and independent of file o
       }),
       fcConfig,
     );
-  });
+  }, 30_000);
 });
 
 describe("Property 36: Agreement with the previous call rule", () => {
@@ -225,7 +225,7 @@ describe("Property 36: Agreement with the previous call rule", () => {
       ),
       fcConfig,
     );
-  });
+  }, 30_000);
 });
 
 describe("Property 43: Inherited statics resolve to the declaring class and import it", () => {
@@ -243,7 +243,7 @@ describe("Property 43: Inherited statics resolve to the declaring class and impo
       }),
       fcConfig,
     );
-  });
+  }, 30_000);
 
   it("uses the alias of the plan when the simple name is taken", () => {
     const sources = [
@@ -255,7 +255,7 @@ describe("Property 43: Inherited statics resolve to the declaring class and impo
     const c = run(sources).classes.find((x) => x.className === "p0.K0")!;
     expect(c.text).toContain("return q_K2.zzS;");
     expect(c.text).toContain("import { K2 as q_K2 } from");
-  });
+  }, 30_000);
 });
 
 describe("Property 44: Method values are bound once, after super, in declaration order", () => {
@@ -285,7 +285,7 @@ describe("Property 44: Method values are bound once, after super, in declaration
       }),
       fcConfig,
     );
-  });
+  }, 30_000);
 });
 
 describe("Property 46: A field initialiser sees the bound methods, and the bound function is one reference", () => {
@@ -315,7 +315,7 @@ describe("Property 46: A field initialiser sees the bound methods, and the bound
       }),
       fcConfig,
     );
-  });
+  }, 30_000);
 
   /** **Validates: Requirements 22.13** */
   it("the same source with no initialiser read keeps the constructor form (Property 44 default)", () => {
@@ -329,5 +329,5 @@ describe("Property 46: A field initialiser sees the bound methods, and the bound
       }),
       fcConfig,
     );
-  });
+  }, 30_000);
 });

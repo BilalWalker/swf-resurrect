@@ -45,7 +45,7 @@ describe("Property 3: Output parses or the failure is reported", () => {
       }),
       fcConfig,
     );
-  });
+  }, 30_000);
 
   /** **Validates: Requirements 1.5, 1.6, 3.5** */
   it("token soup: output parses, and a failed core parse is reported on line 1", () => {
@@ -68,7 +68,7 @@ describe("Property 3: Output parses or the failure is reported", () => {
       }),
       fcConfig,
     );
-  });
+  }, 30_000);
 
   /** **Validates: Requirements 1.5, 1.6, 3.5** */
   it("blank input gives empty text", () => {

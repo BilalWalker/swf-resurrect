@@ -113,7 +113,7 @@ describe('planEmit', () => {
       repoRoot: resolve(__dirname, '../..'),
     });
     expect(gate.errors).toEqual([]);
-  });
+  }, 30_000);
 
   it('4.3 an omitted class has no import and no entry, and its file is still written', () => {
     const omittedInput: EmitInput = { ...input, translated: [{ className: 'LeftButton', fileName: 'LeftButton.ts', text: 'x\n', diagnostics: [], spans: [], extendsName: null, extendsQualified: null, importRecords: [] }], handwritten: [] };

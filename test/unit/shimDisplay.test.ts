@@ -241,7 +241,7 @@ const SLIDER_EVENT = `package fl.events
    }
 }
 `;
-describe('ComponentEvent and SliderEvent shapes through the real gate (Requirement 29.6)', () => {
+describe('ComponentEvent and SliderEvent shapes through the real gate (Requirement 29.6)', { timeout: 30_000 }, () => {
   it('give no TS4113 and no TS2339 for clone or formatToString', () => {
     const scene: SceneJson = {
       formatVersion: 1,

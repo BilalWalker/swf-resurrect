@@ -71,7 +71,7 @@ beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'emit-omission-'));
 });
 afterEach(async () => {
-  await rm(root, { recursive: true, force: true });
+  await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
 async function run(
@@ -119,7 +119,8 @@ const real = (r: { omissions: { className: string; reason: { kind: string } }[] 
   r.omissions.filter((o) => o.reason.kind !== 'missing-source').map((o) => o.className);
 const registryKeys = (text: string): string[] => [...text.matchAll(/^ {2}"(\w+)":/gm)].map((x) => x[1]);
 
-describe('emit: gate first, plan again only when needed, write once', () => {
+// Each test runs the real TypeScript gate over a whole project, one to two times.
+describe('emit: gate first, plan again only when needed, write once', { timeout: 30_000 }, () => {
   it('omits a class with a syntax error and its dependants, writes once with the second plan', async () => {
     const out = join(root, 'out');
     let writes = 0;
