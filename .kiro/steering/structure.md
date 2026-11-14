@@ -5,6 +5,9 @@ Status: unpack, convert, translate, emit and the pipeline CLI exist. Verify, web
 ## Current repo layout (tool itself)
 ```
 .kiro/steering/   Steering rules (committed, never gitignored)
+.kiro/hooks/      Agent hooks (shell command actions only)
+.kiro/agents/     Custom agents: fidelity-reviewer
+.kiro/settings/   mcp.json (swf-inspector, playwright)
 .kiro/specs/      Specs: vertical-slice, translate (verify, ui, hosting to come)
 docs/brief.md     Project brief and source of truth for scope
 samples/          SWFs, each with PROVENANCE.md
@@ -15,6 +18,8 @@ src/translate/    AS3 -> TS: tokenizer, scanner, rewrite, emitTs, translate, pla
                   tsSyntaxCheck, typeCheckGate
 src/emit/         Writes the Vite+Pixi project from template/ plus translated classes
 src/pipeline/     Stage wiring, CLI (npm run pipeline), report writing
+mcp/              MCP servers for Kiro: swf-inspector (npm run mcp:swf-inspector)
+scripts/hooks/    Scripts run by the hooks in .kiro/hooks/ (plain Node, no tsx)
 template/         Files copied into every emitted project: runtime/, shim/, src/
 test/             unit/, property/ (fast-check), e2e/, fixtures/, support/
 handwritten/      Optional override directory (see Rules); empty by default
@@ -26,7 +31,6 @@ Gitignored: `tools/`, `node_modules/`, `out/`, `.work/`, `dist/`.
 - Verify stage (Ruffle vs output) as its own module with explicit inputs and outputs.
 - Web app (drag-in SWF, stage progress, side-by-side preview, zip download, fidelity report).
 - `samples/`: 3-4 SWFs in total (two so far).
-- `.kiro/hooks/`.
 
 ## Emitted project layout (what we generate)
 ```

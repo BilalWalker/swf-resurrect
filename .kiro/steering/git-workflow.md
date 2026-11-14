@@ -51,13 +51,22 @@ When all sub-tasks of a top-level task (for example 5.1 to 5.4) are done:
    ```
 
    Areas in use: `Unpack`, `Convert`, `Translate`, `Emit`, `Runtime`,
-   `Shim`,
-   `Pipeline`, `Test`, `Spec`, `Steering`, `Build`, `Repo`, `Samples`.
-4. No `Co-Authored-By`, no "Generated with" lines, no emoji.
+   `Shim`, `Pipeline`, `Verify`, `Test`, `Spec`, `Steering`, `Build`,
+   `Repo`, `Samples`, `Web`, `MCP`, `Hooks`, `Docs`.
+4. No `Co-Authored-By`, no "Generated with" lines, no emoji, and no
+   UTF-8 BOM at the start of the message (pass it on stdin with
+   `git commit -F -`, or write the file without a BOM).
 
 One top-level task is one commit. Do not mix two tasks in one commit and
 do not split one task across several unless a sub-task is a pure move or
 rename.
+
+## Hooks enforce part of this
+
+`.kiro/hooks/git-guard.json` blocks the forbidden git commands before
+they run, and `.kiro/hooks/task-hygiene.json` lints the commits of the
+branch after each task (see `kiro-tooling.md`). A blocked command means
+the rule applies; do not route around it.
 
 ## Never
 
