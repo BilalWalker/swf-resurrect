@@ -528,7 +528,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Evidence is the recorded CC measurement and the recorded limit lists; they are guarded by `test/e2e/overallMatch.e2e.test.ts`, `test/unit/clickgotoReplay.test.ts` and `test/property/shapeFunction.property.test.ts` (Property 42).
     - _Requirements: 1.6, 2.8, 7.11_
 
-- [ ] 11. Runtime: drawing of strokes, gradients, bitmap fills and colour offsets
+- [x] 11. Runtime: drawing of strokes, gradients, bitmap fills and colour offsets
   - Commit area: `Runtime`. Read design sections 2, 3 and 4. Verification V2, plus CC. Decided F8, F16. Each drawing sub-task flips its `DRAWN_FILLS` flag in the same sub-task as the drawing code, so the Shape_Function stops returning the limit for exactly the cases that are drawn (Requirements 2.8, 8, 9; D21). A fill kind whose flag is still false stays refused by the backend and named.
   - [x] 11.1 Stroke styles measured on wide open strokes
     - Read design section 3 (Strokes) and the second-pass table "Strokes: line caps and miter on a wide open stroke". The design already measured 100 percent, 0 differing pixels, in all six cases (10 px and 20 px; cap `none`, `round`, `square`); this sub-task records that value again on the implemented backend and does not take it on trust (Requirement 13.12). Under `.work/` build, as `samples/tweendemo/build.py` rebuilds its SWF, variants of the `gradients` dump with one open stroked path and no fill, width 10 and 20 px, one variant per cap value, and join variants (round, bevel, miter-clip with `stroke-miterlimit="2.0"`, with corners below and above the limit). Export each Reference_Frame with FFDec, render it with the real Pipeline backend, score with `compareImages` under the unchanged Verify_Tolerance. Record the matchPercent and differing pixels per variant in the commit message. IF a cap differs from the Reference_Frame, add a `stroke-style` limit for exactly that cap in `src/convert/svgToShape.ts` with a test, and report it; do not set a floor on a stroke that was not measured. Delete the variants.
@@ -565,19 +565,19 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/player.test.ts` (an offset colour transform calls `setColorOffset`, a multiplier-only transform calls `setColorMultiplier`) and `test/e2e/render.e2e.test.ts` (a synthetic one-sprite scene with `redAddTerm=255` read back through the filter shows the expected colour and leaves the box around the glyphs unchanged).
     - _Requirements: 13.5, 13.6, 13.7_
 
-  - [-] 11.8 Measure the alpha add term and narrow the `colour-offset` limit
+  - [x] 11.8 Measure the alpha add term and narrow the `colour-offset` limit
     - Build, under `.work/`, swf2xml variants of `acid-color-2` (`alphaAddTerm=100`; `alphaMultTerm=128` with `alphaAddTerm=64`; `alphaMultTerm=0` with `alphaAddTerm=255`; the controls with no alpha add term), export each Reference_Frame, score the render with the real backend under the unchanged Verify_Tolerance, and record the differing pixels per variant in the commit message (Requirement 13.13; the design recorded 7389, 8335 and 10194). `src/verify/core/limits.ts` then produces `colour-offset` only for a placement with a non-zero alpha add term, with the message `approximated: alpha add term (alphaAddTerm N) is not drawn exactly`. IF a variant with a non-zero alpha add term is an Exact_Render, the limit is not recorded for it and the commit message says so. Delete the variants.
     - Test: extend **Property 9** in `test/property/visualLimits.property.test.ts` (`colour-offset` only for a non-zero alpha offset) and `test/unit/limits.test.ts`. The measurement itself is guarded by the `acid-color-2` Exact_Render assertion of sub-task 15.6.
     - _Requirements: 13.6, 13.7, 13.13, 2.4_
 
-  - [ ] 11.9 Record CC
+  - [x] 11.9 Record CC
     - Run `clickgoto` and `tweendemo` end to end and state CC before and after (they have no gradients, bitmap fills or colour offsets, so their solid path is unchanged).
     - Evidence is the recorded CC measurement; it is guarded by `test/unit/clickgotoReplay.test.ts` and `test/e2e/overallMatch.e2e.test.ts`.
     - _Requirements: 1.6, 1.7_
 
 - [ ] 12. Convert: static and dynamic text, filters, blend modes and masks
   - Commit area: `Convert` (the commit also changes Unpack and the Runtime clip groups; the message names them). Read design sections 5, 6 and 7. Verification V2 (sub-tasks 12.6 and 12.7 change `template/`), plus CC. Decided F2, F7. `TextField` stays out of this spec; dynamic text stays a Named_Limit (Requirement 11).
-  - [ ] 12.1 Export `texts/<id>.svg`
+  - [-] 12.1 Export `texts/<id>.svg`
     - `src/unpack/unpack.ts`: the second FFDec call becomes `-format text:svg -export shape,script,symbolClass,text <workDir> <swf>`; `UnpackResult` gains `textsDir`; `texts` joins the expected exports. `src/convert/readUnpacked.ts` reads `texts/<id>.svg` for each id in `staticTextIds` into `textAssets`; a missing, empty or invalid file records `{ kind: 'text' }` with the id and the placements are dropped (Requirement 10.4). The empty-group SVG that FFDec writes for a `DefineEditTextTag` is not read (F7).
     - Test: extend `test/unit/unpack.test.ts` (the argument vector contains `-format text:svg`, `texts` is expected) and `test/unit/readUnpacked.test.ts` (text assets, a missing file, an empty edit-text SVG ignored).
     - _Requirements: 10.1, 10.4_

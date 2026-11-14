@@ -28,6 +28,7 @@ async function setup(csv: string): Promise<{ unpacked: UnpackResult; dir: string
     unpacked: {
       workDir: dir,
       shapesDir: join(fixture, 'shapes'),
+      textsDir: join(fixture, 'texts'),
       structureDumpPath: join(fixture, 'structure.xml'),
       symbolClassPath: join(dir, 'symbols.csv'),
       scriptsDir: join(dir, 'scripts'),

@@ -6,7 +6,7 @@ import type { UnpackResult } from '../unpack/unpack';
 import { extractClassProperties } from './classProps';
 import { MalformedSvgError } from './errors';
 import { parseStructure, readDumpHeader } from './ffdecXml';
-import type { ClassSourceModel, ShapeAssetModel, TagsModel } from './model';
+import type { ClassSourceModel, ShapeAssetModel, TagsModel, UnsupportedObservation } from './model';
 import { extractSvgOrigin } from './svgOrigin';
 import { InvalidClassNameError, scriptRelPath } from './qualifiedName';
 import { parseSymbolsCsv } from './symbolsCsv';
@@ -73,6 +73,24 @@ export async function readUnpacked(unpacked: UnpackResult): Promise<TagsModel> {
   }
   shapeAssets.sort((a, b) => a.id - b.id);
 
+  // Static text: texts/<id>.svg per staticTextIds entry. A missing, empty or invalid file is a Named_Limit (10.4).
+  // The empty-group SVGs FFDec writes for DefineEditTextTag are never looked up (F7).
+  const textAssets: ShapeAssetModel[] = [];
+  const unsupported: UnsupportedObservation[] = [...structure.unsupported];
+  for (const id of [...new Set(structure.staticTextIds)].sort((a, b) => a - b)) {
+    const svg = await readOptional(join(unpacked.textsDir, `${id}.svg`));
+    if (svg === null || svg === '' || XMLValidator.validate(svg) !== true) {
+      unsupported.push({
+        kind: 'text',
+        tagName: 'DefineTextTag',
+        characterId: id,
+        message: `static text is not drawn; texts/${id}.svg is missing, empty or invalid (character ${id})`,
+      });
+      continue;
+    }
+    textAssets.push({ id, svg, origin: extractSvgOrigin(svg) });
+  }
+
   const classSources: ClassSourceModel[] = [];
   const seen = new Set<string>();
   for (const { className } of symbolClasses) {
@@ -93,8 +111,9 @@ export async function readUnpacked(unpacked: UnpackResult): Promise<TagsModel> {
     staticTextIds: structure.staticTextIds,
     bitmapIds: structure.bitmapIds,
     shapeAssets,
+    textAssets,
     symbolClasses,
     classSources,
-    unsupported: structure.unsupported,
+    unsupported,
   };
 }

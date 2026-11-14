@@ -23,6 +23,8 @@ export interface UnpackInput {
 export interface UnpackResult {
   workDir: string;
   shapesDir: string;
+  /** Static text SVGs (texts/<id>.svg); FFDec writes the directory only when the SWF has text. */
+  textsDir: string;
   structureDumpPath: string;
   /** null: no SymbolClassTag in the dump and no symbols.csv. */
   symbolClassPath: string | null;
@@ -36,6 +38,11 @@ const AS3_CHECK_BYTES = 64 * 1024;
 /** True when the swf2xml dump holds an item of type SymbolClassTag. Pure. */
 export function hasSymbolClassTag(xmlText: string): boolean {
   return /<item\b[^>]*\btype\s*=\s*"SymbolClassTag"/.test(xmlText);
+}
+
+/** True when the swf2xml dump holds a DefineTextTag, DefineText2Tag or DefineEditTextTag item. Pure. */
+export function hasTextTag(xmlText: string): boolean {
+  return /<item\b[^>]*\btype\s*=\s*"Define(Text|Text2|EditText)Tag"/.test(xmlText);
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -58,7 +65,7 @@ async function readHead(path: string, bytes: number): Promise<string> {
   }
 }
 
-/** Unpacks a SWF with exactly two FFDec invocations: -swf2xml, then -export shape,script,symbolClass. */
+/** Unpacks a SWF with exactly two FFDec invocations: -swf2xml, then -format text:svg -export shape,script,symbolClass,text. */
 export async function unpack(input: UnpackInput): Promise<UnpackResult> {
   const swfPath = resolve(input.swfPath);
   const workDir = resolve(input.workDir);
@@ -83,10 +90,11 @@ export async function unpack(input: UnpackInput): Promise<UnpackResult> {
     console.warn(`Warning: FFDec XML export minor version is ${xmlVersion.minor}; the verified version is 4.2`);
   }
 
-  await run({ javaCommand, jarPath, args: ['-export', 'shape,script,symbolClass', workDir, swfPath], timeoutMs });
+  await run({ javaCommand, jarPath, args: ['-format', 'text:svg', '-export', 'shape,script,symbolClass,text', workDir, swfPath], timeoutMs });
 
   const shapesDir = join(workDir, 'shapes');
   const symbolClassPath = join(workDir, 'symbolClass', 'symbols.csv');
+  const textsDir = join(workDir, 'texts');
   const scriptsDir = join(workDir, 'scripts');
   const symbolClassTag = hasSymbolClassTag(xmlText);
   const symbolClassPresent = await exists(symbolClassPath);
@@ -96,6 +104,8 @@ export async function unpack(input: UnpackInput): Promise<UnpackResult> {
     // symbols.csv is expected only when the dump holds a SymbolClassTag.
     ['symbolClass/symbols.csv', symbolClassPath, symbolClassTag],
     ['scripts', scriptsDir, true],
+    // texts/ is expected only when the dump holds a text definition tag.
+    ['texts', textsDir, hasTextTag(xmlText)],
   ];
   const missing: string[] = [];
   for (const [name, path, required] of expected) {
@@ -108,6 +118,7 @@ export async function unpack(input: UnpackInput): Promise<UnpackResult> {
   return {
     workDir,
     shapesDir,
+    textsDir,
     structureDumpPath,
     symbolClassPath: symbolClassPresent ? symbolClassPath : null,
     scriptsDir,

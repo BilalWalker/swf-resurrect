@@ -15,6 +15,7 @@ async function fixtureModel(name: string): Promise<TagsModel> {
   return readUnpacked({
     workDir: dir,
     shapesDir: resolve(dir, 'shapes'),
+    textsDir: resolve(dir, 'texts'),
     structureDumpPath: resolve(dir, 'structure.xml'),
     symbolClassPath: resolve(dir, 'symbols.csv'),
     scriptsDir: resolve(dir, 'scripts'),
@@ -69,6 +70,7 @@ describe('convertModel writes Shape_JSON', () => {
       staticTextIds: [],
       bitmapIds: [],
       shapeAssets: [{ id: 7, svg, origin: { x: 0, y: 0 } }],
+      textAssets: [],
       symbolClasses: [],
       classSources: [],
       unsupported: [],

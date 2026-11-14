@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { InvalidClassNameError } from '../../src/convert/qualifiedName';
+import { MissingExportError } from '../../src/unpack/errors';
 import type { FfdecSpawner } from '../../src/unpack/spawnFfdec';
 import { unpack } from '../../src/unpack/unpack';
 
@@ -25,6 +26,7 @@ describe('unpack (real FFDec)', () => {
     expect(result.header).toEqual({ widthPx: 550, heightPx: 400, frameRate: 24, frameCount: 3 });
     expect(result.xmlVersion.major).toBe(4);
     expect(result.shapesDir).toBe(join(workDir, 'shapes'));
+    expect(result.textsDir).toBe(join(workDir, 'texts'));
   }, 120_000);
 });
 
@@ -62,5 +64,47 @@ describe('unpack symbols.csv validation (fake FFDec)', () => {
     const err = await run('3;"..\\evil.X"\n').catch((e) => e);
     expect(err).toBeInstanceOf(InvalidClassNameError);
     expect(err.stage).toBe('unpack');
+  });
+});
+
+describe('unpack text export (fake FFDec)', () => {
+  async function run(withTexts: boolean, dumpHasText: boolean) {
+    const dir = await mkdtemp(join(tmpdir(), 'swf-unpack-txt-'));
+    workDirs.push(dir);
+    const swf = join(dir, 'in.swf');
+    await writeFile(swf, 'FWS\x09rest');
+    const jar = join(dir, 'ffdec-cli.jar');
+    await writeFile(jar, 'jar');
+    const workDir = join(dir, 'work');
+    await mkdir(workDir);
+    let xml = await readFile(join(root, 'test', 'fixtures', 'clickgoto', 'structure.xml'), 'utf8');
+    if (dumpHasText) xml = xml.replace('<item type="DefineShape4Tag"', '<item type="DefineTextTag" characterID="9"/><item type="DefineShape4Tag"');
+    const calls: string[][] = [];
+    const spawner: FfdecSpawner = async (req) => {
+      calls.push(req.args);
+      if (req.args[0] === '-swf2xml') {
+        await writeFile(req.args[2]!, xml);
+      } else {
+        await mkdir(join(workDir, 'shapes'), { recursive: true });
+        await mkdir(join(workDir, 'scripts'), { recursive: true });
+        await mkdir(join(workDir, 'symbolClass'), { recursive: true });
+        await writeFile(join(workDir, 'symbolClass', 'symbols.csv'), '0;"MainTimeline"\n');
+        if (withTexts) await mkdir(join(workDir, 'texts'), { recursive: true });
+      }
+      return { stdout: '', stderr: '' };
+    };
+    const result = await unpack({ swfPath: swf, workDir, ffdecJarPath: jar, spawner }).catch((e) => e);
+    return { result, calls, workDir };
+  }
+
+  it('12.1 the export call carries -format text:svg and the text export', async () => {
+    const { result, calls, workDir } = await run(true, true);
+    expect(calls[1]).toEqual(['-format', 'text:svg', '-export', 'shape,script,symbolClass,text', workDir, expect.any(String)]);
+    expect(result.textsDir).toBe(join(workDir, 'texts'));
+  });
+
+  it('12.1 a missing texts directory is an error only when the dump has text', async () => {
+    expect((await run(false, true)).result).toBeInstanceOf(MissingExportError);
+    expect((await run(false, false)).result.textsDir).toBeDefined();
   });
 });

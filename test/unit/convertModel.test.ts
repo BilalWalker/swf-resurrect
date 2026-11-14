@@ -16,6 +16,7 @@ describe('convertModel', () => {
     const model = await readUnpacked({
       workDir: dir,
       shapesDir: resolve(dir, 'shapes'),
+      textsDir: resolve(dir, 'texts'),
       structureDumpPath: resolve(dir, 'structure.xml'),
       symbolClassPath: resolve(dir, 'symbols.csv'),
       scriptsDir: resolve(dir, 'scripts'),
@@ -54,6 +55,7 @@ describe('convertModel', () => {
     staticTextIds: [],
     bitmapIds: [],
     shapeAssets: [{ id: 1, svg, origin: { x: 0, y: 0 } }],
+    textAssets: [],
     symbolClasses: [],
     classSources: [],
     unsupported: [],

@@ -31,6 +31,7 @@ async function buildProject(sample: string): Promise<Map<string, string>> {
   const model = await readUnpacked({
     workDir: fixture,
     shapesDir: resolve(fixture, 'shapes'),
+    textsDir: resolve(fixture, 'texts'),
     structureDumpPath: resolve(fixture, 'structure.xml'),
     symbolClassPath: resolve(fixture, 'symbols.csv'),
     scriptsDir,

@@ -37,6 +37,7 @@ function model(over: Partial<TagsModel> = {}): TagsModel {
     staticTextIds: [],
     bitmapIds: [],
     shapeAssets: [{ id: 1, svg: SVG, origin: { x: 0, y: 0 } }],
+    textAssets: [],
     symbolClasses: [],
     classSources: [],
     unsupported: [],
@@ -195,6 +196,7 @@ describe('convertStage error paths with staging directories', () => {
     return {
       workDir: dir,
       shapesDir: join(dir, 'shapes'),
+      textsDir: join(dir, 'texts'),
       structureDumpPath: join(dir, 'structure.xml'),
       symbolClassPath: join(dir, 'symbols.csv'),
       scriptsDir: join(dir, 'scripts'),

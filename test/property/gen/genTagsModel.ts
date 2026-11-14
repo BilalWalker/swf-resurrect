@@ -156,6 +156,7 @@ export const genTagsModel: fc.Arbitrary<TagsModel> = fc
       staticTextIds,
       bitmapIds,
       shapeAssets,
+      textAssets: [],
       symbolClasses,
       classSources,
       unsupported,

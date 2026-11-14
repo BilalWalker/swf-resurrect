@@ -18,6 +18,7 @@ function setup(): UnpackResult {
   return {
     workDir: dir,
     shapesDir: join(dir, 'shapes'),
+    textsDir: join(dir, 'texts'),
     structureDumpPath: join(dir, 'structure.xml'),
     symbolClassPath: join(dir, 'symbols.csv'),
     scriptsDir: join(dir, 'scripts'),

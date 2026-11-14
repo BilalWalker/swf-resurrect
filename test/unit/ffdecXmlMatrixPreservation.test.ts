@@ -99,6 +99,7 @@ describe('clickgoto scene output (3.4)', () => {
     const model = await readUnpacked({
       workDir: dir,
       shapesDir: resolve(dir, 'shapes'),
+      textsDir: resolve(dir, 'texts'),
       structureDumpPath: resolve(dir, 'structure.xml'),
       symbolClassPath: resolve(dir, 'symbols.csv'),
       scriptsDir: resolve(dir, 'scripts'),
