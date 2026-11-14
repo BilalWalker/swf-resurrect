@@ -16,6 +16,7 @@ const CORE_FILES = [
   "src/translate/memberTables.ts",
   "src/translate/implicitThis.ts",
   "template/runtime/errorReport.ts", // 22.1
+  "template/runtime/shapeJson.ts", // 10.1
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];
