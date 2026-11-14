@@ -19,6 +19,7 @@ const CORE_FILES = [
   "template/runtime/shapeJson.ts", // 10.1
   "src/convert/pathData.ts", // 10.2
   "src/convert/evenOdd.ts", // 10.3
+  "src/convert/svgToShape.ts", // 10.4
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

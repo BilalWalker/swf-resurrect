@@ -478,7 +478,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/property/evenOdd.property.test.ts` (create), **Property 5: Contour grouping agrees with the even-odd rule** (brute-force model over sampled points), with `test/property/gen/genContours.ts` (create).
     - _Requirements: 8.1, 9.1, 10.2, 15.2, 15.5_
 
-  - [ ] 10.4 `svgToShapeJson` for solid fills, wrapper, nested transforms and `<use>`
+  - [x] 10.4 `svgToShapeJson` for solid fills, wrapper, nested transforms and `<use>`
     - Create `src/convert/svgToShape.ts` with `svgToShapeJson(svg, kind, caps = DRAWN_FILLS)` returning `{ shape, images, limits }`. The first `<g transform>` wrapper is the shape origin and is not applied; nested `<g transform>` and `<use transform>` compose into one matrix baked with `bakeCmds`; `<use xlink:href>` resolves to the `<g id>` in `<defs>`. Solid fills, one `ShapePath` per element in SVG order, holes through `groupContours`. Deterministic: no `Map` iteration order, no locale, shortest round-trip numbers, `-0` to `0`. Add the file to the purity test. Idempotence (Requirement 7.8) does not apply because the output form (Shape_JSON) differs from the input form (SVG); the test file header says so.
     - Test: `test/property/shapeFunction.property.test.ts` (create), **Property 3: The Shape_Function is deterministic, total and valid** (two calls equal, never throws, passes `validateShapeJson`, limits sorted by `(kind, message)` without duplicates), with `test/property/gen/genFfdecSvg.ts` (create). `test/unit/svgToShape.test.ts` (create): the SVGs of the `clickgoto` and `tweendemo` fixtures and an inline `<use>` glyph sample.
     - _Requirements: 7.7, 7.8, 7.9, 2.7, 10.2, 15.5_
