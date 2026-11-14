@@ -177,7 +177,7 @@ export const FFDEC_XML = {
     placeObject2: 'PlaceObject2Tag',
     /** UNVERIFIED (not in sample; FFDec class name). */
     placeObject: 'PlaceObjectTag',
-    /** UNVERIFIED (not in sample; FFDec class name). */
+    /** Verified on FFDec 26.4.0 (Ruffle 4a8d396, visual/blend_modes/add and visual/cache_as_bitmap/contains_grown_filter): type="PlaceObject3Tag". */
     placeObject3: 'PlaceObject3Tag',
     /** Verified on FFDec 26.4.0 (line 81): attribute, present only when placeFlagHasCharacter is true. */
     characterId: 'characterId',
@@ -201,10 +201,14 @@ export const FFDEC_XML = {
     clipDepth: 'clipDepth',
     /** Verified on FFDec 26.4.0 (line 81): flag on PlaceObject2Tag. Ratio is not used by the pipeline. */
     flagHasRatio: 'placeFlagHasRatio',
-    /** UNVERIFIED (PlaceObject3Tag only; FFDec field name). */
+    /** Verified on FFDec 26.4.0 (Ruffle 4a8d396, visual/cache_as_bitmap/contains_grown_filter, PlaceObject3Tag in sprite 3: placeFlagHasFilterList="true"; "false" on placements without a filter). */
     flagHasFilterList: 'placeFlagHasFilterList',
-    /** UNVERIFIED (PlaceObject3Tag only; FFDec field name). */
+    /** Verified on FFDec 26.4.0 (same placement): child element holding one <item type="GLOWFILTER"> per filter. */
     surfaceFilterList: 'surfaceFilterList',
+    /** Verified on FFDec 26.4.0 (Ruffle 4a8d396, visual/blend_modes/add, PlaceObject3Tag line 1046: placeFlagHasBlendMode="true"). */
+    flagHasBlendMode: 'placeFlagHasBlendMode',
+    /** Verified on FFDec 26.4.0 (same placement): blendMode="8" (SWF blend mode number, 8 is add), present with the flag. */
+    blendMode: 'blendMode',
   },
 
   remove: {

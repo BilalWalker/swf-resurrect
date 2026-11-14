@@ -582,12 +582,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend `test/unit/unpack.test.ts` (the argument vector contains `-format text:svg`, `texts` is expected) and `test/unit/readUnpacked.test.ts` (text assets, a missing file, an empty edit-text SVG ignored).
     - _Requirements: 10.1, 10.4_
 
-  - [-] 12.2 Static text as a shape symbol; dynamic text dropped with a limit
+  - [x] 12.2 Static text as a shape symbol; dynamic text dropped with a limit
     - `convertModel` builds a `shape` symbol from each static-text asset with `svgToShapeJson(raw, 'text')` exactly like a shape, with `size` and `origin`; placements are kept. It records one `text-metrics` entry per static-text shape (message `glyph shapes come from the embedded font outlines; the original font hinting is not reproduced`). Dynamic text placements are dropped with kind `text` and the message `dynamic text (DefineEditText) is not rendered`. `TextField` is not added to the Shim (Requirement 11.3), and the Translate stage keeps reporting `TextField` members as before (Requirement 11.2).
     - Test: extend **Property 10** in `test/property/convertAccounting.property.test.ts` (static text drawn, not dropped) and `test/unit/convertModel.test.ts` (static text symbol, `text-metrics` entry, dynamic text drop, a `TextField` member still produces the existing diagnostic); extend `genTagsModel.ts`; `test/unit/convertTextDeterminism.test.ts` (create): two Convert runs over a model with static text give byte-identical `*.shape.json`.
     - _Requirements: 5.3, 10.2, 10.3, 10.5, 11.1, 11.2, 11.3, 11.4, 9.2_
 
-  - [ ] 12.3 XML names for filters and blend modes
+  - [-] 12.3 XML names for filters and blend modes
     - Download `visual/blend_modes/add/test.swf` under `.work/` (not committed), run FFDec `-swf2xml`, and record the `PlaceObject3Tag` filter flag (`placeFlagHasFilterList`), the blend-mode flag and the blend-mode value attribute in `FFDEC_XML`; names seen lose their `UNVERIFIED` mark. IF an attribute name cannot be observed on a placement that uses it, STOP and ask before relying on it (Requirement 13.4, git workflow). Delete the download.
     - Test: `test/unit/ffdecXmlVerifiedNames.test.ts` rows for the observed names only, using a dump excerpt.
     - _Requirements: 13.3, 13.4_

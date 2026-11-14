@@ -103,3 +103,28 @@ describe('3.3 observed id names are verified, unobserved ones stay UNVERIFIED', 
     expect(FFDEC_XML.shape.idAttr).toBe('shapeId');
   });
 });
+
+describe('12.3 filter and blend-mode names observed on Ruffle 4a8d396 dumps (FFDec 26.4.0)', () => {
+  // Excerpt: tests/tests/swfs/visual/blend_modes/add/test.swf, -swf2xml line 1046 (attributes trimmed to the ones used).
+  const blendPlacement =
+    '<item type="PlaceObject3Tag" blendMode="8" characterId="19" depth="3" placeFlagHasBlendMode="true" placeFlagHasFilterList="false" placeFlagHasMatrix="true" placeFlagMove="false">';
+  // Excerpt: tests/tests/swfs/visual/cache_as_bitmap/contains_grown_filter/test.swf, sprite 3, line 56 and following.
+  const filterPlacement =
+    '<item type="PlaceObject3Tag" characterId="2" depth="1" placeFlagHasBlendMode="false" placeFlagHasFilterList="true" placeFlagHasMatrix="true" placeFlagMove="false">';
+  const filterChild = '<surfaceFilterList><item type="GLOWFILTER" blurX="50.0" blurY="50.0"/></surfaceFilterList>';
+  it('PlaceObject3Tag class name and the blend-mode flag and value', () => {
+    const p = FFDEC_XML.place;
+    expect(blendPlacement.includes(`type="${p.placeObject3}"`)).toBe(true);
+    expect(blendPlacement.includes(`${p.flagHasBlendMode}="true"`)).toBe(true);
+    expect(blendPlacement.includes(`${p.blendMode}="8"`)).toBe(true);
+  });
+  it('filter flag is true on a filtered placement, with surfaceFilterList child', () => {
+    const p = FFDEC_XML.place;
+    expect(filterPlacement.includes(`${p.flagHasFilterList}="true"`)).toBe(true);
+    expect(filterPlacement.includes(`${p.flagHasBlendMode}="false"`)).toBe(true);
+    expect(filterChild.includes(`<${p.surfaceFilterList}>`)).toBe(true);
+  });
+  it('the clip depth value attribute stays UNVERIFIED (not observed)', () => {
+    expect(blendPlacement.includes(`${FFDEC_XML.place.clipDepth}="`)).toBe(false);
+  });
+});
