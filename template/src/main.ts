@@ -3,23 +3,8 @@ import { loadScene } from '../runtime/loader';
 import { canvasToStage } from '../runtime/canvasToStage';
 import { Player } from '../runtime/player';
 import { PixiBackend } from '../runtime/pixi/pixiBackend';
-import type { SceneJson } from '../runtime/scene';
 import { classRegistry } from './classes';
 import { parseTimelineOnly, runTimelineOnly } from './timelineOnly';
-
-/** True when any placement in the scene has a non-zero colour offset. */
-function hasColorOffsets(scene: SceneJson): boolean {
-  for (const sym of Object.values(scene.symbols)) {
-    if (sym.type !== 'sprite') continue;
-    for (const frame of sym.frames) {
-      for (const entry of frame) {
-        const ct = entry.colorTransform;
-        if (ct[4] !== 0 || ct[5] !== 0 || ct[6] !== 0 || ct[7] !== 0) return true;
-      }
-    }
-  }
-  return false;
-}
 
 async function fetchText(url: string): Promise<string> {
   const response = await fetch(url);
@@ -44,8 +29,6 @@ async function boot(): Promise<void> {
     return;
   }
   const { scene, shapeBounds } = loaded;
-
-  if (hasColorOffsets(scene)) backend.warnColorOffsetsUnsupported();
 
   const app = new Application();
   await app.init({

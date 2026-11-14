@@ -1,4 +1,5 @@
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../../../template/runtime/backend';
+import type { ColorTransform8 } from '../../../template/runtime/scene';
 import { assertShapeDrawn, DRAWN_FILLS, type DrawnFills, type ShapeJson } from '../../../template/runtime/shapeJson';
 
 export interface FakeNode {
@@ -11,6 +12,8 @@ export interface FakeNode {
   alpha: number;
   visible: boolean;
   colorMultiplier: [number, number, number, number] | null;
+  /** The transform last given to setColorOffset; null when none or removed. */
+  colorOffset: ColorTransform8 | null;
   destroyed: boolean;
 }
 
@@ -85,10 +88,10 @@ export class FakeBackend implements RenderBackend {
     this.errors.push(message);
   }
 
-  offsetWarnings = 0;
-
-  warnColorOffsetsUnsupported(): void {
-    this.offsetWarnings++;
+  setColorOffset(node: NodeHandle, ct: Readonly<ColorTransform8> | null): void {
+    const n = node as FakeNode;
+    n.colorOffset = ct === null ? null : [...ct];
+    if (ct !== null) n.colorMultiplier = null;
   }
 
   /** Nodes not destroyed. */
@@ -107,6 +110,7 @@ export class FakeBackend implements RenderBackend {
       alpha: 1,
       visible: true,
       colorMultiplier: null,
+      colorOffset: null,
       destroyed: false,
     };
     this.nodes.push(node);

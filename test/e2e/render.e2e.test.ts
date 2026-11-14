@@ -76,10 +76,10 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
   }, 30_000);
 
-  /** Renders the shape on a white W x H stage and returns a `dark(x, y)` reader (red channel below 128). */
-  async function renderRed(shape: ShapeJson): Promise<(x: number, y: number) => number> {
+  /** Renders the shape (optionally in a container with setColorOffset(ct)) on a white W x H stage; returns an rgb reader. */
+  async function renderRgb(shape: ShapeJson, ct?: number[]): Promise<(x: number, y: number) => [number, number, number]> {
     const data = await page!.evaluate(
-      async ({ shape: s, w, h }) => {
+      async ({ shape: s, w, h, ct: offset }) => {
         const T = (globalThis as unknown as { T: { Application: new () => any; PixiBackend: new () => any } }).T;
         const app = new T.Application();
         await app.init({ width: w, height: h, background: '#ffffff', antialias: true, resolution: 1, autoStart: false });
@@ -98,7 +98,16 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
         for (const p of s.paths) if (p.fill?.kind === 'bitmap' && p.fill.image === 'test:2x2') p.fill.image = url;
         const backend = new T.PixiBackend();
         await backend.loadShape(1, s, '');
-        app.stage.addChild(backend.createShape(1));
+        const shapeNode = backend.createShape(1);
+        if (offset === undefined) {
+          app.stage.addChild(shapeNode);
+        } else {
+          // One sprite: a container holding the shape, with the colour transform on the container.
+          const box = backend.createContainer();
+          backend.addChildAt(box, shapeNode, 0);
+          backend.setColorOffset(box, offset);
+          app.stage.addChild(box);
+        }
         app.renderer.render(app.stage);
         // Copy the WebGL canvas in the same task as the render, before the drawing buffer is cleared.
         const copy = document.createElement('canvas');
@@ -108,14 +117,23 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
         ctx.drawImage(app.canvas as HTMLCanvasElement, 0, 0);
         const px = ctx.getImageData(0, 0, w, h).data;
         const r: number[] = [];
-        for (let i = 0; i < px.length; i += 4) r.push(px[i]!);
+        for (let i = 0; i < px.length; i += 4) r.push(px[i]!, px[i + 1]!, px[i + 2]!);
         app.destroy(true, { children: true });
         return { r, width: copy.width };
       },
-      { shape, w: W, h: H },
+      { shape, w: W, h: H, ct },
     );
     expect(data.width).toBe(W);
-    return (x, y) => data.r[y * W + x]!;
+    return (x, y) => {
+      const i = (y * W + x) * 3;
+      return [data.r[i]!, data.r[i + 1]!, data.r[i + 2]!];
+    };
+  }
+
+  /** Renders the shape on a white W x H stage and returns a ed(x, y) reader. */
+  async function renderRed(shape: ShapeJson): Promise<(x: number, y: number) => number> {
+    const rgb = await renderRgb(shape);
+    return (x, y) => rgb(x, y)[0];
   }
 
   async function render(shape: ShapeJson): Promise<(x: number, y: number) => boolean> {
@@ -293,5 +311,32 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
     expect(red(5, 5)).toBeLessThan(40);
     expect(red(10, 5)).toBeGreaterThan(60);
     expect(red(10, 5)).toBeLessThan(200);
+  });
+
+  // Colour offsets (task 11.7): a two black squares in a one-sprite scene with redAddTerm 255 and alphaAddTerm 100.
+  const blackSquare: ShapeJson = {
+    formatVersion: 1,
+    paths: [
+      {
+        contours: [{ outer: [['M', 50, 30], ['L', 90, 30], ['L', 90, 70], ['L', 50, 70], ['Z']], holes: [] }],
+        fill: { kind: 'solid', color: '#000000', alpha: 1 },
+        stroke: null,
+      },
+      {
+        contours: [{ outer: [['M', 130, 30], ['L', 150, 30], ['L', 150, 70], ['L', 130, 70], ['Z']], holes: [] }],
+        fill: { kind: 'solid', color: '#000000', alpha: 1 },
+        stroke: null,
+      },
+    ],
+  };
+
+  it('setColorOffset adds the red offset to the fill and leaves the transparent box around it unchanged', async () => {
+    // The Player strips the alpha add term, so the transform given here has alpha add 0.
+    const rgb = await renderRgb(blackSquare, [1, 1, 1, 1, 255, 0, 0, 0]);
+    expect(rgb(70, 50)).toEqual([255, 0, 0]); // fill: black plus 255 red
+    expect(rgb(5, 5)).toEqual([255, 255, 255]); // background untouched
+    expect(rgb(140, 50)).toEqual([255, 0, 0]);
+    expect(rgb(110, 50)).toEqual([255, 255, 255]); // inside the container box, between the two glyphs: unchanged
+    expect(rgb(45, 50)).toEqual([255, 255, 255]);
   });
 });

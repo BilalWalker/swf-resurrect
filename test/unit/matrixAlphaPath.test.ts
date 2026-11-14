@@ -89,7 +89,7 @@ describe('Player matrix and colour transform path', () => {
       expect(n2.transform.x).toBe(490);
       expect(n2.transform.y).toBe(90);
       expect(n2.colorMultiplier).toEqual([1, 1, 1, 0.5]);
-      expect(backend.offsetWarnings).toBe(0);
+      expect(n2.colorOffset).toBeNull();
       expect(warn).not.toHaveBeenCalled();
     } finally {
       warn.mockRestore();

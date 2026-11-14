@@ -373,14 +373,29 @@ describe('Player: a linked class that is not in the registry', () => {
 });
 
 describe('Player colour offsets and scripted children', () => {
-  it('reports non-zero colour offsets to the backend and stays silent for zero offsets', () => {
+  it('draws an offset colour transform through setColorOffset and a multiplier-only one through setColorMultiplier', () => {
     const withOffset: DisplayListEntry = { ...entry(1, 1), colorTransform: [1, 1, 1, 1, 0, 10, 0, 0] };
     const a = setup(sceneOf(sprite([[withOffset]])));
-    expect(a.backend.offsetWarnings).toBeGreaterThan(0);
+    const an = a.backend.nodes.find((n) => n.kind === 'shape')!;
+    expect(an.colorOffset).toEqual([1, 1, 1, 1, 0, 10, 0, 0]);
+    expect(an.colorMultiplier).toBeNull();
     const b = setup(sceneOf(sprite([[{ ...entry(1, 1), colorTransform: [0.5, 1, 1, 1, 0, 0, 0, 0] }]])));
-    expect(b.backend.offsetWarnings).toBe(0);
+    const bn = b.backend.nodes.find((n) => n.kind === 'shape')!;
+    expect(bn.colorOffset).toBeNull();
+    expect(bn.colorMultiplier).toEqual([0.5, 1, 1, 1]);
   });
 
+  it('strips the alpha add term before setColorOffset and removes the offset when it is gone', () => {
+    const e1: DisplayListEntry = { ...entry(1, 1), colorTransform: [1, 1, 1, 0.5, 20, 0, 0, 100] };
+    const e2: DisplayListEntry = { ...entry(1, 1), colorTransform: [1, 1, 1, 0.5, 0, 0, 0, 0] };
+    const { backend, clock, player } = setup(sceneOf(sprite([[e1], [e2]])));
+    const node = backend.nodes.find((n) => n.kind === 'shape')!;
+    expect(node.colorOffset).toEqual([1, 1, 1, 0.5, 20, 0, 0, 0]);
+    clock.advance(1000);
+    player.update();
+    expect(node.colorOffset).toBeNull();
+    expect(node.colorMultiplier).toEqual([1, 1, 1, 0.5]);
+  });
   it('draws a child added by script above timeline children, including ones created later', () => {
     const root = sprite([[entry(1, 1)], [entry(1, 1), entry(2, 1)]]);
     const { backend, clock, player } = setup(sceneOf(root));

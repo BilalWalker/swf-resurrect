@@ -555,12 +555,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend `test/unit/emit.test.ts` and `test/unit/buildProject.test.ts` with a fixture holding `images/5.png`: the file is present in the emitted project and in `dist/assets/images`.
     - _Requirements: 9.2_
 
-  - [-] 11.6 `colourMatrix`, `hasOffsets`, `stripAlphaAdd`, `hasAlphaAdd`
+  - [x] 11.6 `colourMatrix`, `hasOffsets`, `stripAlphaAdd`, `hasAlphaAdd`
     - Create `template/runtime/colourMatrix.ts` as in design section 4 (row-major 4x5, offsets divided by 255; `colourMatrix` keeps the full Flash formula; `stripAlphaAdd` returns the transform with the alpha add term replaced by 0; `hasAlphaAdd`). Add the file to the purity test.
     - Test: `test/property/colourMatrix.property.test.ts` (create), **Property 8: The colour matrix equals the Flash formula** (including `stripAlphaAdd` and `hasAlphaAdd`).
     - _Requirements: 13.5, 13.6, 15.2, 15.5_
 
-  - [ ] 11.7 `setColorOffset` in the backend and Player, and the Exact_Render measurement
+  - [-] 11.7 `setColorOffset` in the backend and Player, and the Exact_Render measurement
     - `backend.ts`, `pixiBackend.ts`, `fakeBackend.ts`: `setColorOffset(node, ct | null)` sets `node.filters = [filter]` and resets `tint` and colour alpha, `null` removes the filter; remove `warnColorOffsetsUnsupported`. `Player` calls it with the matrix of `stripAlphaAdd(ct)` when `hasOffsets(ct)` and `setColorMultiplier` otherwise; `template/src/main.ts` drops `hasColorOffsets`. Measure `acid-color-2` on a local copy under `.work/`: it must show 0 differing pixels (Exact_Render, Requirement 13.6); IF it does not, STOP and ask and keep the `colour-offset` limit (Requirement 13.7). Report the Overall_Match; the committed floor comes in sub-task 15.6.
     - Test: `test/unit/player.test.ts` (an offset colour transform calls `setColorOffset`, a multiplier-only transform calls `setColorMultiplier`) and `test/e2e/render.e2e.test.ts` (a synthetic one-sprite scene with `redAddTerm=255` read back through the filter shows the expected colour and leaves the box around the glyphs unchanged).
     - _Requirements: 13.5, 13.6, 13.7_

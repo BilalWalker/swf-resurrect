@@ -1,5 +1,7 @@
-import { Container, FillGradient, FillPattern, Graphics, ImageSource, Matrix, Texture, type FillInput } from 'pixi.js';
+import { ColorMatrixFilter, Container, FillGradient, FillPattern, Graphics, ImageSource, Matrix, Texture, type FillInput } from 'pixi.js';
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../backend';
+import { colourMatrix } from '../colourMatrix';
+import type { ColorTransform8 } from '../scene';
 import { GRADIENT_HALF_EXTENT, GRADIENT_TEXTURE_SIZE } from '../gradientMatrix';
 import { assertShapeDrawn, DRAWN_FILLS, ShapeJsonError, type DrawnFills, type PathCmd, type ShapeFill, type ShapeJson, type ShapePath } from '../shapeJson';
 
@@ -218,7 +220,6 @@ export class PixiBackend implements RenderBackend {
   private readonly errorHost: HTMLElement | undefined;
   private readonly caps: DrawnFills;
   private errorElement: HTMLElement | null = null;
-  private warnedOffsets = false;
 
   constructor(options: PixiBackendOptions = {}) {
     this.errorHost = options.errorHost;
@@ -283,11 +284,30 @@ export class PixiBackend implements RenderBackend {
     this.applyAlpha(c);
   }
 
-  /** Colour transform offsets are not supported; report once. */
-  warnColorOffsetsUnsupported(): void {
-    if (this.warnedOffsets) return;
-    this.warnedOffsets = true;
-    console.warn('PixiBackend: colour transform offsets are not supported and are ignored');
+  /**
+   * A colour transform with offsets as a ColorMatrixFilter on the node (design section 4). Pixi 8.22.0 sources relied
+   * on, under node_modules/pixi.js/lib/filters/defaults/color-matrix:
+   * - ColorMatrixFilter.mjs:1178-1183 `matrix` setter: a 20-number row-major 4x5 array (rows r, g, b, a; the fifth
+   *   column is the offset on 0..1 channels), which is the layout of colourMatrix().
+   * - ColorMatrixFilter.mjs:1208-1213 `alpha` (uAlpha, default 1): the blend between the source and the transformed
+   *   colour; it stays 1 so the whole matrix is applied.
+   * - colorMatrixFilter.frag.mjs: the shader un-premultiplies the texel (`color.rgb /= color.a`), applies the matrix
+   *   and premultiplies with the result alpha, so a transparent texel stays transparent unless the alpha row adds to
+   *   it; that is why the Player strips the alpha add term first.
+   * The tint and the colour alpha of setColorMultiplier are reset so the multiplier is not applied twice.
+   */
+  setColorOffset(node: NodeHandle, ct: Readonly<ColorTransform8> | null): void {
+    const c = node as Container;
+    if (ct === null) {
+      c.filters = null;
+      return;
+    }
+    c.tint = 0xffffff;
+    this.stateOf(c).colorAlpha = 1;
+    this.applyAlpha(c);
+    const filter = new ColorMatrixFilter();
+    filter.matrix = colourMatrix(ct) as typeof filter.matrix;
+    c.filters = [filter];
   }
 
   destroyNode(node: NodeHandle): void {

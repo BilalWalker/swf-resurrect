@@ -26,6 +26,7 @@ import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
+import { hasOffsets, stripAlphaAdd } from './colourMatrix';
 import { constructorSite, messageOf, type ErrorSink } from './errorReport';
 import { hitTestAll, resolveHitTarget, type TargetNode } from './hitTest';
 import type { ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
@@ -459,14 +460,21 @@ export class Player {
   private applyColor(child: DisplayObject, ct: DisplayListEntry['colorTransform']): void {
     const node = this.nodes.nodeOf(child);
     if (node === undefined) return;
-    if (ct[4] !== 0 || ct[5] !== 0 || ct[6] !== 0 || ct[7] !== 0) this.backend.warnColorOffsetsUnsupported?.();
     // Identity on a fresh node needs no call; a change back to identity is an explicit call from a later entry.
     if (isIdentityColor(ct) && !this.coloured.has(child)) return;
     this.coloured.add(child);
+    if (hasOffsets(ct)) {
+      // The alpha add term is stripped so the filter does not paint the box around the glyphs (design section 4, F16).
+      this.backend.setColorOffset(node, stripAlphaAdd(ct));
+      this.offsetFiltered.add(child);
+      return;
+    }
+    if (this.offsetFiltered.delete(child)) this.backend.setColorOffset(node, null);
     this.backend.setColorMultiplier(node, ct[0], ct[1], ct[2], ct[3]);
   }
 
   private readonly coloured = new WeakSet<DisplayObject>();
+  private readonly offsetFiltered = new WeakSet<DisplayObject>();
 
   // ---- scene preparation ----
 
