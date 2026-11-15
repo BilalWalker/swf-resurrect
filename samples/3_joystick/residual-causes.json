@@ -1,0 +1,292 @@
+{
+  "formatVersion": 1,
+  "sample": "3_joystick",
+  "entries": [
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 115,
+        "y0": 9,
+        "x1": 115,
+        "y1": 9
+      },
+      "kind": "edge-antialiasing",
+      "message": "Outline pixel of the white arrow at the top (arrow path vertex near (115.15,9.05) in 1.shape.json). The reference blends the white outline slightly less into the light background than the render. Coverage of a pixel-sized vertex differs between the FFDec rasteriser and the browser canvas."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 77,
+        "y0": 54,
+        "x1": 77,
+        "y1": 54
+      },
+      "kind": "edge-antialiasing",
+      "message": "Outline pixel at the vertex (77.85,54.6) of the white outline of the upper-left arrow (1.shape.json). Edge coverage of one pixel differs between the FFDec rasteriser and the browser canvas; the render is darker."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 239,
+        "y0": 9,
+        "x1": 454,
+        "y1": 10
+      },
+      "kind": "subpixel-strips",
+      "message": "Top border of the right panel. 1.shape.json draws the panel frame as stacked solid #666666 strips 0.5 to 1.15 px wide with alpha from 1 to 0.09 (y 8 to 9.15, 9.15 to 9.65, 9.65 to 10.15, ...). Rows 9 and 10 are covered by fractions of several strips; the reference row 9 is (113,119,124) and the render (106,108,109), so the render is darker by 7 to 16 per channel along the whole edge. The two rasterisers combine the fractional coverage of overlapping thin strips differently."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 239,
+        "y0": 32,
+        "x1": 239,
+        "y1": 65
+      },
+      "kind": "subpixel-strips",
+      "message": "Left border column x=239 of the right panel (strips 239.1 to 239.6 alpha 0.80 and 239.6 to 240.1 alpha 0.69 in 1.shape.json). Reference (114,120,127), render (110,114,118): the render is darker by 4 to 9. Same cause as the top border: fractional coverage of overlapping thin strips."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 237,
+        "y0": 190,
+        "x1": 237,
+        "y1": 212
+      },
+      "kind": "subpixel-strips",
+      "message": "Left outer border column x=237 of the right panel (strip 237.7 to 238.6 alpha 1 in 1.shape.json, fractional coverage 0.3 of pixel 237). Reference (107,125,144), render (111,132,153): the render is lighter by 4 to 9. Same cause as the top border."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 56,
+        "y0": 83,
+        "x1": 65,
+        "y1": 126
+      },
+      "kind": "ring-edge",
+      "message": "Left arc of the outer edge of the ring (symbol 5: shape 4 radius 59.4 and its shadow shape 2 scaled 0.9 at alpha 0.89 about (115.1,116)). All pixels are 59.8 to 60.5 px from the centre and at most one pixel wide, with mixed signs (render minus reference -2 to +11). The edge coverage of the ring and the stepped alpha ramp of its shadow gradient differ between the two renderers."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 82,
+        "y0": 58,
+        "x1": 100,
+        "y1": 66
+      },
+      "kind": "ring-edge",
+      "message": "Upper-left arc of the ring edge, where the ring crosses the white outline of the upper-left arrow. Pixels are 59.9 to 60.4 px from the ring centre (115.1,116), differences of 6 to 23 with mixed signs. Edge coverage of the ring over the arrow outline."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 129,
+        "y0": 58,
+        "x1": 150,
+        "y1": 67
+      },
+      "kind": "ring-edge",
+      "message": "Upper-right arc of the ring edge, where the ring crosses the white outline of the upper-right arrow. Pixels are 59.3 to 60.7 px from the centre, differences of 9 to 32, render darker by 6 to 8 on average. Edge coverage of the ring over the arrow outline."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 163,
+        "y0": 81,
+        "x1": 175,
+        "y1": 98
+      },
+      "kind": "ring-edge",
+      "message": "Right-upper arc of the ring edge and its shadow (59.0 to 62.5 px from the centre). Reference (78,88,98) against render (65,88,111) at the first pixel; the render is darker by 10 on average. Edge coverage and shadow gradient steps."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 164,
+        "y0": 133,
+        "x1": 176,
+        "y1": 152
+      },
+      "kind": "ring-edge",
+      "message": "Right-lower arc of the ring edge and its shadow, 60.0 to 63.4 px from the centre, up to 38 per channel, render darker by 15 on average (reference (53,64,72), render (28,33,37) at the first differing pixel). Edge coverage and shadow gradient steps."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 128,
+        "y0": 155,
+        "x1": 161,
+        "y1": 177
+      },
+      "kind": "ring-edge",
+      "message": "Lower arc of the ring edge and its shadow (60.0 to 63.6 px from the centre), up to 54 per channel, render darker by 6 to 15 on average. Edge coverage and shadow gradient steps where the ring crosses the white outline of the lower-right arrow."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 80,
+        "y0": 166,
+        "x1": 105,
+        "y1": 178
+      },
+      "kind": "ring-edge",
+      "message": "Lower-left arc of the ring edge and its shadow (58.9 to 63.4 px from the centre), up to 55 per channel, render darker by 9 to 18. Reference (107,107,107) against render (74,92,109) at (104,174): the reference keeps the grey of the white outline under the ring edge, the render shows the blue arrow."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 109,
+        "y0": 174,
+        "x1": 125,
+        "y1": 178
+      },
+      "kind": "ring-edge",
+      "message": "Bottom of the ring edge and its shadow beside the downward arrow shaft (58.8 to 62.8 px from the centre), up to 40 per channel, render darker by 6 to 21. Reference (96,96,96) against render (56,75,95) at (125,174): the reference keeps the grey of the white outline under the ring edge."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 78,
+        "y0": 78,
+        "x1": 110,
+        "y1": 107
+      },
+      "kind": "sphere-edge",
+      "message": "Upper-left edge of the red sphere (shape 8 radial gradient, radius 40, 35.0 to 40.8 px from (115.1,116)). The reference edge is a staircase without partial coverage, the render has a smoothly blended edge about half a pixel further out. Most of the 973 differing pixels in the box differ by a few levels; 166 exceed the tolerance. Differences up to 139 only on the outermost pixels."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 79,
+        "y0": 97,
+        "x1": 79,
+        "y1": 97
+      },
+      "kind": "sphere-edge",
+      "message": "Single outermost pixel of the sphere edge: the reference is the background (140,163,186), the render has the sphere colour blended in (132,41,47). 40.8 px from the centre; the reference sphere edge has no partial coverage there."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 75,
+        "y0": 111,
+        "x1": 75,
+        "y1": 111
+      },
+      "kind": "sphere-edge",
+      "message": "Single outermost pixel of the sphere edge: the reference is the background (137,160,184), the render has the sphere colour blended in (121,40,46). 40.4 px from the centre; the reference sphere edge has no partial coverage there."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 153,
+        "y0": 104,
+        "x1": 155,
+        "y1": 104
+      },
+      "kind": "sphere-edge",
+      "message": "Right edge of the sphere where the shaft starts (39.8 to 41.7 px from the centre): reference (40,40,40),(26,26,26),(12,12,12) against render (50,17,17),(17,17,17),(1,1,1). The sphere edge colour is blended in the render and not in the reference."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 112,
+        "y0": 79,
+        "x1": 112,
+        "y1": 80
+      },
+      "kind": "gradient-step",
+      "message": "Two interior pixels of the sphere radial gradient. Reference (179,0,0) and (195,0,0), render (188,0,0) and (204,0,0): one level of the 256-step ramp of the reference (steps of about 9 per level near the rim) against the continuous ramp of the render."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 79,
+        "y0": 109,
+        "x1": 80,
+        "y1": 109
+      },
+      "kind": "gradient-step",
+      "message": "Two interior pixels of the sphere radial gradient (red 163 and 179 in the reference, 172 and 188 in the render): one step of about 9 of the quantised ramp of the reference against the continuous ramp of the render."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 80,
+        "y0": 111,
+        "x1": 80,
+        "y1": 111
+      },
+      "kind": "gradient-step",
+      "message": "One interior pixel of the sphere radial gradient (red 180 in the reference, 189 in the render): one step of about 9 of the quantised ramp of the reference against the continuous ramp of the render."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 159,
+        "y0": 101,
+        "x1": 194,
+        "y1": 106
+      },
+      "kind": "gradient-phase",
+      "message": "Shaft gradient (symbol 6, linear black, white at 0.216, black). Down column x=180 the reference rows 100 to 106 read 0,36,73,110,147,184,221 and the render 18,55,92,128,165,202,239: a constant difference of 18 to 19, half of the 37 per row step, so the ramp is sampled half a pixel earlier in the render (below the peak the render is 5 lower, half of the step of 10). The reference samples the gradient at the pixel corner, the render at the pixel centre."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 331,
+        "y0": 109,
+        "x1": 369,
+        "y1": 128
+      },
+      "kind": "gradient-step",
+      "message": "Single interior pixels of the red shell of the beetle (shape 14 gradient). The render is lighter by 9 to 19, for example (170,6,2) against (181,13,4) at (348,124): one step of the reference ramp against the continuous ramp of the render. Differences of at most 19 at the tolerance edge."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 372,
+        "y0": 124,
+        "x1": 382,
+        "y1": 139
+      },
+      "kind": "edge-antialiasing",
+      "message": "Dark crescent of the beetle head at the shell edge (57 px over the tolerance of 158 differing pixels in the box, up to 57 per channel, render lighter by 13 on average). Edge coverage of the dark head shape (shape 14 radial gradient) over the shell differs between the renderers."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 378,
+        "y0": 123,
+        "x1": 378,
+        "y1": 123
+      },
+      "kind": "edge-antialiasing",
+      "message": "Single pixel on the beetle head edge: reference (60,60,60), render (69,69,69)."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 384,
+        "y0": 107,
+        "x1": 384,
+        "y1": 107
+      },
+      "kind": "edge-antialiasing",
+      "message": "Antenna tip of the beetle: reference blends the thin dark tip into the background (124,130,137), the render has a full black pixel (0,0,0). Thin-line coverage differs."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 385,
+        "y0": 145,
+        "x1": 387,
+        "y1": 147
+      },
+      "kind": "edge-antialiasing",
+      "message": "Tip of the lower leg of the beetle, thin dark line: reference (89,100,111) against render (111,123,136); the render is lighter by 4 on average. Thin-line coverage differs."
+    }
+  ]
+}
