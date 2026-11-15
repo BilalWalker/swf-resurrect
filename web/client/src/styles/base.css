@@ -334,6 +334,16 @@ main,
   color: var(--mist);
 }
 
+.wordmark {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .top-note {
+    display: none;
+  }
+}
+
 main {
   max-width: var(--max);
   margin: 0 auto;
