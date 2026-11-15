@@ -806,12 +806,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/e2e/residual.e2e.test.ts` entry when below 100 (the entry skips with the others' rule when the file is absent).
     - _Requirements: 10.5, 10.6, 10.7, 14.19, 20.8, 21.1, 21.3_
 
-  - [-] 17.13 `static_text`: skipping floor tests
+  - [x] 17.13 `static_text`: skipping floor tests
     - Create `test/e2e/staticText.e2e.test.ts`: it uses the helper of 17.10 (`describe.skipIf` with the skip message naming `npm run fetch:static-text`; a present file with another hash fails naming both values) and asserts the Overall_Match floor and the Trace_Score floor equal to the values measured in 17.12. A test asserts that `samples/static_text/test.swf` does not exist.
     - Test: `test/e2e/staticText.e2e.test.ts`; with the file absent the suite is reported as skipped, not failed.
     - _Requirements: 3.6, 10.6, 20.3, 20.8, 20.9_
 
-  - [ ] 17.14 Final measurement of every floor
+  - [-] 17.14 Final measurement of every floor
     - Run `npm run pipeline -- samples/<name>/test.swf out/<name> --verify --force` for every admitted sample, for `clickgoto` and `tweendemo`, and for `static_text` when the fetched file is present. Raise any Overall_Match or Trace_Score floor in `test/e2e/overallMatch.e2e.test.ts`, `test/e2e/traceScore.e2e.test.ts`, `test/e2e/staticText.e2e.test.ts` and `test/unit/clickgotoReplay.test.ts` whose measured value rose (Ratchet_Rule); never lower one. If a value is below its floor, fix the cause or STOP; do not touch a floor or the tolerance. Add a determinism test: two Pipeline runs on `radial` and on `mask_reapply` give byte-identical `*.shape.json`, `images/*`, `scene.json`, `fidelity-report.json` and `fidelity-report.html`.
     - Test: the floor tests above and `test/e2e/determinism.e2e.test.ts` (create; same skip rules as the other e2e tests).
     - _Requirements: 1.3, 1.4, 1.5, 3.6, 3.7, 15.5_
