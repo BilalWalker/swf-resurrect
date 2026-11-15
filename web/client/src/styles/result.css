@@ -1,0 +1,569 @@
+/* The result: It lives. Moon gauges, the ghost beside the risen, autopsy, grave, grimoire. */
+.result {
+  margin-bottom: 28px;
+}
+
+.alive {
+  position: relative;
+  padding: 4px 0 8px;
+}
+
+.alive-title {
+  font-size: clamp(2.4rem, 7vw, 4.2rem);
+  color: var(--spectral-soft);
+  text-shadow:
+    0 0 18px rgba(126, 242, 184, 0.45),
+    0 0 48px rgba(126, 242, 184, 0.2);
+  margin: 0;
+  animation: wake 1.6s ease-out both;
+}
+
+.alive-title:focus {
+  outline: none;
+}
+
+@keyframes wake {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.2em;
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: 0.01em;
+    filter: blur(0);
+  }
+}
+
+.alive-sub {
+  color: var(--bone);
+  font-size: 1.05rem;
+  margin: 6px 0 0;
+  word-break: break-word;
+}
+
+.ekg {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: 12px 0 4px;
+}
+
+.ekg path {
+  stroke: var(--spectral);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--spectral-glow));
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 0;
+  animation: trace 2.2s ease-out both;
+  vector-effect: non-scaling-stroke;
+}
+
+@keyframes trace {
+  from {
+    stroke-dashoffset: 1400;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---- Vitals: two moon gauges and two tiles ---- */
+.vitals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 10px 0 18px;
+}
+
+.gauge,
+.tile {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--night-3);
+  border-radius: var(--radius);
+  background: rgba(10, 14, 20, 0.88);
+}
+
+.gauge {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.moon-gauge {
+  width: 76px;
+  height: 76px;
+}
+
+.moon-gauge .moon-dark {
+  fill: #141b25;
+}
+.moon-gauge .moon-lit {
+  fill: #e3f7ec;
+  filter: drop-shadow(0 0 6px rgba(185, 248, 215, 0.6));
+}
+.moon-gauge .moon-craters circle {
+  fill: rgba(70, 96, 84, 0.22);
+}
+.moon-gauge .moon-ring {
+  stroke: var(--night-4);
+  stroke-width: 1.5;
+}
+.moon-gauge.is-eclipsed .moon-ring {
+  stroke: var(--mist-dim);
+  stroke-dasharray: 4 5;
+}
+
+.gauge figcaption,
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gauge-title,
+.tile-title {
+  font: 600 0.75rem/1.3 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mist);
+}
+
+.gauge-value,
+.tile-value {
+  font: 600 1.7rem/1.15 var(--font-mono);
+  color: var(--bone);
+}
+
+.gauge.is-none .gauge-value {
+  font-size: 1.15rem;
+  color: var(--mist);
+  padding: 4px 0;
+}
+
+.gauge-measures {
+  font-size: 0.82rem;
+  color: var(--mist);
+}
+
+.gauge-basis,
+.tile-sub {
+  font-size: 0.85rem;
+  color: var(--bone);
+  margin-top: 4px;
+}
+
+.gauge-basis code {
+  color: var(--mist);
+  font-size: 0.78rem;
+}
+
+.linkish {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--spectral);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.result-actions {
+  margin: 0 0 22px;
+}
+
+.btn-large {
+  min-height: 52px;
+  padding: 12px 24px;
+  font-size: 1.02rem;
+}
+
+.btn-small {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+
+/* ---- The ghost beside the risen ---- */
+.seance {
+  margin: 0 0 24px;
+}
+
+.seance-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+.seance-head h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.side {
+  margin: 0;
+  min-width: 0;
+}
+
+.side figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-bottom: 8px;
+}
+
+.side-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.side-sub {
+  color: var(--mist);
+  font-size: 0.85rem;
+}
+
+.is-ghost .side-name {
+  color: #c9d6e3;
+  font-style: italic;
+}
+
+.is-risen .side-name {
+  color: var(--spectral-soft);
+}
+
+.screen {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid var(--night-4);
+}
+
+.is-ghost .screen {
+  box-shadow: 0 0 30px rgba(185, 205, 230, 0.12);
+  filter: saturate(0.85);
+}
+
+.is-risen .screen {
+  border-color: var(--spectral-deep);
+  box-shadow: 0 0 30px rgba(126, 242, 184, 0.16);
+}
+
+.screen iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #05070b;
+}
+
+.screen-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  color: var(--ember);
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.seance > .muted {
+  margin-top: 10px;
+}
+
+/* ---- Tabs: autopsy, grave, grimoire ---- */
+.details {
+  border: 1px solid var(--night-3);
+  border-radius: var(--radius);
+  background: rgba(10, 14, 20, 0.92);
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--night-3);
+  background: rgba(5, 7, 11, 0.6);
+}
+
+.tabs [role='tab'] {
+  min-height: 48px;
+  padding: 12px 18px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--mist);
+  font: 600 0.95rem/1.2 var(--font-display);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.tabs [role='tab']:hover {
+  color: var(--bone);
+}
+
+.tabs [role='tab'][aria-selected='true'] {
+  color: var(--spectral-soft);
+  border-bottom-color: var(--spectral);
+  background: rgba(126, 242, 184, 0.05);
+}
+
+.tabs [role='tab']:focus-visible {
+  outline-offset: -3px;
+}
+
+.tab-panel {
+  padding: clamp(14px, 2.5vw, 24px);
+}
+
+.tab-panel:focus-visible {
+  outline-offset: -3px;
+}
+
+.tab-panel h4 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  margin: 18px 0 8px;
+}
+
+.tab-panel h4:first-child {
+  margin-top: 0;
+}
+
+.report-frame {
+  width: 100%;
+  height: min(75vh, 900px);
+  border: 1px solid var(--night-3);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--night-3);
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--night-3);
+  vertical-align: top;
+}
+
+th {
+  font: 600 0.75rem/1.3 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mist);
+  background: rgba(5, 7, 11, 0.6);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.num {
+  text-align: right;
+}
+
+.status {
+  display: inline-block;
+  margin: 0 6px 2px 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--night-4);
+  font: 600 0.75rem/1.5 var(--font-mono);
+  color: var(--bone);
+}
+
+.status.is-clean {
+  border-color: var(--spectral-deep);
+  color: var(--spectral-soft);
+}
+.status.is-loose {
+  border-color: #6f7a3a;
+  color: #e3eda0;
+}
+.status.is-unsupported,
+.status.is-omitted {
+  border-color: #7a4038;
+  color: #ffc4b8;
+}
+
+/* ---- Grimoire ---- */
+.grimoire-intro {
+  margin-bottom: 12px;
+}
+
+.grimoire {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 14px;
+  min-height: 320px;
+}
+
+.grimoire-files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.grimoire-file {
+  display: grid;
+  width: 100%;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  color: var(--bone);
+  text-align: left;
+  cursor: pointer;
+}
+
+.grimoire-file:hover {
+  background: var(--night-2);
+}
+
+.grimoire-file[aria-current='true'] {
+  border-color: var(--spectral-deep);
+  background: rgba(126, 242, 184, 0.06);
+}
+
+.grimoire-name {
+  font: 0.88rem/1.3 var(--font-mono);
+  word-break: break-all;
+}
+
+.grimoire-kind {
+  font-size: 0.75rem;
+  color: var(--mist);
+}
+
+.grimoire-view {
+  min-width: 0;
+}
+
+.grimoire-caption {
+  font: 0.8rem/1.3 var(--font-mono);
+  color: var(--mist);
+  margin: 0 0 6px;
+}
+
+.grimoire-code {
+  margin: 0;
+  max-height: 70vh;
+  overflow: auto;
+  padding: 12px 0;
+  background: #070a0f;
+  border: 1px solid var(--night-3);
+  border-radius: 8px;
+  font: 0.84rem/1.55 var(--font-mono);
+  tab-size: 2;
+  counter-reset: ln;
+}
+
+.grimoire-code .ln {
+  display: block;
+  padding: 0 14px 0 0;
+  white-space: pre;
+}
+
+.grimoire-code .ln::before {
+  counter-increment: ln;
+  content: counter(ln);
+  display: inline-block;
+  width: 3.4em;
+  margin-right: 14px;
+  padding-right: 8px;
+  text-align: right;
+  color: #7d8792;
+  border-right: 1px solid var(--night-3);
+  user-select: none;
+}
+
+.tk-keyword {
+  color: #8fd8ff;
+}
+.tk-type {
+  color: var(--spectral-soft);
+}
+.tk-string {
+  color: #f1d4a0;
+}
+.tk-number {
+  color: #f6b8d8;
+}
+.tk-comment {
+  color: #8a949f;
+  font-style: italic;
+}
+
+.result.is-remains,
+.panel.result.is-remains {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1120px) {
+  .vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .grimoire {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .grimoire-files {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+}
+
+@media (max-width: 520px) {
+  .vitals {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
