@@ -43,7 +43,6 @@ describe('Property 9: visual limits', () => {
         } as unknown as SceneJson;
         const limits = knownVisualLimits(s, [], { allComparedFramesExact: false }).filter((l) => l.kind === 'colour-offset');
         if (aAdd === 0) expect(limits).toEqual([]);
-        else if (aAdd > 0 && aMul >= 1) expect(limits).toEqual([]);
         else {
           expect(limits).toHaveLength(1);
           expect(limits[0]?.message).toContain(`alphaAddTerm ${aAdd}`);

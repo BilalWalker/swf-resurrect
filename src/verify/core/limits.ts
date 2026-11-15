@@ -59,17 +59,15 @@ function compareLimits(a: VisualLimit, b: VisualLimit): number {
 }
 
 /**
- * The backend draws the transform without its alpha add term (`stripAlphaAdd`). That is an
- * Exact_Render only for a positive add term with an alpha multiplier of at least 1: on an opaque
- * fill the Flash result clamps to the same opaque alpha (measured: `acid-color-2` with
- * alphaAddTerm 100, 0 differing pixels). Any other non-zero add term differs (measured with
- * alphaMultTerm 128 / alphaAddTerm 64 and alphaMultTerm 0 / alphaAddTerm 255; design section 4).
- * Not measured: a placement whose fills are semi-transparent.
+ * The backend draws the transform without its alpha add term (`stripAlphaAdd`), so every non-zero
+ * add term is recorded. Measured (design section 4, Alpha add term): on opaque fills a positive add
+ * term with an alpha multiplier of at least 1 is an Exact_Render (`acid-color-2`, alphaAddTerm 100,
+ * 0 differing pixels), but with semi-transparent fills it is not (fills at alpha 128 with
+ * alphaAddTerm 100: 7115 differing pixels). The scene does not say whether the placed content has
+ * semi-transparent pixels, so the rule cannot tell the two apart and names every non-zero term.
  */
 function alphaAddNotDrawnExactly(ct: readonly number[]): boolean {
-  const add = ct[7] ?? 0;
-  if (add === 0) return false;
-  return !(add > 0 && (ct[3] ?? 1) >= 1);
+  return (ct[7] ?? 0) !== 0;
 }
 
 /**

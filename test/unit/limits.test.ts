@@ -16,11 +16,11 @@ const sceneWith = (ct: number[]): SceneJson =>
 describe('knownVisualLimits colour-offset', () => {
   it.each([
     ['RGB offsets only', [1, 1, 1, 1, 255, 10, 0, 0]],
-    ['positive alpha add, alpha multiplier 1 (measured exact)', [1, 1, 1, 1, 0, 0, 0, 100]],
   ])('records nothing for %s', (_n, ct) => {
     expect(knownVisualLimits(sceneWith(ct), [], OPEN)).toEqual([]);
   });
   it.each([
+    ['positive add 100, alpha multiplier 1 (exact on opaque fills, 7115 px off on alpha 128 fills)', [1, 1, 1, 1, 0, 0, 0, 100], 100],
     ['alpha multiplier 0.5, add 64', [1, 1, 1, 0.5, 0, 0, 0, 64], 64],
     ['alpha multiplier 0, add 255', [1, 1, 1, 0, 0, 0, 0, 255], 255],
     ['negative alpha add', [1, 1, 1, 1, 0, 0, 0, -20], -20],
