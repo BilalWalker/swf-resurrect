@@ -6,7 +6,8 @@ import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium, type Browser } from 'playwright';
+import { chromium } from 'playwright';
+import { launchChromium, type LaunchedChromium } from '../support/launchChromium';
 import { afterAll, describe, expect, it } from 'vitest';
 import { emit } from '../../src/emit/emit';
 import type { TranslatedClass } from '../../src/translate/planTranslate';
@@ -74,9 +75,9 @@ const MIME: Record<string, string> = {
 describe.skipIf(reason !== null)(`browser boot with a throwing root class${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
   let tempRoot = '';
   let built: BuiltProject | null = null;
-  let browser: Browser | null = null;
+  let launched: LaunchedChromium | null = null;
   afterAll(async () => {
-    await browser?.close().catch(() => undefined);
+    await launched?.stop();
     await built?.dispose();
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
   }, 60_000);
@@ -106,10 +107,10 @@ describe.skipIf(reason !== null)(`browser boot with a throwing root class${reaso
         },
       );
       built = await buildProject(result.outputDir);
-      browser = await chromium.launch({ headless: true });
+      launched = await launchChromium();
     }
     const distDir = built.distDir;
-    const context = await browser!.newContext({ viewport: { width: 60, height: 40 }, deviceScaleFactor: 1 });
+    const context = await launched!.browser.newContext({ viewport: { width: 60, height: 40 }, deviceScaleFactor: 1 });
     const page = await context.newPage();
     const errors: string[] = [];
     page.on('console', (c) => {

@@ -6,8 +6,9 @@ import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium, type Browser, type Page } from 'playwright';
+import { chromium, type Page } from 'playwright';
 import { build } from 'vite';
+import { launchChromium, type LaunchedChromium } from '../support/launchChromium';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ShapeJson } from '../../template/runtime/shapeJson';
 
@@ -47,7 +48,7 @@ function strokeShape(points: Array<[number, number]>, cap: Cap, join: Join, widt
 describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
   let tempRoot = '';
   let bundle = '';
-  let browser: Browser | null = null;
+  let launched: LaunchedChromium | null = null;
   let page: Page | null = null;
 
   // A real Vite build of the real backend into one script, and a real Chromium launch: allow 30 s.
@@ -65,14 +66,14 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
       build: { outDir, emptyOutDir: true, lib: { entry, name: 'T', formats: ['iife'], fileName: () => 't.js' } },
     });
     bundle = await readFile(resolve(outDir, 't.js'), 'utf8');
-    browser = await chromium.launch({ headless: true });
-    page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+    launched = await launchChromium();
+    page = await launched.browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
     await page.setContent('<!doctype html><html><body style="margin:0"></body></html>');
     await page.addScriptTag({ content: bundle });
   }, 30_000);
 
   afterAll(async () => {
-    await browser?.close().catch(() => undefined);
+    await launched?.stop();
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
   }, 30_000);
 
