@@ -734,12 +734,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.14, 3.15, 3.20, 3.23_
 
-  - [-] 16.5 `click_block`: measure and attribute the residual
+  - [x] 16.5 `click_block`: measure and attribute the residual
     - Run `--verify`. The Trace_Score is whatever Tasks 5 to 8 give, measured at Task 9; do not add a Shim API beyond the fixture lines (Requirement 14.17). Report the Known_Visual_Limits (the morph shape, the edit text), that no `bitmap-fill` limit is recorded for its two Bitmap_Fills (Requirement 9.5), the Overall_Match (about 94.5 expected), the Trace_Score with `missing` and `extra` counts and any `release-outside`, `unsupported-input` and `unpaired-mouse-event` notes next to them (Requirement 14.21). Apply the residual step of 15.2 to every differing region (the dropped morph shape and edit text regions are attributed to their Named_Limit kinds in `samples/click_block/residual-causes.json`).
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 9.5, 14.2, 14.21, 21.1, 21.3, 21.4_
 
-  - [ ] 16.6 `click_block`: floors
+  - [-] 16.6 `click_block`: floors
     - Only after 16.5 is complete, add the Overall_Match and Trace_Score floors (the measured values) to `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`. No zero Trace_Score floor is accepted as a stand-in (Requirement 18.13): if the measured value is 0, STOP and ask.
     - Test: the two floor tests.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_

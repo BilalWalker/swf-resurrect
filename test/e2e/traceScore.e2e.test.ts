@@ -13,6 +13,8 @@ import { main } from '../../src/pipeline/cli';
 
 /** Measured in task 16.2 (missing 0, extra 0; was 0 at Checkpoint 27). Never lower. */
 const TRACE_SCORE_FLOOR_MASK_REAPPLY = 100;
+/** Measured in task 16.5 (5 of 5 matched, missing 0, extra 0; was 100 at Checkpoint 27). Never lower. */
+const TRACE_SCORE_FLOOR_CLICK_BLOCK = 100;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -43,7 +45,10 @@ describe.skipIf(reason !== null)(`trace score floor${reason === null ? '' : ` (s
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
   }, 60_000);
 
-  const cases: Array<[string, number]> = [['mask_reapply', TRACE_SCORE_FLOOR_MASK_REAPPLY]];
+  const cases: Array<[string, number]> = [
+    ['mask_reapply', TRACE_SCORE_FLOOR_MASK_REAPPLY],
+    ['click_block', TRACE_SCORE_FLOOR_CLICK_BLOCK],
+  ];
   it.each(cases)(
     '%s keeps Trace_Score at or above its floor',
     async (sample, floor) => {
