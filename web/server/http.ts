@@ -17,6 +17,9 @@ export interface HandlerContext {
 
 type Next = (req: IncomingMessage, res: ServerResponse) => void;
 
+/** Documents that run code from an untrusted SWF are sandboxed by header too (opaque origin). */
+const SANDBOX_CSP = 'sandbox allow-scripts';
+
 /** Headers on every response. */
 export function baseHeaders(res: ServerResponse): void {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -130,6 +133,7 @@ function wantsRerun(url: URL): boolean {
 export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMessage, res: ServerResponse) => void {
   const { jobs } = ctx;
   const ruffleDir = join(ctx.repoRoot, 'node_modules', '@ruffle-rs', 'ruffle');
+  const publicDir = join(ctx.repoRoot, 'web', 'client', 'public');
 
   const handle = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     baseHeaders(res);
@@ -142,6 +146,14 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
     if (rawPath.startsWith('/vendor/ruffle/')) {
       if (!isGet) return sendError(res, 405, 'Method not allowed');
       return sendFileInside(req, res, ruffleDir, rawPath.slice('/vendor/ruffle/'.length), { cors: true });
+    }
+    if (rawPath === '/ruffle-frame.html' || rawPath === '/ruffle-frame.js') {
+      // Served here in dev and production alike, so the sandbox header always applies.
+      if (!isGet) return sendError(res, 405, 'Method not allowed');
+      return sendFileInside(req, res, publicDir, rawPath.slice(1), {
+        cors: true,
+        headers: rawPath.endsWith('.html') ? { 'Content-Security-Policy': SANDBOX_CSP } : {},
+      });
     }
     if (!rawPath.startsWith('/api/')) {
       next(req, res);
@@ -229,7 +241,14 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
         res.end();
         return;
       }
-      return sendFileInside(req, res, dirs.app, rest.slice('app/'.length), { cors: true, fallback: 'index.html' });
+      const tail = rest.slice('app/'.length);
+      const isHtml = tail === '' || tail.endsWith('.html');
+      return sendFileInside(req, res, dirs.app, tail, {
+        cors: true,
+        fallback: 'index.html',
+        // Also sandboxed when opened on its own (new tab), not only inside the iframe.
+        headers: isHtml ? { 'Content-Security-Policy': SANDBOX_CSP } : {},
+      });
     }
 
     if (rest.startsWith('out/')) {
@@ -302,8 +321,6 @@ export function staticClient(distDir: string): Next {
     }
     const isIndex = r.relative === 'index.html';
     const headers: Record<string, string> = isIndex ? { 'Content-Security-Policy': csp } : {};
-    // The Ruffle frame runs in a sandboxed (opaque-origin) iframe and loads Ruffle cross-origin.
-    if (r.relative.startsWith('ruffle-frame.')) headers['Access-Control-Allow-Origin'] = '*';
     void sendFile(req, res, r.path, { headers });
   };
 }
