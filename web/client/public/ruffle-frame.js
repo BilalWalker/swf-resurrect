@@ -21,7 +21,7 @@
     publicPath: '/vendor/ruffle/',
     polyfills: false,
     autoplay: 'on',
-    unmuteOverlay: 'visible',
+    unmuteOverlay: 'hidden',
     splashScreen: false,
     letterbox: 'on',
     contextMenu: 'rightClickOnly',
