@@ -38,6 +38,7 @@ export type TimelineOp =
       name?: string;
       clipDepth?: number;
       hasFilters?: boolean;
+      /** True only for a blend mode other than normal (0 and 1); normal is drawn exactly. */
       hasBlendMode?: boolean;
     }
   | { kind: 'remove'; depth: number; characterId?: number }

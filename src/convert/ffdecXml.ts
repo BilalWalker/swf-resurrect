@@ -463,7 +463,11 @@ function parsePlace(item: PNode, kind: string, ctx: ParseCtx): TimelineOp | unde
     if (cd !== undefined) op.clipDepth = cd;
   }
   if (attrBool(attrs, p.flagHasFilterList)) op.hasFilters = true;
-  if (attrBool(attrs, p.flagHasBlendMode)) op.hasBlendMode = true;
+  // Blend mode 0 and 1 are normal and drawn exactly; an absent value counts as normal (Requirement 13.3).
+  if (attrBool(attrs, p.flagHasBlendMode)) {
+    const mode = attrNum(attrs, p.blendMode);
+    if (mode !== undefined && mode !== 0 && mode !== 1) op.hasBlendMode = true;
+  }
   return op;
 }
 
