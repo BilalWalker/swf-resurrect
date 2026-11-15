@@ -233,6 +233,31 @@ describe("3_joystick (Apache-2.0, Shumway)", () => {
     }
   });
 });
+describe("slider_component (Apache-2.0, Shumway)", () => {
+  const note = readFileSync(join(root, "samples", "slider_component", "PROVENANCE.md"), "utf8");
+  it("is Apache-2.0 only with the Apache pointer, Shumway attribution and no NOTICE", () => {
+    expect(note).toMatch(/\| Licence\s*\| Apache-2\.0 \|/);
+    expect(licencePointers(note)).toEqual(["samples/LICENSES/Apache-2.0.txt"]);
+    expect(note).toContain("https://github.com/mozilla/shumway/blob/master/LICENSE");
+    expect(note).toMatch(/`mozilla\/shumway` ships no NOTICE file/);
+    expect(note).toContain("no embedded fonts");
+    expect(note).toContain("bf6dbcb755b764beeb0c8d68af24438d803b2e39e7d171fc663551d364593e9b");
+  });
+  it("has the reference files and fixtures", () => {
+    for (const p of [
+      "samples/slider_component/reference/input.json",
+      "samples/slider_component/reference/output.txt",
+      "samples/slider_component/reference/test.toml",
+      "test/fixtures/slider_component/structure.xml",
+      "test/fixtures/slider_component/symbols.csv",
+      "test/fixtures/slider_component/fl/controls/Slider.as",
+      "test/fixtures/slider_component/slider1_fla/MainTimeline.as",
+    ]) {
+      expect(existsSync(join(root, p)), p).toBe(true);
+    }
+    expect(walk(join(root, "test", "fixtures", "slider_component"), (n) => n.endsWith(".as"))).toHaveLength(27);
+  });
+});
 describe("repository rules", () => {
   it("keeps every sample input.json under reference/", () => {
     const inputs = walk(join(root, "samples"), (n) => n === "input.json");

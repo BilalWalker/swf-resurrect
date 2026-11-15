@@ -756,12 +756,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 12.6, 14.2, 14.12, 21.1, 21.3, 21.4, 21.5_
 
-  - [-] 17.3 `3_joystick`: floors
+  - [x] 17.3 `3_joystick`: floors
     - Only after 17.2 is complete, add the Overall_Match floor and, when the behaviour is `compared`, the Trace_Score floor (the measured values). A Replay that throws is `compared` (Task 7.8), so a low value is explained line by line (Requirement 22.11, 18.13). If the measured Trace_Score is 0, set no Trace_Score floor, state the cause line by line and STOP and ask.
     - Test: the floor tests in `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
-  - [ ] 17.4 `slider_component`: files, PROVENANCE.md and fixtures
+  - [-] 17.4 `slider_component`: files, PROVENANCE.md and fixtures
     - `test.toml` sets `num_ticks = 10`; `input.json` holds `MouseMove` entries and a press at (250, 22) released at (150, 22). Copy `test.swf` unmodified into `samples/slider_component/` (SHA-256 prefix `bf6dbcb7`; verify the full value and compare with the SC copy), the reference files unchanged, `PROVENANCE.md` (Apache-2.0 fields as in 17.1) and `test/fixtures/slider_component/` with the structure dump, symbol list and the 27 class sources. The SC copy under `.work/local/slider_component/` may be deleted once this task has committed (Requirement 3.17).
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.20, 23.6_
