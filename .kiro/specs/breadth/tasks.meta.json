@@ -1542,6 +1542,11 @@
         "executionId": "8ca51f1a-4538-412e-b71c-c795e8b12aaa",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794633536526
+      },
+      {
+        "executionId": "8ca51f1a-4538-412e-b71c-c795e8b12aaa",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794633718556
       }
     ],
     "15.1 `radial` and `gradients`: files, PROVENANCE.md and fixtures": [
@@ -2393,6 +2398,13 @@
         "executionId": "2439d6b0-02e8-4771-aa4c-5d128de8ec11",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794593755601
+      }
+    ],
+    "28.1 Round join limit (amends 11.1)": [
+      {
+        "executionId": "8ca51f1a-4538-412e-b71c-c795e8b12aaa",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794633741905
       }
     ]
   }

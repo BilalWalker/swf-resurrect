@@ -108,6 +108,8 @@ describe("svgToShapeJson on synthetic input", () => {
   });
 });
 
+const ROUND_JOIN = "approximated: round join at a corner under 60 degrees is not drawn exactly (34 px differ at 7 degrees)";
+
 describe("svgToShapeJson strokes", () => {
   const head =
     '<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">';
@@ -122,7 +124,7 @@ describe("svgToShapeJson strokes", () => {
       expect(shape.paths[0]!.fill).toBeNull();
     });
   }
-  for (const join of ["miter", "round", "bevel"] as const) {
+  for (const join of ["miter", "bevel"] as const) {
     it(`maps stroke-linejoin ${join} and records no limit`, () => {
       const { shape, limits } = one(`stroke="#00ff00" stroke-linejoin="${join}" stroke-miterlimit="2.5"`);
       expect(limits).toEqual([]);
@@ -133,12 +135,37 @@ describe("svgToShapeJson strokes", () => {
     for (const cap of ["butt", "round", "square"] as const) {
       for (const join of ["miter", "round", "bevel"] as const) {
         const { shape, limits } = one(`stroke="#000000" stroke-width="10" stroke-linecap="${cap}" stroke-linejoin="${join}"`);
-        expect(limits).toEqual([]);
+        expect(limits).toEqual([]); // the 90 degree corner of `one` is wider than 60 degrees
         expect(shape.paths[0]!.stroke).toEqual({ color: "#000000", alpha: 1, width: 10, cap, join, miterLimit: 4 });
       }
     }
   });
-  it("maps miter-clip to miter and records one approximated stroke-style limit", () => {
+  const sharp = (join: string, d = "M0 0 L100 0 0 12"): ReturnType<typeof svgToShapeJson> =>
+    svgToShapeJson(`${head}<g transform="matrix(1,0,0,1,0,0)"><path d="${d}" fill="none" stroke="#000000" stroke-linejoin="${join}"/></g></svg>`, "shape");
+  it("maps a round join as written and records one approximated stroke-style limit at a 7 degree corner", () => {
+    const { shape, limits } = sharp("round");
+    expect(shape.paths[0]!.stroke).toMatchObject({ join: "round" });
+    expect(limits).toEqual([{ kind: "stroke-style", message: ROUND_JOIN }]);
+  });
+  it("records the round join limit once for a shape with several sharp round-joined paths", () => {
+    const path = '<path d="M0 0 L100 0 0 12" fill="none" stroke="#000000" stroke-linejoin="round"/>';
+    const { limits } = svgToShapeJson(`${head}<g transform="matrix(1,0,0,1,0,0)">${path}${path}${path}</g></svg>`, "shape");
+    expect(limits).toEqual([{ kind: "stroke-style", message: ROUND_JOIN }]);
+  });
+  it("records nothing for a bevel or miter join at a 7 degree corner", () => {
+    expect(sharp("bevel").limits).toEqual([]);
+    expect(sharp("miter").limits).toEqual([]);
+  });
+  it("records nothing for a round join at corners of 60 degrees or wider, open or closed", () => {
+    expect(sharp("round", "M0 0 L100 0 50 86.7").limits).toEqual([]); // interior angle just over 60 degrees
+    expect(sharp("round", "M0 0 L100 0 100 100 0 100 Z").limits).toEqual([]);
+    expect(sharp("round", "M0 0 L100 0").limits).toEqual([]); // no corner
+  });
+  it("finds the sharp corner at the closing edge, in a curve tangent, and for a reversal", () => {
+    expect(sharp("round", "M0 0 L100 0 L100 12 Z").limits).toHaveLength(1); // closes back to the start at about 7 degrees
+    expect(sharp("round", "M0 0 Q50 0 100 0 L0 12").limits).toHaveLength(1);
+    expect(sharp("round", "M0 0 L100 0 0 0").limits).toHaveLength(1);
+  });  it("maps miter-clip to miter and records one approximated stroke-style limit", () => {
     const { shape, limits } = one('stroke="#000000" stroke-linejoin="miter-clip" stroke-miterlimit="2.0"');
     expect(shape.paths[0]!.stroke).toMatchObject({ join: "miter", miterLimit: 2 });
     expect(limits).toEqual([{ kind: "stroke-style", message: "approximated: miter-clip join is drawn as miter" }]);

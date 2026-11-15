@@ -8,7 +8,8 @@
 // patternTransform, the decoded bytes (never re-encoded) and `ffdec:fill-bitmapId`; `images` is sorted by bitmapId with
 // one entry per id; with `caps.bitmap` false the fill is a limit. Strokes (sub-task 10.5): cap, join, miter limit, width,
 // colour and alpha are read; a miter-clip join, a gradient stroke, an unresolved stroke paint and a dash array are each
-// returned as a `stroke-style` limit (decided F8). No limit is recorded for a cap (sub-task 11.1 measures caps).
+// returned as a `stroke-style` limit (decided F8), and so is a round join at a corner under 60 degrees (sub-task 28.1). No limit is
+// recorded for a cap, a bevel join, a miter join or a wider round corner (sub-task 11.1 measures them exact).
 //
 // Elements that cannot be read at all (malformed XML, path data outside M L H V Q C Z, non-finite numbers) are
 // dropped without a limit: FFDec does not write them, and ShapeLimitKind has no kind for them.
@@ -253,6 +254,63 @@ function decodeDataUrl(href: string | undefined): { ext: 'png' | 'jpg'; bytes: U
   return { ext, bytes };
 }
 
+/**
+ * Sub-task 28.1. Measured in 11.1 (a9c787e): a round join at a corner below the miter limit 2.0 (interior angle above
+ * 60 degrees) is exact, and a round join at a 7 degree corner differs by 34 px. Nothing between is measured, so a round
+ * join is named at every corner whose interior angle is under 60 degrees.
+ */
+const ROUND_JOIN_LIMIT = 'approximated: round join at a corner under 60 degrees is not drawn exactly (34 px differ at 7 degrees)';
+const SHARP_COS = -0.5; // cos of the turning angle 120 degrees, that is an interior angle of 60 degrees
+
+type Vec = readonly [number, number];
+
+/** Start and end direction of a segment from `p`, or null when it has no length. */
+function segmentDirs(c: PathCmd, p: Vec): { dirs: [Vec, Vec]; end: Vec } | null {
+  const pts: Vec[] = [];
+  for (let i = 1; i + 1 < c.length; i += 2) pts.push([c[i] as number, c[i + 1] as number]);
+  const end = pts[pts.length - 1];
+  if (end === undefined) return null;
+  const sub = (a: Vec, b: Vec): Vec => [a[0] - b[0], a[1] - b[1]];
+  const nonZero = (v: Vec): boolean => Math.hypot(v[0], v[1]) > 1e-9;
+  const from = [p, ...pts];
+  let start: Vec | null = null;
+  for (let i = 1; i < from.length && start === null; i++) if (nonZero(sub(from[i]!, p))) start = sub(from[i]!, p);
+  let fin: Vec | null = null;
+  for (let i = from.length - 1; i >= 1 && fin === null; i--) if (nonZero(sub(from[i]!, from[i - 1]!))) fin = sub(from[i]!, from[i - 1]!);
+  if (start === null || fin === null) return null;
+  return { dirs: [start, fin], end };
+}
+
+/** True when some corner of the subpaths has an interior angle under 60 degrees (a turn of more than 120 degrees). */
+function hasSharpCorner(subpaths: readonly PathCmd[][]): boolean {
+  for (const sp of subpaths) {
+    const segs: Array<[Vec, Vec]> = [];
+    let cur: Vec = [0, 0];
+    let first: Vec = [0, 0];
+    let closed = false;
+    for (const c of sp) {
+      if (c[0] === 'M') {
+        cur = [c[1], c[2]];
+        first = cur;
+      } else if (c[0] === 'Z') {
+        const s = segmentDirs(['L', first[0], first[1]], cur);
+        if (s !== null) segs.push(s.dirs);
+        cur = first;
+        closed = true;
+      } else {
+        const s = segmentDirs(c, cur);
+        if (s !== null) segs.push(s.dirs);
+        cur = s !== null ? s.end : cur;
+      }
+    }
+    if (cur[0] === first[0] && cur[1] === first[1]) closed = true;
+    const turn = (a: Vec, b: Vec): number => (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]));
+    for (let i = 0; i + 1 < segs.length; i++) if (turn(segs[i]![1], segs[i + 1]![0]) < SHARP_COS) return true;
+    if (closed && segs.length > 1 && turn(segs[segs.length - 1]![1], segs[0]![0]) < SHARP_COS) return true;
+  }
+  return false;
+}
+
 // ---- the builder ----------------------------------------------------------------------------------------------
 
 class Builder {
@@ -343,6 +401,9 @@ class Builder {
       else subpaths[subpaths.length - 1]?.push(c);
     }
     if (subpaths.length === 0) return;
+    if (stroke !== null && stroke.join === 'round' && hasSharpCorner(subpaths)) {
+      this.limits.push({ kind: 'stroke-style', message: ROUND_JOIN_LIMIT });
+    }
     // A path without a fill keeps every subpath as its own outer contour (design section 2).
     const contours = fill === null ? subpaths.map((outer) => ({ outer, holes: [] })) : groupContours(subpaths);
     this.paths.push({ contours, fill, stroke });
@@ -366,6 +427,7 @@ class Builder {
     }
     const joinText = st['stroke-linejoin'];
     let join: ShapeStroke['join'] = 'miter';
+    // A round join is named per path in `path()`, where the corners are known.
     if (joinText === 'round' || joinText === 'bevel' || joinText === 'miter') join = joinText;
     else if (joinText !== undefined) {
       // F8: Pixi has no miter-clip join; it is drawn as miter. Any other unknown spelling is read the same way.

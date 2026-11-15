@@ -51,6 +51,7 @@ describe("svgToShapeJson limit order", () => {
     'stroke="#102030" stroke-dasharray="4 2"',
     'stroke="red"',
     'stroke="#102030" stroke-linejoin="arcs"',
+    'stroke="#102030" stroke-linejoin="round"',
   ];
   const build = (items: string[][]): string =>
     `${head}<g transform="matrix(1,0,0,1,0,0)">${items.map((attrs) => `<path ${attrs.join(" ")}/>`).join("")}</g></svg>`;
@@ -116,7 +117,15 @@ describe("svgToShapeJson strokes", () => {
           expect(shape.paths).toHaveLength(kept);
           const messages = limits.filter((l) => l.kind === "stroke-style").map((l) => l.message);
           expect(limits.every((l) => l.kind === "stroke-style")).toBe(true);
-          const expected = [...new Set(items.flatMap(([v]) => (v.limit === null ? [] : [v.limit])))].sort();
+          const ROUND = "approximated: round join at a corner under 60 degrees is not drawn exactly (34 px differ at 7 degrees)";
+          const expected = [
+            ...new Set(
+              items.flatMap(([v, , join]) => [
+                ...(v.limit === null ? [] : [v.limit]),
+                ...(!dropped(v.attrs) && (v.attrs.includes("stroke-linejoin") ? false : join === "round") ? [ROUND] : []),
+              ]),
+            ),
+          ].sort();
           expect(messages).toEqual(expected);
         },
       ),

@@ -14,7 +14,7 @@ const genEntry: fc.Arbitrary<UnsupportedFeatureEntry> = fc
   .record(
     {
       kind: fc.constantFrom(...OWN, ...PLAIN, ...OTHER),
-      message: fc.constantFrom('a', 'b', 'c<d>'),
+      message: fc.constantFrom('a', 'b', 'c<d>', 'approximated: round join at a corner under 60 degrees is not drawn exactly (34 px differ at 7 degrees)'),
       id: fc.integer({ min: 0, max: 3 }),
     },
     { requiredKeys: ['kind', 'message'] },
