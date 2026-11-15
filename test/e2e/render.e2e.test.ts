@@ -116,21 +116,34 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
         const ctx = copy.getContext('2d')!;
         ctx.drawImage(app.canvas as HTMLCanvasElement, 0, 0);
         const px = ctx.getImageData(0, 0, w, h).data;
-        const r: number[] = [];
-        for (let i = 0; i < px.length; i += 4) r.push(px[i]!, px[i + 1]!, px[i + 2]!);
         app.destroy(true, { children: true });
-        return { r, width: copy.width };
+        // RGBA as one base64 string (see reader below for why not an array).
+        let bin = '';
+        for (let i = 0; i < px.length; i += 0x8000) bin += String.fromCharCode(...px.subarray(i, i + 0x8000));
+        return { rgba: btoa(bin), width: copy.width };
       },
       { shape, w: W, h: H, ct },
     );
     expect(data.width).toBe(W);
+    return reader(data.rgba);
+  }
+
+  /**
+   * Pixels cross from the page as a base64 string of the RGBA bytes. Returning them as a number array (60000 entries
+   * per frame) made Playwright serialise each number on its own: about 270 ms per render on an idle machine and over
+   * 1 s under load, against under 10 ms for the drawing itself, so a test with three renders came close to the 5 s
+   * test timeout in a loaded full-suite run (task 28.6).
+   */
+  function reader(rgbaBase64: string): (x: number, y: number) => [number, number, number] {
+    const px = Buffer.from(rgbaBase64, 'base64');
+    expect(px.length).toBe(W * H * 4);
     return (x, y) => {
-      const i = (y * W + x) * 3;
-      return [data.r[i]!, data.r[i + 1]!, data.r[i + 2]!];
+      const i = (y * W + x) * 4;
+      return [px[i]!, px[i + 1]!, px[i + 2]!];
     };
   }
 
-  /** Renders the shape on a white W x H stage and returns a ed(x, y) reader. */
+  /** Renders the shape on a white W x H stage and returns a red-channel (x, y) reader. */
   async function renderRed(shape: ShapeJson): Promise<(x: number, y: number) => number> {
     const rgb = await renderRgb(shape);
     return (x, y) => rgb(x, y)[0];
@@ -376,7 +389,7 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
         });
         backend.setMask(group, maskNode);
         app.stage.addChild(root);
-        const out: number[][] = [];
+        const out: string[] = [];
         for (const pose of ps) {
           backend.setTransform(maskNode, pose);
           app.renderer.render(app.stage);
@@ -386,19 +399,16 @@ describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${r
           const ctx = copy.getContext('2d')!;
           ctx.drawImage(app.canvas as HTMLCanvasElement, 0, 0);
           const px = ctx.getImageData(0, 0, w, h).data;
-          const r: number[] = [];
-          for (let i = 0; i < px.length; i += 4) r.push(px[i]!, px[i + 1]!, px[i + 2]!);
-          out.push(r);
+          let bin = '';
+          for (let i = 0; i < px.length; i += 0x8000) bin += String.fromCharCode(...px.subarray(i, i + 0x8000));
+          out.push(btoa(bin));
         }
         app.destroy(true, { children: true });
         return out;
       },
       { poses, targetsX, w: W, h: H, red: square(0, 0, 80, 80, '#ff0000'), blue: square(0, 0, 60, 60, '#0000ff') },
     );
-    return frames.map((r) => (x, y) => {
-      const i = (y * W + x) * 3;
-      return [r[i]!, r[i + 1]!, r[i + 2]!];
-    });
+    return frames.map(reader);
   }
 
   const isRed = (c: [number, number, number]): boolean => c[0] > 200 && c[1] < 60 && c[2] < 60;
