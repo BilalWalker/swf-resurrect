@@ -1,6 +1,8 @@
 // Client entry: draws the sky, routes between the graveyard (#/) and a job (#/job/<id>).
 import { BAT, CRESCENT, HORIZON } from './art';
 import { h, svg } from './dom';
+import { jobUrl } from './api';
+import { renderJob } from './job';
 import { renderLanding } from './landing';
 
 const main = document.getElementById('main') as HTMLElement;
@@ -45,9 +47,19 @@ function route(): void {
   const m = hash.match(/^#\/job\/([a-f0-9]{24})$/);
   if (m) {
     document.title = 'Ritual | SWF Resurrect';
-    main.replaceChildren(
-      h('p', { class: 'loading' }, 'Job ', h('code', {}, m[1]), ' started. ', h('a', { href: `/api/jobs/${m[1]}` }, 'Job summary (JSON)')),
-    );
+    cleanup = renderJob(main, m[1], {
+      openJob,
+      renderResult(container, job) {
+        container.replaceChildren(
+          h(
+            'section',
+            { class: 'notice' },
+            h('h2', {}, 'It lives.'),
+            h('p', {}, h('a', { href: jobUrl.report(job.id) }, 'Fidelity report'), ' · ', h('a', { href: jobUrl.zip(job.id) }, 'Project (.zip)')),
+          ),
+        );
+      },
+    });
   } else {
     document.title = 'SWF Resurrect';
     void renderLanding(main, { openJob });

@@ -32,8 +32,10 @@ export function svg(markup: string): SVGSVGElement {
   return el;
 }
 
-export function clear(el: Element): void {
+/** Replaces the children of `el`, skipping null, undefined and false. */
+export function fill(el: Element, ...children: Child[]): void {
   el.replaceChildren();
+  append(el, ...children);
 }
 
 export function formatBytes(n: number): string {

@@ -1,0 +1,418 @@
+/* The job page and the resurrection ritual: one candle per stage, lit as the pipeline reports. */
+.job-head {
+  padding: clamp(8px, 3vh, 28px) 0 18px;
+}
+
+.job-title {
+  font-size: clamp(1.8rem, 4.4vw, 2.8rem);
+  word-break: break-word;
+}
+
+.job-meta {
+  color: var(--mist);
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.queue {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.ritual-panel {
+  margin-top: 8px;
+}
+
+.ritual-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.ritual-head h2 {
+  font-size: 1.4rem;
+}
+
+.connection {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--mist);
+}
+
+.ritual {
+  position: relative;
+  margin: 8px 0 4px;
+}
+
+.rites {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rite {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  align-items: start;
+  padding: 10px 0 14px;
+}
+
+/* The line joining the candles; it glows once the stage above has passed. */
+.rite::before {
+  content: '';
+  position: absolute;
+  left: 21px;
+  top: 64px;
+  bottom: -10px;
+  width: 2px;
+  background: var(--night-4);
+  transition: background 0.6s ease, box-shadow 0.6s ease;
+}
+
+.rite:last-child::before {
+  display: none;
+}
+
+.rite[data-status='ok']::before,
+.rite[data-status='warn']::before {
+  background: var(--spectral-deep);
+  box-shadow: 0 0 8px var(--spectral-glow);
+}
+
+.rite-candle {
+  display: block;
+  width: 44px;
+}
+
+.candle {
+  display: block;
+  width: 40px;
+  height: 72px;
+  overflow: visible;
+}
+
+.candle .wax {
+  fill: var(--wax);
+  opacity: 0.55;
+  transition: opacity 0.6s ease;
+}
+.candle .drip {
+  fill: #f2eee2;
+  opacity: 0.5;
+}
+.candle .wick {
+  stroke: #1d1a16;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.candle .flame,
+.candle .halo,
+.candle .smoke {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.candle .flame-outer {
+  fill: var(--spectral);
+}
+.candle .flame-inner {
+  fill: #f2fff8;
+}
+.candle .halo {
+  fill: var(--spectral);
+  filter: blur(6px);
+}
+.candle .smoke {
+  stroke: var(--mist-dim);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.candle .flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.rite[data-status='running'] .candle .flame,
+.rite[data-status='ok'] .candle .flame,
+.rite[data-status='warn'] .candle .flame {
+  opacity: 1;
+  animation: flicker 2.6s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.37s);
+}
+
+.rite[data-status='running'] .candle .halo {
+  opacity: 0.55;
+  animation: pulse 1.4s ease-in-out infinite alternate;
+}
+
+.rite[data-status='ok'] .candle .halo,
+.rite[data-status='warn'] .candle .halo {
+  opacity: 0.3;
+}
+
+.rite[data-status='ok'] .candle .wax,
+.rite[data-status='warn'] .candle .wax,
+.rite[data-status='running'] .candle .wax {
+  opacity: 0.9;
+}
+
+/* A type-error stage burns, but amber-tinged: done with problems. */
+.rite[data-status='warn'] .candle .flame-outer {
+  fill: #d9e98a;
+}
+
+.rite[data-status='failed'] .candle .smoke {
+  opacity: 1;
+  stroke: var(--ember);
+  animation: rise 3s ease-out infinite;
+}
+
+.rite[data-status='skipped'] .candle .wax,
+.rite[data-status='pending'] .candle .wax {
+  opacity: 0.35;
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1, 1) rotate(0deg);
+  }
+  20% {
+    transform: scale(0.94, 1.06) rotate(-2deg);
+  }
+  45% {
+    transform: scale(1.04, 0.95) rotate(1.5deg);
+  }
+  70% {
+    transform: scale(0.97, 1.03) rotate(-1deg);
+  }
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
+
+@keyframes rise {
+  from {
+    stroke-dasharray: 0 40;
+  }
+  to {
+    stroke-dasharray: 40 0;
+    opacity: 0.2;
+  }
+}
+
+.rite-title {
+  margin: 6px 0 2px;
+  font-size: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.rite-stage {
+  font: 600 0.85rem/1.2 var(--font-mono);
+  color: var(--spectral);
+  background: rgba(126, 242, 184, 0.08);
+  border: 1px solid rgba(126, 242, 184, 0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.rite-what {
+  margin: 0;
+  color: var(--mist);
+  font-size: 0.92rem;
+}
+
+.rite-detail {
+  margin: 6px 0 0;
+  font: 0.9rem/1.4 var(--font-mono);
+  color: var(--bone);
+  word-break: break-word;
+}
+
+.rite-status {
+  margin-top: 9px;
+  font: 600 0.78rem/1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mist);
+  white-space: nowrap;
+}
+
+.rite[data-status='running'] .rite-status,
+.rite[data-status='ok'] .rite-status {
+  color: var(--spectral);
+}
+.rite[data-status='warn'] .rite-status {
+  color: #d9e98a;
+}
+.rite[data-status='failed'] .rite-status,
+.rite[data-status='failed'] .rite-name {
+  color: var(--ember);
+}
+.rite[data-status='skipped'] .rite-name,
+.rite[data-status='pending'] .rite-name {
+  color: #c4c9cf;
+}
+
+/* The wisp: a small light that drifts to the stage in progress. */
+.wisp {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(242, 255, 248, 0.95) 0 12%, rgba(126, 242, 184, 0.55) 30%, rgba(126, 242, 184, 0) 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.9s cubic-bezier(0.4, 0.1, 0.2, 1),
+    opacity 0.5s ease;
+  z-index: 2;
+  filter: blur(0.5px);
+  mix-blend-mode: screen;
+}
+
+.wisp.is-on {
+  opacity: 1;
+  animation: hover-wisp 3s ease-in-out infinite;
+}
+
+@keyframes hover-wisp {
+  0%,
+  100% {
+    margin-left: 0;
+  }
+  50% {
+    margin-left: 6px;
+  }
+}
+
+/* Finished: the ritual record stays, more compact, below the result. */
+.ritual-panel.is-done .rite {
+  padding: 4px 0 8px;
+}
+.ritual-panel.is-done .rite-what {
+  display: none;
+}
+.ritual-panel.is-done .candle {
+  height: 48px;
+}
+.ritual-panel.is-done .rite::before {
+  top: 46px;
+}
+
+.omens {
+  margin-top: 12px;
+  border-top: 1px solid var(--night-3);
+  padding-top: 12px;
+}
+
+.omens h3 {
+  font-size: 1.05rem;
+}
+
+.omens ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--bone);
+  font-size: 0.92rem;
+}
+
+.omens code {
+  color: #d9e98a;
+}
+
+.log {
+  margin-top: 14px;
+  border-top: 1px solid var(--night-3);
+  padding-top: 10px;
+}
+
+.log summary {
+  cursor: pointer;
+  color: var(--mist);
+  font-size: 0.92rem;
+  min-height: 32px;
+  display: list-item;
+}
+
+.log-text {
+  max-height: 320px;
+  overflow: auto;
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  background: var(--night-0);
+  border: 1px solid var(--night-3);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-line.is-stderr {
+  color: #ffc4b8;
+}
+.log-line.is-server {
+  color: var(--spectral-soft);
+}
+
+.failure {
+  border-color: rgba(255, 154, 138, 0.45);
+  margin-bottom: 20px;
+}
+
+.failure h2 {
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+}
+
+.failure h2 code {
+  color: var(--ember);
+  font-size: 0.8em;
+}
+
+.eyebrow.is-ember {
+  color: var(--ember);
+}
+
+.failure-message {
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  background: var(--night-0);
+  border: 1px solid rgba(255, 154, 138, 0.35);
+  border-radius: 8px;
+  color: #ffd9d2;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  align-items: center;
+}
+
+@media (max-width: 520px) {
+  .rite {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .rite-status {
+    grid-column: 2;
+    margin-top: 0;
+  }
+}
