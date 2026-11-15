@@ -801,12 +801,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/provenance.test.ts` validates the real note (fetched directory, extra rows present, no `samples/static_text/test.swf`, no `test/fixtures/static_text`).
     - _Requirements: 3.4, 3.16, 3.20, 20.2, 20.4, 20.5, 20.6_
 
-  - [-] 17.12 `static_text`: measure and attribute the residual
+  - [x] 17.12 `static_text`: measure and attribute the residual
     - Run `npm run pipeline -- .work/samples/static_text/test.swf out/static_text --verify --force --reference-dir samples/static_text/reference`. The Replay uses empty input and `num_frames = 1` (Requirement 14.23; a Replay that throws is `compared`, Requirement 14.22). Report the Overall_Match (about 100 on frame 1 expected, and that `text-metrics` is omitted when every compared frame is exact), the Trace_Score with `missing` and `extra`, and whether the three reference lines `Caught error: ArgumentError: Error #2012: StaticText$ class cannot be instantiated.`, `e.errorID: 2012` and `Child: [object StaticText]` appear as `missing` (Requirement 20.8). Do not remove a line or an event type from the comparison (Requirement 14.19) and do not add a Shim API for it (Requirement 14.17). Apply the residual step of 15.2 if the Overall_Match is below 100. State the Overall_Match and Trace_Score measured on the fetched file in the commit message (Requirement 10.7).
     - Test: `test/e2e/residual.e2e.test.ts` entry when below 100 (the entry skips with the others' rule when the file is absent).
     - _Requirements: 10.5, 10.6, 10.7, 14.19, 20.8, 21.1, 21.3_
 
-  - [ ] 17.13 `static_text`: skipping floor tests
+  - [-] 17.13 `static_text`: skipping floor tests
     - Create `test/e2e/staticText.e2e.test.ts`: it uses the helper of 17.10 (`describe.skipIf` with the skip message naming `npm run fetch:static-text`; a present file with another hash fails naming both values) and asserts the Overall_Match floor and the Trace_Score floor equal to the values measured in 17.12. A test asserts that `samples/static_text/test.swf` does not exist.
     - Test: `test/e2e/staticText.e2e.test.ts`; with the file absent the suite is reported as skipped, not failed.
     - _Requirements: 3.6, 10.6, 20.3, 20.8, 20.9_
