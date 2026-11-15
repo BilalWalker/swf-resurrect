@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { createHandler, staticClient } from './http';
 import { JobManager } from './jobs';
 import { parseServerOptions } from './options';
+import { TokenBuckets } from './rateLimit';
+import type { TakeResult } from './rateLimit';
 import type { ServerOptions } from './options';
 
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -29,6 +31,10 @@ async function buildPreview(projectDir: string, appDir: string): Promise<void> {
   }
 }
 
+function limiter(buckets: TokenBuckets): (client: string) => TakeResult {
+  return (client) => buckets.take(client, Date.now());
+}
+
 export async function startServer(
   options: ServerOptions,
   paths: { repoRoot?: string; runsDir?: string; log?: (line: string) => void } = {},
@@ -43,6 +49,7 @@ export async function startServer(
     timeoutMs: options.timeoutMs,
     buildPreview,
     retention: options.retention,
+    ...(options.rateLimit === null ? {} : { admit: limiter(new TokenBuckets(options.rateLimit)) }),
   });
   await jobs.load();
   await jobs.startSweeper(
@@ -68,7 +75,7 @@ export async function startServer(
   } else {
     next = staticClient(join(repoRoot, 'web', 'dist'));
   }
-  server.on('request', createHandler({ jobs, repoRoot }, next));
+  server.on('request', createHandler({ jobs, repoRoot, trustProxyHops: options.trustProxyHops }, next));
 
   await new Promise<void>((res, rej) => {
     server.once('error', rej);

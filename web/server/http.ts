@@ -5,6 +5,7 @@ import { stat } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import type { ApiError, ResetEvent } from '../shared/api';
+import { clientAddress } from './clientAddress';
 import { JobManager, SubmitError } from './jobs';
 import { contentType } from './mime';
 import { resolveInside } from './safePath';
@@ -13,6 +14,8 @@ import { hasSwfMagic, isSampleName, MAX_UPLOAD_BYTES } from './upload';
 export interface HandlerContext {
   jobs: JobManager;
   repoRoot: string;
+  /** Reverse proxies whose X-Forwarded-For entries are trusted; 0: use the socket's peer. */
+  trustProxyHops?: number;
 }
 
 type Next = (req: IncomingMessage, res: ServerResponse) => void;
@@ -39,6 +42,11 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
 function sendError(res: ServerResponse, status: number, message: string): void {
   const body: ApiError = { error: message };
   sendJson(res, status, body);
+}
+
+function sendSubmitError(res: ServerResponse, err: SubmitError): void {
+  if (err.retryAfterS !== undefined) res.setHeader('Retry-After', String(err.retryAfterS));
+  sendError(res, err.status, err.message);
 }
 
 /**
@@ -144,6 +152,7 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
     const rawPath = (req.url ?? '/').split('?')[0];
     const method = req.method ?? 'GET';
     const isGet = method === 'GET' || method === 'HEAD';
+    const client = (): string => clientAddress(req.socket.remoteAddress, req.headers['x-forwarded-for'], ctx.trustProxyHops ?? 0);
 
     if (rawPath === '/healthz') {
       // Liveness for a host or load balancer: cheap, no disk and no child process.
@@ -176,9 +185,9 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
       if (!hasSwfMagic(body)) return sendError(res, 415, 'This is not a SWF file (it does not start with FWS, CWS or ZWS).');
       const name = req.headers['x-filename'];
       try {
-        return sendJson(res, 202, await jobs.submitUpload(body, typeof name === 'string' ? name : undefined, wantsRerun(url)));
+        return sendJson(res, 202, await jobs.submitUpload(body, typeof name === 'string' ? name : undefined, wantsRerun(url), client()));
       } catch (err) {
-        if (err instanceof SubmitError) return sendError(res, err.status, err.message);
+        if (err instanceof SubmitError) return sendSubmitError(res, err);
         throw err;
       }
     }
@@ -188,9 +197,9 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
       if (!isSampleName(m[1])) return sendError(res, 400, 'Bad sample name');
       req.resume();
       try {
-        return sendJson(res, 202, await jobs.submitSample(m[1], wantsRerun(url)));
+        return sendJson(res, 202, await jobs.submitSample(m[1], wantsRerun(url), client()));
       } catch (err) {
-        if (err instanceof SubmitError) return sendError(res, err.status, err.message);
+        if (err instanceof SubmitError) return sendSubmitError(res, err);
         throw err;
       }
     }
@@ -203,9 +212,9 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
     if (rest === 'rerun' && method === 'POST') {
       req.resume();
       try {
-        return sendJson(res, 202, await jobs.rerun(job));
+        return sendJson(res, 202, await jobs.rerun(job, client()));
       } catch (err) {
-        if (err instanceof SubmitError) return sendError(res, err.status, err.message);
+        if (err instanceof SubmitError) return sendSubmitError(res, err);
         throw err;
       }
     }

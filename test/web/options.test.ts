@@ -16,8 +16,27 @@ describe('parseServerOptions', () => {
         ffdecJar: join(root, 'tools', 'ffdec', 'ffdec-cli.jar'),
         retention: { maxAgeMs: 72 * 3600_000, maxTotalBytes: 2048 * 1024 * 1024, maxJobs: 100, orphanGraceMs: 3600_000 },
         sweepIntervalMs: 600_000,
+        production: false,
+        rateLimit: null,
+        trustProxyHops: 0,
       },
     });
+  });
+
+  it('turns the rate limit on in production unless told otherwise', () => {
+    expect(parseServerOptions([], { NODE_ENV: 'production' }, root)).toMatchObject({
+      ok: true,
+      options: { production: true, rateLimit: { burst: 3, perHour: 10 } },
+    });
+    expect(parseServerOptions([], { NODE_ENV: 'production', SWF_RESURRECT_RATE_LIMIT: 'off' }, root)).toMatchObject({ ok: true, options: { rateLimit: null } });
+    expect(
+      parseServerOptions([], { SWF_RESURRECT_RATE_LIMIT: 'on', SWF_RESURRECT_RATE_BURST: '5', SWF_RESURRECT_RATE_PER_HOUR: '20' }, root),
+    ).toMatchObject({ ok: true, options: { production: false, rateLimit: { burst: 5, perHour: 20 } } });
+  });
+
+  it('reads TRUST_PROXY as a number of hops', () => {
+    expect(parseServerOptions([], { TRUST_PROXY: '1' }, root)).toMatchObject({ ok: true, options: { trustProxyHops: 1 } });
+    expect(parseServerOptions([], { TRUST_PROXY: '0' }, root)).toMatchObject({ ok: true, options: { trustProxyHops: 0 } });
   });
 
   it('reads the retention limits, 0 meaning no limit', () => {
@@ -51,6 +70,10 @@ describe('parseServerOptions', () => {
       [[], { SWF_RESURRECT_KEEP_HOURS: '1.5' }],
       [[], { SWF_RESURRECT_KEEP_MB: '-1' }],
       [[], { SWF_RESURRECT_KEEP_JOBS: 'many' }],
+      [[], { SWF_RESURRECT_RATE_LIMIT: 'yes' }],
+      [[], { SWF_RESURRECT_RATE_BURST: '0' }],
+      [[], { SWF_RESURRECT_RATE_PER_HOUR: '1.5' }],
+      [[], { TRUST_PROXY: 'true' }],
     ] as const) {
       expect(parseServerOptions(argv, env, root).ok).toBe(false);
     }

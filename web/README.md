@@ -31,6 +31,11 @@ Environment:
 | `SWF_RESURRECT_KEEP_MB` | `2048` | Most disk space all job directories may use; oldest jobs go first. `0`: no limit. |
 | `SWF_RESURRECT_KEEP_JOBS` | `100` | Most job directories kept; oldest go first. `0`: no limit. |
 | `SWF_RESURRECT_SWEEP_MINUTES` | `10` | How often the retention sweep runs (it also runs at start). `0`: only at start. |
+| `NODE_ENV` | unset | `production` switches on the public-host defaults below (rate limit). |
+| `SWF_RESURRECT_RATE_LIMIT` | `on` in production, else `off` | Per-client token bucket on starting conversions. Cache hits and joining a job already running for the same SWF are free; reading is never limited. Refusals are `429` with `Retry-After`. |
+| `SWF_RESURRECT_RATE_BURST` | `3` | Conversions a client may start at once (bucket size). |
+| `SWF_RESURRECT_RATE_PER_HOUR` | `10` | Steady rate at which a client's bucket refills. |
+| `TRUST_PROXY` | `0` | Number of reverse proxies in front of the server. `0`: the client is the socket's peer and `X-Forwarded-For` is ignored (it is written by the client too). `N`: the client is the `X-Forwarded-For` entry N places from the right, the one the outermost trusted proxy wrote; entries further left are ignored. |
 
 Retention (`web/server/retention.ts` decides, `JobManager.sweep` deletes)
 never removes a queued or running job, nor the current cached result of a

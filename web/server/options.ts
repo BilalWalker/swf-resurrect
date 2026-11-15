@@ -1,5 +1,6 @@
 // Server options from argv and environment. Pure.
 import { join } from 'node:path';
+import type { RateLimit } from './rateLimit';
 import { DEFAULT_RETENTION } from './retention';
 import type { RetentionPolicy } from './retention';
 
@@ -14,6 +15,12 @@ export interface ServerOptions {
   retention: RetentionPolicy;
   /** How often the retention sweep runs; 0: only at start. */
   sweepIntervalMs: number;
+  /** NODE_ENV=production: public-host defaults (rate limit on). */
+  production: boolean;
+  /** Per-client limit on starting conversions; null: no limit. */
+  rateLimit: RateLimit | null;
+  /** Reverse proxies in front of the server whose X-Forwarded-For entries are trusted (TRUST_PROXY). */
+  trustProxyHops: number;
 }
 
 export type ParsedOptions = { ok: true; options: ServerOptions } | { ok: false; message: string };
@@ -21,6 +28,7 @@ export type ParsedOptions = { ok: true; options: ServerOptions } | { ok: false; 
 export const DEFAULT_PORT = 5180;
 export const DEFAULT_TIMEOUT_S = 180;
 export const DEFAULT_SWEEP_MINUTES = 10;
+export const DEFAULT_RATE_LIMIT: RateLimit = { burst: 3, perHour: 10 };
 export const USAGE =
   'Usage: web/server/main.ts [--dev] [--port <n>] [--host <addr>]  (env: see web/README.md)';
 
@@ -80,6 +88,22 @@ export function parseServerOptions(
   ] as const) {
     if (v === null) return { ok: false, message: `${name} is not a whole number (0 means no limit): ${env[name]}` };
   }
+  const production = env.NODE_ENV === 'production';
+  const rl = env.SWF_RESURRECT_RATE_LIMIT;
+  if (rl !== undefined && rl !== '' && rl !== 'on' && rl !== 'off') {
+    return { ok: false, message: `SWF_RESURRECT_RATE_LIMIT must be on or off: ${rl}` };
+  }
+  const rateOn = rl === 'on' || ((rl === undefined || rl === '') && production);
+  const burst = envCount(env, 'SWF_RESURRECT_RATE_BURST', DEFAULT_RATE_LIMIT.burst);
+  const perHour = envCount(env, 'SWF_RESURRECT_RATE_PER_HOUR', DEFAULT_RATE_LIMIT.perHour);
+  if (burst === null || burst < 1) {
+    return { ok: false, message: `SWF_RESURRECT_RATE_BURST must be a whole number of at least 1: ${env.SWF_RESURRECT_RATE_BURST}` };
+  }
+  if (perHour === null) return { ok: false, message: `SWF_RESURRECT_RATE_PER_HOUR is not a whole number: ${env.SWF_RESURRECT_RATE_PER_HOUR}` };
+  const tp = env.TRUST_PROXY;
+  if (tp !== undefined && tp !== '' && !/^\d{1,2}$/.test(tp)) {
+    return { ok: false, message: `TRUST_PROXY must be the number of trusted reverse proxies (0 to 99): ${tp}` };
+  }
   const jar = env.SWF_RESURRECT_FFDEC;
   return {
     ok: true,
@@ -96,6 +120,9 @@ export function parseServerOptions(
         orphanGraceMs: DEFAULT_RETENTION.orphanGraceMs,
       },
       sweepIntervalMs: (sweepMin ?? 0) * 60_000,
+      production,
+      rateLimit: rateOn ? { burst, perHour } : null,
+      trustProxyHops: tp === undefined || tp === '' ? 0 : Number(tp),
     },
   };
 }

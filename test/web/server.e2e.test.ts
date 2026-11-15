@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { CreateJobResponse, JobSummary } from '../../web/shared/api';
 import { REPO_ROOT, startServer } from '../../web/server/main';
 import type { RunningServer } from '../../web/server/main';
+import { testServerOptions } from './helpers';
 
 const jar = process.env.SWF_RESURRECT_FFDEC || join(REPO_ROOT, 'tools', 'ffdec', 'ffdec-cli.jar');
 const javaOk = ((): boolean => {
@@ -42,15 +43,7 @@ beforeAll(async () => {
   runsDir = resolve(REPO_ROOT, '.work', `test-web-runs-${process.pid}`);
   await mkdir(runsDir, { recursive: true });
   server = await startServer(
-    {
-      port: 0,
-      host: '127.0.0.1',
-      dev: false,
-      timeoutMs: 240_000,
-      ffdecJar: jar,
-      retention: { maxAgeMs: 0, maxTotalBytes: 0, maxJobs: 0, orphanGraceMs: 3600_000 },
-      sweepIntervalMs: 0,
-    },
+    testServerOptions({ timeoutMs: 240_000, ffdecJar: jar }),
     { runsDir },
   );
 });

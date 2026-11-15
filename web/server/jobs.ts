@@ -15,6 +15,7 @@ import type { JobSummary, LogLine, SampleInfo, SetupStatus, SourceFile } from '.
 import { abort, applyLine, buildFinished, initialState, pipelineExited, start } from './jobState';
 import type { JobState } from './jobState';
 import { javaAvailable, killTree, spawnPipeline } from './processTree';
+import type { TakeResult } from './rateLimit';
 import { planRetention } from './retention';
 import type { RetentionDecision, RetentionEntry, RetentionPolicy } from './retention';
 import { summariseResults } from './results';
@@ -35,6 +36,11 @@ export interface JobManagerOptions {
   buildPreview(projectDir: string, appDir: string): Promise<void>;
   /** When to delete old job directories (see retention.ts). Absent: never. */
   retention?: RetentionPolicy;
+  /**
+   * Asked once per new job (not for cache hits or a job already running for the same SWF), with
+   * the client's address; a refusal becomes a 429. Absent: every job is admitted.
+   */
+  admit?(client: string): TakeResult;
 }
 
 export type JobListener = (event: 'job' | 'log', data: JobSummary | LogLine) => void;
@@ -78,10 +84,15 @@ export class SubmitError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** Seconds the client should wait (sent as Retry-After). */
+    readonly retryAfterS?: number,
   ) {
     super(message);
   }
 }
+
+/** Client key for jobs started by the server itself (pre-warm, tests). */
+export const LOCAL_CLIENT = 'local';
 
 const MAX_LOG_LINES = 2000;
 
@@ -267,36 +278,37 @@ export class JobManager {
     return job;
   }
 
-  async submitSample(name: string, rerun: boolean): Promise<{ id: string; cached: boolean }> {
+  async submitSample(name: string, rerun: boolean, client = LOCAL_CLIENT): Promise<{ id: string; cached: boolean }> {
     if (!(await this.sampleNames()).includes(name)) throw new SubmitError(404, `No sample named ${name}`);
     const swfPath = join(this.samplesDir, name, 'test.swf');
     const bytes = await readFile(swfPath);
-    return this.submit({ name: `${name}.swf`, source: 'sample', sample: name, sha256: cacheKey(bytes), swfPath, bytes: null }, rerun);
+    return this.submit({ name: `${name}.swf`, source: 'sample', sample: name, sha256: cacheKey(bytes), swfPath, bytes: null }, rerun, client);
   }
 
-  async submitUpload(bytes: Buffer, rawName: string | undefined, rerun: boolean): Promise<{ id: string; cached: boolean }> {
+  async submitUpload(bytes: Buffer, rawName: string | undefined, rerun: boolean, client = LOCAL_CLIENT): Promise<{ id: string; cached: boolean }> {
     const sha = cacheKey(bytes);
     // Bytes identical to a sample run as that sample, so verify finds its reference folder.
     const sample = (await this.sampleHashMap()).get(sha);
-    if (sample !== undefined) return this.submitSample(sample, rerun);
-    return this.submit({ name: displayName(rawName), source: 'upload', sample: null, sha256: sha, swfPath: '', bytes }, rerun);
+    if (sample !== undefined) return this.submitSample(sample, rerun, client);
+    return this.submit({ name: displayName(rawName), source: 'upload', sample: null, sha256: sha, swfPath: '', bytes }, rerun, client);
   }
 
   /** Runs the same SWF again, bypassing the cache. */
-  async rerun(job: Job): Promise<{ id: string; cached: boolean }> {
-    if (job.source === 'sample' && job.sample !== null) return this.submitSample(job.sample, true);
+  async rerun(job: Job, client = LOCAL_CLIENT): Promise<{ id: string; cached: boolean }> {
+    if (job.source === 'sample' && job.sample !== null) return this.submitSample(job.sample, true, client);
     let bytes: Buffer;
     try {
       bytes = await readFile(job.swfPath);
     } catch {
       throw new SubmitError(410, 'The uploaded SWF of this job is no longer on the server. Upload it again.');
     }
-    return this.submitUpload(bytes, job.name, true);
+    return this.submitUpload(bytes, job.name, true, client);
   }
 
   private async submit(
     s: { name: string; source: 'sample' | 'upload'; sample: string | null; sha256: string; swfPath: string; bytes: Buffer | null },
     rerun: boolean,
+    client: string,
   ): Promise<{ id: string; cached: boolean }> {
     if (this.stopping) throw new SubmitError(503, 'The server is shutting down.');
     if (!rerun) {
@@ -306,6 +318,15 @@ export class JobManager {
     // The same SWF already waiting or running: share that job.
     const active = [this.running, ...this.queue].find((j) => j !== null && j.sha256 === s.sha256);
     if (active) return { id: active.id, cached: false };
+    const admitted = this.opts.admit?.(client) ?? { ok: true };
+    if (!admitted.ok) {
+      const minutes = Math.ceil(admitted.retryAfterS / 60);
+      throw new SubmitError(
+        429,
+        `Too many conversions started from your address. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}; samples that have risen before still open at once.`,
+        admitted.retryAfterS,
+      );
+    }
     const setup = this.setupStatus();
     if (!setup.ready) throw new SubmitError(503, setup.problems.join(' '));
     if (this.queue.length >= (this.opts.maxQueued ?? 8)) {
