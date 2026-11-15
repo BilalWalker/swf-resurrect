@@ -712,7 +712,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/e2e/overallMatch.e2e.test.ts` (floor and Exact_Render assertion) and `test/e2e/emptyReferenceTrace.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 13.5, 13.6, 13.10, 14.24, 21.7_
 
-- [ ] 16. Samples: admit `mask_reapply` and `click_block`
+- [x] 16. Samples: admit `mask_reapply` and `click_block`
   - Commit area: `Samples`. Verification V1. Both are `MIT OR Apache-2.0` with MIT chosen. This admission comes after Task 14 and Task 15. Decided O4 (changed) and F19 apply to `mask_reapply`: its root class `Main` assigns `maskee1.mask = mask1` (TS2339, the Shim has no `mask`, Requirement 12.7) and, before Task 21, read `maskee1` before the Player bound it (Amended after Checkpoint 9: Task 21 binds the children before the constructor runs). The TS2339 is a type error, so `Main` is a Loose_Class, stays registered under the key `Main` and has no `class-omitted` entry; the `Main`/`main` collision is repaired by Emit (Requirement 6) and is not a Class_Failure (Requirements 6.6, 23.2). Amended after Checkpoint 9: Tasks 21 and 22 make the constructor run past `maskee1` and catch any remaining throw as a Caught_Error (a `runtime-error` Problem, the Replay keeps ticking), so the expectation that the Trace_Score is 0 no longer holds; the value is what Task 27 reports (design 19.6 and 21.3). The Overall_Match is not affected. Capture and report the exit code of every pipeline run; every sample under 100 on either score (Overall_Match or Trace_Score) gets its cause recorded in the report.
   - [x] 16.1 `mask_reapply`: files, PROVENANCE.md and fixtures
     - Copy `test.swf` unmodified into `samples/mask_reapply/` (SHA-256 `8146cb4de7e39bdb2d4ee418e90d65509d4b3afa246b899ac3260abfa6ac41c7`), the reference files unchanged (no `input.json`; `test.toml` sets `num_ticks = 1`), `PROVENANCE.md` (MIT, pointer, fonts, SHA-256, reason) and `test/fixtures/mask_reapply/` with the structure dump, the symbol list and the original `Main.as` as the fixture class source (as `test/fixtures/clickgoto/` holds its classes).
@@ -739,14 +739,14 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 9.5, 14.2, 14.21, 21.1, 21.3, 21.4_
 
-  - [-] 16.6 `click_block`: floors
+  - [x] 16.6 `click_block`: floors
     - Only after 16.5 is complete, add the Overall_Match and Trace_Score floors (the measured values) to `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`. No zero Trace_Score floor is accepted as a stand-in (Requirement 18.13): if the measured value is 0, STOP and ask.
     - Test: the two floor tests.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
 - [ ] 17. Samples: admit `3_joystick`, `slider_component` and the fetched `static_text`
   - Commit area: `Samples`. Verification V1. This admission sits last, after Tasks 15 and 16. `3_joystick` and `slider_component` are `Apache-2.0` only; `static_text` is never committed (decided F9, F10): its 17 glyph outlines of "Times New Roman" under a Monotype copyright have no established licence, so the Repository gets only `samples/static_text/PROVENANCE.md`, `reference/output.txt` and `reference/test.toml`, no `test.swf`, no `input.json` and no `test/fixtures/static_text/` (Requirement 20). The Fetch_Script and its measurement are sub-tasks 17.7 to 17.13. What the Replay does with `3_joystick` depends on the implicit-`this` outcome of Task 8; report the outcome as measured. Decided items touched, reported as measured counts and not as questions: O3 (the binding count on `3_joystick` and `slider_component`), O4 (the `fl.*` classes that cannot load and are omitted, versus the Loose_Classes with only type errors, which stay registered) and O1 (names resolved to `Declaring.x`). Capture and report the exit code of every pipeline run; every sample under 100 on either score (Overall_Match or Trace_Score) gets its cause recorded in the report, including `static_text` trace 0, `clipDepth` trace 25 and `edit_text_linkage` trace 0 when they are run.
-  - [ ] 17.1 `3_joystick`: files, PROVENANCE.md and fixtures
+  - [-] 17.1 `3_joystick`: files, PROVENANCE.md and fixtures
     - `test.toml` sets `num_ticks = 21`; `input.json` holds `MouseMove` entries without a `btn` field. Copy `test.swf` unmodified into `samples/3_joystick/` (SHA-256 prefix `9f21a582`; verify the full value), the reference files unchanged, `PROVENANCE.md` (`Apache-2.0`, pointer to `samples/LICENSES/Apache-2.0.txt`, Shumway attribution, the no-NOTICE statement, `no embedded fonts`, SHA-256, reason) and `test/fixtures/3_joystick/` with the structure dump, symbol list and the class source `code/Interactivity3.as`.
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.20_

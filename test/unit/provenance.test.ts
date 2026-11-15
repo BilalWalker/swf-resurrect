@@ -210,6 +210,29 @@ describe("acid-color-2 (Apache-2.0, Shumway)", () => {
   });
 });
 
+describe("3_joystick (Apache-2.0, Shumway)", () => {
+  const note = readFileSync(join(root, "samples", "3_joystick", "PROVENANCE.md"), "utf8");
+  it("is Apache-2.0 only with the Apache pointer, Shumway attribution and no NOTICE", () => {
+    expect(note).toMatch(/\| Licence\s*\| Apache-2\.0 \|/);
+    expect(licencePointers(note)).toEqual(["samples/LICENSES/Apache-2.0.txt"]);
+    expect(note).toContain("https://github.com/mozilla/shumway/blob/master/LICENSE");
+    expect(note).toMatch(/`mozilla\/shumway` ships no NOTICE file/);
+    expect(note).toContain("no embedded fonts");
+  });
+  it("has the reference files and fixtures", () => {
+    for (const p of [
+      "samples/3_joystick/input.json",
+      "samples/3_joystick/reference/output.txt",
+      "samples/3_joystick/reference/test.toml",
+      "test/fixtures/3_joystick/structure.xml",
+      "test/fixtures/3_joystick/symbols.csv",
+      "test/fixtures/3_joystick/FINDINGS.md",
+      "test/fixtures/3_joystick/code/Interactivity3.as",
+    ]) {
+      expect(existsSync(join(root, p)), p).toBe(true);
+    }
+  });
+});
 describe("repository rules", () => {
   it("has no _loc<N>_ placeholders in handwritten/", () => {
     const files = walk(join(root, "handwritten"), (n) => /\.(ts|js|as)$/.test(n));
