@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" ffdec:objectType="shape" height="400.0px" width="550.0px" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)">
+    <path d="M490.1 260.15 L550.0 260.15 550.0 400.0 357.75 400.0 357.75 353.9 357.75 260.15 490.1 260.15" fill="#00ff00" fill-rule="evenodd" stroke="none"/>
+    <path d="M327.0 353.9 L357.75 353.9 357.75 400.0 0.0 400.0 0.0 0.0 550.0 0.0 550.0 260.15 490.1 260.15 490.1 43.6 63.4 43.6 63.4 353.9 224.0 353.9 224.0 389.0 327.0 389.0 327.0 353.9" fill="#0000ff" fill-rule="evenodd" stroke="none"/>
+    <path d="M327.0 353.9 L327.0 389.0 224.0 389.0 224.0 353.9 224.0 331.0 327.0 331.0 327.0 353.9" fill="url(#gradient0)" fill-rule="evenodd" stroke="none"/>
+    <path d="M357.75 353.9 L327.0 353.9 327.0 331.0 327.0 273.0 224.0 273.0 224.0 331.0 224.0 353.9 63.4 353.9 63.4 43.6 490.1 43.6 490.1 260.15 357.75 260.15 357.75 353.9" fill="url(#gradient1)" fill-rule="evenodd" stroke="none"/>
+    <path d="M327.0 353.9 L327.0 389.0 224.0 389.0 224.0 353.9 224.0 331.0 327.0 331.0 327.0 353.9 Z" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.0"/>
+  </g>
+  <defs>
+    <linearGradient gradientTransform="matrix(0.0629, 0.0, 0.0, 0.0354, 275.5, 360.0)" gradientUnits="userSpaceOnUse" id="gradient0" spreadMethod="pad" x1="-819.2" x2="819.2">
+      <stop offset="0.0" stop-color="#ff0000"/>
+      <stop offset="0.16470588235294117" stop-color="#ffff00"/>
+      <stop offset="0.36470588235294116" stop-color="#00ff00"/>
+      <stop offset="0.4980392156862745" stop-color="#00ffff"/>
+      <stop offset="0.6666666666666666" stop-color="#0000ff"/>
+      <stop offset="0.8313725490196079" stop-color="#ff00ff"/>
+      <stop offset="1.0" stop-color="#ff0000"/>
+    </linearGradient>
+    <linearGradient gradientTransform="matrix(0.0623, 0.108, -0.164, 0.0947, 276.7, 198.75)" gradientUnits="userSpaceOnUse" id="gradient1" spreadMethod="reflect" x1="-819.2" x2="819.2">
+      <stop offset="0.0" stop-color="#ff0000"/>
+      <stop offset="1.0" stop-color="#00ffff"/>
+    </linearGradient>
+  </defs>
+</svg>
