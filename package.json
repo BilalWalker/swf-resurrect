@@ -12,7 +12,9 @@
     "mcp:swf-inspector": "tsx mcp/swf-inspector/main.ts",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "web:start": "tsx web/server/main.ts",
-    "fetch:static-text": "tsx scripts/fetch-static-text.ts"
+    "fetch:static-text": "tsx scripts/fetch-static-text.ts",
+    "web": "tsx web/server/main.ts --dev",
+    "web:build": "vite build --config web/client/vite.config.ts"
   },
   "devDependencies": {
     "@ruffle-rs/ruffle": "0.7.1",

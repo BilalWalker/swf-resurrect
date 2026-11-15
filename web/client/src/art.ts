@@ -1,0 +1,129 @@
+// Original illustrations, drawn here as inline SVG (no third-party art). Colours come from CSS
+// custom properties so one palette rules the whole page. All of it is decorative (aria-hidden)
+// unless a caller gives it a label.
+
+/** The night horizon behind the landing page: hills, a dead tree, a fence and old stones. */
+export const HORIZON = `
+<svg class="horizon" viewBox="0 0 1440 240" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+  <path class="hill-far" d="M0 150 C 180 110 300 128 470 118 C 640 108 760 70 930 92 C 1110 114 1250 96 1440 120 L1440 240 L0 240 Z"/>
+  <g class="tree">
+    <path d="M196 196 C 198 160 194 140 186 118 C 180 102 170 92 158 84 M186 118 C 196 104 212 98 226 86 C 232 80 236 70 238 62
+             M190 140 C 176 132 160 130 144 132 M192 130 C 206 126 222 128 236 122 M158 84 C 150 78 146 70 146 60
+             M226 86 C 240 84 250 78 258 70 M170 96 C 166 88 168 80 172 72"
+          fill="none" stroke-linecap="round"/>
+  </g>
+  <path class="hill-near" d="M0 196 C 220 176 420 192 640 184 C 860 176 1080 168 1260 182 C 1350 189 1400 186 1440 182 L1440 240 L0 240 Z"/>
+  <g class="stones">
+    <path d="M300 196 v-26 a12 12 0 0 1 24 0 v26 z"/>
+    <path d="M352 196 v-18 a9 9 0 0 1 18 0 v18 z"/>
+    <path d="M1010 190 v-30 a14 14 0 0 1 28 0 v30 z"/>
+    <path d="M1066 190 v-20 h-8 v-6 h8 v-8 h6 v8 h8 v6 h-8 v20 z"/>
+    <path d="M1120 188 v-22 a10 10 0 0 1 20 0 v22 z"/>
+  </g>
+  <g class="fence">
+    <path d="M520 196 H 900 M520 172 H 900" fill="none"/>
+    ${Array.from({ length: 20 }, (_, i) => {
+      const x = 524 + i * 19.5;
+      return `<path d="M${x} 200 V 160 l3 -7 l3 7 V 200" />`;
+    }).join('')}
+  </g>
+</svg>`;
+
+/** A bat, flapped by CSS (the wings are separate groups). */
+export const BAT = `
+<svg class="bat" viewBox="0 0 64 28" aria-hidden="true" focusable="false">
+  <g class="wing wing-l"><path d="M32 14 C 26 6 16 4 4 8 C 10 10 12 14 10 18 C 16 15 20 17 22 20 C 24 16 28 15 32 16 Z"/></g>
+  <g class="wing wing-r"><path d="M32 14 C 38 6 48 4 60 8 C 54 10 52 14 54 18 C 48 15 44 17 42 20 C 40 16 36 15 32 16 Z"/></g>
+  <path d="M29 12 l1 -4 l2 3 l2 -3 l1 4 c1 3 0 7 -3 8 c-3 -1 -4 -5 -3 -8 z"/>
+</svg>`;
+
+/** The open grave of the drop zone. `.lid` slides aside while a file is dragged over it. */
+export const GRAVE = `
+<svg class="grave" viewBox="0 0 360 190" aria-hidden="true" focusable="false">
+  <defs>
+    <radialGradient id="grave-glow" cx="50%" cy="60%" r="60%">
+      <stop offset="0" stop-color="var(--spectral)" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="var(--spectral)" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="grave-ground" cx="50%" cy="45%" r="50%">
+      <stop offset="0.55" stop-color="#14120e"/>
+      <stop offset="1" stop-color="#14120e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lid-wood" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#3a3026"/>
+      <stop offset="1" stop-color="#241d17"/>
+    </linearGradient>
+  </defs>
+  <path class="headstone" d="M138 98 V 34 a42 24 0 0 1 84 0 V 98 Z"/>
+  <path class="headstone-mark" d="M180 30 v30 M167 43 h26" fill="none"/>
+  <ellipse class="ground" cx="180" cy="150" rx="186" ry="58" fill="url(#grave-ground)"/>
+  <path class="pit" d="M66 100 L 294 100 L 276 182 L 84 182 Z"/>
+  <path class="pit-edge" d="M66 100 L 294 100" fill="none"/>
+  <ellipse class="glow" cx="180" cy="146" rx="120" ry="50" fill="url(#grave-glow)"/>
+  <path class="coffin" d="M122 112 L 238 112 L 250 132 L 230 172 L 130 172 L 110 132 Z"/>
+  <g class="lid">
+    <path d="M122 112 L 238 112 L 250 132 L 230 172 L 130 172 L 110 132 Z" fill="url(#lid-wood)"/>
+    <path class="lid-cross" d="M180 122 v36 M167 134 h26" fill="none"/>
+  </g>
+  <path class="mound" d="M2 186 C 10 140 40 112 76 118 C 88 120 94 132 92 148 L 86 186 Z"/>
+  <path class="mound" d="M358 186 C 350 140 320 112 284 118 C 272 120 266 132 268 148 L 274 186 Z"/>
+  <path class="soil" d="M20 160 q 8 -6 16 0 M48 140 q 8 -6 16 0 M304 146 q 8 -6 16 0 M326 166 q 8 -6 16 0" fill="none"/>
+</svg>`;
+
+/** One ritual candle. CSS lights, flickers or snuffs it from the step's data-status. */
+export const CANDLE = `
+<svg class="candle" viewBox="0 0 40 72" aria-hidden="true" focusable="false">
+  <circle class="halo" cx="20" cy="16" r="16"/>
+  <g class="flame">
+    <path class="flame-outer" d="M20 4 C 26 12 28 18 24 24 C 22 27 18 27 16 24 C 12 18 14 12 20 4 Z"/>
+    <path class="flame-inner" d="M20 13 C 23 17 23 21 21 23 C 20 24 19 24 18 23 C 17 21 17 17 20 13 Z"/>
+  </g>
+  <path class="smoke" d="M20 22 C 16 16 24 12 20 6 C 17 2 22 -2 20 -6" fill="none"/>
+  <path class="wick" d="M20 22 V 30" fill="none"/>
+  <path class="wax" d="M11 30 H 29 V 68 H 11 Z"/>
+  <path class="drip" d="M11 30 H 29 V 36 C 27 36 27 42 25 42 C 23 42 24 35 21 35 C 18 35 18 39 16 39 C 14 39 14 34 11 34 Z"/>
+</svg>`;
+
+/** A heartbeat trace drawn once when the result appears. */
+export const EKG = `
+<svg class="ekg" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+  <path d="M0 34 H 200 L 214 34 L 222 20 L 230 34 L 246 34 L 256 4 L 268 56 L 278 30 L 288 34 H 410 L 420 26 L 428 34 H 600" fill="none"/>
+</svg>`;
+
+/** Small crescent beside the wordmark. */
+export const CRESCENT = `
+<svg class="crescent" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+  <path d="M21 4 A 13 13 0 1 0 28 22 A 10 10 0 1 1 21 4 Z"/>
+</svg>`;
+
+/**
+ * A moon whose lit part is `fraction` (0-1) of the disk, as a score gauge. null draws an
+ * eclipsed moon (not compared). The number itself is always printed next to it as text.
+ */
+export function moonGauge(fraction: number | null): string {
+  const r = 44;
+  const c = 50;
+  if (fraction === null) {
+    return `<svg class="moon-gauge is-eclipsed" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+      <circle class="moon-dark" cx="${c}" cy="${c}" r="${r}"/>
+      <circle class="moon-ring" cx="${c}" cy="${c}" r="${r}" fill="none"/>
+    </svg>`;
+  }
+  const f = Math.min(1, Math.max(0, fraction));
+  const rx = Math.abs(1 - 2 * f) * r;
+  const sweep = f < 0.5 ? 0 : 1;
+  const lit =
+    f <= 0
+      ? ''
+      : f >= 1
+        ? `<circle class="moon-lit" cx="${c}" cy="${c}" r="${r}"/>`
+        : `<path class="moon-lit" d="M ${c} ${c - r} A ${r} ${r} 0 0 1 ${c} ${c + r} A ${rx.toFixed(2)} ${r} 0 0 ${sweep} ${c} ${c - r} Z"/>`;
+  return `<svg class="moon-gauge" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+    <circle class="moon-dark" cx="${c}" cy="${c}" r="${r}"/>
+    ${lit}
+    <g class="moon-craters">
+      <circle cx="38" cy="36" r="7"/><circle cx="62" cy="58" r="9"/><circle cx="44" cy="68" r="4"/><circle cx="66" cy="32" r="3"/>
+    </g>
+    <circle class="moon-ring" cx="${c}" cy="${c}" r="${r}" fill="none"/>
+  </svg>`;
+}

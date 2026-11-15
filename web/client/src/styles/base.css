@@ -1,0 +1,464 @@
+/* SWF Resurrect: night palette, one spectral accent, system fonts only (no external requests). */
+:root {
+  color-scheme: dark;
+  --night-0: #05070b;
+  --night-1: #0a0e14;
+  --night-2: #10161f;
+  --night-3: #18212d;
+  --night-4: #243041;
+  --stone: #2b3442;
+  --stone-hi: #3c4859;
+  --bone: #ebe7dc;
+  --mist: #a4adb8;
+  --mist-dim: #7f8994;
+  --spectral: #7ef2b8;
+  --spectral-soft: #b9f8d7;
+  --spectral-deep: #2f7d58;
+  --spectral-glow: rgba(126, 242, 184, 0.35);
+  --ember: #ff9a8a;
+  --wax: #d8d2c2;
+
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', 'URW Palladio L', Georgia, serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --radius: 10px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --max: 1180px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--night-0);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--bone);
+  font: 16px/1.55 var(--font-body);
+  background:
+    radial-gradient(ellipse 120% 70% at 70% -10%, #142133 0%, rgba(20, 33, 51, 0) 60%),
+    linear-gradient(180deg, #0b1220 0%, var(--night-0) 55%);
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.4em;
+}
+
+p {
+  margin: 0 0 0.8em;
+}
+
+a {
+  color: var(--spectral);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--spectral-soft);
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--spectral);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 20;
+  padding: 8px 14px;
+  background: var(--night-3);
+  color: var(--bone);
+  border-radius: 6px;
+}
+
+.skip:focus {
+  top: 12px;
+}
+
+/* ---- The sky: stars, moon, fog, bats. Decorative, behind everything. ---- */
+.sky {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: max(100vh, 760px);
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stars {
+  position: absolute;
+  inset: 0 0 35% 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(235, 231, 220, 0.8), transparent 60%),
+    radial-gradient(1px 1px at 27% 8%, rgba(235, 231, 220, 0.6), transparent 60%),
+    radial-gradient(1.5px 1.5px at 41% 22%, rgba(235, 231, 220, 0.7), transparent 60%),
+    radial-gradient(1px 1px at 55% 12%, rgba(235, 231, 220, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 63% 30%, rgba(235, 231, 220, 0.6), transparent 60%),
+    radial-gradient(1.5px 1.5px at 86% 26%, rgba(235, 231, 220, 0.7), transparent 60%),
+    radial-gradient(1px 1px at 93% 9%, rgba(235, 231, 220, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 6% 40%, rgba(235, 231, 220, 0.4), transparent 60%),
+    radial-gradient(1px 1px at 35% 44%, rgba(235, 231, 220, 0.35), transparent 60%),
+    radial-gradient(1px 1px at 72% 48%, rgba(235, 231, 220, 0.35), transparent 60%);
+  animation: twinkle 9s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.moon {
+  position: absolute;
+  top: clamp(48px, 9vh, 110px);
+  right: clamp(24px, 12vw, 200px);
+  width: clamp(70px, 10vw, 128px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 38%, rgba(160, 176, 170, 0.45) 0 9%, transparent 10%),
+    radial-gradient(circle at 62% 62%, rgba(160, 176, 170, 0.4) 0 12%, transparent 13%),
+    radial-gradient(circle at 58% 28%, rgba(160, 176, 170, 0.3) 0 5%, transparent 6%),
+    radial-gradient(circle at 40% 40%, #f3f6ee 0%, #d7e6dc 55%, #b8cdc1 100%);
+  box-shadow:
+    0 0 40px 6px rgba(185, 248, 215, 0.25),
+    0 0 140px 40px rgba(126, 242, 184, 0.08);
+}
+
+.horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: clamp(140px, 24vh, 260px);
+}
+
+.horizon .hill-far {
+  fill: #0c1420;
+}
+.horizon .hill-near {
+  fill: #06090e;
+}
+.horizon .tree path {
+  stroke: #06090e;
+  stroke-width: 5;
+}
+.horizon .stones path {
+  fill: #0a0f16;
+}
+.horizon .fence path {
+  stroke: #0a0f16;
+  stroke-width: 2.5;
+  fill: #0a0f16;
+}
+
+.fog {
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  height: 40vh;
+  bottom: -6vh;
+  background:
+    radial-gradient(ellipse 22% 42% at 20% 60%, rgba(170, 200, 190, 0.1), transparent 70%),
+    radial-gradient(ellipse 28% 38% at 55% 70%, rgba(170, 200, 190, 0.08), transparent 70%),
+    radial-gradient(ellipse 20% 34% at 85% 55%, rgba(170, 200, 190, 0.09), transparent 70%);
+  filter: blur(6px);
+  animation: drift 90s linear infinite;
+  transition: opacity 0.6s ease;
+}
+
+.fog.fog-2 {
+  bottom: -12vh;
+  opacity: 0.8;
+  animation-duration: 140s;
+  animation-direction: reverse;
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(25%);
+  }
+}
+
+/* A file dragged anywhere over the page stirs the fog. */
+body.is-dragging .fog {
+  animation-duration: 18s;
+  filter: blur(6px) brightness(1.9);
+}
+
+.bat {
+  position: absolute;
+  width: 34px;
+  fill: #04060a;
+  top: 18vh;
+  left: -60px;
+  animation: fly 46s linear infinite;
+  animation-delay: 6s;
+}
+
+.bat.bat-2 {
+  width: 24px;
+  top: 26vh;
+  animation-duration: 61s;
+  animation-delay: 21s;
+}
+
+.bat .wing {
+  transform-box: fill-box;
+  animation: flap 0.36s ease-in-out infinite alternate;
+}
+
+.bat .wing-l {
+  transform-origin: 100% 60%;
+}
+.bat .wing-r {
+  transform-origin: 0% 60%;
+}
+
+@keyframes flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.35);
+  }
+}
+
+@keyframes fly {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(30vw, -4vh);
+  }
+  50% {
+    transform: translate(60vw, 3vh);
+  }
+  75% {
+    transform: translate(90vw, -2vh);
+  }
+  100% {
+    transform: translate(115vw, 0);
+  }
+}
+
+/* ---- Page frame ---- */
+.top,
+main,
+.foot {
+  position: relative;
+  z-index: 1;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 18px var(--gutter);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--bone);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-variant: small-caps;
+  letter-spacing: 0.14em;
+}
+
+.wordmark .crescent {
+  width: 22px;
+  height: 22px;
+  fill: var(--spectral);
+  filter: drop-shadow(0 0 6px var(--spectral-glow));
+}
+
+.top-note {
+  font-size: 0.85rem;
+  color: var(--mist);
+}
+
+main {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 8px var(--gutter) 56px;
+  min-height: 60vh;
+}
+
+main:focus {
+  outline: none;
+}
+
+.foot {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 28px var(--gutter) 40px;
+  color: var(--mist);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--night-3);
+  background: linear-gradient(180deg, rgba(5, 7, 11, 0) 0%, rgba(5, 7, 11, 0.85) 30%);
+}
+
+.foot p {
+  margin: 0 0 0.4em;
+}
+
+/* ---- Shared pieces ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--night-4);
+  background: var(--night-2);
+  color: var(--bone);
+  font: 600 0.95rem/1.2 var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  border-color: var(--spectral-deep);
+  color: var(--bone);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #1c3a2d, #12271e);
+  border-color: var(--spectral-deep);
+  color: var(--spectral-soft);
+  box-shadow: 0 0 22px rgba(126, 242, 184, 0.14);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 28px rgba(126, 242, 184, 0.3);
+  color: #ffffff;
+}
+
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.panel {
+  background: linear-gradient(180deg, rgba(16, 22, 31, 0.92), rgba(10, 14, 20, 0.92));
+  border: 1px solid var(--night-3);
+  border-radius: var(--radius);
+  padding: clamp(16px, 3vw, 28px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.eyebrow {
+  font: 600 0.75rem/1.3 var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--spectral);
+  margin: 0 0 8px;
+}
+
+.muted {
+  color: var(--mist);
+}
+
+.notice {
+  border: 1px solid var(--night-4);
+  border-left: 3px solid var(--spectral);
+  background: rgba(16, 22, 31, 0.9);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 0 0 20px;
+}
+
+.notice.is-error {
+  border-left-color: var(--ember);
+}
+
+.notice h2,
+.notice h3 {
+  font-size: 1.1rem;
+}
+
+.notice p:last-child {
+  margin-bottom: 0;
+}
+
+.error-text {
+  color: var(--ember);
+}
+
+.loading {
+  color: var(--mist);
+  font-family: var(--font-mono);
+  padding: 40px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .bat {
+    display: none;
+  }
+}

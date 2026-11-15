@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Convert an ActionScript 3 Flash .swf into a readable TypeScript + PixiJS project, with a fidelity report." />
+    <title>SWF Resurrect</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/landing.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="sky" id="sky" aria-hidden="true">
+      <div class="stars"></div>
+      <div class="moon"></div>
+      <div class="fog"></div>
+      <div class="fog fog-2"></div>
+    </div>
+    <header class="top">
+      <a class="wordmark" href="#/" id="wordmark">SWF Resurrect</a>
+      <span class="top-note">Flash, raised as TypeScript</span>
+    </header>
+    <main id="main" tabindex="-1"></main>
+    <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <footer class="foot">
+      <p>
+        Originals play in <a href="https://ruffle.rs/" rel="noopener noreferrer">Ruffle</a> (MIT or Apache-2.0), served from this
+        server. Conversions run FFDec as a separate process. Nothing on this page loads from another site.
+      </p>
+      <p>Uploads are converted on this server and kept in its work folder. Do not upload files you may not share.</p>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
