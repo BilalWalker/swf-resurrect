@@ -786,12 +786,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/fetchStaticText.test.ts` (create): stub `FetchDeps` for the four outcomes, and on `sha-mismatch` neither `writeFile` nor `rename` was called; no network in any test. `test/unit/packageJson.test.ts` (extend): the script entry exists and a static check shows that only that entry names `scripts/fetch-static-text.ts` (no file under `src/` or `test/` runs it).
     - _Requirements: 20.1, 20.2, 20.7, 15.9_
 
-  - [-] 17.9 The `--reference-dir` option
+  - [x] 17.9 The `--reference-dir` option
     - Add `--reference-dir <dir>` to the CLI (`PipelineArgs.referenceDir: string | null`; default `<swf dir>/reference`, which is how `pipeline.ts` reads it today), so that a SWF under `.work/samples/static_text/` can use the committed `samples/static_text/reference/`.
     - Test: extend `test/unit/cli.test.ts` (flag parsed, default unchanged) and `test/unit/pipeline.test.ts` (the Verify_Stage reads the given directory).
     - _Requirements: 20.5_
 
-  - [ ] 17.10 Skip helper and sample-directory classification in the tests
+  - [-] 17.10 Skip helper and sample-directory classification in the tests
     - Add `test/support/fetchedSample.ts`: reads `.work/samples/static_text/test.swf` synchronously at collection time, computes the hash, returns `decideFloorTest(...)` for use as `describe.skipIf(decision.action === 'skip')` with the message in the suite title; a `fail` decision throws the message in the first test. Update `test/unit/provenance.test.ts` to enumerate `samples/` through `classifySampleDir` (a directory with `PROVENANCE.md` and no `test.swf` is a Fetched_Sample and is not failed), to assert that `samples/static_text/test.swf` does not exist, and to check the extra rows (`Not in the Repository`, `Fetch command`, `Target path`, `Embedded fonts`) of a fetched note on a synthetic temp directory (the real note comes with 17.11).
     - Test: `test/unit/provenance.test.ts` and `test/unit/fetchedSample.test.ts`.
     - _Requirements: 20.3, 20.4, 20.9_

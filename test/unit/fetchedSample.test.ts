@@ -8,6 +8,10 @@ import {
   sha256Hex,
   verifySha256,
 } from "../../src/samples/fetchedSample";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { assertNotFailed, staticTextDecision, suiteTitle } from "../support/fetchedSample";
 
 const EMPTY_SHA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
@@ -56,5 +60,28 @@ describe("fetchedSample", () => {
     expect(classifySampleDir(["PROVENANCE.md", "other.swf"])).toBe("invalid");
     expect(classifySampleDir(["reference"])).toBe("invalid");
     expect(classifySampleDir([])).toBe("invalid");
+  });
+});
+
+// Spec task 17.10: the collection-time skip helper.
+describe("test/support/fetchedSample", () => {
+  it("skips, naming the fetch command, when the file is absent", () => {
+    const d = staticTextDecision(join(tmpdir(), "no-such-dir-17-10", "test.swf"));
+    expect(d.action).toBe("skip");
+    expect(suiteTitle("static_text", d)).toContain("npm run fetch:static-text");
+    expect(() => assertNotFailed(d)).not.toThrow();
+  });
+  it("fails, naming both values, when the file has another hash; the title is unchanged", () => {
+    const dir = mkdtempSync(join(tmpdir(), "st-"));
+    try {
+      const f = join(dir, "test.swf");
+      writeFileSync(f, "not the sample");
+      const d = staticTextDecision(f);
+      expect(d.action).toBe("fail");
+      expect(() => assertNotFailed(d)).toThrow(STATIC_TEXT_SOURCE.sha256);
+      expect(suiteTitle("static_text", d)).toBe("static_text");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

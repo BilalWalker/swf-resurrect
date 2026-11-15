@@ -1,4 +1,5 @@
-import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync, statSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -8,6 +9,8 @@ import {
   parseExpectedState,
   validateProvenance,
 } from "../support/provenance";
+import { classifySampleDir } from "../../src/samples/fetchedSample";
+import { validateFetchedNoteRows } from "../support/fetchedSample";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -178,6 +181,50 @@ describe("repository samples", () => {
   }
 });
 
+describe("sample directories and the Fetched_Sample (Requirement 20)", () => {
+  const samplesDir = join(root, "samples");
+  const dirs = readdirSync(samplesDir)
+    .filter((n) => n !== "LICENSES" && statSync(join(samplesDir, n)).isDirectory())
+    .sort();
+  for (const name of dirs) {
+    it(`samples/${name} is a committed or fetched directory`, () => {
+      const kind = classifySampleDir(readdirSync(join(samplesDir, name)));
+      expect(kind, `samples/${name}`).not.toBe("invalid");
+      if (kind === "fetched") {
+        const dir = join(samplesDir, name);
+        expect(existsSync(join(dir, "reference")), `samples/${name}/reference`).toBe(true);
+        const text = readFileSync(join(dir, "PROVENANCE.md"), "utf8");
+        expect(validateProvenance(text, { clickSample: false }), name).toEqual([]);
+        expect(validateFetchedNoteRows(text), name).toEqual([]);
+      }
+    });
+  }
+  it("does not commit samples/static_text/test.swf", () => {
+    expect(existsSync(join(samplesDir, "static_text", "test.swf"))).toBe(false);
+  });
+  it("checks the extra rows of a fetched note on a synthetic directory", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "fetched-"));
+    try {
+      mkdirSync(join(tmp, "reference"));
+      const withRows = `${good}
+| Not in the Repository | yes |
+| Fetch command | \`npm run fetch:static-text\` |
+| Target path | \`.work/samples/static_text/test.swf\` |
+| Embedded fonts | Times New Roman, 17 glyphs |
+`;
+      writeFileSync(join(tmp, "PROVENANCE.md"), withRows);
+      expect(classifySampleDir(readdirSync(tmp))).toBe("fetched");
+      expect(validateProvenance(withRows, { clickSample: false })).toEqual([]);
+      expect(validateFetchedNoteRows(withRows)).toEqual([]);
+      expect(validateFetchedNoteRows(good).length).toBe(4);
+      expect(validateFetchedNoteRows(withRows.replace("| Fetch command |", "| Other |")).join()).toMatch(/Fetch command/);
+      writeFileSync(join(tmp, "test.swf"), "x");
+      expect(classifySampleDir(readdirSync(tmp))).toBe("committed");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});
 describe("acid-color-2 (Apache-2.0, Shumway)", () => {
   const note = readFileSync(join(root, "samples", "acid-color-2", "PROVENANCE.md"), "utf8");
 
