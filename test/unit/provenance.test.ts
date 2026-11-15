@@ -221,7 +221,7 @@ describe("3_joystick (Apache-2.0, Shumway)", () => {
   });
   it("has the reference files and fixtures", () => {
     for (const p of [
-      "samples/3_joystick/input.json",
+      "samples/3_joystick/reference/input.json",
       "samples/3_joystick/reference/output.txt",
       "samples/3_joystick/reference/test.toml",
       "test/fixtures/3_joystick/structure.xml",
@@ -234,7 +234,12 @@ describe("3_joystick (Apache-2.0, Shumway)", () => {
   });
 });
 describe("repository rules", () => {
-  it("has no _loc<N>_ placeholders in handwritten/", () => {
+  it("keeps every sample input.json under reference/", () => {
+    const inputs = walk(join(root, "samples"), (n) => n === "input.json");
+    for (const f of inputs) {
+      expect(relative(root, dirname(f)).replace(/\\/g, "/"), relative(root, f)).toMatch(/^samples\/[^/]+\/reference$/);
+    }
+  });  it("has no _loc<N>_ placeholders in handwritten/", () => {
     const files = walk(join(root, "handwritten"), (n) => /\.(ts|js|as)$/.test(n));
     for (const f of files) {
       expect(readFileSync(f, "utf8"), relative(root, f)).not.toMatch(/_loc\d+_/);

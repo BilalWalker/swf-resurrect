@@ -31,7 +31,7 @@ The `-swf2xml` dump (FFDec 26.4.0) holds no `DefineFont*` or text tag.
   `DefineShape3`) and seven DefineSprite tags.
 - No text, sound or embedded bitmaps.
 ## Expected behaviour
-Interactive: a joystick ball dragged with the mouse. `input.json` (595
+Interactive: a joystick ball dragged with the mouse. `reference/input.json` (595
 bytes) holds `MouseMove`, `MouseDown` and `MouseUp` entries without a `btn`
 field, and `reference/test.toml` sets `num_ticks = 21`. The reference
 `output.txt` holds four trace lines (`Interactivity3 init`,
@@ -42,6 +42,6 @@ same licence (Apache-2.0):
 - `reference/output.txt`: the four trace lines above.
 - `reference/test.toml`: `num_ticks = 21`, tiered image tolerances (128 with
   0 outliers, 32 with 2500 outliers), optional high quality renderer.
-- `input.json`: copied unedited to `samples/3_joystick/input.json`.
+- `reference/input.json`: copied unedited to `samples/3_joystick/reference/input.json`.
 Upstream also holds `output.expected.png` and `3_joystick.fla`; neither is
 copied.
