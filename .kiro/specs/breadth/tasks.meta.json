@@ -2048,6 +2048,11 @@
         "executionId": "70079fae-664c-470a-a38c-c765b419285e",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794650541485
+      },
+      {
+        "executionId": "70079fae-664c-470a-a38c-c765b419285e",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794650659322
       }
     ],
     "17.12 `static_text`: measure and attribute the residual": [
@@ -2060,6 +2065,11 @@
         "executionId": "e57263e3-227c-47fc-86e8-e0f20957a65c",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794554989385
+      },
+      {
+        "executionId": "70079fae-664c-470a-a38c-c765b419285e",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794650658624
       }
     ],
     "17.13 `static_text`: skipping floor tests": [
