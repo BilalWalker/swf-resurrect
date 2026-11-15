@@ -19,3 +19,6 @@ inline SVG in this directory.
 
 FFDec (GPLv3) is not part of the web app. The server runs the pipeline CLI
 as a separate process, which in turn runs FFDec as a separate process.
+The container image (`Dockerfile`) installs the unmodified FFDec release
+in its own directory, `/opt/ffdec/`, with its licence beside it; see
+`THIRD_PARTY.md` in the repository root.

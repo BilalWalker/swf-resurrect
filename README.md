@@ -80,6 +80,13 @@ npm run web        # http://127.0.0.1:5180
 
 See [web/README.md](web/README.md).
 
+Container (everything above in one image, samples converted at build time, port 7860):
+
+```
+docker build -t swf-resurrect .
+docker run --rm -p 7860:7860 swf-resurrect
+```
+
 Tests:
 
 ```
@@ -119,7 +126,8 @@ The engine was built spec-first in Kiro. Everything Kiro worked from is in the r
 
 - This project: MIT, see [LICENSE](LICENSE).
 - JPEXS Free Flash Decompiler (FFDec): GPL-3.0. It is called as a separate program, never
-  linked or copied, and is not part of this repository.
+  linked or copied, and is not part of this repository. The container image downloads the
+  official release unmodified into its own directory; see [THIRD_PARTY.md](THIRD_PARTY.md).
 - Ruffle: MIT OR Apache-2.0. The web app uses the Ruffle web player to show the original SWF;
   some samples and their recorded traces come from Ruffle's test suite. See
   [web/THIRD_PARTY.md](web/THIRD_PARTY.md) and `samples/LICENSES/`.

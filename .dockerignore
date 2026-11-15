@@ -1,0 +1,12 @@
+# Keep the build context small and free of local state; the image installs and builds its own.
+.git
+node_modules
+**/node_modules
+.work
+out
+tools
+dist
+web/dist
+*.log
+.env
+.env.*
