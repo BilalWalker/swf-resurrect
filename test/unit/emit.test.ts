@@ -2,6 +2,8 @@ import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { planTranslate } from '../../src/translate/planTranslate';
+import { tsSyntaxCheck } from '../../src/translate/tsSyntaxCheck';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildReport } from '../../src/translate/report';
@@ -301,7 +303,19 @@ describe('planEmit: class paths', () => {
     expect(plan.classPaths).toEqual([{ className: 'Main', originalPath: 'src/Main.ts', path: 'src/Main.class.ts' }]);
   });
 
-  it('keeps main.Main and Main apart at the directory level', () => {
+  it('emits the real mask_reapply Main.as at src/Main.class.ts and registers it', () => {
+    const source = readFileSync(resolve('test/fixtures/mask_reapply/scripts/Main.as'), 'utf8');
+    const s = sceneWith('Main');
+    const artifact = planTranslate([{ className: 'Main', source }], s, tsSyntaxCheck);
+    const plan = planEmitDetailed(
+      { ...input, scene: s, sceneJson: serialiseScene(s), translated: artifact.classes, handwritten: [], templates: [...input.templates, { path: 'src/main.ts', content: 'boot\n' }] },
+      svgs,
+    );
+    const paths = plan.files.map((f) => f.path);
+    expect(paths).toContain('src/Main.class.ts');
+    expect(plan.files.find((f) => f.path === 'src/main.ts')?.content).toBe('boot\n');
+    expect(plan.files.find((f) => f.path === 'src/classes.ts')?.content).toContain("import { Main } from './Main.class';");
+  });  it('keeps main.Main and Main apart at the directory level', () => {
     const plan = planFor(['Main', 'main.Main'], { templates: [...input.templates, { path: 'src/main.ts', content: 'boot\n' }] });
     const paths = plan.classPaths.map((c) => c.path);
     expect(new Set(paths.map((p) => p.toLowerCase())).size).toBe(2);
