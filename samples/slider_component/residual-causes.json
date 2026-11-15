@@ -1,0 +1,72 @@
+{
+    "formatVersion":  1,
+    "sample":  "slider_component",
+    "entries":  [
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  18,
+                                     "y0":  20,
+                                     "x1":  18,
+                                     "y1":  22
+                                 },
+                        "kind":  "stroke-scaling",
+                        "message":  "Vertical edge of the 1 px black outline in shape 1 (stroke width 1, rectangle 80x22) as drawn by symbol 2 (matrix 1,0,0,0.1363678) inside the aSlider instance (matrix 3.75,0,0,1 at (20,20), 300 px by 3 px). The render applies the instance matrix to the stroke, so the vertical edges are 3.75 px wide and the horizontal edges 0.136 px wide. The reference draws a line about 1 px wide on every edge (rows 19 to 23: 128 on two rows, 64 at the corner). Left edge column x=18 rows 20 to 22: reference (255,255,255), render (0,0,0); the render stroke covers x 18.1 to 21.9 where the reference stroke covers x 19.5 to 20.5."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  321,
+                                     "y0":  20,
+                                     "x1":  321,
+                                     "y1":  22
+                                 },
+                        "kind":  "stroke-scaling",
+                        "message":  "Vertical edge of the 1 px black outline in shape 1 (stroke width 1, rectangle 80x22) as drawn by symbol 2 (matrix 1,0,0,0.1363678) inside the aSlider instance (matrix 3.75,0,0,1 at (20,20), 300 px by 3 px). The render applies the instance matrix to the stroke, so the vertical edges are 3.75 px wide and the horizontal edges 0.136 px wide. The reference draws a line about 1 px wide on every edge (rows 19 to 23: 128 on two rows, 64 at the corner). Right edge column x=321 rows 20 to 22: reference (255,255,255), render (64,64,64); the render stroke covers x 318.1 to 321.9."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  21,
+                                     "y0":  21,
+                                     "x1":  21,
+                                     "y1":  21
+                                 },
+                        "kind":  "stroke-scaling",
+                        "message":  "Vertical edge of the 1 px black outline in shape 1 (stroke width 1, rectangle 80x22) as drawn by symbol 2 (matrix 1,0,0,0.1363678) inside the aSlider instance (matrix 3.75,0,0,1 at (20,20), 300 px by 3 px). The render applies the instance matrix to the stroke, so the vertical edges are 3.75 px wide and the horizontal edges 0.136 px wide. The reference draws a line about 1 px wide on every edge (rows 19 to 23: 128 on two rows, 64 at the corner). Pixel (21,21) on the inner side of the left edge: reference (255,255,255), render (64,64,64); rows 20 and 22 of the same column are 128 in the reference and 64 in the render, which is inside the tolerance."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  318,
+                                     "y0":  21,
+                                     "x1":  318,
+                                     "y1":  21
+                                 },
+                        "kind":  "stroke-scaling",
+                        "message":  "Vertical edge of the 1 px black outline in shape 1 (stroke width 1, rectangle 80x22) as drawn by symbol 2 (matrix 1,0,0,0.1363678) inside the aSlider instance (matrix 3.75,0,0,1 at (20,20), 300 px by 3 px). The render applies the instance matrix to the stroke, so the vertical edges are 3.75 px wide and the horizontal edges 0.136 px wide. The reference draws a line about 1 px wide on every edge (rows 19 to 23: 128 on two rows, 64 at the corner). Pixel (318,21) on the inner side of the right edge: reference (255,255,255), render (0,0,0); rows 20 and 22 are 128 in the reference and 0 in the render."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  175,
+                                     "y0":  110,
+                                     "x1":  175,
+                                     "y1":  187
+                                 },
+                        "kind":  "stroke-scaling",
+                        "message":  "Left edge of the 3 px track outline on the bSlider instance (matrix 0,1,1,0 at (175.35,108.85), symbol 2 scaled 0.1363678 in local y, which maps to the screen x axis). The render stroke of width 1 is scaled to 0.136 px across the edge: column x=175 is (192,192,192) in rows 110 to 187, the reference (38,38,38), a line about 1 px wide centred on x=175.35 with spill (217,217,217) at x=174 and x=177. Same cause as regions 1 to 4: the reference line width does not follow the instance matrix, the render width does."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  178,
+                                     "y0":  110,
+                                     "x1":  178,
+                                     "y1":  188
+                                 },
+                        "kind":  "stroke-scaling",
+                        "message":  "Right edge of the 3 px track outline on the bSlider instance (edge at x=178.35). Column x=178 is (192,192,192) in the render (0.136 px stroke) against (38,38,38) in the reference (about 1 px stroke), rows 110 to 188. Same cause as region 5."
+                    }
+                ]
+}

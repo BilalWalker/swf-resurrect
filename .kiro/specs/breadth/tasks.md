@@ -761,12 +761,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: the floor tests in `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
-  - [-] 17.4 `slider_component`: files, PROVENANCE.md and fixtures
+  - [x] 17.4 `slider_component`: files, PROVENANCE.md and fixtures
     - `test.toml` sets `num_ticks = 10`; `input.json` holds `MouseMove` entries and a press at (250, 22) released at (150, 22). Copy `test.swf` unmodified into `samples/slider_component/` (SHA-256 prefix `bf6dbcb7`; verify the full value and compare with the SC copy), the reference files unchanged, `PROVENANCE.md` (Apache-2.0 fields as in 17.1) and `test/fixtures/slider_component/` with the structure dump, symbol list and the 27 class sources. The SC copy under `.work/local/slider_component/` may be deleted once this task has committed (Requirement 3.17).
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.20, 23.6_
 
-  - [ ] 17.5 `slider_component`: measure and attribute the residual
+  - [-] 17.5 `slider_component`: measure and attribute the residual
     - Run `--verify`. Report the Overall_Match (99.93 before this spec), the Trace_Score and counts (0.00 before), the tick count 10 from `num_ticks` (13 before), the classes that translated, those left out of the registry because they cannot load, the Loose_Classes and those reported (Requirements 18.14, 23.7), and the Known_Visual_Limits. Its `fl.*` library lines use `stage.focus`, `stage.invalidate()` and `stage.getChildAt(0)` (design section 15): add a Shim member only if Requirement 14.17 allows it for a fixture line, with its row in `ADDED_APIS.md`; otherwise leave it and report the lines. Apply the residual step of 15.2 to every region (the 165 differing pixels of the baseline are six regions whose cause was not examined: two 1 px lines at x 175 and 178, y 110 to 188 on the reflected `bSlider` instance, two 3 px marks at x 18 and x 321, two single pixels).
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 14.2, 14.12, 18.14, 21.1, 21.3, 21.4_
