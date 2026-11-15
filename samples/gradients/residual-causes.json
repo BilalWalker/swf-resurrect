@@ -1,0 +1,127 @@
+{
+    "formatVersion":  1,
+    "sample":  "gradients",
+    "entries":  [
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  65,
+                                     "y0":  43,
+                                     "x1":  67,
+                                     "y1":  43
+                                 },
+                        "kind":  "gradient-top-edge-coverage",
+                        "message":  "Top edge row y=43 of the gradient rectangle: the reference fills the row with the full gradient colour (81,173,173 at x=65) while the render draws it at about 25% coverage over the blue background (21,43,235); rows below agree within 3 levels."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  207,
+                                     "y0":  43,
+                                     "x1":  207,
+                                     "y1":  43
+                                 },
+                        "kind":  "gradient-top-edge-coverage",
+                        "message":  "Top edge row y=43 of the gradient rectangle: the reference fills the row with the full gradient colour (170,84,84 at x=207) while the render draws it at about 25% coverage over the blue background (43,21,213); rows below agree within 3 levels."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  209,
+                                     "y0":  43,
+                                     "x1":  479,
+                                     "y1":  43
+                                 },
+                        "kind":  "gradient-top-edge-coverage",
+                        "message":  "Top edge row y=43 of the gradient rectangle: the reference fills the row with the full gradient colour (171,83,83 at x=209) while the render draws it at about 25% coverage over the blue background (44,21,212); rows below agree within 3 levels."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  481,
+                                     "y0":  43,
+                                     "x1":  481,
+                                     "y1":  43
+                                 },
+                        "kind":  "gradient-top-edge-coverage",
+                        "message":  "Top edge row y=43 of the gradient rectangle: the reference fills the row with the full gradient colour (169,85,85 at x=481) while the render draws it at about 25% coverage over the blue background (42,22,214); rows below agree within 3 levels."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  229,
+                                     "y0":  333,
+                                     "x1":  229,
+                                     "y1":  386
+                                 },
+                        "kind":  "gradient-ramp-phase",
+                        "message":  "Horizontal gradient ramp (y=333-386): the render\u0027s ramp is offset by about half a pixel against the reference, so one colour channel differs by 8 to 10 levels (at x=229 reference 255,74,0, render 255,83,0); only the columns where the offset crosses the tolerance are listed, the others stay within it."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  231,
+                                     "y0":  333,
+                                     "x1":  231,
+                                     "y1":  386
+                                 },
+                        "kind":  "gradient-ramp-phase",
+                        "message":  "Horizontal gradient ramp (y=333-386): the render\u0027s ramp is offset by about half a pixel against the reference, so one colour channel differs by 8 to 10 levels (at x=231 reference 255,104,0, render 255,113,0); only the columns where the offset crosses the tolerance are listed, the others stay within it."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  233,
+                                     "y0":  333,
+                                     "x1":  233,
+                                     "y1":  386
+                                 },
+                        "kind":  "gradient-ramp-phase",
+                        "message":  "Horizontal gradient ramp (y=333-386): the render\u0027s ramp is offset by about half a pixel against the reference, so one colour channel differs by 8 to 10 levels (at x=233 reference 255,134,0, render 255,144,0); only the columns where the offset crosses the tolerance are listed, the others stay within it."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  237,
+                                     "y0":  333,
+                                     "x1":  237,
+                                     "y1":  386
+                                 },
+                        "kind":  "gradient-ramp-phase",
+                        "message":  "Horizontal gradient ramp (y=333-386): the render\u0027s ramp is offset by about half a pixel against the reference, so one colour channel differs by 8 to 10 levels (at x=237 reference 255,195,0, render 255,204,0); only the columns where the offset crosses the tolerance are listed, the others stay within it."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  262,
+                                     "y0":  333,
+                                     "x1":  274,
+                                     "y1":  386
+                                 },
+                        "kind":  "gradient-ramp-phase",
+                        "message":  "Horizontal gradient ramp (y=333-386): the render\u0027s ramp is offset by about half a pixel against the reference, so one colour channel differs by 8 to 10 levels (at x=262 reference 0,255,8, render 0,255,17); only the columns where the offset crosses the tolerance are listed, the others stay within it."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  283,
+                                     "y0":  333,
+                                     "x1":  283,
+                                     "y1":  386
+                                 },
+                        "kind":  "gradient-ramp-phase",
+                        "message":  "Horizontal gradient ramp (y=333-386): the render\u0027s ramp is offset by about half a pixel against the reference, so one colour channel differs by 8 to 10 levels (at x=283 reference 0,143,255, render 0,134,255); only the columns where the offset crosses the tolerance are listed, the others stay within it."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  294,
+                                     "y0":  333,
+                                     "x1":  294,
+                                     "y1":  386
+                                 },
+                        "kind":  "gradient-ramp-phase",
+                        "message":  "Horizontal gradient ramp (y=333-386): the render\u0027s ramp is offset by about half a pixel against the reference, so one colour channel differs by 8 to 10 levels (at x=294 reference 19,0,255, render 28,0,255); only the columns where the offset crosses the tolerance are listed, the others stay within it."
+                    }
+                ]
+}
