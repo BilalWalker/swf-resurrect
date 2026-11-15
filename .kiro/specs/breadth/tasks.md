@@ -791,12 +791,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend `test/unit/cli.test.ts` (flag parsed, default unchanged) and `test/unit/pipeline.test.ts` (the Verify_Stage reads the given directory).
     - _Requirements: 20.5_
 
-  - [-] 17.10 Skip helper and sample-directory classification in the tests
+  - [x] 17.10 Skip helper and sample-directory classification in the tests
     - Add `test/support/fetchedSample.ts`: reads `.work/samples/static_text/test.swf` synchronously at collection time, computes the hash, returns `decideFloorTest(...)` for use as `describe.skipIf(decision.action === 'skip')` with the message in the suite title; a `fail` decision throws the message in the first test. Update `test/unit/provenance.test.ts` to enumerate `samples/` through `classifySampleDir` (a directory with `PROVENANCE.md` and no `test.swf` is a Fetched_Sample and is not failed), to assert that `samples/static_text/test.swf` does not exist, and to check the extra rows (`Not in the Repository`, `Fetch command`, `Target path`, `Embedded fonts`) of a fetched note on a synthetic temp directory (the real note comes with 17.11).
     - Test: `test/unit/provenance.test.ts` and `test/unit/fetchedSample.test.ts`.
     - _Requirements: 20.3, 20.4, 20.9_
 
-  - [ ] 17.11 `static_text`: fetch the file, write the note and the reference files
+  - [-] 17.11 `static_text`: fetch the file, write the note and the reference files
     - Run `npm run fetch:static-text` (an explicit network call permitted by Requirement 15.9). It must write `.work/samples/static_text/test.swf` only when the SHA-256 equals `b16194d9913a94b90a733841e8f19cd72fae38e223bc92e5e1040c368f33997e`. Generate the FFDec structure dump and the symbol list under `.work/samples/static_text/` (uncommitted; they may hold glyph shapes). Copy `output.txt` and `test.toml` unchanged from the Candidate_Source into `samples/static_text/reference/`. Write `samples/static_text/PROVENANCE.md` with the Requirement 20.4 fields in the `| Field | Value |` format: author, source URL pinned to the commit, `MIT OR Apache-2.0` with MIT chosen and a pointer to `samples/LICENSES/MIT-Ruffle.txt`, the statement that the licence of the embedded font is not part of it, the SHA-256, the rows `Not in the Repository`, `Fetch command` (`npm run fetch:static-text`), `Target path` (`.work/samples/static_text/test.swf`), and `Embedded fonts` (the `DefineFont3Tag` font id 1 `Times New Roman`, 17 glyphs, the `DefineFontNameTag` copyright text). Read the SymbolClass string from the generated list (design assumed `test_fla.MainTimeline`, not read).
     - Test: `test/unit/provenance.test.ts` validates the real note (fetched directory, extra rows present, no `samples/static_text/test.swf`, no `test/fixtures/static_text`).
     - _Requirements: 3.4, 3.16, 3.20, 20.2, 20.4, 20.5, 20.6_
