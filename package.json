@@ -14,7 +14,8 @@
     "web:start": "tsx web/server/main.ts",
     "fetch:static-text": "tsx scripts/fetch-static-text.ts",
     "web": "tsx web/server/main.ts --dev",
-    "web:build": "vite build --config web/client/vite.config.ts"
+    "web:build": "vite build --config web/client/vite.config.ts",
+    "web:prewarm": "tsx web/server/prewarm.ts"
   },
   "devDependencies": {
     "@ruffle-rs/ruffle": "0.7.1",

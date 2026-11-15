@@ -15,6 +15,8 @@ npm run web                      # dev: one server, Vite in middleware mode, htt
 npm run web -- --port 6000       # or PORT=6000 npm run web
 npm run web:build                # build the client into web/dist
 npm run web:start                # production: serve web/dist and the API on one port
+npm run web:prewarm              # convert every bundled sample into the cache (exit 1 if any fails)
+npm run web:prewarm -- --rerun   # the same, ignoring results already cached
 npm run typecheck:web            # strict type-check of web/ (tsconfig.web.json)
 npx vitest run test/web          # unit tests and the end-to-end test
 ```
@@ -44,6 +46,14 @@ bundled sample, so the gallery keeps opening at once. Superseded sample
 runs and finished uploads are removed by age, then oldest first while the
 size or count limit is exceeded. A job directory without a readable
 `job.json` (a server stopped mid-run) is removed once it is an hour old.
+
+`web:prewarm` runs each sample through the same job code path as the
+server (`JobManager.submitSample`) and leaves the results in
+`.work/web-runs`, so a fresh deployment shows every tombstone as "risen
+before". It prints the pipeline's progress lines, reuses cached results
+unless `--rerun` is given, and exits 1 (naming each failed sample) when
+any sample does not end in a successful job, or when Java or FFDec is
+missing.
 
 The end-to-end conversion test uses the same `SWF_RESURRECT_FFDEC` and is
 skipped, with the reason printed, when Java or the jar is missing.

@@ -168,6 +168,7 @@ export class JobManager {
   private sampleHashes: Map<string, string> | null = null;
   private setup: SetupStatus | null = null;
   private stopping = false;
+  private readonly settledWaiters = new Map<string, Array<(s: JobSummary) => void>>();
   private sweeping: Promise<RetentionDecision[]> | null = null;
   private sweepTimer: NodeJS.Timeout | null = null;
 
@@ -388,6 +389,26 @@ export class JobManager {
     return { running: this.running === null ? 0 : 1, queued: this.queue.length };
   }
 
+  /**
+   * Resolves once the job has finished and its result is persisted and (on success) cached;
+   * at once for a job that already finished. Undefined for an unknown id.
+   */
+  whenSettled(id: string): Promise<JobSummary> | undefined {
+    const job = this.get(id);
+    if (job === undefined) return undefined;
+    if (job.finishedAt !== null && this.running !== job && !this.queue.includes(job)) return Promise.resolve(this.summary(job));
+    return new Promise((res) => {
+      const list = this.settledWaiters.get(id) ?? [];
+      list.push(res);
+      this.settledWaiters.set(id, list);
+    });
+  }
+
+  /** Bundled sample names (samples/<name>/test.swf). */
+  samples(): Promise<string[]> {
+    return this.sampleNames();
+  }
+
   get(id: string): Job | undefined {
     return isJobId(id) ? this.jobs.get(id) : undefined;
   }
@@ -469,6 +490,9 @@ export class JobManager {
         if (job.state.status === 'succeeded') this.cache.set(job.sha256, job.id);
         this.emitJob(job);
         this.running = null;
+        const waiters = this.settledWaiters.get(job.id) ?? [];
+        this.settledWaiters.delete(job.id);
+        for (const w of waiters) w(this.summary(job));
         this.pump();
       });
   }
@@ -685,7 +709,11 @@ export class JobManager {
     if (this.sweepTimer !== null) clearInterval(this.sweepTimer);
     await this.sweeping?.catch(() => undefined);
     for (const j of this.queue.splice(0)) {
+      j.finishedAt = new Date();
       this.setState(j, abort(j.state, 'the server stopped before this job started'));
+      const waiters = this.settledWaiters.get(j.id) ?? [];
+      this.settledWaiters.delete(j.id);
+      for (const w of waiters) w(this.summary(j));
     }
     const r = this.running;
     if (r?.child) killTree(r.child);

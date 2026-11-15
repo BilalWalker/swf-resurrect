@@ -21,7 +21,7 @@ export interface RunningServer {
 }
 
 /** Builds the emitted project with the repo's own Vite and PixiJS and copies dist to appDir. */
-async function buildPreview(projectDir: string, appDir: string): Promise<void> {
+export async function buildPreview(projectDir: string, appDir: string): Promise<void> {
   const { buildProject } = await import('../../src/verify/edge/buildProject');
   const built = await buildProject(projectDir);
   try {
