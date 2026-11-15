@@ -781,12 +781,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/property/fetchedSample.property.test.ts` (create), **Property 28: The fetch SHA-256 check** and **Property 29: The fetch URL and the floor decision**; `test/unit/fetchedSample.test.ts` (create): the known SHA-256 of the empty array, `decideFloorTest` messages (skip names `npm run fetch:static-text`, fail names both values), `classifySampleDir` cases.
     - _Requirements: 20.2, 20.3, 20.7, 15.1, 15.2, 15.5_
 
-  - [-] 17.8 Add `scripts/fetch-static-text.ts` and the npm script
+  - [x] 17.8 Add `scripts/fetch-static-text.ts` and the npm script
     - Edge script with `FetchDeps`, `fetchStaticText(deps, source)` and `main(argv)`: already present with a matching hash returns without network; otherwise download from `candidateUrl(...)`, verify; on a mismatch print both values, write nothing and remove `<target>.part`; on a match write `<target>.part` and rename to `.work/samples/static_text/test.swf`. Exit codes 0 (fetched or already present), 1 (mismatch), 2 (download failed). Add `"fetch:static-text": "tsx scripts/fetch-static-text.ts"` to `package.json`; `scripts/**/*.ts` is already in the `include` of `tsconfig.json` from sub-task 8.2. The script imports nothing from `src/` except `src/samples/fetchedSample.ts`. The script is run by no test, no Pipeline stage and no other npm script (Requirement 20.1).
     - Test: `test/unit/fetchStaticText.test.ts` (create): stub `FetchDeps` for the four outcomes, and on `sha-mismatch` neither `writeFile` nor `rename` was called; no network in any test. `test/unit/packageJson.test.ts` (extend): the script entry exists and a static check shows that only that entry names `scripts/fetch-static-text.ts` (no file under `src/` or `test/` runs it).
     - _Requirements: 20.1, 20.2, 20.7, 15.9_
 
-  - [ ] 17.9 The `--reference-dir` option
+  - [-] 17.9 The `--reference-dir` option
     - Add `--reference-dir <dir>` to the CLI (`PipelineArgs.referenceDir: string | null`; default `<swf dir>/reference`, which is how `pipeline.ts` reads it today), so that a SWF under `.work/samples/static_text/` can use the committed `samples/static_text/reference/`.
     - Test: extend `test/unit/cli.test.ts` (flag parsed, default unchanged) and `test/unit/pipeline.test.ts` (the Verify_Stage reads the given directory).
     - _Requirements: 20.5_

@@ -278,6 +278,34 @@ describe('runPipeline', () => {
   });
 });
 
+describe('runPipeline: reference directory', () => {
+  const summary = { overallMatch: 100, traceScore: null, missing: 0, extra: 0, inputNoteLines: [], jsonPath: 'j', htmlPath: 'h' };
+
+  async function runVerify(over: Partial<PipelineArgs>): Promise<string | null | undefined> {
+    let seen: string | null | undefined;
+    const stages = makeStages({
+      async verify(req) {
+        seen = req.referenceDir;
+        return summary;
+      },
+    });
+    await runPipeline(args({ verify: {}, ...over }), stages, io);
+    return seen;
+  }
+
+  it('defaults to <swf dir>/reference when it exists, else null', async () => {
+    expect(await runVerify({})).toBeNull();
+    await mkdir(join(tmp, 'reference'));
+    expect(await runVerify({ force: true })).toBe(join(tmp, 'reference'));
+  });
+
+  it('passes the given directory to the Verify_Stage', async () => {
+    const dir = join(tmp, 'elsewhere', 'reference');
+    await mkdir(dir, { recursive: true });
+    expect(await runVerify({ referenceDir: dir })).toBe(dir);
+  });
+});
+
 describe('runPipeline: omitted classes (spec task 4.5)', () => {
   const broken: ClassOmission = {
     className: 'pkg.Broken',

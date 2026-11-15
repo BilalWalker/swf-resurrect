@@ -25,6 +25,18 @@ describe('parseArgs', () => {
     });
   });
 
+  it('parses --reference-dir and leaves the default unset without it', () => {
+    const r = parseArgs(['a.swf', 'out', '--reference-dir', 'samples/static_text/reference']);
+    expect(r).toEqual({
+      ok: true,
+      options: { swfPath: 'a.swf', outputDir: 'out', force: false, keepWork: false, referenceDir: 'samples/static_text/reference' },
+    });
+    expect(parseArgs(['a.swf', 'out', '--verify'])).toEqual({
+      ok: true,
+      options: { swfPath: 'a.swf', outputDir: 'out', force: false, keepWork: false, verify: true },
+    });
+  });
+
   it.each([
     [[]],
     [['a.swf']],
@@ -32,6 +44,8 @@ describe('parseArgs', () => {
     [['a.swf', 'out', '--bogus']],
     [['a.swf', 'out', '--work-dir']],
     [['a.swf', 'out', '--ffdec', '']],
+    [['a.swf', 'out', '--reference-dir']],
+    [['a.swf', 'out', '--reference-dir', '']],
   ])('usage error -> exit 2: %j', (argv) => {
     const r = parseArgs(argv);
     expect(r.ok).toBe(false);

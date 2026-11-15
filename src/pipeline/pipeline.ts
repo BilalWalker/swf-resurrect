@@ -61,6 +61,8 @@ export interface PipelineArgs {
   homeDir: string;
   /** Set by --verify; frames is K from --verify-frames. */
   verify?: { frames?: number };
+  /** Set by --reference-dir; null or absent means <swf dir>/reference when it exists. */
+  referenceDir?: string | null;
 }
 
 /** Error codes of the Emitter refusals that must leave the output directory untouched (Req 5.8, 5.10). */
@@ -279,7 +281,8 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     if (args.verify !== undefined && stages.verify !== undefined) {
       stage = 'verify';
       const swfDir = dirname(resolve(args.swfPath));
-      const referenceDir = join(swfDir, 'reference');
+      const defaultReferenceDir = join(swfDir, 'reference');
+      const referenceDir = args.referenceDir == null ? defaultReferenceDir : resolve(args.referenceDir);
       const req: VerifyRequest = {
         swfPath: resolve(args.swfPath),
         jarPath: args.ffdecJarPath,
@@ -289,7 +292,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
         unsupported,
         translationReport: reportOf(translated, overridden, gate, omissions, loose, classPaths, problems),
         sampleName: basename(swfDir),
-        referenceDir: existsSync(referenceDir) ? referenceDir : null,
+        referenceDir: args.referenceDir == null && !existsSync(referenceDir) ? null : referenceDir,
       };
       if (args.verify.frames !== undefined) req.frames = args.verify.frames;
       const summary = await stages.verify(req);

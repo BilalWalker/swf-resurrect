@@ -23,12 +23,13 @@ export interface CliOptions {
   handwrittenDir?: string;
   verify?: true;
   verifyFrames?: number;
+  referenceDir?: string;
 }
 
 export type ParsedArgs = { ok: true; options: CliOptions } | { ok: false; message: string; exitCode: 2 };
 
 export const USAGE =
-  'Usage: pipeline <input.swf> <output-dir> [--force] [--work-dir <dir>] [--keep-work] [--ffdec <jar>] [--handwritten <dir>] [--verify] [--verify-frames <n>]';
+  'Usage: pipeline <input.swf> <output-dir> [--force] [--work-dir <dir>] [--keep-work] [--ffdec <jar>] [--handwritten <dir>] [--verify] [--verify-frames <n>] [--reference-dir <dir>]';
 
 /** Pure: argv excludes the node binary and script path. Usage errors give exit code 2. */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
@@ -46,6 +47,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
         handwritten: { type: 'string' },
         verify: { type: 'boolean' },
         'verify-frames': { type: 'string' },
+        'reference-dir': { type: 'string' },
       },
     });
   } catch (err) {
@@ -63,6 +65,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     ['--work-dir', values['work-dir']],
     ['--ffdec', values.ffdec],
     ['--handwritten', values.handwritten],
+    ['--reference-dir', values['reference-dir']],
   ] as const) {
     if (v === '') return { ok: false, message: `${name} needs a non-empty value\n${USAGE}`, exitCode: 2 };
   }
@@ -84,6 +87,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   if (values['work-dir'] !== undefined) options.workDir = values['work-dir'];
   if (values.ffdec !== undefined) options.ffdecJarPath = values.ffdec;
   if (values.handwritten !== undefined) options.handwrittenDir = values.handwritten;
+  if (values['reference-dir'] !== undefined) options.referenceDir = values['reference-dir'];
   if (values.verify === true) options.verify = true;
   if (verifyFramesText !== undefined) options.verifyFrames = Number(verifyFramesText);
   return { ok: true, options };
@@ -143,6 +147,15 @@ export async function main(argv: readonly string[]): Promise<number> {
     handwrittenDir = (await isDirectory(candidate)) ? candidate : null;
   }
 
+  let referenceDir: string | null = null;
+  if (o.referenceDir !== undefined) {
+    referenceDir = resolve(o.referenceDir);
+    if (!(await isDirectory(referenceDir))) {
+      io.err(`error [pipeline]: reference directory not found: ${referenceDir}\n`);
+      return 2;
+    }
+  }
+
   const handwrittenClasses =
     handwrittenDir === null
       ? []
@@ -157,6 +170,7 @@ export async function main(argv: readonly string[]): Promise<number> {
     templateDir: join(REPO_ROOT, 'template'),
     handwrittenDir,
     handwrittenClasses,
+    referenceDir,
     cwd: process.cwd(),
     homeDir: homedir(),
   };
