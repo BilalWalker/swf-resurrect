@@ -729,12 +729,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: the two floor tests.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
-  - [-] 16.4 `click_block`: files, PROVENANCE.md and fixtures
+  - [x] 16.4 `click_block`: files, PROVENANCE.md and fixtures
     - Links `test_fla.MainTimeline`, uses `mouseX`, `mouseY` and `stage`, and has `MouseMove`/`MouseDown`/`MouseUp` entries; `test.toml` sets `num_frames = 100`. Copy `test.swf` unmodified into `samples/click_block/` (SHA-256 prefix `4023640b`; verify the full value), the reference files unchanged, `PROVENANCE.md` (MIT, pointer, a fonts section stating that the font reference with zero glyphs counts as no embedded outlines, SHA-256, reason) and `test/fixtures/click_block/` with the structure dump, symbol list and the class source `test_fla/MainTimeline.as`.
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.14, 3.15, 3.20, 3.23_
 
-  - [ ] 16.5 `click_block`: measure and attribute the residual
+  - [-] 16.5 `click_block`: measure and attribute the residual
     - Run `--verify`. The Trace_Score is whatever Tasks 5 to 8 give, measured at Task 9; do not add a Shim API beyond the fixture lines (Requirement 14.17). Report the Known_Visual_Limits (the morph shape, the edit text), that no `bitmap-fill` limit is recorded for its two Bitmap_Fills (Requirement 9.5), the Overall_Match (about 94.5 expected), the Trace_Score with `missing` and `extra` counts and any `release-outside`, `unsupported-input` and `unpaired-mouse-event` notes next to them (Requirement 14.21). Apply the residual step of 15.2 to every differing region (the dropped morph shape and edit text regions are attributed to their Named_Limit kinds in `samples/click_block/residual-causes.json`).
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 9.5, 14.2, 14.21, 21.1, 21.3, 21.4_

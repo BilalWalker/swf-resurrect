@@ -1,0 +1,435 @@
+{
+  "formatVersion": 1,
+  "sample": "click_block",
+  "entries": [
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 222,
+        "y0": 183,
+        "x1": 243,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 142 differing pixels, 142 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 0 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 288,
+        "y0": 184,
+        "x1": 297,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 104 differing pixels, 102 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 2 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 247,
+        "y0": 191,
+        "x1": 264,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 190 differing pixels, 186 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 4 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 268,
+        "y0": 191,
+        "x1": 285,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 145 differing pixels, 139 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 6 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 1,
+      "bbox": {
+        "x0": 419,
+        "y0": 282,
+        "x1": 533,
+        "y1": 382
+      },
+      "kind": "morph-shape",
+      "message": "Pink morph square (DefineMorphShape 8, placement dropped, Named_Limit morph-shape). Of the 11615 differing pixels, 11512 are reference pink (about 255,51,255) where the render has the background green (51,204,51) or its 10% black blend (26,102,26); 101 are pixels where the render shows the black stage border line (0,0,0) that the reference covers with the morph outline; 2 are other pixels of the morph edge (anti-aliased fill and outline, and the border line seen through it) where the render shows plain green, border black or its blend."
+    },
+    {
+      "frame": 2,
+      "bbox": {
+        "x0": 222,
+        "y0": 183,
+        "x1": 243,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 142 differing pixels, 142 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 0 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 2,
+      "bbox": {
+        "x0": 288,
+        "y0": 184,
+        "x1": 297,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 104 differing pixels, 102 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 2 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 2,
+      "bbox": {
+        "x0": 247,
+        "y0": 191,
+        "x1": 264,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 190 differing pixels, 186 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 4 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 2,
+      "bbox": {
+        "x0": 268,
+        "y0": 191,
+        "x1": 285,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 145 differing pixels, 139 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 6 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 2,
+      "bbox": {
+        "x0": 419,
+        "y0": 281,
+        "x1": 533,
+        "y1": 382
+      },
+      "kind": "morph-shape",
+      "message": "Pink morph square (DefineMorphShape 8, placement dropped, Named_Limit morph-shape). Of the 10943 differing pixels, 10621 are reference pink (about 255,51,255) where the render has the background green (51,204,51) or its 10% black blend (26,102,26); 20 are pixels where the render shows the black stage border line (0,0,0) that the reference covers with the morph outline; 302 are other pixels of the morph edge (anti-aliased fill and outline, and the border line seen through it) where the render shows plain green, border black or its blend."
+    },
+    {
+      "frame": 4,
+      "bbox": {
+        "x0": 222,
+        "y0": 183,
+        "x1": 243,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 142 differing pixels, 142 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 0 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 4,
+      "bbox": {
+        "x0": 288,
+        "y0": 184,
+        "x1": 297,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 104 differing pixels, 102 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 2 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 4,
+      "bbox": {
+        "x0": 247,
+        "y0": 191,
+        "x1": 264,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 190 differing pixels, 186 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 4 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 4,
+      "bbox": {
+        "x0": 268,
+        "y0": 191,
+        "x1": 285,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 145 differing pixels, 139 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 6 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 4,
+      "bbox": {
+        "x0": 420,
+        "y0": 278,
+        "x1": 533,
+        "y1": 382
+      },
+      "kind": "morph-shape",
+      "message": "Pink morph square (DefineMorphShape 8, placement dropped, Named_Limit morph-shape). Of the 9883 differing pixels, 9573 are reference pink (about 255,51,255) where the render has the background green (51,204,51) or its 10% black blend (26,102,26); 13 are pixels where the render shows the black stage border line (0,0,0) that the reference covers with the morph outline; 297 are other pixels of the morph edge (anti-aliased fill and outline, and the border line seen through it) where the render shows plain green, border black or its blend."
+    },
+    {
+      "frame": 5,
+      "bbox": {
+        "x0": 222,
+        "y0": 183,
+        "x1": 243,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 142 differing pixels, 142 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 0 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 5,
+      "bbox": {
+        "x0": 288,
+        "y0": 184,
+        "x1": 297,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 104 differing pixels, 102 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 2 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 5,
+      "bbox": {
+        "x0": 247,
+        "y0": 191,
+        "x1": 264,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 190 differing pixels, 186 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 4 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 5,
+      "bbox": {
+        "x0": 268,
+        "y0": 191,
+        "x1": 285,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 145 differing pixels, 139 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 6 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 5,
+      "bbox": {
+        "x0": 420,
+        "y0": 277,
+        "x1": 533,
+        "y1": 382
+      },
+      "kind": "morph-shape",
+      "message": "Pink morph square (DefineMorphShape 8, placement dropped, Named_Limit morph-shape). Of the 9544 differing pixels, 9257 are reference pink (about 255,51,255) where the render has the background green (51,204,51) or its 10% black blend (26,102,26); 11 are pixels where the render shows the black stage border line (0,0,0) that the reference covers with the morph outline; 276 are other pixels of the morph edge (anti-aliased fill and outline, and the border line seen through it) where the render shows plain green, border black or its blend."
+    },
+    {
+      "frame": 6,
+      "bbox": {
+        "x0": 222,
+        "y0": 183,
+        "x1": 243,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 142 differing pixels, 142 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 0 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 6,
+      "bbox": {
+        "x0": 288,
+        "y0": 184,
+        "x1": 297,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 104 differing pixels, 102 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 2 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 6,
+      "bbox": {
+        "x0": 247,
+        "y0": 191,
+        "x1": 264,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 190 differing pixels, 186 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 4 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 6,
+      "bbox": {
+        "x0": 268,
+        "y0": 191,
+        "x1": 285,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 145 differing pixels, 139 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 6 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 6,
+      "bbox": {
+        "x0": 421,
+        "y0": 276,
+        "x1": 533,
+        "y1": 382
+      },
+      "kind": "morph-shape",
+      "message": "Pink morph square (DefineMorphShape 8, placement dropped, Named_Limit morph-shape). Of the 9335 differing pixels, 9065 are reference pink (about 255,51,255) where the render has the background green (51,204,51) or its 10% black blend (26,102,26); 11 are pixels where the render shows the black stage border line (0,0,0) that the reference covers with the morph outline; 259 are other pixels of the morph edge (anti-aliased fill and outline, and the border line seen through it) where the render shows plain green, border black or its blend."
+    },
+    {
+      "frame": 7,
+      "bbox": {
+        "x0": 222,
+        "y0": 183,
+        "x1": 243,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 142 differing pixels, 142 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 0 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 7,
+      "bbox": {
+        "x0": 288,
+        "y0": 184,
+        "x1": 297,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 104 differing pixels, 102 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 2 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 7,
+      "bbox": {
+        "x0": 247,
+        "y0": 191,
+        "x1": 264,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 190 differing pixels, 186 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 4 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 7,
+      "bbox": {
+        "x0": 268,
+        "y0": 191,
+        "x1": 285,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 145 differing pixels, 139 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 6 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 7,
+      "bbox": {
+        "x0": 421,
+        "y0": 275,
+        "x1": 533,
+        "y1": 382
+      },
+      "kind": "morph-shape",
+      "message": "Pink morph square (DefineMorphShape 8, placement dropped, Named_Limit morph-shape). Of the 9280 differing pixels, 8996 are reference pink (about 255,51,255) where the render has the background green (51,204,51) or its 10% black blend (26,102,26); 11 are pixels where the render shows the black stage border line (0,0,0) that the reference covers with the morph outline; 273 are other pixels of the morph edge (anti-aliased fill and outline, and the border line seen through it) where the render shows plain green, border black or its blend."
+    },
+    {
+      "frame": 9,
+      "bbox": {
+        "x0": 222,
+        "y0": 183,
+        "x1": 243,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 142 differing pixels, 142 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 0 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 9,
+      "bbox": {
+        "x0": 288,
+        "y0": 184,
+        "x1": 297,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 104 differing pixels, 102 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 2 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 9,
+      "bbox": {
+        "x0": 247,
+        "y0": 191,
+        "x1": 264,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 190 differing pixels, 186 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 4 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 9,
+      "bbox": {
+        "x0": 268,
+        "y0": 191,
+        "x1": 285,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 145 differing pixels, 139 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 6 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 9,
+      "bbox": {
+        "x0": 422,
+        "y0": 273,
+        "x1": 533,
+        "y1": 382
+      },
+      "kind": "morph-shape",
+      "message": "Pink morph square (DefineMorphShape 8, placement dropped, Named_Limit morph-shape). Of the 9532 differing pixels, 9262 are reference pink (about 255,51,255) where the render has the background green (51,204,51) or its 10% black blend (26,102,26); 12 are pixels where the render shows the black stage border line (0,0,0) that the reference covers with the morph outline; 258 are other pixels of the morph edge (anti-aliased fill and outline, and the border line seen through it) where the render shows plain green, border black or its blend."
+    },
+    {
+      "frame": 10,
+      "bbox": {
+        "x0": 222,
+        "y0": 183,
+        "x1": 243,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 142 differing pixels, 142 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 0 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 10,
+      "bbox": {
+        "x0": 288,
+        "y0": 184,
+        "x1": 297,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 104 differing pixels, 102 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 2 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 10,
+      "bbox": {
+        "x0": 247,
+        "y0": 191,
+        "x1": 264,
+        "y1": 211
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 190 differing pixels, 186 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 4 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    },
+    {
+      "frame": 10,
+      "bbox": {
+        "x0": 268,
+        "y0": 191,
+        "x1": 285,
+        "y1": 210
+      },
+      "kind": "text",
+      "message": "Letters of the dynamic text \"Text\" (DefineEditText 10, placement dropped, Named_Limit text). Of the 145 differing pixels, 139 are reference orange (255,153,51) where the render has the plain background green (51,204,51) and 6 are anti-aliased glyph edge pixels (reference blends orange into green) where the render has the plain green."
+    }
+  ]
+}
