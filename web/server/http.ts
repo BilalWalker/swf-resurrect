@@ -97,6 +97,7 @@ function readBody(req: IncomingMessage, res: ServerResponse, limit: number): Pro
   return new Promise((resolveBody, reject) => {
     const declared = Number(req.headers['content-length'] ?? NaN);
     if (Number.isFinite(declared) && declared > limit) {
+      res.setHeader('Connection', 'close'); // the unread body must not be parsed as the next request
       sendError(res, 413, `The file is larger than ${limit / (1024 * 1024)} MB.`);
       req.resume();
       resolveBody(null);
@@ -110,7 +111,8 @@ function readBody(req: IncomingMessage, res: ServerResponse, limit: number): Pro
       size += c.length;
       if (size > limit) {
         done = true;
-        sendError(res, 413, `The file is larger than ${limit / (1024 * 1024)} MB.`);
+        res.setHeader('Connection', 'close'); // the unread body must not be parsed as the next request
+      sendError(res, 413, `The file is larger than ${limit / (1024 * 1024)} MB.`);
         req.destroy();
         resolveBody(null);
         return;
