@@ -22,6 +22,8 @@ const OVERALL_MATCH_FLOOR_RADIAL = 100;
 const OVERALL_MATCH_FLOOR_GRADIENTS = 99.41;
 /** Measured in task 15.5 (1 frame, 0 of 220000 differing pixels; Exact_Render, Requirement 13.6). Never lower. */
 const OVERALL_MATCH_FLOOR_ACID_COLOR_2 = 100;
+/** Measured in task 16.2 (1 frame, 2 differing pixels, attributed in residual-causes.json; was 20.00 with the mask off). Never lower. */
+const OVERALL_MATCH_FLOOR_MASK_REAPPLY = 99.99;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -62,6 +64,7 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
     ['radial', OVERALL_MATCH_FLOOR_RADIAL],
     ['gradients', OVERALL_MATCH_FLOOR_GRADIENTS],
     ['acid-color-2', OVERALL_MATCH_FLOOR_ACID_COLOR_2],
+    ['mask_reapply', OVERALL_MATCH_FLOOR_MASK_REAPPLY],
   ];
   it.each(cases)(
     '%s keeps Overall_Match at or above its floor',

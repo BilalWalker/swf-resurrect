@@ -719,12 +719,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/provenance.test.ts` and fixture rows; a row in `test/unit/emit.test.ts` that the real fixture emits `src/Main.class.ts`.
     - _Requirements: 3.4, 3.5, 3.7, 3.14, 3.15, 3.20, 6.3_
 
-  - [-] 16.2 `mask_reapply`: gate, measurement and residual
+  - [x] 16.2 `mask_reapply`: gate, measurement and residual
     - Run the Pipeline with `--verify`. The type-check gate must report `typeCheck: ran` and zero `otherErrors` (Requirement 6.6; the errors from `maskee1.mask = mask1` at `Main.as:20, 21` must be attributed to the class as the gate does today, otherwise report it). State the Overall_Match before (20.00 with the mask off) and after (about 99.99 expected), the Trace_Score with `missing` and `extra` (empty input replay, `num_ticks = 1`, Task 7.9), that `Main` is registered under the key `Main` and reported as a Loose_Class (`classes[].loose`), not omitted, and apply the residual step of 15.2 to the 2 differing pixels or whatever is measured.
     - Test: extend `test/unit/emitMainCollision.test.ts` with the real `Main.as` fixture (type-check gate `ran`, zero `otherErrors`, `Main` in `src/classes.ts`, no `class-omitted` entry); `residual.e2e.test.ts` entry when below 100.
     - _Requirements: 6.6, 12.6, 14.2, 14.23, 21.1, 21.3_
 
-  - [ ] 16.3 `mask_reapply`: floors
+  - [-] 16.3 `mask_reapply`: floors
     - Only after 16.2 is complete, add the Overall_Match floor to `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score floor to `test/e2e/traceScore.e2e.test.ts` (the measured values; create the latter in this sub-task, with the same skip rules as `overallMatch.e2e.test.ts`, if it does not exist yet). IF the measured Trace_Score is 0 (for example because the constructor of the registered `Main` throws and the Replay records a `replay-error`), STOP and ask before setting a floor of 0 (Requirement 18.13).
     - Test: the two floor tests.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
