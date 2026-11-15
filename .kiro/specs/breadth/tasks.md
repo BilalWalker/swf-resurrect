@@ -664,18 +664,18 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend `test/unit/resolveTimeline.test.ts` (the old rejection test now expects the entry without `clipDepth` and one limit; `clipDepth` equal to `depth` stays a valid mask), `test/property/resolveTimeline.test.ts` (no input makes `resolveTimeline` throw `MalformedFrameDataError` for `clipDepth`), `test/unit/convertModel.test.ts` (the limit reaches the Unsupported list and the Scene_JSON passes `validateScene`) and **Property 10** in `test/property/convertAccounting.property.test.ts` (such a placement is kept, counted once as a limit, never a drop).
     - _Requirements: 12.3, 12.4, 2.1, 2.5_
 
-  - [-] 28.5 Colour-offset rule (amends 11.8)
+  - [x] 28.5 Colour-offset rule (amends 11.8)
     - Sub-task 11.8 states the alpha add term rule from one measured case (in 11.8, `alphaAddTerm` 100 measured 0 differing pixels on opaque fills; 7389 was the design's earlier figure with the add term inside the filter). One case does not make the general rule exact. Choose one: (a) add a second measurement under `.work/` with partly transparent pixels that confirms the rule (variants of `acid-color-2` as in 11.8, Reference_Frames exported with FFDec, scored with the real backend under the unchanged Verify_Tolerance), and keep the general rule; or (b) narrow the rule in `src/verify/core/limits.ts` and its message to the measured conditions and keep the `colour-offset` limit for every other alpha add term. State the choice in the commit message. Update F16 and the numbers in `design.md` section 4 to the 11.8 measurements (commit `ef18198`): original 0 differing pixels; control `alphaMultTerm=128`, `alphaAddTerm=0`: 0; `alphaAddTerm=100`: 0; `alphaMultTerm=128` with `alphaAddTerm=64`: 7501; `alphaMultTerm=0` with `alphaAddTerm=255`: 9818. Replace the 7389, 8335 and 10194 figures in F16 and the Colour offsets measurement table, and remove any sentence that says a non-zero alpha add term is never exact. Delete the variants.
     - Test: `test/unit/limits.test.ts` (rows for the measured conditions: no limit for the measured exact case, a limit for the cases measured not exact, the exact message) and **Property 9** in `test/property/visualLimits.property.test.ts` (`colour-offset` exactly for the placements the rule names, nothing else). The measurement is guarded by the `acid-color-2` Exact_Render assertion of sub-task 15.6.
     - _Requirements: 13.6, 13.7, 13.13, 2.4_
 
-  - [ ] 28.6 Flaky stroke-join tests in `render.e2e`
+  - [x] 28.6 Flaky stroke-join tests in `render.e2e`
     - The stroke-join tests of `test/e2e/render.e2e.test.ts` failed once in two full-suite runs and pass when run alone. Find the cause; the first guess is a pixel read-back before the frame is drawn (read after `app.render()` or the next ticker frame, with no wait on a drawn-frame signal). Reproduce it by running the file under load (the full suite, or the file with the other e2e files in parallel), record the failing assertion, then fix the cause in the test helper or the backend: read back only after the draw has completed (an explicit render call and a `requestAnimationFrame` boundary, or a drawn-frame counter the page exposes). Do not raise a timeout and do not add a retry. If the cause is in `template/`, run V2.
     - Verification: run the full suite `npm test -- --run` three times in a row, all green, and report the three durations in the commit message.
     - Test: the stroke-join rows of `test/e2e/render.e2e.test.ts` are the evidence; add a row that fails on the old read-back order only if the cause allows a deterministic one.
     - _Requirements: 13.8, 15.3_
 
-  - [ ] 28.7 Design: Chromium's native SVG render is a diagnostic aid only
+  - [-] 28.7 Design: Chromium's native SVG render is a diagnostic aid only
     - Spec-only change in `design.md`: state in the Render_Path selection section that Chromium's native render of an SVG is a diagnostic aid and never an acceptance measure, and that the acceptance measure of every visual requirement is the Reference_Frame (Requirement 7.6, which already says this; the design lacks it). Add no other text. Task 14 reports this as a gap.
     - Test: none; a spec-only change, checked by reading the design section named above against Requirement 7.6.
     - _Requirements: 7.6_

@@ -171,6 +171,8 @@ sequenceDiagram
 
 Method: the harness called the project's `readUnpacked` and `convertModel` on the FFDec output, exported the Reference_Frame with `exportReferenceFrames`, drew the scene in headless Chromium with PixiJS 8.22.0 (`dist/pixi.min.js`, `antialias: true`, resolution 1, the same settings as `timelineOnly.ts`) once per path, and scored with `compareImages(reference, rendered, background)` under the unchanged `AA_TOLERANCE`. "Region" scores crop both images to the union of the non-background bounding boxes and run the same comparison. For scale and rotation, FFDec re-rendered a SWF variant whose root placement matrix was edited in the swf2xml dump and rebuilt with `-xml2swf` (so the reference is FFDec's, not Chromium's). Chromium's native SVG rendering takes part only as path (c), which is scored against the FFDec frame like the others; it is not an acceptance reference anywhere in this design (Requirement 7.6).
 
+Chromium's native render of an SVG is a diagnostic aid only and is never an acceptance measure. The acceptance measure of every visual requirement is the Reference_Frame (Requirement 7.6).
+
 Paths:
 
 - (a0) today: `flattenSvgWrapper` plus `Graphics.svg()`.
