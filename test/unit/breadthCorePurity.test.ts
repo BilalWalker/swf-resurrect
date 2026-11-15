@@ -34,6 +34,21 @@ function stripComments(text: string): string {
   return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
+/** Each file is read once for the whole test file, and the tree is listed once (task 28.6: reads were slow under load). */
+const texts = new Map<string, string>();
+function read(file: string): string {
+  let text = texts.get(file);
+  if (text === undefined) {
+    text = readFileSync(file, "utf8");
+    texts.set(file, text);
+  }
+  return text;
+}
+let allTs: string[] | null = null;
+function allTsFiles(): string[] {
+  allTs ??= [...listTs("src"), ...listTs("scripts"), ...listTs("test")];
+  return allTs;
+}
 function listTs(dir: string): string[] {
   if (!existsSync(dir)) return [];
   const out: string[] = [];
@@ -52,7 +67,7 @@ describe("Core purity", () => {
 
   for (const file of [...CORE_FILES, ...verifyCore]) {
     it(`${file} uses no node module, tool import, clock, randomness or locale call`, () => {
-      const code = stripComments(readFileSync(file, "utf8"));
+      const code = stripComments(read(file));
       for (const re of FORBIDDEN) expect(re.test(code), `${file} ${re}`).toBe(false);
     });
   }
@@ -76,15 +91,15 @@ describe("typescript-js imports", () => {
   const importRe = /(?:from\s*|import\s*\(?\s*|require\s*\(\s*)["']typescript-js["']/;
 
   it("is imported only by the allowed files", () => {
-    const offenders = [...listTs("src"), ...listTs("scripts"), ...listTs("test")].filter(
-      (f) => !ALLOWED.has(f) && importRe.test(readFileSync(f, "utf8")),
+    const offenders = allTsFiles().filter(
+      (f) => !ALLOWED.has(f) && importRe.test(read(f)),
     );
     expect(offenders).toEqual([]);
   });
 
   it("is still imported by the two production files", () => {
     for (const f of ["src/translate/tsSyntaxCheck.ts", "src/translate/typeCheckGate.ts"]) {
-      expect(importRe.test(readFileSync(f, "utf8")), f).toBe(true);
+      expect(importRe.test(read(f)), f).toBe(true);
     }
   });
 });
