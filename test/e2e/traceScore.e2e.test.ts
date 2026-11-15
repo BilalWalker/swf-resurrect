@@ -15,6 +15,8 @@ import { main } from '../../src/pipeline/cli';
 const TRACE_SCORE_FLOOR_MASK_REAPPLY = 100;
 /** Measured in task 16.5 (5 of 5 matched, missing 0, extra 0; was 100 at Checkpoint 27). Never lower. */
 const TRACE_SCORE_FLOOR_CLICK_BLOCK = 100;
+/** Measured in task 17.2 (3 of 4 lines matched, missing 1, extra 0; was 75 at Checkpoint 27). The missing line is `wrap`: the AS3 `with(joystick)` in enterFrameHandler is not translated, so its body is comments and the trace call never runs. Never lower. */
+const TRACE_SCORE_FLOOR_3_JOYSTICK = 75;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -48,6 +50,7 @@ describe.skipIf(reason !== null)(`trace score floor${reason === null ? '' : ` (s
   const cases: Array<[string, number]> = [
     ['mask_reapply', TRACE_SCORE_FLOOR_MASK_REAPPLY],
     ['click_block', TRACE_SCORE_FLOOR_CLICK_BLOCK],
+    ['3_joystick', TRACE_SCORE_FLOOR_3_JOYSTICK],
   ];
   it.each(cases)(
     '%s keeps Trace_Score at or above its floor',

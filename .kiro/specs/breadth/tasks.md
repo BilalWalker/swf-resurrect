@@ -751,12 +751,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.20_
 
-  - [-] 17.2 `3_joystick`: measure and attribute the 1,241 pixels
+  - [x] 17.2 `3_joystick`: measure and attribute the 1,241 pixels
     - Run `--verify`. Report the Overall_Match (15.82 before this spec, about 98.9 expected), the Trace_Score and `missing`/`extra` counts (0.00 before) or the `not-compared` reason with the `replay-error` message, the tick count read from `num_ticks = 21`, the Known_Visual_Limits (`gradient-focal` if recorded) and that the mask is a Trivial_Mask kept (Requirement 12.6). Apply the residual step of 15.2 to every region, including the 1,241 pixels the first pass described as a thin band along the top of the right panel and arcs around the ball without a cause; the cause of each region is examined, not assumed.
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 12.6, 14.2, 14.12, 21.1, 21.3, 21.4, 21.5_
 
-  - [ ] 17.3 `3_joystick`: floors
+  - [-] 17.3 `3_joystick`: floors
     - Only after 17.2 is complete, add the Overall_Match floor and, when the behaviour is `compared`, the Trace_Score floor (the measured values). A Replay that throws is `compared` (Task 7.8), so a low value is explained line by line (Requirement 22.11, 18.13). If the measured Trace_Score is 0, set no Trace_Score floor, state the cause line by line and STOP and ask.
     - Test: the floor tests in `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
