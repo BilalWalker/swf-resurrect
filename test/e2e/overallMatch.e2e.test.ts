@@ -28,6 +28,8 @@ const OVERALL_MATCH_FLOOR_MASK_REAPPLY = 99.99;
 const OVERALL_MATCH_FLOOR_CLICK_BLOCK = 95.75;
 /** Measured in task 17.2 (21 ticks, all 59 differing regions attributed in residual-causes.json; was 15.82 at Checkpoint 27). Never lower. */
 const OVERALL_MATCH_FLOOR_3_JOYSTICK = 98.86;
+/** Measured in task 17.5 (10 ticks, all 6 differing regions attributed to stroke scaling; was 99.93 at Checkpoint 27). Never lower. */
+const OVERALL_MATCH_FLOOR_SLIDER_COMPONENT = 99.93;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -71,6 +73,7 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
     ['mask_reapply', OVERALL_MATCH_FLOOR_MASK_REAPPLY],
     ['click_block', OVERALL_MATCH_FLOOR_CLICK_BLOCK],
     ['3_joystick', OVERALL_MATCH_FLOOR_3_JOYSTICK],
+    ['slider_component', OVERALL_MATCH_FLOOR_SLIDER_COMPONENT],
   ];
   it.each(cases)(
     '%s keeps Overall_Match at or above its floor',

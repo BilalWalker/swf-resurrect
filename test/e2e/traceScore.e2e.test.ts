@@ -17,6 +17,8 @@ const TRACE_SCORE_FLOOR_MASK_REAPPLY = 100;
 const TRACE_SCORE_FLOOR_CLICK_BLOCK = 100;
 /** Measured in task 17.2 (3 of 4 lines matched, missing 1, extra 0; was 75 at Checkpoint 27). The missing line is `wrap`: the AS3 `with(joystick)` in enterFrameHandler is not translated, so its body is comments and the trace call never runs. Never lower. */
 const TRACE_SCORE_FLOOR_3_JOYSTICK = 75;
+/** Measured in task 17.5 (1 of 4 lines matched, missing 3, extra 0; was 25 at Checkpoint 27). The three missing lines are the changeHandler traces: fl.controls.Slider extends UIComponent, which fails at load with TS2304 on TextFormat (line 15), so Slider is omitted, symbol 20 is a plain MovieClip and never dispatches CHANGE. Never lower. */
+const TRACE_SCORE_FLOOR_SLIDER_COMPONENT = 25;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -51,6 +53,7 @@ describe.skipIf(reason !== null)(`trace score floor${reason === null ? '' : ` (s
     ['mask_reapply', TRACE_SCORE_FLOOR_MASK_REAPPLY],
     ['click_block', TRACE_SCORE_FLOOR_CLICK_BLOCK],
     ['3_joystick', TRACE_SCORE_FLOOR_3_JOYSTICK],
+    ['slider_component', TRACE_SCORE_FLOOR_SLIDER_COMPONENT],
   ];
   it.each(cases)(
     '%s keeps Trace_Score at or above its floor',
