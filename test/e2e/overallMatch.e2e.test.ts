@@ -20,6 +20,8 @@ const OVERALL_MATCH_FLOOR_TWEENDEMO = 100;
 const OVERALL_MATCH_FLOOR_RADIAL = 100;
 /** Measured in task 15.2 (1 frame, 1302 differing pixels, all attributed in residual-causes.json). Never lower. */
 const OVERALL_MATCH_FLOOR_GRADIENTS = 99.41;
+/** Measured in task 15.5 (1 frame, 0 of 220000 differing pixels; Exact_Render, Requirement 13.6). Never lower. */
+const OVERALL_MATCH_FLOOR_ACID_COLOR_2 = 100;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -44,7 +46,7 @@ interface VisualReport {
   visual: {
     status: string;
     overallMatch: number;
-    frames: Array<{ frame: number; status: string; matchPercent?: number }>;
+    frames: Array<{ frame: number; status: string; matchPercent?: number; differingPixels?: number }>;
   };
 }
 
@@ -59,6 +61,7 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
     ['tweendemo', OVERALL_MATCH_FLOOR_TWEENDEMO],
     ['radial', OVERALL_MATCH_FLOOR_RADIAL],
     ['gradients', OVERALL_MATCH_FLOOR_GRADIENTS],
+    ['acid-color-2', OVERALL_MATCH_FLOOR_ACID_COLOR_2],
   ];
   it.each(cases)(
     '%s keeps Overall_Match at or above its floor',
@@ -72,6 +75,11 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
       expect(report.visual.status).toBe('compared');
       expect(report.visual.frames.every((f) => f.status === 'compared')).toBe(true);
       expect(report.visual.overallMatch).toBeGreaterThanOrEqual(floor);
+      if (sample === 'acid-color-2') {
+        // Exact_Render: frame 1 has zero differing pixels under the unchanged Verify_Tolerance.
+        const frame1 = report.visual.frames.find((f) => f.frame === 1);
+        expect(frame1?.differingPixels).toBe(0);
+      }
     },
     TIMEOUT_MS,
   );

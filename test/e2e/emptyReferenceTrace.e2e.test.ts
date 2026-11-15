@@ -41,7 +41,7 @@ describe.skipIf(reason !== null)(`empty reference trace report${reason === null 
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
   }, 60_000);
 
-  it.each(['radial', 'gradients'])(
+  it.each(['radial', 'gradients', 'acid-color-2'])(
     '%s reports behaviour not-compared with empty-reference-trace and no Trace_Score',
     async (sample) => {
       await mkdir(resolve(repoRoot, '.work'), { recursive: true });

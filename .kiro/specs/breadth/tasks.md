@@ -697,17 +697,17 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: the Overall_Match floor test and `test/e2e/emptyReferenceTrace.e2e.test.ts` (both skipped with a reason when the SWF, Java or Chromium is missing).
     - _Requirements: 3.6, 3.7, 8.5, 14.24, 21.7_
 
-  - [-] 15.4 `acid-color-2`: files, PROVENANCE.md and fixtures
+  - [x] 15.4 `acid-color-2`: files, PROVENANCE.md and fixtures
     - Copy `test.swf` unmodified into `samples/acid-color-2/` (SHA-256 `17ef8545fddb565af25d6178e52a7fffaa5c74b4711761952f7c8df5efad8ef9`). `PROVENANCE.md` states `Apache-2.0`, points to `samples/LICENSES/Apache-2.0.txt`, gives the Shumway attribution from `tests/tests/swfs/from_shumway/README.md` and that `mozilla/shumway` ships no NOTICE file (Appendix A.1), the embedded fonts (or `no embedded fonts`), the SHA-256 and the reason. Copy the reference files that exist unchanged. Create `test/fixtures/acid-color-2/`. IF a NOTICE file is found, STOP and ask.
     - Test: `test/unit/provenance.test.ts` (Apache pointer, attribution text, no-NOTICE statement) and fixture-presence rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.13, 3.20_
 
-  - [ ] 15.5 `acid-color-2`: measure and attribute the residual
+  - [x] 15.5 `acid-color-2`: measure and attribute the residual
     - Run the Pipeline with `--verify`. Report the Overall_Match (expected 100), the Known_Visual_Limits and that no `colour-offset` limit is recorded for the drawn placements. If the Overall_Match is below 100, apply the residual step of 15.2 (every region of every compared frame to a cause, fixed or recorded in `samples/acid-color-2/residual-causes.json`).
     - Test: the `residual.e2e.test.ts` entry when the Overall_Match is below 100; otherwise the Exact_Render assertion of 15.6.
     - _Requirements: 13.6, 14.2, 21.1, 21.3_
 
-  - [ ] 15.6 `acid-color-2`: Exact_Render floor
+  - [-] 15.6 `acid-color-2`: Exact_Render floor
     - Add `OVERALL_MATCH_FLOOR_ACID_COLOR_2` to `test/e2e/overallMatch.e2e.test.ts` set to the measured Overall_Match, plus an assertion that frame 1 has zero differing pixels under the unchanged Verify_Tolerance (Requirement 13.6). IF it does not, STOP and ask; keep the `colour-offset` limit and record why (Requirement 13.7). Add no Trace_Score floor (Empty_Reference_Trace, Requirement 3.7); add `acid-color-2` to `test/e2e/emptyReferenceTrace.e2e.test.ts` (`not-compared`, `empty-reference-trace`).
     - Test: `test/e2e/overallMatch.e2e.test.ts` (floor and Exact_Render assertion) and `test/e2e/emptyReferenceTrace.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 13.5, 13.6, 13.10, 14.24, 21.7_
