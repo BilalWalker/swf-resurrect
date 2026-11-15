@@ -76,6 +76,7 @@ skipped, with the reason printed, when Java or the jar is missing.
 | `GET /api/jobs/<id>/source`, `/source/<path>` | Generated `src/` file list and file text. |
 | `GET /api/jobs/<id>/project.zip` | The emitted project without `node_modules` and `dist`. |
 | `GET /api/samples`, `GET /api/setup` | Gallery and setup status. |
+| `GET /healthz` | Liveness: `{status: "ok", running, queued}`. No disk access, no child process. |
 | `GET /vendor/ruffle/*` | The Ruffle web package from `node_modules`. |
 
 ## Security

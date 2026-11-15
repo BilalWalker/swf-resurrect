@@ -71,6 +71,15 @@ describe('web server HTTP', () => {
     expect((await raw('GET', '/api/setup')).status).toBe(200);
   });
 
+  it('answers the health check without touching the pipeline', async () => {
+    const r = await raw('GET', '/healthz');
+    expect(r.status).toBe(200);
+    expect(r.headers['cache-control']).toBe('no-store');
+    expect(JSON.parse(r.body.toString())).toEqual({ status: 'ok', running: 0, queued: 0 });
+    expect((await raw('HEAD', '/healthz')).status).toBe(200);
+    expect((await raw('POST', '/healthz')).status).toBe(405);
+  });
+
   it('serves Ruffle and refuses traversal out of the vendor directory', async () => {
     const ok = await raw('GET', '/vendor/ruffle/ruffle.js');
     expect(ok.status).toBe(200);

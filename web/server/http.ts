@@ -145,6 +145,11 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
     const method = req.method ?? 'GET';
     const isGet = method === 'GET' || method === 'HEAD';
 
+    if (rawPath === '/healthz') {
+      // Liveness for a host or load balancer: cheap, no disk and no child process.
+      if (!isGet) return sendError(res, 405, 'Method not allowed');
+      return sendJson(res, 200, { status: 'ok', ...jobs.queueCounts() });
+    }
     if (rawPath.startsWith('/vendor/ruffle/')) {
       if (!isGet) return sendError(res, 405, 'Method not allowed');
       return sendFileInside(req, res, ruffleDir, rawPath.slice('/vendor/ruffle/'.length), { cors: true });

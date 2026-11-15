@@ -346,6 +346,11 @@ export class JobManager {
     return { id, cached: false };
   }
 
+  /** Jobs running (0 or 1) and waiting, for the health check. */
+  queueCounts(): { running: number; queued: number } {
+    return { running: this.running === null ? 0 : 1, queued: this.queue.length };
+  }
+
   get(id: string): Job | undefined {
     return isJobId(id) ? this.jobs.get(id) : undefined;
   }
