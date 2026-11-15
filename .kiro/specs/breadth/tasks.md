@@ -692,12 +692,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Both samples are single-frame SWFs (`num_frames = 1`): the Frame_Sample is `[1]` and the run must complete with it (Requirement 14.18). Test: `test/unit/frameSample.test.ts` (create): `selectFrames(1)` returns `[1]` and a one-frame SWF through the Verify_Stage with a stub yields one compared frame.
     - _Requirements: 8.5, 14.2, 14.18, 21.1, 21.2, 21.3, 21.4, 21.5, 21.6_
 
-  - [-] 15.3 `radial` and `gradients`: floors
+  - [x] 15.3 `radial` and `gradients`: floors
     - Only after 15.2 is complete, add `OVERALL_MATCH_FLOOR_RADIAL` and `OVERALL_MATCH_FLOOR_GRADIENTS` to `test/e2e/overallMatch.e2e.test.ts`, each equal to the measured Overall_Match (the measured value, not the expectation of about 100 and about 99.4). Add no Trace_Score floor for these two samples (Empty_Reference_Trace, Requirement 3.7). Create `test/e2e/emptyReferenceTrace.e2e.test.ts` (same skip rules as `overallMatch.e2e.test.ts`; its header says that it pins the report and is not a floor): for `radial` and `gradients`, `behaviour.status === 'not-compared'`, `behaviour.reason === 'empty-reference-trace'` and no Trace_Score field. Delete the Diff_Images; commit none.
     - Test: the Overall_Match floor test and `test/e2e/emptyReferenceTrace.e2e.test.ts` (both skipped with a reason when the SWF, Java or Chromium is missing).
     - _Requirements: 3.6, 3.7, 8.5, 14.24, 21.7_
 
-  - [ ] 15.4 `acid-color-2`: files, PROVENANCE.md and fixtures
+  - [-] 15.4 `acid-color-2`: files, PROVENANCE.md and fixtures
     - Copy `test.swf` unmodified into `samples/acid-color-2/` (SHA-256 `17ef8545fddb565af25d6178e52a7fffaa5c74b4711761952f7c8df5efad8ef9`). `PROVENANCE.md` states `Apache-2.0`, points to `samples/LICENSES/Apache-2.0.txt`, gives the Shumway attribution from `tests/tests/swfs/from_shumway/README.md` and that `mozilla/shumway` ships no NOTICE file (Appendix A.1), the embedded fonts (or `no embedded fonts`), the SHA-256 and the reason. Copy the reference files that exist unchanged. Create `test/fixtures/acid-color-2/`. IF a NOTICE file is found, STOP and ask.
     - Test: `test/unit/provenance.test.ts` (Apache pointer, attribution text, no-NOTICE statement) and fixture-presence rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.9, 3.11, 3.12, 3.13, 3.20_

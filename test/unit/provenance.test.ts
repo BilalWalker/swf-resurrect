@@ -178,6 +178,38 @@ describe("repository samples", () => {
   }
 });
 
+describe("acid-color-2 (Apache-2.0, Shumway)", () => {
+  const note = readFileSync(join(root, "samples", "acid-color-2", "PROVENANCE.md"), "utf8");
+
+  it("is Apache-2.0 only with the Apache pointer", () => {
+    expect(note).toMatch(/\| Licence\s*\| Apache-2\.0 \|/);
+    expect(licencePointers(note)).toEqual(["samples/LICENSES/Apache-2.0.txt"]);
+  });
+
+  it("carries the Shumway attribution", () => {
+    expect(note).toContain("https://github.com/mozilla/shumway/tree/master/test/swfs");
+    expect(note).toContain("https://github.com/mozilla/shumway/blob/master/LICENSE");
+    expect(note).toContain("from_shumway");
+  });
+
+  it("states that mozilla/shumway ships no NOTICE file", () => {
+    expect(note).toMatch(/`mozilla\/shumway` ships no NOTICE file/);
+    expect(note).toContain("16451d8836fa85f4b16eeda8b4bda2fa9e2b22b0");
+  });
+
+  it("has the reference files and fixtures", () => {
+    for (const p of [
+      "samples/acid-color-2/reference/output.txt",
+      "samples/acid-color-2/reference/test.toml",
+      "test/fixtures/acid-color-2/structure.xml",
+      "test/fixtures/acid-color-2/FINDINGS.md",
+      "test/fixtures/acid-color-2/shapes/1.svg",
+    ]) {
+      expect(existsSync(join(root, p)), p).toBe(true);
+    }
+  });
+});
+
 describe("repository rules", () => {
   it("has no _loc<N>_ placeholders in handwritten/", () => {
     const files = walk(join(root, "handwritten"), (n) => /\.(ts|js|as)$/.test(n));
