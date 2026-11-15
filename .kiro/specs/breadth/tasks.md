@@ -649,12 +649,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: rows in `test/unit/svgToShape.test.ts` (a round join and a `miter-clip` join each give exactly one `stroke-style` limit naming the shape id; a bevel join and a miter join give none; the limit is not repeated per path of the same shape); extend **Property 9** in `test/property/visualLimits.property.test.ts` (every `stroke-style` limit reaches `knownVisualLimits` with its message) and **Property 42** in `test/property/shapeFunction.property.test.ts` where the generator already covers join spellings (the output is deterministic and sorted by `(kind, message)`).
     - _Requirements: 13.8, 13.9, 13.11, 2.1, 2.4_
 
-  - [-] 28.2 Normal blend modes record no limit (amends 12.4)
+  - [x] 28.2 Normal blend modes record no limit (amends 12.4)
     - A placement whose blend mode is normal (value 0 or 1) is drawn exactly and must record no `blend-mode` limit, whatever the flag says. Read the verified `blendMode` attribute (`FFDEC_XML.place.blendMode`, verified in 12.3), set `PlaceOp.hasBlendMode` only when its value is neither 0 nor 1 (an absent attribute counts as normal), and keep the `blend-mode` entry for every other value. The filter path is unchanged.
     - Test: `test/unit/resolveTimeline.test.ts` (blend mode 0, 1, absent: no `KeptPlacementLimit`; blend mode 2 and 8: one entry each; a move without a character), `test/unit/convertModel.test.ts` (no `blend-mode` Unsupported entry for a normal blend mode, the message of the others unchanged) and **Property 10** in `test/property/convertAccounting.property.test.ts` (blend-mode entries equal the count of placements with a blend mode other than 0 and 1, and none counts as a drop); extend `genTagsModel.ts` with the blend-mode value.
     - _Requirements: 13.3, 13.4, 2.5_
 
-  - [ ] 28.3 Nested masks limit (amends 12.5)
+  - [-] 28.3 Nested masks limit (amends 12.5)
     - When a mask placement lies inside the depth range of another mask (`depth` in `(outer.depth, outer.clipDepth]`), record a Named_Limit of kind `mask` that names the sprite id, the frame and the depth of the inner mask and says `nested masks are not verified against Flash`. The layout and the drawing do not change; the limit says only that the result was not compared with the Reference_Frame. Record it in `src/convert/masks.ts` (`resolveMasks`) once per nested mask placement and sprite, not once per frame.
     - Test: extend `test/unit/masks.test.ts` (a nested mask records one `mask` limit naming the inner placement; two sibling masks and a mask after the outer range record none; the nested content is still kept) and **Property 12** in `test/property/masks.property.test.ts` (a limit exists exactly when the brute-force model finds a mask depth inside another mask's range).
     - _Requirements: 12.1, 12.3, 2.1, 2.3_

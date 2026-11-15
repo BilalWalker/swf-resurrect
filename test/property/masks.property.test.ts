@@ -77,6 +77,16 @@ describe("Property 12: mask classification and resolution", () => {
         expect(r.dropped.length).toBeLessThanOrEqual(removed);
         expect(r.dropped.length > 0).toBe(removed > 0);
         for (const d of r.dropped) expect(d.kind).toBe("mask");
+        // nested-mask limits: one per (depth, character) among kept masks that lie inside another kept mask's range
+        const expectedKeys = new Set<string>();
+        for (const f of r.frames) {
+          const ms = f.filter((e) => e.clipDepth !== undefined);
+          for (const i of ms) {
+            if (ms.some((o) => o !== i && i.depth > o.depth && i.depth <= (o.clipDepth as number))) expectedKeys.add(`${i.depth}:${i.symbolId}`);
+          }
+        }
+        expect(r.limits.map((l) => `${l.depth}:${l.characterId}`).sort()).toEqual([...expectedKeys].sort());
+        for (const l of r.limits) expect(l.spriteId).toBe(3);
         expect(resolveMasks(3, frames, symbols)).toEqual(r);
       }),
       fcConfig,

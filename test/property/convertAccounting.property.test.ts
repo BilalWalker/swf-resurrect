@@ -37,7 +37,7 @@ describe("Property 10: Convert never aborts on a defined character and counts ev
     fc.assert(
       fc.property(genTagsModel, (model) => {
         const r = convertModel(model);
-        const drops = r.unsupported.filter((u) => u.context !== undefined && u.kind !== "filter" && u.kind !== "blend-mode");
+        const drops = r.unsupported.filter((u) => u.context !== undefined && u.kind !== "filter" && u.kind !== "blend-mode" && !u.message.includes("nested masks"));
         expect(drops.length).toBe(countDroppedPlacements(model));
         for (const d of drops) {
           expect(d.context).toMatchObject({ spriteId: expect.any(Number), frame: expect.any(Number), depth: expect.any(Number) });

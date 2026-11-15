@@ -75,4 +75,20 @@ describe('resolveMasks', () => {
     expect(r.frames).toEqual(frames);
     expect(r.dropped).toEqual([]);
   });
+  it('records a nested mask once per placement and keeps the content', () => {
+    const frames = [
+      [entry(1, 1, { clipDepth: 5 }), entry(3, 1, { clipDepth: 4 }), entry(4, 1)],
+      [entry(1, 1, { clipDepth: 5 }), entry(3, 1, { clipDepth: 4 }), entry(4, 1)],
+    ];
+    const r = resolveMasks(9, frames, symbols);
+    expect(r.frames).toEqual(frames);
+    expect(r.dropped).toEqual([]);
+    expect(r.limits).toEqual([{ spriteId: 9, frame: 1, depth: 3, characterId: 1 }]);
+  });
+  it('records no nested-mask limit for sibling masks or a mask after the outer range', () => {
+    const sibling = [[entry(1, 1, { clipDepth: 1 }), entry(2, 1, { clipDepth: 2 }), entry(3, 1)]];
+    const after = [[entry(1, 1, { clipDepth: 3 }), entry(2, 1), entry(4, 1, { clipDepth: 5 })]];
+    expect(resolveMasks(0, sibling, symbols).limits).toEqual([]);
+    expect(resolveMasks(0, after, symbols).limits).toEqual([]);
+  });
 });

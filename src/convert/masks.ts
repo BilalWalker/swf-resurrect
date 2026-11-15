@@ -36,17 +36,28 @@ export function classifyMask(symbolId: number, symbols: Symbols): MaskClass {
   return { trivial: true };
 }
 
+/** A kept mask placed inside the depth range of another kept mask. A report only: nothing is removed. */
+export interface NestedMaskLimit {
+  spriteId: number;
+  frame: number; // first frame (1-based) in which the nested placement occurs
+  depth: number;
+  characterId: number;
+}
 /**
  * Removes every mask entry whose character is not a Trivial_Mask and records it as kind `mask`; a trivial mask is
- * kept with its `clipDepth`. A non-trivial mask that stays in the same place over consecutive frames is recorded once.
+ * kept with its `clipDepth`. A kept mask whose depth lies in `(outer.depth, outer.clipDepth]` of another kept mask
+ * in the same frame is reported in `limits` once per sprite and placement (depth and character), at its first frame;
+ * the layout does not change. A non-trivial mask that stays in the same place over consecutive frames is recorded once.
  * `frames` is not modified.
  */
 export function resolveMasks(
   spriteId: number,
   frames: readonly DisplayListEntry[][],
   symbols: Symbols,
-): { frames: DisplayListEntry[][]; dropped: DroppedPlacement[] } {
+): { frames: DisplayListEntry[][]; dropped: DroppedPlacement[]; limits: NestedMaskLimit[] } {
   const dropped: DroppedPlacement[] = [];
+  const limits: NestedMaskLimit[] = [];
+  const reported = new Set<string>();
   const cache = new Map<number, boolean>();
   const trivial = (id: number): boolean => {
     let t = cache.get(id);
@@ -67,7 +78,16 @@ export function resolveMasks(
       return false;
     });
     previous = current;
+    const masks = kept.filter((e) => e.clipDepth !== undefined);
+    for (const inner of masks) {
+      const nested = masks.some((o) => o !== inner && inner.depth > o.depth && inner.depth <= (o.clipDepth as number));
+      const key = `${inner.depth}:${inner.symbolId}`;
+      if (nested && !reported.has(key)) {
+        reported.add(key);
+        limits.push({ spriteId, frame: fi + 1, depth: inner.depth, characterId: inner.symbolId });
+      }
+    }
     return kept;
   });
-  return { frames: out, dropped };
+  return { frames: out, dropped, limits };
 }

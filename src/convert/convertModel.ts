@@ -303,6 +303,14 @@ export function convertModel(model: TagsModel): ConvertResult {
   for (const m of resolved) {
     m.sprite.frames = m.frames;
     for (const d of m.dropped) recordDropped(d);
+    for (const l of m.limits) {
+      const where = `mask at depth ${l.depth} in ${l.spriteId === 0 ? 'root timeline' : `sprite ${l.spriteId}`}, frame ${l.frame}`;
+      unsupported.push({
+        kind: 'mask',
+        message: `nested masks are not verified against Flash; the mask is drawn (${where}, character ${l.characterId})`,
+        context: { spriteId: l.spriteId, frame: l.frame, depth: l.depth },
+      });
+    }
   }
 
   // Cycle check (iterative-free DFS; depth is bounded by the sprite count).

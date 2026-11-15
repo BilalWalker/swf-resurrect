@@ -118,8 +118,20 @@ describe('convertModel', () => {
     expect(r.unsupported.filter((u) => u.kind === 'mask')).toEqual([]);
   });
 
-  it('removes a non-trivial mask and records it as a mask limit', () => {
-    // Sprite 2 holds a nested sprite entry, so it is not a Trivial_Mask.
+  it('keeps a nested mask and records one nested-mask limit', () => {
+    const model = modelWith(
+      [{ kind: 'place', depth: 1, characterId: 1, move: false, clipDepth: 5 }, { kind: 'place', depth: 3, characterId: 1, move: false, clipDepth: 4 }, place(4, 1)],
+      {},
+    );
+    const r = convertModel(model);
+    expect((r.scene.symbols['0'] as SpriteSymbol).frames[0].map((e) => e.depth)).toEqual([1, 3, 4]);
+    const masks = r.unsupported.filter((u) => u.kind === 'mask');
+    expect(masks).toHaveLength(1);
+    expect(masks[0]?.message).toContain('nested masks are not verified against Flash');
+    expect(masks[0]?.message).toContain('depth 3 in root timeline, frame 1');
+    expect(masks[0]?.context).toEqual({ spriteId: 0, frame: 1, depth: 3 });
+  });
+  it('removes a non-trivial mask and records it as a mask limit', () => {    // Sprite 2 holds a nested sprite entry, so it is not a Trivial_Mask.
     const model = modelWith([{ kind: 'place', depth: 1, characterId: 2, move: false, clipDepth: 3 }, place(2, 1)], {
       sprites: [{ id: 2, declaredFrameCount: 1, ops: [place(1, 3), { kind: 'showFrame' }] }, { id: 3, declaredFrameCount: 1, ops: [place(1, 1), { kind: 'showFrame' }] }],
     });
