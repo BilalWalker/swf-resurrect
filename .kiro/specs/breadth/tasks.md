@@ -771,12 +771,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/e2e/residual.e2e.test.ts` entry.
     - _Requirements: 14.2, 14.12, 18.14, 21.1, 21.3, 21.4_
 
-  - [-] 17.6 `slider_component`: floors
+  - [x] 17.6 `slider_component`: floors
     - Only after 17.5 is complete, add the Overall_Match floor of 99.93 or the higher measured value (Requirement 23.5) and the Trace_Score floor (the measured value; the floor reachable without Shim additions beyond Requirement 14.17). If the measured Overall_Match is below 99.93, STOP and ask before setting any floor (Requirement 1.5); never lower a floor.
     - Test: the floor tests in `test/e2e/overallMatch.e2e.test.ts` and `test/e2e/traceScore.e2e.test.ts`.
     - _Requirements: 3.6, 3.7, 18.14, 23.5, 21.7_
 
-  - [ ] 17.7 Add `src/samples/fetchedSample.ts`
+  - [-] 17.7 Add `src/samples/fetchedSample.ts`
     - Read design section 16. Core module with `STATIC_TEXT_SOURCE`, `candidateUrl`, `sha256Hex`, `verifySha256`, `decideFloorTest` and `classifySampleDir` as in design section 16. Add the file to the purity test (SHA-256 through `globalThis.crypto.subtle`, no `node:*`).
     - Test: `test/property/fetchedSample.property.test.ts` (create), **Property 28: The fetch SHA-256 check** and **Property 29: The fetch URL and the floor decision**; `test/unit/fetchedSample.test.ts` (create): the known SHA-256 of the empty array, `decideFloorTest` messages (skip names `npm run fetch:static-text`, fail names both values), `classifySampleDir` cases.
     - _Requirements: 20.2, 20.3, 20.7, 15.1, 15.2, 15.5_

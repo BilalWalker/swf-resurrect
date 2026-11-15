@@ -26,6 +26,7 @@ const CORE_FILES = [
   "src/convert/masks.ts", // 12.7
   "src/verify/core/regions.ts", // 13.1
   "src/verify/core/residual.ts", // 13.2
+  "src/samples/fetchedSample.ts", // 17.7
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];
