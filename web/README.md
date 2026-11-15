@@ -27,6 +27,17 @@ Environment:
 | `HOST` / `--host` | `127.0.0.1` | Bind address. Only local by default. |
 | `SWF_RESURRECT_FFDEC` | `tools/ffdec/ffdec-cli.jar` | FFDec jar. If it or Java is missing the page says so and no conversion starts; cached results still open. |
 | `SWF_RESURRECT_TIMEOUT_S` | `180` | Per-job pipeline timeout; the whole process tree is killed. |
+| `SWF_RESURRECT_KEEP_HOURS` | `72` | Finished jobs are deleted this long after they ended. `0`: no age limit. |
+| `SWF_RESURRECT_KEEP_MB` | `2048` | Most disk space all job directories may use; oldest jobs go first. `0`: no limit. |
+| `SWF_RESURRECT_KEEP_JOBS` | `100` | Most job directories kept; oldest go first. `0`: no limit. |
+| `SWF_RESURRECT_SWEEP_MINUTES` | `10` | How often the retention sweep runs (it also runs at start). `0`: only at start. |
+
+Retention (`web/server/retention.ts` decides, `JobManager.sweep` deletes)
+never removes a queued or running job, nor the current cached result of a
+bundled sample, so the gallery keeps opening at once. Superseded sample
+runs and finished uploads are removed by age, then oldest first while the
+size or count limit is exceeded. A job directory without a readable
+`job.json` (a server stopped mid-run) is removed once it is an hour old.
 
 The end-to-end conversion test uses the same `SWF_RESURRECT_FFDEC` and is
 skipped, with the reason printed, when Java or the jar is missing.

@@ -31,17 +31,27 @@ async function buildPreview(projectDir: string, appDir: string): Promise<void> {
 
 export async function startServer(
   options: ServerOptions,
-  paths: { repoRoot?: string; runsDir?: string } = {},
+  paths: { repoRoot?: string; runsDir?: string; log?: (line: string) => void } = {},
 ): Promise<RunningServer> {
   const repoRoot = paths.repoRoot ?? REPO_ROOT;
+  const log = paths.log ?? ((line: string) => process.stdout.write(`${line}
+`));
   const jobs = new JobManager({
     repoRoot,
     runsDir: paths.runsDir ?? join(repoRoot, '.work', 'web-runs'),
     ffdecJar: options.ffdecJar,
     timeoutMs: options.timeoutMs,
     buildPreview,
+    retention: options.retention,
   });
   await jobs.load();
+  await jobs.startSweeper(
+    options.sweepIntervalMs,
+    (deleted) => {
+      if (deleted.length > 0) log(`retention: deleted ${deleted.length} job director${deleted.length === 1 ? 'y' : 'ies'} (${deleted.map((d) => d.reason).join(', ')})`);
+    },
+    (err) => log(`retention: sweep failed: ${err instanceof Error ? err.message : String(err)}`),
+  );
 
   const server = createServer();
   let closeVite: (() => Promise<void>) | null = null;

@@ -42,7 +42,15 @@ beforeAll(async () => {
   runsDir = resolve(REPO_ROOT, '.work', `test-web-runs-${process.pid}`);
   await mkdir(runsDir, { recursive: true });
   server = await startServer(
-    { port: 0, host: '127.0.0.1', dev: false, timeoutMs: 240_000, ffdecJar: jar },
+    {
+      port: 0,
+      host: '127.0.0.1',
+      dev: false,
+      timeoutMs: 240_000,
+      ffdecJar: jar,
+      retention: { maxAgeMs: 0, maxTotalBytes: 0, maxJobs: 0, orphanGraceMs: 3600_000 },
+      sweepIntervalMs: 0,
+    },
     { runsDir },
   );
 });

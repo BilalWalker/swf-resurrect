@@ -8,13 +8,15 @@
 //   project.zip        made on first download
 //   job.json           summary and log, written when the job ends
 import { existsSync } from 'node:fs';
-import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import type { ChildProcess } from 'node:child_process';
 import type { JobSummary, LogLine, SampleInfo, SetupStatus, SourceFile } from '../shared/api';
 import { abort, applyLine, buildFinished, initialState, pipelineExited, start } from './jobState';
 import type { JobState } from './jobState';
 import { javaAvailable, killTree, spawnPipeline } from './processTree';
+import { planRetention } from './retention';
+import type { RetentionDecision, RetentionEntry, RetentionPolicy } from './retention';
 import { summariseResults } from './results';
 import type { ResultSummary } from './results';
 import { parseLine, redactPaths, splitLines } from './stageLines';
@@ -31,6 +33,8 @@ export interface JobManagerOptions {
   maxQueued?: number;
   /** Builds the emitted project for the preview; injected so the module stays light to import. */
   buildPreview(projectDir: string, appDir: string): Promise<void>;
+  /** When to delete old job directories (see retention.ts). Absent: never. */
+  retention?: RetentionPolicy;
 }
 
 export type JobListener = (event: 'job' | 'log', data: JobSummary | LogLine) => void;
@@ -89,6 +93,26 @@ async function readJson(path: string): Promise<unknown> {
   }
 }
 
+/** Total size of the regular files under dir (symbolic links are not followed). */
+async function dirSize(dir: string): Promise<number> {
+  let total = 0;
+  const visit = async (d: string): Promise<void> => {
+    let entries;
+    try {
+      entries = await readdir(d, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const full = join(d, e.name);
+      if (e.isDirectory()) await visit(full);
+      else if (e.isFile()) total += await lstat(full).then((st) => st.size, () => 0);
+    }
+  };
+  await visit(dir);
+  return total;
+}
+
 /** Files under dir (recursively), as forward-slash paths relative to dir, skipping `skip` names. */
 async function walk(dir: string, skip: ReadonlySet<string>): Promise<string[]> {
   const out: string[] = [];
@@ -128,6 +152,8 @@ export class JobManager {
   private sampleHashes: Map<string, string> | null = null;
   private setup: SetupStatus | null = null;
   private stopping = false;
+  private sweeping: Promise<RetentionDecision[]> | null = null;
+  private sweepTimer: NodeJS.Timeout | null = null;
 
   constructor(private readonly opts: JobManagerOptions) {}
 
@@ -544,9 +570,78 @@ export class JobManager {
     return { path: zipPath, fileName };
   }
 
+  /**
+   * Applies the retention policy once: deletes old or excess job directories, never a queued or
+   * running job and never the cached result of a bundled sample. Returns what was deleted.
+   * Concurrent calls share one sweep.
+   */
+  sweep(nowMs = Date.now()): Promise<RetentionDecision[]> {
+    const policy = this.opts.retention;
+    if (policy === undefined || this.stopping) return Promise.resolve([]);
+    this.sweeping ??= this.sweepOnce(policy, nowMs).finally(() => {
+      this.sweeping = null;
+    });
+    return this.sweeping;
+  }
+
+  /** Sweeps now and then every intervalMs until stop(). Errors are passed to onError. */
+  startSweeper(intervalMs: number, onSwept: (deleted: RetentionDecision[]) => void, onError: (err: unknown) => void): Promise<void> {
+    const run = (): Promise<void> => this.sweep().then(onSwept, onError);
+    if (intervalMs > 0 && this.opts.retention !== undefined) {
+      this.sweepTimer = setInterval(() => void run(), intervalMs);
+      this.sweepTimer.unref();
+    }
+    return run();
+  }
+
+  private async sweepOnce(policy: RetentionPolicy, nowMs: number): Promise<RetentionDecision[]> {
+    const protectedIds = new Set<string>();
+    for (const sha of (await this.sampleHashMap()).keys()) {
+      const id = this.cache.get(sha);
+      if (id !== undefined) protectedIds.add(id);
+    }
+    const activeIds = new Set([this.running, ...this.queue].filter((j) => j !== null).map((j) => j.id));
+    let names: string[];
+    try {
+      names = await readdir(this.opts.runsDir);
+    } catch {
+      return [];
+    }
+    const entries: RetentionEntry[] = [];
+    for (const name of names) {
+      if (!isJobId(name)) continue;
+      const dir = join(this.opts.runsDir, name);
+      const st = await stat(dir).catch(() => null);
+      if (st === null || !st.isDirectory()) continue;
+      const job = this.jobs.get(name);
+      entries.push({
+        id: name,
+        active: activeIds.has(name),
+        protected: protectedIds.has(name),
+        orphan: job === undefined,
+        lastUsedMs: (job?.finishedAt ?? job?.createdAt ?? st.mtime).getTime(),
+        bytes: await dirSize(dir),
+      });
+    }
+    const decisions = planRetention(entries, policy, nowMs);
+    const deleted: RetentionDecision[] = [];
+    for (const d of decisions) {
+      // Re-check: a job may have been queued again while the sizes were being read.
+      if (this.stopping || [this.running, ...this.queue].some((j) => j?.id === d.id)) continue;
+      const job = this.jobs.get(d.id);
+      this.jobs.delete(d.id);
+      if (job !== undefined && this.cache.get(job.sha256) === d.id) this.cache.delete(job.sha256);
+      await rm(join(this.opts.runsDir, d.id), { recursive: true, force: true });
+      deleted.push(d);
+    }
+    return deleted;
+  }
+
   /** Stops the running pipeline (killing its process tree) and fails waiting jobs. */
   async stop(): Promise<void> {
     this.stopping = true;
+    if (this.sweepTimer !== null) clearInterval(this.sweepTimer);
+    await this.sweeping?.catch(() => undefined);
     for (const j of this.queue.splice(0)) {
       this.setState(j, abort(j.state, 'the server stopped before this job started'));
     }

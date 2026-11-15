@@ -14,13 +14,27 @@ describe('parseServerOptions', () => {
         dev: false,
         timeoutMs: 180_000,
         ffdecJar: join(root, 'tools', 'ffdec', 'ffdec-cli.jar'),
+        retention: { maxAgeMs: 72 * 3600_000, maxTotalBytes: 2048 * 1024 * 1024, maxJobs: 100, orphanGraceMs: 3600_000 },
+        sweepIntervalMs: 600_000,
       },
+    });
+  });
+
+  it('reads the retention limits, 0 meaning no limit', () => {
+    const r = parseServerOptions(
+      [],
+      { SWF_RESURRECT_KEEP_HOURS: '0', SWF_RESURRECT_KEEP_MB: '500', SWF_RESURRECT_KEEP_JOBS: '7', SWF_RESURRECT_SWEEP_MINUTES: '1' },
+      root,
+    );
+    expect(r).toMatchObject({
+      ok: true,
+      options: { retention: { maxAgeMs: 0, maxTotalBytes: 500 * 1024 * 1024, maxJobs: 7 }, sweepIntervalMs: 60_000 },
     });
   });
 
   it('reads the environment, and flags win over PORT', () => {
     const r = parseServerOptions(['--dev', '--port', '6000'], { PORT: '7000', HOST: '0.0.0.0', SWF_RESURRECT_FFDEC: 'D:\\f.jar', SWF_RESURRECT_TIMEOUT_S: '30' }, root);
-    expect(r).toEqual({ ok: true, options: { port: 6000, host: '0.0.0.0', dev: true, timeoutMs: 30_000, ffdecJar: 'D:\\f.jar' } });
+    expect(r).toMatchObject({ ok: true, options: { port: 6000, host: '0.0.0.0', dev: true, timeoutMs: 30_000, ffdecJar: 'D:\\f.jar' } });
     expect(parseServerOptions([], { PORT: '7000' }, root)).toMatchObject({ ok: true, options: { port: 7000 } });
     expect(parseServerOptions(['--port', '0'], {}, root)).toMatchObject({ ok: true, options: { port: 0 } });
   });
@@ -34,6 +48,9 @@ describe('parseServerOptions', () => {
       [[], { PORT: 'x' }],
       [[], { SWF_RESURRECT_TIMEOUT_S: '0' }],
       [[], { SWF_RESURRECT_TIMEOUT_S: '-5' }],
+      [[], { SWF_RESURRECT_KEEP_HOURS: '1.5' }],
+      [[], { SWF_RESURRECT_KEEP_MB: '-1' }],
+      [[], { SWF_RESURRECT_KEEP_JOBS: 'many' }],
     ] as const) {
       expect(parseServerOptions(argv, env, root).ok).toBe(false);
     }
