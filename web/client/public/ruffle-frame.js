@@ -22,9 +22,13 @@
     polyfills: false,
     autoplay: 'on',
     unmuteOverlay: 'hidden',
+    // No Ruffle splash (logo and load bar) and no Ruffle context menu, so the side-by-side view
+    // shows only the SWF. Option names and values checked against the pinned package 0.7.1
+    // (core/dist/public/config/load-options.js and default.js in ruffle.js.map). Ruffle is
+    // credited in the page footer and in web/THIRD_PARTY.md instead.
     splashScreen: false,
     letterbox: 'on',
-    contextMenu: 'rightClickOnly',
+    contextMenu: 'off',
     showSwfDownload: false,
     warnOnUnsupportedContent: false,
     // The SWF is untrusted: no script bridge, no network, no opening URLs.
