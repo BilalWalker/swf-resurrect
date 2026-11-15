@@ -80,6 +80,33 @@ async function compareTrees(a: string, b: string): Promise<string[]> {
   return diffs;
 }
 
+/** TS2552 is TS2304 plus a spelling suggestion; the gate (TS 6.0.3) and `tsc` (TS 7) differ on when they add it. */
+const normaliseCode = (code: number | string): number => (Number(code) === 2552 ? 2304 : Number(code));
+
+/** Sorted `file|TScode` keys of the errors the type-check gate reported, or null when the gate was skipped. */
+async function reportedErrorKeys(projectDir: string): Promise<string[] | null> {
+  const report = JSON.parse(await readFile(join(projectDir, 'translation-report.json'), 'utf8')) as {
+    typeCheck: 'ran' | 'skipped';
+    classes: { className: string; typeErrors: { code: number }[] }[];
+    classPaths: { className: string; path: string }[];
+    otherErrors: { file: string; code: number }[];
+  };
+  if (report.typeCheck !== 'ran') return null;
+  const pathOf = new Map(report.classPaths.map((p) => [p.className, p.path]));
+  const keys: string[] = report.otherErrors.map((e) => `${e.file}|${normaliseCode(e.code)}`);
+  for (const c of report.classes) {
+    for (const e of c.typeErrors) keys.push(`${pathOf.get(c.className) ?? `src/${c.className}.ts`}|${normaliseCode(e.code)}`);
+  }
+  return keys.sort();
+}
+
+/** Sorted `file|TScode` keys of the errors in `tsc` output (`file(line,col): error TSnnnn:`). */
+function typecheckErrorKeys(output: string): string[] {
+  const keys: string[] = [];
+  for (const m of output.matchAll(/^(\S.*?)\(\d+,\d+\): error TS(\d+):/gm)) keys.push(`${m[1].replace(/\\/g, '/')}|${normaliseCode(m[2])}`);
+  return keys.sort();
+}
+
 describe('pipeline end to end', () => {
   let tempRoot = '';
   let swfs: string[] = [];
@@ -106,6 +133,7 @@ describe('pipeline end to end', () => {
   it(
     'emits deterministic projects that install, typecheck and build',
     async () => {
+      const problems: string[] = [];
       for (const [i, swf] of swfs.entries()) {
         const name = `${i}-${relative(SAMPLES_DIR, swf).replace(/[^A-Za-z0-9]+/g, '_')}`;
         const outA = join(tempRoot, 'a', name);
@@ -117,19 +145,37 @@ describe('pipeline end to end', () => {
         // Same input, same output tree, byte for byte (before npm adds node_modules).
         expect(await compareTrees(outA, outB), `output trees differ for ${swf}`).toEqual([]);
 
-        for (const script of [['install', '--no-audit', '--no-fund'], ['run', 'typecheck'], ['run', 'build']]) {
-          const r = await npm(script, outA);
-          expect(r.code, `npm ${script.join(' ')} in ${outA}\n${r.output}`).toBe(0);
+        const install = await npm(['install', '--no-audit', '--no-fund'], outA);
+        if (install.code !== 0) problems.push(`npm install in ${outA}\n${install.output}`);
+
+        // Type errors are reported, not fatal (tech steering; Requirements 23.2 and 25): a project with
+        // gate-reported errors must show exactly those errors (same files, same codes), and a project
+        // with none must type-check clean.
+        const reported = await reportedErrorKeys(outA);
+        const tc = await npm(['run', 'typecheck'], outA);
+        const actual = typecheckErrorKeys(tc.output);
+        if (reported === null) {
+          if (tc.code !== 0) problems.push(`typecheck failed but the gate was skipped for ${swf}\n${tc.output}`);
+        } else if (reported.length === 0) {
+          if (tc.code !== 0) problems.push(`typecheck in ${outA} must be clean (no reported errors)\n${tc.output}`);
+        } else if (JSON.stringify(actual) !== JSON.stringify(reported)) {
+          problems.push(
+            `typecheck errors differ from translation-report.json for ${swf}\nreported: ${JSON.stringify(reported)}\nactual:   ${JSON.stringify(actual)}`,
+          );
+        }
+
+        const build = await npm(['run', 'build'], outA);
+        if (build.code !== 0) {
+          problems.push(`npm run build in ${outA}\n${build.output}`);
+          continue;
         }
 
         const distDir = join(outA, 'dist');
-        expect((await stat(join(distDir, 'index.html'))).isFile(), `dist/index.html for ${swf}`).toBe(true);
+        if (!(await stat(join(distDir, 'index.html'))).isFile()) problems.push(`dist/index.html missing for ${swf}`);
         const built = await listFiles(distDir);
-        expect(
-          built.some((f) => f.endsWith('.js')),
-          `a JavaScript file in dist for ${swf}`,
-        ).toBe(true);
+        if (!built.some((f) => f.endsWith('.js'))) problems.push(`no JavaScript file in dist for ${swf}`);
       }
+      expect(problems, problems.join('\n----\n')).toEqual([]);
     },
     TIMEOUT_MS,
   );
