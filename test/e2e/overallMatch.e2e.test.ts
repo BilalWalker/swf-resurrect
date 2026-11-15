@@ -16,6 +16,10 @@ const OVERALL_MATCH_FLOOR_CLICKGOTO = 100;
 /** Measured in task 17.3 (8 frames, 0 differing pixels each). Never lower. */
 const OVERALL_MATCH_FLOOR_TWEENDEMO = 100;
 
+/** Measured in task 15.2 (1 frame, 0 differing pixels). Never lower. */
+const OVERALL_MATCH_FLOOR_RADIAL = 100;
+/** Measured in task 15.2 (1 frame, 1302 differing pixels, all attributed in residual-causes.json). Never lower. */
+const OVERALL_MATCH_FLOOR_GRADIENTS = 99.41;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -53,6 +57,8 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
   const cases: Array<[string, number]> = [
     ['clickgoto', OVERALL_MATCH_FLOOR_CLICKGOTO],
     ['tweendemo', OVERALL_MATCH_FLOOR_TWEENDEMO],
+    ['radial', OVERALL_MATCH_FLOOR_RADIAL],
+    ['gradients', OVERALL_MATCH_FLOOR_GRADIENTS],
   ];
   it.each(cases)(
     '%s keeps Overall_Match at or above its floor',

@@ -686,13 +686,13 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/provenance.test.ts` picks the new directories up (it walks `samples/`); add fixture-presence rows if it does not already check them.
     - _Requirements: 3.4, 3.5, 3.7, 3.8, 3.14, 3.15, 3.16, 3.20, 4.5_
 
-  - [-] 15.2 `radial` and `gradients`: measure and attribute the residual
+  - [x] 15.2 `radial` and `gradients`: measure and attribute the residual
     - Run `npm run pipeline -- samples/<name>/test.swf out/<name> --verify --force` for each. Report the Overall_Match, the behaviour (`not-compared: empty-reference-trace`, no Trace_Score) and the Known_Visual_Limits (the `gradients` file carries a `reflect` spread; a radial focal point records `gradient-focal`; no `gradient-fill` limit remains for a drawn gradient). Residual step (Requirement 21): for every sample whose Overall_Match is below 100, open the Diff_Image of every compared frame, cluster the differing pixels (the Task 13 tool), and attribute every region to a Residual_Cause, fixed (measure again) or recorded in `samples/<name>/residual-causes.json` with a `kind` and a `message` that states what differs; the summary holds, per frame, a table (bounding box, pixel count, cause, outcome) whose pixel counts add up to the differing pixels of the frame. For `gradients` this covers its 1,302 differing pixels. A cause that cannot be determined: STOP and ask, set no floor.
     - Test: `test/e2e/residual.e2e.test.ts` gets the sample name for each sample with an Overall_Match below 100 (`unattributed === 0`).
     - Both samples are single-frame SWFs (`num_frames = 1`): the Frame_Sample is `[1]` and the run must complete with it (Requirement 14.18). Test: `test/unit/frameSample.test.ts` (create): `selectFrames(1)` returns `[1]` and a one-frame SWF through the Verify_Stage with a stub yields one compared frame.
     - _Requirements: 8.5, 14.2, 14.18, 21.1, 21.2, 21.3, 21.4, 21.5, 21.6_
 
-  - [ ] 15.3 `radial` and `gradients`: floors
+  - [-] 15.3 `radial` and `gradients`: floors
     - Only after 15.2 is complete, add `OVERALL_MATCH_FLOOR_RADIAL` and `OVERALL_MATCH_FLOOR_GRADIENTS` to `test/e2e/overallMatch.e2e.test.ts`, each equal to the measured Overall_Match (the measured value, not the expectation of about 100 and about 99.4). Add no Trace_Score floor for these two samples (Empty_Reference_Trace, Requirement 3.7). Create `test/e2e/emptyReferenceTrace.e2e.test.ts` (same skip rules as `overallMatch.e2e.test.ts`; its header says that it pins the report and is not a floor): for `radial` and `gradients`, `behaviour.status === 'not-compared'`, `behaviour.reason === 'empty-reference-trace'` and no Trace_Score field. Delete the Diff_Images; commit none.
     - Test: the Overall_Match floor test and `test/e2e/emptyReferenceTrace.e2e.test.ts` (both skipped with a reason when the SWF, Java or Chromium is missing).
     - _Requirements: 3.6, 3.7, 8.5, 14.24, 21.7_
