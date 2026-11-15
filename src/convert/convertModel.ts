@@ -261,6 +261,15 @@ export function convertModel(model: TagsModel): ConvertResult {
     warnings.push(...r.warnings);
     for (const d of r.droppedPlacements) recordDropped(d);
     for (const k of r.keptWithLimit) {
+      if (k.kind === 'mask') {
+        unsupported.push({
+          kind: 'mask',
+          id: k.characterId,
+          message: `invalid clip depth ${String(k.clipDepth)} at depth ${k.depth} in ${id === 0 ? 'root timeline' : `sprite ${id}`}, frame ${k.frame}; the placement is drawn without the mask (character ${k.characterId})`,
+          context: { spriteId: k.spriteId, frame: k.frame, depth: k.depth },
+        });
+        continue;
+      }
       unsupported.push({
         kind: k.kind,
         id: k.characterId,

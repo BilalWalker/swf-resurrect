@@ -37,7 +37,7 @@ describe("Property 10: Convert never aborts on a defined character and counts ev
     fc.assert(
       fc.property(genTagsModel, (model) => {
         const r = convertModel(model);
-        const drops = r.unsupported.filter((u) => u.context !== undefined && u.kind !== "filter" && u.kind !== "blend-mode" && !u.message.includes("nested masks"));
+        const drops = r.unsupported.filter((u) => u.context !== undefined && u.kind !== "filter" && u.kind !== "blend-mode" && !u.message.includes("nested masks") && !u.message.startsWith("invalid clip depth"));
         expect(drops.length).toBe(countDroppedPlacements(model));
         for (const d of drops) {
           expect(d.context).toMatchObject({ spriteId: expect.any(Number), frame: expect.any(Number), depth: expect.any(Number) });
@@ -56,18 +56,23 @@ describe("Property 10: Convert never aborts on a defined character and counts ev
         let filters = 0;
         let blends = 0;
         let placed = 0;
+        let badClips = 0;
         for (const t of [model.root, ...model.sprites]) {
           for (const op of t.ops) {
             if (op.kind !== "place" || op.characterId === undefined || ids.has(op.characterId)) continue;
             placed += 1;
             if (op.hasFilters) filters += 1;
             if (op.hasBlendMode) blends += 1;
+            if (op.clipDepth !== undefined && op.clipDepth < op.depth) badClips += 1;
           }
         }
         const kept = r.unsupported.filter((u) => u.kind === "filter" || u.kind === "blend-mode");
         expect(kept.filter((u) => u.kind === "filter")).toHaveLength(filters);
         expect(kept.filter((u) => u.kind === "blend-mode")).toHaveLength(blends);
         for (const u of kept) expect(u.context).toBeDefined();
+        // A clipDepth below the depth is one limit per placement and never a drop or an abort.
+        expect(r.unsupported.filter((u) => u.message.startsWith("invalid clip depth"))).toHaveLength(badClips);
+        for (const s of Object.values(r.scene.symbols)) if (s.type === "sprite") for (const f of s.frames) for (const e of f) expect(e.clipDepth === undefined || e.clipDepth >= e.depth).toBe(true);
         // Every placement of a drawable character is still in the Scene_JSON.
         let inScene = 0;
         for (const s of Object.values(r.scene.symbols)) if (s.type === "sprite") for (const f of s.frames) inScene += f.length;

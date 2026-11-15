@@ -7,6 +7,7 @@ import type { TagsModel, TimelineOp } from '../../src/convert/model';
 import { readDumpHeader } from '../../src/convert/ffdecXml';
 import { readUnpacked } from '../../src/convert/readUnpacked';
 import { serialiseUnsupported } from '../../src/pipeline/unsupported';
+import { validateScene } from '../../template/runtime/scene';
 import type { SpriteSymbol } from '../../template/runtime/scene';
 
 describe('convertModel', () => {
@@ -118,6 +119,17 @@ describe('convertModel', () => {
     expect(r.unsupported.filter((u) => u.kind === 'mask')).toEqual([]);
   });
 
+  it('records a clipDepth below the depth as a mask limit and keeps a valid Scene_JSON', () => {
+    const model = modelWith([{ kind: 'place', depth: 4, characterId: 1, move: false, clipDepth: 2 }, { kind: 'showFrame' }], {});
+    const r = convertModel(model);
+    const lim = r.unsupported.filter((u) => u.kind === 'mask');
+    expect(lim).toHaveLength(1);
+    expect(lim[0]).toMatchObject({ id: 1, context: { spriteId: 0, frame: 1, depth: 4 } });
+    expect(lim[0]!.message).toContain('invalid clip depth 2');
+    expect(lim[0]!.message).toContain('drawn without the mask');
+    expect((r.scene.symbols['0'] as SpriteSymbol).frames[0]).toHaveLength(1);
+    expect(() => validateScene(r.scene)).not.toThrow();
+  });
   it('keeps a nested mask and records one nested-mask limit', () => {
     const model = modelWith(
       [{ kind: 'place', depth: 1, characterId: 1, move: false, clipDepth: 5 }, { kind: 'place', depth: 3, characterId: 1, move: false, clipDepth: 4 }, place(4, 1)],

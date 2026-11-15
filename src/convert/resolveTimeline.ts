@@ -24,13 +24,17 @@ export interface DroppedPlacement {
   characterId?: number; // set when the drop is due to the character; for a mask, the mask character
 }
 
-/** A placement that stays in the display list although it carries a filter list or a blend mode (not drawn). */
+/**
+ * A placement that stays in the display list although it carries a filter list or a blend mode (not drawn), or an unusable\n * clipDepth (drawn without the mask).
+ */
 export interface KeptPlacementLimit {
   spriteId: number;
   frame: number; // 1-based
   depth: number;
   characterId: number; // the placed character; for a move without character, the character at that depth
-  kind: 'filter' | 'blend-mode';
+  kind: 'filter' | 'blend-mode' | 'mask';
+  /** Set for kind 'mask': the clipDepth value that was dropped (may be NaN or fractional). */
+  clipDepth?: number;
 }
 
 export interface ResolvedTimeline {
@@ -155,9 +159,10 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
 
       if (op.move && !hasChar && droppedDepths.has(depth)) continue;
 
-      if (op.clipDepth !== undefined && !(Number.isSafeInteger(op.clipDepth) && op.clipDepth >= depth)) {
-        bad(`invalid clip depth ${String(op.clipDepth)} at depth ${depth}`);
-      }
+      // An unusable clipDepth (below the depth, not an integer, NaN) never stops the pipeline: the placement is kept
+      // without it and the limit is recorded once, for this placement. Stored state never holds the bad value.
+      const badClip = op.clipDepth !== undefined && !(Number.isSafeInteger(op.clipDepth) && op.clipDepth >= depth);
+      const clipDepth = badClip ? undefined : op.clipDepth;
       if (hasChar) {
         const kind = unsupported.get(op.characterId as number);
         if (kind !== undefined) {
@@ -176,7 +181,7 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
           matrix: op.matrix ?? IDENTITY_MATRIX,
           colorTransform: op.colorTransform ?? IDENTITY_CT,
           name: op.name ?? '',
-          clipDepth: op.clipDepth,
+          clipDepth,
         });
       } else if (hasChar) {
         if (!old && !droppedDepths.has(depth)) bad(`move with character at empty depth ${depth}`);
@@ -186,7 +191,7 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
           matrix: op.matrix ?? old?.matrix ?? IDENTITY_MATRIX,
           colorTransform: op.colorTransform ?? old?.colorTransform ?? IDENTITY_CT,
           name: op.name ?? old?.name ?? '',
-          clipDepth: op.clipDepth ?? old?.clipDepth,
+          clipDepth: clipDepth ?? old?.clipDepth,
         });
       } else {
         if (!old) bad(`move at empty depth ${depth}`);
@@ -196,10 +201,13 @@ export function resolveTimeline(input: ResolveTimelineInput): ResolvedTimeline {
           matrix: op.matrix ?? prev.matrix,
           colorTransform: op.colorTransform ?? prev.colorTransform,
           name: op.name ?? prev.name,
-          clipDepth: op.clipDepth ?? prev.clipDepth,
+          clipDepth: clipDepth ?? prev.clipDepth,
         });
       }
 
+      if (badClip) {
+        keptWithLimit.push({ spriteId, frame, depth, characterId: (state.get(depth) as Placed).symbolId, kind: 'mask', clipDepth: op.clipDepth });
+      }
       // The placement stays; the filter list and the blend mode are not drawn (Requirement 13.3).
       if (op.hasBlendMode || op.hasFilters) {
         const characterId = (state.get(depth) as Placed).symbolId;

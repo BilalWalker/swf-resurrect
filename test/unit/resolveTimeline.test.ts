@@ -110,4 +110,40 @@ describe('resolveTimeline', () => {
     const many: TimelineOp[] = Array.from({ length: 65536 }, () => show);
     expect(() => run(many)).toThrow(MalformedFrameDataError);
   });
+
+  it('keeps a placement whose clipDepth is below its depth, unmasked, with one limit per placement', () => {
+    const r = run([
+      { kind: 'place', depth: 5, characterId: 2, move: false, clipDepth: 3 },
+      show,
+      show,
+      { kind: 'place', depth: 5, move: true, matrix: m(20, 0) },
+      show,
+    ]);
+    expect(r.frames.map((f) => f.map((e) => [e.depth, e.clipDepth]))).toEqual([[[5, undefined]], [[5, undefined]], [[5, undefined]]]);
+    expect(r.keptWithLimit).toEqual([{ spriteId: 6, frame: 1, depth: 5, characterId: 2, kind: 'mask', clipDepth: 3 }]);
+    expect(r.droppedPlacements).toEqual([]);
+  });
+
+  it('treats negative, fractional and NaN clipDepth as unusable, and clipDepth equal to depth as a valid mask', () => {
+    const r = run([
+      { kind: 'place', depth: 1, characterId: 2, move: false, clipDepth: -4 },
+      { kind: 'place', depth: 2, characterId: 2, move: false, clipDepth: 2.5 },
+      { kind: 'place', depth: 3, characterId: 2, move: false, clipDepth: Number.NaN },
+      { kind: 'place', depth: 4, characterId: 2, move: false, clipDepth: 4 },
+      show,
+    ]);
+    expect(r.frames[0]!.map((e) => e.clipDepth)).toEqual([undefined, undefined, undefined, 4]);
+    expect(r.keptWithLimit.map((k) => [k.depth, k.kind])).toEqual([[1, 'mask'], [2, 'mask'], [3, 'mask']]);
+  });
+
+  it('a bad clipDepth on a move keeps the earlier valid clipDepth and records the limit', () => {
+    const r = run([
+      { kind: 'place', depth: 2, characterId: 2, move: false, clipDepth: 6 },
+      show,
+      { kind: 'place', depth: 2, move: true, clipDepth: 1 },
+      show,
+    ]);
+    expect(r.frames[1]![0]!.clipDepth).toBe(6);
+    expect(r.keptWithLimit).toEqual([{ spriteId: 6, frame: 2, depth: 2, characterId: 2, kind: 'mask', clipDepth: 1 }]);
+  });
 });
