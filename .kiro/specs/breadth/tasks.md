@@ -724,12 +724,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: extend `test/unit/emitMainCollision.test.ts` with the real `Main.as` fixture (type-check gate `ran`, zero `otherErrors`, `Main` in `src/classes.ts`, no `class-omitted` entry); `residual.e2e.test.ts` entry when below 100.
     - _Requirements: 6.6, 12.6, 14.2, 14.23, 21.1, 21.3_
 
-  - [-] 16.3 `mask_reapply`: floors
+  - [x] 16.3 `mask_reapply`: floors
     - Only after 16.2 is complete, add the Overall_Match floor to `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score floor to `test/e2e/traceScore.e2e.test.ts` (the measured values; create the latter in this sub-task, with the same skip rules as `overallMatch.e2e.test.ts`, if it does not exist yet). IF the measured Trace_Score is 0 (for example because the constructor of the registered `Main` throws and the Replay records a `replay-error`), STOP and ask before setting a floor of 0 (Requirement 18.13).
     - Test: the two floor tests.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
-  - [ ] 16.4 `click_block`: files, PROVENANCE.md and fixtures
+  - [-] 16.4 `click_block`: files, PROVENANCE.md and fixtures
     - Links `test_fla.MainTimeline`, uses `mouseX`, `mouseY` and `stage`, and has `MouseMove`/`MouseDown`/`MouseUp` entries; `test.toml` sets `num_frames = 100`. Copy `test.swf` unmodified into `samples/click_block/` (SHA-256 prefix `4023640b`; verify the full value), the reference files unchanged, `PROVENANCE.md` (MIT, pointer, a fonts section stating that the font reference with zero glyphs counts as no embedded outlines, SHA-256, reason) and `test/fixtures/click_block/` with the structure dump, symbol list and the class source `test_fla/MainTimeline.as`.
     - Test: `test/unit/provenance.test.ts` and fixture rows.
     - _Requirements: 3.4, 3.5, 3.7, 3.14, 3.15, 3.20, 3.23_
