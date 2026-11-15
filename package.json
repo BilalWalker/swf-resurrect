@@ -11,7 +11,8 @@
     "gen:shim-members": "tsx scripts/gen-shim-members.ts",
     "mcp:swf-inspector": "tsx mcp/swf-inspector/main.ts",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
-    "web:start": "tsx web/server/main.ts"
+    "web:start": "tsx web/server/main.ts",
+    "fetch:static-text": "tsx scripts/fetch-static-text.ts"
   },
   "devDependencies": {
     "@ruffle-rs/ruffle": "0.7.1",
