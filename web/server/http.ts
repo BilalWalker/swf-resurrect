@@ -6,7 +6,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import type { ApiError, ResetEvent } from '../shared/api';
 import { clientAddress } from './clientAddress';
-import { JobManager, SubmitError } from './jobs';
+import { JobManager, SubmitError, UPLOADS_DISABLED_MESSAGE } from './jobs';
 import { contentType } from './mime';
 import { resolveInside } from './safePath';
 import { hasSwfMagic, isSampleName, MAX_UPLOAD_BYTES } from './upload';
@@ -180,6 +180,12 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
     if (rawPath === '/api/samples' && isGet) return sendJson(res, 200, await jobs.listSamples());
 
     if (rawPath === '/api/jobs' && method === 'POST') {
+      if (!jobs.uploadsEnabled) {
+        // Refused before the body is read; the unread body must not be parsed as the next request.
+        res.setHeader('Connection', 'close');
+        req.resume();
+        return sendError(res, 403, UPLOADS_DISABLED_MESSAGE);
+      }
       const body = await readBody(req, res, MAX_UPLOAD_BYTES);
       if (body === null) return;
       if (!hasSwfMagic(body)) return sendError(res, 415, 'This is not a SWF file (it does not start with FWS, CWS or ZWS).');

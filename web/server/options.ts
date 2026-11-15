@@ -21,6 +21,8 @@ export interface ServerOptions {
   rateLimit: RateLimit | null;
   /** Reverse proxies in front of the server whose X-Forwarded-For entries are trusted (TRUST_PROXY). */
   trustProxyHops: number;
+  /** SWF_RESURRECT_UPLOADS=off: gallery only, uploads are refused with 403. */
+  uploadsEnabled: boolean;
 }
 
 export type ParsedOptions = { ok: true; options: ServerOptions } | { ok: false; message: string };
@@ -104,6 +106,10 @@ export function parseServerOptions(
   if (tp !== undefined && tp !== '' && !/^\d{1,2}$/.test(tp)) {
     return { ok: false, message: `TRUST_PROXY must be the number of trusted reverse proxies (0 to 99): ${tp}` };
   }
+  const up = env.SWF_RESURRECT_UPLOADS;
+  if (up !== undefined && up !== '' && up !== 'on' && up !== 'off') {
+    return { ok: false, message: `SWF_RESURRECT_UPLOADS must be on or off: ${up}` };
+  }
   const jar = env.SWF_RESURRECT_FFDEC;
   return {
     ok: true,
@@ -123,6 +129,7 @@ export function parseServerOptions(
       production,
       rateLimit: rateOn ? { burst, perHour } : null,
       trustProxyHops: tp === undefined || tp === '' ? 0 : Number(tp),
+      uploadsEnabled: up !== 'off',
     },
   };
 }

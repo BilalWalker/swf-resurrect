@@ -35,6 +35,7 @@ Environment:
 | `SWF_RESURRECT_RATE_LIMIT` | `on` in production, else `off` | Per-client token bucket on starting conversions. Cache hits and joining a job already running for the same SWF are free; reading is never limited. Refusals are `429` with `Retry-After`. |
 | `SWF_RESURRECT_RATE_BURST` | `3` | Conversions a client may start at once (bucket size). |
 | `SWF_RESURRECT_RATE_PER_HOUR` | `10` | Steady rate at which a client's bucket refills. |
+| `SWF_RESURRECT_UPLOADS` | `on` | `off`: gallery-only host. The landing page hides the drop zone and says uploads are disabled here; `POST /api/jobs` and re-runs of uploaded jobs answer `403` with that message. Samples still convert. |
 | `TRUST_PROXY` | `0` | Number of reverse proxies in front of the server. `0`: the client is the socket's peer and `X-Forwarded-For` is ignored (it is written by the client too). `N`: the client is the `X-Forwarded-For` entry N places from the right, the one the outermost trusted proxy wrote; entries further left are ignored. |
 
 Retention (`web/server/retention.ts` decides, `JobManager.sweep` deletes)

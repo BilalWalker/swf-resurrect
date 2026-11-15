@@ -8,6 +8,17 @@ export interface LandingDeps {
   openJob(id: string): void;
 }
 
+/** Shown instead of the drop zone on a gallery-only host. */
+function uploadsOff(): HTMLElement {
+  return h(
+    'div',
+    { class: 'notice uploads-off', role: 'note' },
+    h('h2', {}, 'Uploads are disabled on this host'),
+    h('p', {}, 'This public demo raises the resident dead below. Every sample opens; the ones marked "Risen before" open at once.'),
+    h('p', { class: 'muted' }, 'To convert your own .swf, run SWF Resurrect on your own machine (see the README).'),
+  );
+}
+
 function setupNotice(setup: SetupStatus): HTMLElement | null {
   if (setup.ready) return null;
   return h(
@@ -169,7 +180,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
         ),
         h('p', { class: 'epitaph-line' }, 'Flash Player reached its end of life on 31 December 2020. Its files did not have to.'),
       ),
-      h('div', {}, zone, input, status),
+      setup.uploadsEnabled ? h('div', {}, zone, input, status) : h('div', {}, uploadsOff(), status),
     ),
     h(
       'section',

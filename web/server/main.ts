@@ -49,6 +49,7 @@ export async function startServer(
     timeoutMs: options.timeoutMs,
     buildPreview,
     retention: options.retention,
+    uploadsEnabled: options.uploadsEnabled,
     ...(options.rateLimit === null ? {} : { admit: limiter(new TokenBuckets(options.rateLimit)) }),
   });
   await jobs.load();

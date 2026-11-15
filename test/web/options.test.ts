@@ -19,6 +19,7 @@ describe('parseServerOptions', () => {
         production: false,
         rateLimit: null,
         trustProxyHops: 0,
+        uploadsEnabled: true,
       },
     });
   });
@@ -32,6 +33,12 @@ describe('parseServerOptions', () => {
     expect(
       parseServerOptions([], { SWF_RESURRECT_RATE_LIMIT: 'on', SWF_RESURRECT_RATE_BURST: '5', SWF_RESURRECT_RATE_PER_HOUR: '20' }, root),
     ).toMatchObject({ ok: true, options: { production: false, rateLimit: { burst: 5, perHour: 20 } } });
+  });
+
+  it('turns uploads off with SWF_RESURRECT_UPLOADS=off', () => {
+    expect(parseServerOptions([], { SWF_RESURRECT_UPLOADS: 'off' }, root)).toMatchObject({ ok: true, options: { uploadsEnabled: false } });
+    expect(parseServerOptions([], { SWF_RESURRECT_UPLOADS: 'on' }, root)).toMatchObject({ ok: true, options: { uploadsEnabled: true } });
+    expect(parseServerOptions([], { SWF_RESURRECT_UPLOADS: 'no' }, root).ok).toBe(false);
   });
 
   it('reads TRUST_PROXY as a number of hops', () => {

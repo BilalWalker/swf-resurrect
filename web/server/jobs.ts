@@ -41,6 +41,8 @@ export interface JobManagerOptions {
    * the client's address; a refusal becomes a 429. Absent: every job is admitted.
    */
   admit?(client: string): TakeResult;
+  /** False: gallery only; uploads (and re-runs of uploads) are refused with 403. Default true. */
+  uploadsEnabled?: boolean;
 }
 
 export type JobListener = (event: 'job' | 'log', data: JobSummary | LogLine) => void;
@@ -90,6 +92,9 @@ export class SubmitError extends Error {
     super(message);
   }
 }
+
+export const UPLOADS_DISABLED_MESSAGE =
+  'Uploads are disabled on this host. Pick one of the samples instead; to convert your own .swf, run SWF Resurrect on your own machine.';
 
 /** Client key for jobs started by the server itself (pre-warm, tests). */
 export const LOCAL_CLIENT = 'local';
@@ -168,6 +173,10 @@ export class JobManager {
 
   constructor(private readonly opts: JobManagerOptions) {}
 
+  get uploadsEnabled(): boolean {
+    return this.opts.uploadsEnabled ?? true;
+  }
+
   get samplesDir(): string {
     return join(this.opts.repoRoot, 'samples');
   }
@@ -219,7 +228,13 @@ export class JobManager {
       );
     }
     if (!javaAvailable()) problems.push('Java was not found. FFDec needs Java 17 or newer on the PATH.');
-    this.setup = { ready: problems.length === 0, problems, maxUploadBytes: MAX_UPLOAD_BYTES, timeoutSeconds: this.opts.timeoutMs / 1000 };
+    this.setup = {
+      ready: problems.length === 0,
+      problems,
+      maxUploadBytes: MAX_UPLOAD_BYTES,
+      timeoutSeconds: this.opts.timeoutMs / 1000,
+      uploadsEnabled: this.uploadsEnabled,
+    };
     return this.setup;
   }
 
@@ -311,6 +326,7 @@ export class JobManager {
     client: string,
   ): Promise<{ id: string; cached: boolean }> {
     if (this.stopping) throw new SubmitError(503, 'The server is shutting down.');
+    if (s.source === 'upload' && !this.uploadsEnabled) throw new SubmitError(403, UPLOADS_DISABLED_MESSAGE);
     if (!rerun) {
       const hit = this.cachedJob(s.sha256);
       if (hit !== undefined) return { id: hit.id, cached: true };

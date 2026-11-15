@@ -14,10 +14,10 @@ const SWF = Buffer.from('FWS\x0a not really a movie, never converted');
 let dir: string;
 const servers: RunningServer[] = [];
 
-async function start(trustProxyHops: number): Promise<RunningServer> {
+async function start(trustProxyHops: number, uploadsEnabled = true): Promise<RunningServer> {
   const s = await startServer(
-    testServerOptions({ ffdecJar: join(dir, 'missing.jar'), rateLimit: { burst: 1, perHour: 2 }, trustProxyHops }),
-    { runsDir: join(dir, `runs-${trustProxyHops}`), log: () => undefined },
+    testServerOptions({ ffdecJar: join(dir, 'missing.jar'), rateLimit: { burst: 1, perHour: 2 }, trustProxyHops, uploadsEnabled }),
+    { runsDir: join(dir, `runs-${servers.length}`), log: () => undefined },
   );
   servers.push(s);
   return s;
@@ -58,5 +58,27 @@ describe('rate limit on job creation', () => {
     expect(await as('10.9.9.9, 203.0.113.1')).toBe(429);
     // ...but a different real address is.
     expect(await as('203.0.113.1, 203.0.113.2')).toBe(503);
+  });
+});
+
+describe('gallery-only mode (SWF_RESURRECT_UPLOADS=off)', () => {
+  it('refuses uploads with 403 before reading the body, and says so in setup', async () => {
+    const s = await start(0, false);
+    const setup = JSON.parse((await rawRequest(s.port, 'GET', '/api/setup')).body.toString()) as { uploadsEnabled: boolean };
+    expect(setup.uploadsEnabled).toBe(false);
+    const r = await rawRequest(s.port, 'POST', '/api/jobs', SWF, { 'content-type': 'application/octet-stream' });
+    expect(r.status).toBe(403);
+    expect(r.headers.connection).toBe('close');
+    expect(JSON.parse(r.body.toString()).error).toMatch(/^Uploads are disabled on this host\./);
+    // Re-runs of earlier uploads go through the same refusal.
+    await expect(s.jobs.submitUpload(SWF, 'x.swf', true)).rejects.toMatchObject({ status: 403 });
+    // Samples are still accepted (here refused only because FFDec is missing).
+    expect((await rawRequest(s.port, 'POST', '/api/jobs/sample/clickgoto')).status).toBe(503);
+  });
+
+  it('reports uploads as enabled by default', async () => {
+    const s = await start(0);
+    const setup = JSON.parse((await rawRequest(s.port, 'GET', '/api/setup')).body.toString()) as { uploadsEnabled: boolean };
+    expect(setup.uploadsEnabled).toBe(true);
   });
 });

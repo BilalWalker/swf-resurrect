@@ -66,6 +66,8 @@ export interface SetupStatus {
   problems: string[];
   maxUploadBytes: number;
   timeoutSeconds: number;
+  /** False on a gallery-only host (SWF_RESURRECT_UPLOADS=off): the drop zone is hidden. */
+  uploadsEnabled: boolean;
 }
 
 export interface SourceFile {
