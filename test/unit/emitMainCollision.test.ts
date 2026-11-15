@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import type { SceneJson } from '../../template/runtime/scene';
 import { serialiseScene } from '../../src/convert/sceneJson';
+import { looseClasses } from '../../src/emit/classOmissions';
 import { planEmitDetailed } from '../../src/emit/planEmit';
 import type { TemplateFile } from '../../src/emit/planEmit';
 import { planTranslate } from '../../src/translate/planTranslate';
@@ -39,6 +40,18 @@ function build(source: string, scene: SceneJson) {
     [],
   );
   const gate = typeCheckProject({ files: new Map(plan.files.map((f) => [f.path, f.content])), repoRoot });
+  const loose = looseClasses(
+    gate.errors,
+    plan.classPaths.map((p) => ({
+      className: p.className,
+      path: p.path,
+      extendsQualified: null,
+      importsQualified: [],
+      handwritten: false,
+      produced: true,
+    })),
+    [],
+  );
   const report = buildReport(
     artifact.classes.map((c) => ({
       className: c.className,
@@ -47,7 +60,7 @@ function build(source: string, scene: SceneJson) {
       diagnostics: c.diagnostics,
     })),
     gate,
-    { classPaths: plan.classPaths },
+    { classPaths: plan.classPaths, loose },
   );
   return { plan, gate, report };
 }
@@ -73,4 +86,20 @@ describe('class Main next to the Boot_File (Requirement 6.6)', () => {
     expect(gate.errors).toEqual([]);
     expect(report.otherErrors).toEqual([]);
   });
+
+  it('type-checks the real mask_reapply Main.as with its two TS2339 errors attributed to the class', () => {
+    const source = readFileSync(join(repoRoot, 'test/fixtures/mask_reapply/scripts/Main.as'), 'utf8');
+    const { plan, gate, report } = build(source, sceneOf('Main'));
+    const classes = plan.files.find((f) => f.path === 'src/classes.ts')?.content ?? '';
+    expect(classes).toContain("import { Main } from './Main.class';");
+    expect(classes).toContain('"Main": Main,');
+    expect(report.typeCheck).toBe('ran');
+    expect(report.otherErrors).toEqual([]);
+    expect(report.omittedClasses).toEqual([]);
+    expect(gate.errors.map((e) => e.code)).toEqual([2339, 2339]);
+    const main = report.classes.find((c) => c.className === 'Main');
+    expect(main?.loose).toBe(true);
+    expect(main?.omitted).toBe(false);
+    expect(main?.typeErrors.map((e) => e.code)).toEqual([2339, 2339]);
+  }, 30_000);
 });

@@ -15,7 +15,7 @@ import { main } from '../../src/pipeline/cli';
  * Admitted samples with an Overall_Match below 100. Empty until Task 15 admits the first one; add the sample
  * name here together with its residual-causes.json and its floor in the same commit.
  */
-const ADMITTED_BELOW_100: readonly string[] = ['gradients'];
+const ADMITTED_BELOW_100: readonly string[] = ['gradients', 'mask_reapply'];
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');

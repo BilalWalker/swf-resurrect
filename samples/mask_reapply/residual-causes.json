@@ -1,0 +1,28 @@
+{
+    "formatVersion":  1,
+    "sample":  "mask_reapply",
+    "entries":  [
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  37,
+                                     "y0":  42,
+                                     "x1":  37,
+                                     "y1":  42
+                                 },
+                        "kind":  "mask-edge-coverage",
+                        "message":  "Top-left corner pixel (x=37, y=42) of the masked rectangle: the reference fills it with the full colour 51,204,255 while the render draws it at about 25% coverage over white (204,243,255); its right neighbour (x=38) renders 153,230,255 against 51,204,255, which stays within tolerance, and the pixels below agree."
+                    },
+                    {
+                        "frame":  1,
+                        "bbox":  {
+                                     "x0":  87,
+                                     "y0":  42,
+                                     "x1":  87,
+                                     "y1":  42
+                                 },
+                        "kind":  "mask-edge-coverage",
+                        "message":  "Top-left corner pixel (x=87, y=42) of the masked rectangle: the reference fills it with the full colour 51,204,255 while the render draws it at about 25% coverage over white (204,243,255); its right neighbour (x=88) renders 153,230,255 against 51,204,255, which stays within tolerance, and the pixels below agree."
+                    }
+                ]
+}
