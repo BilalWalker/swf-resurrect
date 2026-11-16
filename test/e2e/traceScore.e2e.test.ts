@@ -4,12 +4,12 @@
 // Validates: Requirements 3.6, 3.7, 18.13
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { afterAll, describe, expect, it } from 'vitest';
-import { main } from '../../src/pipeline/cli';
+import { describe, expect, it } from 'vitest';
+import { sharedPipelineRun } from '../support/sharedPipelineRun';
 
 /** Measured in task 16.2 (missing 0, extra 0; was 0 at Checkpoint 27). Never lower. */
 const TRACE_SCORE_FLOOR_MASK_REAPPLY = 100;
@@ -44,10 +44,6 @@ interface BehaviourReport {
 }
 
 describe.skipIf(reason !== null)(`trace score floor${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
-  let tempRoot = '';
-  afterAll(async () => {
-    if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
-  }, 60_000);
 
   const cases: Array<[string, number]> = [
     ['mask_reapply', TRACE_SCORE_FLOOR_MASK_REAPPLY],
@@ -58,10 +54,7 @@ describe.skipIf(reason !== null)(`trace score floor${reason === null ? '' : ` (s
   it.each(cases)(
     '%s keeps Trace_Score at or above its floor',
     async (sample, floor) => {
-      await mkdir(resolve(repoRoot, '.work'), { recursive: true });
-      tempRoot = tempRoot === '' ? await mkdtemp(resolve(repoRoot, '.work', 'trace-score-')) : tempRoot;
-      const outDir = join(tempRoot, sample);
-      const code = await main([resolve(repoRoot, 'samples', sample, 'test.swf'), outDir, '--verify', '--force']);
+      const { outDir, code } = await sharedPipelineRun(sample, resolve(repoRoot, 'samples', sample, 'test.swf'));
       expect(code).toBe(0);
       const report = JSON.parse(await readFile(join(outDir, 'fidelity-report.json'), 'utf8')) as BehaviourReport;
       expect(report.behaviour.status).toBe('compared');

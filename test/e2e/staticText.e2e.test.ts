@@ -5,13 +5,13 @@
 // Validates: Requirements 3.6, 10.6, 20.3, 20.8, 20.9
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { afterAll, describe, expect, it } from 'vitest';
-import { main } from '../../src/pipeline/cli';
+import { describe, expect, it } from 'vitest';
 import { assertNotFailed, STATIC_TEXT_PATH, staticTextDecision, suiteTitle } from '../support/fetchedSample';
+import { sharedPipelineRun } from '../support/sharedPipelineRun';
 
 /** Measured in task 17.12 (1 frame, 0 differing pixels). Never lower. */
 const OVERALL_MATCH_FLOOR_STATIC_TEXT = 100;
@@ -74,26 +74,16 @@ describe('static_text is not committed', () => {
 describe.skipIf(decision.action === 'skip' || reason !== null)(
   suiteTitle('static_text floors', decision) + (reason === null ? '' : ` (skipped: ${reason})`),
   () => {
-    let tempRoot = '';
-    afterAll(async () => {
-      if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
-    }, 60_000);
 
     it(
       'keeps Overall_Match and Trace_Score at their floors; the three reference lines are the missing ones',
       async () => {
         assertNotFailed(decision);
-        await mkdir(resolve(repoRoot, '.work'), { recursive: true });
-        tempRoot = await mkdtemp(resolve(repoRoot, '.work', 'static-text-'));
-        const outDir = join(tempRoot, 'static_text');
-        const code = await main([
-          STATIC_TEXT_PATH,
-          outDir,
-          '--verify',
-          '--force',
-          '--reference-dir',
-          resolve(repoRoot, 'samples', 'static_text', 'reference'),
-        ]);
+        const referenceDir = resolve(repoRoot, 'samples', 'static_text', 'reference');
+        const { outDir, code } = await sharedPipelineRun('static_text', STATIC_TEXT_PATH, {
+          extraArgs: ['--reference-dir', referenceDir],
+          inputDirs: [referenceDir],
+        });
         expect(code).toBe(0);
         const report = JSON.parse(await readFile(join(outDir, 'fidelity-report.json'), 'utf8')) as StaticTextReport;
         expect(report.visual.status).toBe('compared');

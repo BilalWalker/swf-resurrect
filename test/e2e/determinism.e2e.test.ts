@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { afterAll, describe, expect, it } from 'vitest';
 import { main } from '../../src/pipeline/cli';
+import { sharedPipelineRun } from '../support/sharedPipelineRun';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
@@ -62,10 +63,16 @@ describe.skipIf(reason !== null)(`pipeline determinism${reason === null ? '' : `
       await mkdir(resolve(repoRoot, '.work'), { recursive: true });
       tempRoot = tempRoot === '' ? await mkdtemp(resolve(repoRoot, '.work', 'determinism-')) : tempRoot;
       const swf = resolve(repoRoot, 'samples', sample, 'test.swf');
-      const outA = join(tempRoot, `${sample}-a`);
+      // Run 1 is the shared run of this sample (possibly cached). Run 2 is FRESH: main() runs the pipeline in this test
+      // process, into its own directory, on every execution. A cached result is never compared with itself.
       const outB = join(tempRoot, `${sample}-b`);
-      expect(await main([swf, outA, '--verify', '--force'])).toBe(0);
-      expect(await main([swf, outB, '--verify', '--force'])).toBe(0);
+      const [shared, codeB] = await Promise.all([
+        sharedPipelineRun(sample, swf),
+        main([swf, outB, '--verify', '--force']),
+      ]);
+      expect(shared.code).toBe(0);
+      expect(codeB).toBe(0);
+      const outA = shared.outDir;
       const filesA = await comparedFiles(outA);
       const filesB = await comparedFiles(outB);
       expect(filesB).toEqual(filesA);

@@ -4,12 +4,12 @@
 // Validates: Requirements 21.3, 21.7
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { afterAll, describe, expect, it } from 'vitest';
-import { main } from '../../src/pipeline/cli';
+import { describe, expect, it } from 'vitest';
+import { sharedPipelineRun } from '../support/sharedPipelineRun';
 
 /**
  * Admitted samples with an Overall_Match below 100. Empty until Task 15 admits the first one; add the sample
@@ -42,10 +42,6 @@ interface ResidualReport {
 }
 
 describe.skipIf(reason !== null)(`residual attribution floor${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
-  let tempRoot = '';
-  afterAll(async () => {
-    if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
-  }, 60_000);
 
   // vitest fails a file with no test, so an empty list gets one passing placeholder that says why.
   if (ADMITTED_BELOW_100.length === 0) {
@@ -57,10 +53,7 @@ describe.skipIf(reason !== null)(`residual attribution floor${reason === null ? 
   it.each(ADMITTED_BELOW_100.map((s) => [s] as [string]))(
     '%s has no unattributed differing region',
     async (sample) => {
-      await mkdir(resolve(repoRoot, '.work'), { recursive: true });
-      tempRoot = tempRoot === '' ? await mkdtemp(resolve(repoRoot, '.work', 'residual-')) : tempRoot;
-      const outDir = join(tempRoot, sample);
-      const code = await main([resolve(repoRoot, 'samples', sample, 'test.swf'), outDir, '--verify', '--force']);
+      const { outDir, code } = await sharedPipelineRun(sample, resolve(repoRoot, 'samples', sample, 'test.swf'));
       expect(code).toBe(0);
       const report = JSON.parse(await readFile(join(outDir, 'fidelity-report.json'), 'utf8')) as ResidualReport;
       expect(report.visual.residual.unattributed).toBe(0);

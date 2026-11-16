@@ -4,12 +4,12 @@
 // Validates: Requirements 3.7, 14.24
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { afterAll, describe, expect, it } from 'vitest';
-import { main } from '../../src/pipeline/cli';
+import { describe, expect, it } from 'vitest';
+import { sharedPipelineRun } from '../support/sharedPipelineRun';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
@@ -36,18 +36,11 @@ interface BehaviourReport {
 }
 
 describe.skipIf(reason !== null)(`empty reference trace report${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
-  let tempRoot = '';
-  afterAll(async () => {
-    if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
-  }, 60_000);
 
   it.each(['radial', 'gradients', 'acid-color-2'])(
     '%s reports behaviour not-compared with empty-reference-trace and no Trace_Score',
     async (sample) => {
-      await mkdir(resolve(repoRoot, '.work'), { recursive: true });
-      tempRoot = tempRoot === '' ? await mkdtemp(resolve(repoRoot, '.work', 'empty-trace-')) : tempRoot;
-      const outDir = join(tempRoot, sample);
-      const code = await main([resolve(repoRoot, 'samples', sample, 'test.swf'), outDir, '--verify', '--force']);
+      const { outDir, code } = await sharedPipelineRun(sample, resolve(repoRoot, 'samples', sample, 'test.swf'));
       expect(code).toBe(0);
       const report = JSON.parse(await readFile(join(outDir, 'fidelity-report.json'), 'utf8')) as BehaviourReport;
       expect(report.behaviour.status).toBe('not-compared');

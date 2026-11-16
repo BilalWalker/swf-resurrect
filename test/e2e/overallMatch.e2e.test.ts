@@ -4,12 +4,12 @@
 // Validates: Requirements 4.1, 13.5
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { afterAll, describe, expect, it } from 'vitest';
-import { main } from '../../src/pipeline/cli';
+import { describe, expect, it } from 'vitest';
+import { sharedPipelineRun } from '../support/sharedPipelineRun';
 
 /** Measured in task 17.3 (3 frames, 0 differing pixels each). Never lower. */
 const OVERALL_MATCH_FLOOR_CLICKGOTO = 100;
@@ -59,10 +59,6 @@ interface VisualReport {
 }
 
 describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
-  let tempRoot = '';
-  afterAll(async () => {
-    if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
-  }, 60_000);
 
   const cases: Array<[string, number]> = [
     ['clickgoto', OVERALL_MATCH_FLOOR_CLICKGOTO],
@@ -78,10 +74,7 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
   it.each(cases)(
     '%s keeps Overall_Match at or above its floor',
     async (sample, floor) => {
-      await mkdir(resolve(repoRoot, '.work'), { recursive: true });
-      tempRoot = tempRoot === '' ? await mkdtemp(resolve(repoRoot, '.work', 'overall-match-')) : tempRoot;
-      const outDir = join(tempRoot, sample);
-      const code = await main([resolve(repoRoot, 'samples', sample, 'test.swf'), outDir, '--verify', '--force']);
+      const { outDir, code } = await sharedPipelineRun(sample, resolve(repoRoot, 'samples', sample, 'test.swf'));
       expect(code).toBe(0);
       const report = JSON.parse(await readFile(join(outDir, 'fidelity-report.json'), 'utf8')) as VisualReport;
       expect(report.visual.status).toBe('compared');
