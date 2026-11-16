@@ -12,6 +12,7 @@ import { chromium } from 'playwright';
 import { afterAll, describe, expect, it } from 'vitest';
 import { main } from '../../src/pipeline/cli';
 import { sharedPipelineRun } from '../support/sharedPipelineRun';
+import { PIPELINE_SLOTS, withSlot } from '../support/slots';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
@@ -68,7 +69,7 @@ describe.skipIf(reason !== null)(`pipeline determinism${reason === null ? '' : `
       const outB = join(tempRoot, `${sample}-b`);
       const [shared, codeB] = await Promise.all([
         sharedPipelineRun(sample, swf),
-        main([swf, outB, '--verify', '--force']),
+        withSlot('pipeline', PIPELINE_SLOTS, () => main([swf, outB, '--verify', '--force'])),
       ]);
       expect(shared.code).toBe(0);
       expect(codeB).toBe(0);

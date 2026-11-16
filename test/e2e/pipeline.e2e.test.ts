@@ -1,13 +1,13 @@
 // End-to-end smoke test: real FFDec, real npm install, typecheck and build of every emitted project.
 // Requirements: 4.8, 5.5, 5.6, 5.7, 9.1, 10.5, 10.6, 10.8.
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { mkdir, mkdtemp, readdir, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { main } from '../../src/pipeline/cli';
+import { PIPELINE_SLOTS, withSlot } from '../support/slots';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FFDEC_JAR = join(REPO_ROOT, 'tools', 'ffdec', 'ffdec-cli.jar');
@@ -37,6 +37,15 @@ function run(command: string, args: string[], cwd: string, env?: NodeJS.ProcessE
   });
 }
 
+/**
+ * One pipeline run (`tsx src/pipeline/cli.ts <args>`) as a child process. The samples of this file run concurrently,
+ * and the pipeline keeps process-wide state (console output, the in-process type-check), so each run gets its own process.
+ */
+function main(args: string[]): Promise<RunResult> {
+  const tsx = join(REPO_ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+  return withSlot('pipeline', PIPELINE_SLOTS, () => run(process.execPath, [tsx, 'src/pipeline/cli.ts', ...args], REPO_ROOT));
+}
+
 /** Run npm without a shell: on Windows use node + npm-cli.js (npm.cmd cannot be spawned safely without a shell). */
 function npm(args: string[], cwd: string): Promise<RunResult> {
   const env = { npm_config_cache: NPM_CACHE };
@@ -49,8 +58,8 @@ function npm(args: string[], cwd: string): Promise<RunResult> {
   return run(process.execPath, [candidates[0], ...args], cwd, env);
 }
 
-async function findSwfs(dir: string): Promise<string[]> {
-  const entries = await readdir(dir, { recursive: true, withFileTypes: true });
+function findSwfs(dir: string): string[] {
+  const entries = readdirSync(dir, { recursive: true, withFileTypes: true });
   return entries
     .filter((e) => e.isFile() && e.name.toLowerCase().endsWith('.swf'))
     .map((e) => join(e.parentPath, e.name))
@@ -109,7 +118,7 @@ function typecheckErrorKeys(output: string): string[] {
 
 describe('pipeline end to end', () => {
   let tempRoot = '';
-  let swfs: string[] = [];
+  const swfs = findSwfs(SAMPLES_DIR);
 
   beforeAll(async () => {
     let java: RunResult;
@@ -120,7 +129,6 @@ describe('pipeline end to end', () => {
     }
     if (java.code !== 0) throw new Error('Missing dependency: Java (`java -version` failed)');
     if (!existsSync(FFDEC_JAR)) throw new Error(`Missing dependency: FFDec jar not found at ${FFDEC_JAR}`);
-    swfs = await findSwfs(SAMPLES_DIR);
     if (swfs.length === 0) throw new Error(`Missing dependency: no Sample_SWF (*.swf) found under ${SAMPLES_DIR}`);
     await mkdir(NPM_CACHE, { recursive: true });
     tempRoot = await mkdtemp(join(tmpdir(), 'swf-resurrect-e2e-'));
@@ -130,22 +138,29 @@ describe('pipeline end to end', () => {
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
   }, 60_000);
 
-  it(
-    'emits deterministic projects that install, typecheck and build',
-    async () => {
-      const problems: string[] = [];
-      for (const [i, swf] of swfs.entries()) {
-        const name = `${i}-${relative(SAMPLES_DIR, swf).replace(/[^A-Za-z0-9]+/g, '_')}`;
+  // One test per sample, run concurrently (task 29.1); each does what the single loop did, in the same order.
+  if (swfs.length === 0) {
+    it('has a Sample_SWF to run', () => {
+      throw new Error(`Missing dependency: no Sample_SWF (*.swf) found under ${SAMPLES_DIR}`);
+    });
+  }
+  for (const [i, swf] of swfs.entries()) {
+    const name = `${i}-${relative(SAMPLES_DIR, swf).replace(/[^A-Za-z0-9]+/g, '_')}`;
+    it.concurrent(
+      `${name} emits a deterministic project that installs, typechecks and builds`,
+      async () => {
+        const problems: string[] = [];
         const outA = join(tempRoot, 'a', name);
         const outB = join(tempRoot, 'b', name);
-
-        expect(await main([swf, outA]), `pipeline run 1 for ${swf}`).toBe(0);
-        expect(await main([swf, outB]), `pipeline run 2 for ${swf}`).toBe(0);
+        const [runA, runB] = await Promise.all([main([swf, outA]), main([swf, outB])]);
+        expect(runA.code, `pipeline run 1 for ${swf}\n${runA.output}`).toBe(0);
+        expect(runB.code, `pipeline run 2 for ${swf}\n${runB.output}`).toBe(0);
 
         // Same input, same output tree, byte for byte (before npm adds node_modules).
         expect(await compareTrees(outA, outB), `output trees differ for ${swf}`).toEqual([]);
 
-        const install = await npm(['install', '--no-audit', '--no-fund'], outA);
+        // One npm install at a time across workers, as when this file ran its samples in one loop.
+        const install = await withSlot('npm', 1, () => npm(['install', '--no-audit', '--no-fund'], outA));
         if (install.code !== 0) problems.push(`npm install in ${outA}\n${install.output}`);
 
         // Type errors are reported, not fatal (tech steering; Requirements 23.2 and 25): a project with
@@ -167,16 +182,15 @@ describe('pipeline end to end', () => {
         const build = await npm(['run', 'build'], outA);
         if (build.code !== 0) {
           problems.push(`npm run build in ${outA}\n${build.output}`);
-          continue;
+        } else {
+          const distDir = join(outA, 'dist');
+          if (!(await stat(join(distDir, 'index.html'))).isFile()) problems.push(`dist/index.html missing for ${swf}`);
+          const built = await listFiles(distDir);
+          if (!built.some((f) => f.endsWith('.js'))) problems.push(`no JavaScript file in dist for ${swf}`);
         }
-
-        const distDir = join(outA, 'dist');
-        if (!(await stat(join(distDir, 'index.html'))).isFile()) problems.push(`dist/index.html missing for ${swf}`);
-        const built = await listFiles(distDir);
-        if (!built.some((f) => f.endsWith('.js'))) problems.push(`no JavaScript file in dist for ${swf}`);
-      }
-      expect(problems, problems.join('\n----\n')).toEqual([]);
-    },
-    TIMEOUT_MS,
-  );
+        expect(problems, problems.join('\n----\n')).toEqual([]);
+      },
+      TIMEOUT_MS,
+    );
+  }
 });

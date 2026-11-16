@@ -816,7 +816,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: the floor tests above and `test/e2e/determinism.e2e.test.ts` (create; same skip rules as the other e2e tests).
     - _Requirements: 1.3, 1.4, 1.5, 3.6, 3.7, 15.5_
 
-- [-] 18. Checkpoint: browser review of fidelity-report.html
+- [x] 18. Checkpoint: browser review of fidelity-report.html
   - STOP. Commit nothing.
   - Run `npm run pipeline -- samples/<name>/test.swf out/<name> --verify --force` on every Approved_Sample_List SWF (and report any that was not admitted and why). `avm2/static_text` is run on `.work/samples/static_text/test.swf` with `--reference-dir samples/static_text/reference` after `npm run fetch:static-text`, or is reported as `skipped: file absent` with the reason. Give the paths of each `fidelity-report.html` and `fidelity-report.json`, the Overall_Match, the Trace_Score or `not-compared`, the `missing` and `extra` counts, the `release-outside`, `unsupported-input` and `unpaired-mouse-event` notes, the Known_Visual_Limits and the Residual_Cause list of each. Include `clickgoto` and `tweendemo` for comparison and the figures before and after this spec for every sample.
   - Report the measured effect of every decided item O1 to O9 and of F19 to F21 (counts, and which sample or task it affected), as information. Name the three empty-trace samples as `not-compared: empty-reference-trace` and the `Main` of `mask_reapply` as a registered Loose_Class with its measured Trace_Score.
@@ -825,11 +825,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 29. Checkpoint 18 follow-ups
   - Commit area: `Test`, `Translate` or `Convert` per sub-task (each commit names its area). The user accepted Checkpoint 18 with these changes. They run before Task 19. One commit per sub-task, not one commit for the task. Each commit message has a blank second line (check with `git log -1 --format=%B` before moving on). Verification V1 (V2 where a sub-task changes `template/`). Sub-task 29.3 amends the `design.md` lines it names (the Strokes measurement table); this is the one exception to the rule that no task edits those files, and the commit message lists the lines.
-  - [ ] 29.1 Suite time
+  - [-] 29.1 Suite time
     - Find why `test/e2e/omittedClass.e2e.test.ts` hung (300 s timeout in the Checkpoint 18 suite run) and report the cause; do not raise the timeout. Then bring the full suite back under about 150 s (it is now about 485 s; it was about 100 s before Tasks 15 to 17 added e2e files that each run the pipeline per sample). Run the pipeline once per sample and share the output across the e2e files that need it (for example a vitest `globalSetup`, or a shared cached run keyed by sample under `.work/`). No test is weakened or removed: every assertion stays.
     - Verification: the full suite `npm test -- --run` green once; report the duration in the commit message.
     - Test: the existing e2e files are the evidence; add a unit test for the shared-run helper (same sample gives one pipeline run; a changed input gives a new one).
     - _Requirements: 15.3, 15.5, 1.3_
+    - Open item (machine freeze, not resolved): in a full-suite run at peak load (16 JVMs, about 48 node processes and about 40 headless Chromium processes at once) Chromium launch, page loads and process exit froze machine-wide for 2 to 5 minutes. CPU stayed at 0 to 6 %, about 5 GB of memory was free and JVMs still started; Chromium processes that were killed did not exit until the freeze released, so a `launched.stop()` in the afterAll hook of `render.e2e` timed out at 30 s. The OS-level cause is unknown. Capping Chromium-using pipeline runs at 3 at once (`PIPELINE_SLOTS` in `test/support/slots.ts`, npm install 1) is a workaround, not a diagnosis; no timeout was raised.
 
   - [ ] 29.2 `static_text`: class `Test` is never translated
     - The class `Test` is referenced only from a frame script (`new Test(this)` in `MainTimeline` frame 1) and is never translated. Diagnose why. If the fix is in the translation closure (classes reachable from frame scripts), fix it with tests and measure `static_text` again (Overall_Match and Trace_Score); raise the floors per the Ratchet_Rule. If the fix is larger than that, STOP and report.

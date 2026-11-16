@@ -20,6 +20,7 @@ import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { PIPELINE_SLOTS, withSlot } from './slots';
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const WAIT_LIMIT_MS = 20 * 60 * 1000;
 const STALE_LOCK_MS = 15 * 60 * 1000;
@@ -181,6 +182,6 @@ export function createSharedRuns(deps: SharedRunDeps): (name: string, swfPath: s
 export const sharedPipelineRun = createSharedRuns({
   sharedDir: resolve(repoRoot, '.work', 'shared-runs'),
   common: commonInputs,
-  run: runChild,
+  run: (args, logPath) => withSlot('pipeline', PIPELINE_SLOTS, () => runChild(args, logPath)),
   bypass: () => process.env[NO_RUN_CACHE_ENV] === '1',
 });
