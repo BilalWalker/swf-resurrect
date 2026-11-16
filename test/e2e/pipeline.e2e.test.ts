@@ -2,7 +2,7 @@
 // Requirements: 4.8, 5.5, 5.6, 5.7, 9.1, 10.5, 10.6, 10.8.
 import { spawn } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, symlink } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -162,7 +162,9 @@ interface InstalledProject {
 }
 let installer: Promise<InstalledProject | null> | null = null;
 /** Which samples installed and which reused, with the identity check that backed each reuse (asserted per test). */
-const installLog: { sample: string; how: 'installed' | 'reused'; from?: string }[] = [];
+const installLog: { sample: string; how: 'installed' | 'reused'; from?: string; packageJson: Buffer }[] = [];
+/** The node_modules junctions this file created, removed one by one before the temp root is deleted. */
+const junctions: string[] = [];
 /** Gives `projectDir` its node_modules: a real install for the first caller, else a junction when package.json is identical. */
 async function provideNodeModules(name: string, projectDir: string): Promise<RunResult> {
   const packageJson = await readFile(join(projectDir, 'package.json'));
@@ -176,7 +178,7 @@ async function provideNodeModules(name: string, projectDir: string): Promise<Run
     } finally {
       settle(result !== undefined && result.code === 0 ? { dir: projectDir, packageJson } : null);
     }
-    installLog.push({ sample: name, how: 'installed' });
+    installLog.push({ sample: name, how: 'installed', packageJson });
     return result;
   }
   const first = await installer;
@@ -184,11 +186,12 @@ async function provideNodeModules(name: string, projectDir: string): Promise<Run
     // The identity that makes the reuse valid.
     expect(packageJson.equals(first.packageJson), `package.json of ${name} must be byte-identical to ${first.dir} to reuse its node_modules`).toBe(true);
     await symlink(join(first.dir, 'node_modules'), join(projectDir, 'node_modules'), 'junction');
-    installLog.push({ sample: name, how: 'reused', from: first.dir });
+    junctions.push(join(projectDir, 'node_modules'));
+    installLog.push({ sample: name, how: 'reused', from: first.dir, packageJson });
     return { code: 0, output: '' };
   }
   const result = await realInstall();
-  installLog.push({ sample: name, how: 'installed' });
+  installLog.push({ sample: name, how: 'installed', packageJson });
   return result;
 }
 describe('pipeline end to end', () => {
@@ -210,8 +213,24 @@ describe('pipeline end to end', () => {
   }, 60_000);
 
   afterAll(async () => {
-    for (const e of installLog) console.info(`npm install: ${e.sample} ${e.how}${e.from === undefined ? '' : ` from ${e.from}`}`);
-    if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
+    try {
+      for (const e of installLog) console.info(`npm install: ${e.sample} ${e.how}${e.from === undefined ? '' : ` from ${e.from}`}`);
+      // Runs after every sample test has finished and covers only the samples that ran (a -t filter runs fewer).
+      // When all emitted package.json files are identical, exactly one real install happened and the rest reused it.
+      const identical = installLog.every((e) => e.packageJson.equals(installLog[0].packageJson));
+      if (installLog.length > 0 && identical) {
+        const installed = installLog.filter((e) => e.how === 'installed').length;
+        console.info(`npm install count: ${installed} installed, ${installLog.length - installed} reused, ${installLog.length} samples`);
+        expect(installed, 'one real npm install when every emitted package.json is identical').toBe(1);
+      }
+    } finally {
+      // Remove each node_modules junction itself (the link, not its target) so the recursive delete below can never
+      // walk through one into the installed node_modules.
+      for (const link of junctions) {
+        if ((await lstat(link).catch(() => null))?.isSymbolicLink()) await unlink(link);
+      }
+      if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
+    }
   }, 60_000);
 
   // One test per sample, run concurrently (task 29.1); each does what the single loop did, in the same order.
