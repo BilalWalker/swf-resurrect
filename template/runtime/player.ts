@@ -307,9 +307,10 @@ export class Player {
    * runner and the Play_Tests. Each browser repeat is a further call with `KEY_DOWN`.
    */
   dispatchKey(type: typeof KeyboardEvent.KEY_DOWN | typeof KeyboardEvent.KEY_UP, keyCode: number): void {
-    const focus = this.stage.focus as Partial<DisplayObject> | null;
+    const focus = this.stage.focus;
+    // A Stage_Object stored by the setter has no _onStage: the typeof check sends the key to the Stage.
     const onStage = focus !== null && typeof focus._onStage === 'function' && focus._onStage();
-    const target = onStage ? (focus as DisplayObject) : this.stage;
+    const target = onStage ? focus : this.stage;
     target.dispatchEvent(new KeyboardEvent(type, true, false, keyCode));
     this.syncAll();
   }

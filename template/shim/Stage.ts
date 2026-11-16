@@ -1,5 +1,6 @@
 import { addChildTo, getChildAtOf, getChildByNameOf, removeChildFrom } from './containerOps';
 import type { DisplayObject } from './DisplayObject';
+import type { InteractiveObject } from './InteractiveObject';
 import { ArgumentError, IllegalOperationError } from './errors';
 import { EventDispatcher } from './events';
 import { classNameOf, registerClassName } from './classNames';
@@ -18,8 +19,19 @@ export class Stage extends EventDispatcher {
   readonly _isStage = true;
   readonly _parent: null = null;
   _children: DisplayObject[] = [];
-  /** The object that receives key events; null sends them to the Stage. Any object is accepted, the Stage included. */
-  focus: object | null = null;
+  private _focus: InteractiveObject | Stage | null = null;
+  /**
+   * The object that receives key events; null sends them to the Stage. Read as InteractiveObject | null, as in AS3, so
+   * ar io:InteractiveObject = stage.focus type-checks. In AS3 the Stage is itself an InteractiveObject and stage.focus =
+   * stage is legal (entity_game), but here it is not a DisplayObject, so the setter accepts it and the getter hands it
+   * back typed as InteractiveObject (it has no _onStage; Player.dispatchKey treats it as the Stage).
+   */
+  get focus(): InteractiveObject | null {
+    return this._focus as InteractiveObject | null;
+  }
+  set focus(v: InteractiveObject | Stage | null) {
+    this._focus = v;
+  }
   /** Frames per second of the movie. The Player sets it from Scene_JSON `stage.frameRate`. */
   frameRate = 0;
   private _scaleMode: string = StageScaleMode.SHOW_ALL;

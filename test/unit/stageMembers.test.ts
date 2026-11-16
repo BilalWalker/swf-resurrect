@@ -14,7 +14,7 @@ describe('Stage members', () => {
     expect(stage.scaleMode).toBe(StageScaleMode.SHOW_ALL);
     expect([stage.mouseX, stage.mouseY]).toEqual([0, 0]);
   });
-  it('focus accepts any object including the Stage itself', () => {
+  it('focus accepts an InteractiveObject, null or the Stage itself', () => {
     const { stage } = playerOn(new ManualClock());
     expect(() => {
       stage.focus = stage;
