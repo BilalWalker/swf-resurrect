@@ -7,6 +7,7 @@ export { DisplayObjectContainer, Sprite } from './Sprite';
 export { Stage } from './Stage';
 export { StageScaleMode } from './StageScaleMode';
 export { MovieClip } from './MovieClip';
+export { Dictionary } from './Dictionary';
 export { Shape } from './Shape';
 export { trace, setTraceSink } from './trace';
 export { getDefinitionByName, getQualifiedClassName, getTimer, registerDefinitions } from './utils';

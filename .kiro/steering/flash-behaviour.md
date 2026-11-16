@@ -137,3 +137,12 @@ say which you did. The spec that holds the evidence is named with each item.
   `entity_game` Overall_Match 100.00 / Trace_Score not-compared / 18 type errors in both;
   `clickgoto` 100.00 / 100.00 / 0 in both. The 18 errors are unchanged in count; the six
   `Game.stage` statements now emit `this.stage`.
+
+## Dictionary
+- **`Dictionary` keys objects and functions by identity, strings and numbers by value; `weakKeys` is ignored.**
+  Built on `Map` (SameValueZero). Neither read in Ruffle nor measured: it follows as3-coverage
+  Requirement 13 and design D10. Open_Item (task 30): read `core/src/avm2/object/dictionary_object.rs` at the
+  commit above, and check that a string key and a number key of the same text stay two entries (Flash uses
+  strict equality for non-string keys). `Dictionary.set` returns the value, so an assignment used as an
+  expression keeps its value. The index syntax on a typed receiver is rewritten by the translator
+  (`src/translate/rewrite.ts`); `for (k in d)` and `for each` over a Dictionary are not handled.

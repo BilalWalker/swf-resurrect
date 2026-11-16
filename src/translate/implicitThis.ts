@@ -112,6 +112,22 @@ export function collectFunctionLocals(params: readonly Param[], body: readonly N
   return out;
 }
 
+/** Declared type text of every parameter and local of a function, '' when it has no annotation (the last declaration of a name wins). */
+export function collectFunctionLocalTypes(params: readonly Param[], body: readonly Node[]): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const p of params) out.set(p.name, p.rest ? 'Array' : (p.typeText ?? ''));
+  const walk = (nodes: readonly Node[]): void => {
+    for (const n of nodes) {
+      if (n.kind !== 'statement') continue;
+      if (n.decl !== null) for (const d of n.decl.declarators) out.set(d.name, d.typeText ?? '');
+      if (n.body !== null) walk(n.body.nodes);
+      if (n.elseBody !== null) walk(n.elseBody.nodes);
+    }
+  };
+  walk(body);
+  return out;
+}
+
 function isP(t: Token | undefined, text: string): boolean {
   return t !== undefined && t.kind === 'punct' && t.text === text;
 }

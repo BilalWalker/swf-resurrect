@@ -30,6 +30,8 @@ export interface Declarator {
   nameIdx: number;
   line: number;
   type: TokRange | null;
+  /** The type as written (significant tokens joined), null when absent. */
+  typeText: string | null;
   init: TokRange | null;
 }
 
@@ -43,6 +45,7 @@ export interface Param {
   rest: boolean;
   line: number;
   type: TokRange | null;
+  typeText: string | null;
   init: TokRange | null;
 }
 
@@ -792,15 +795,24 @@ class Scanner {
     return b;
   }
 
+  /** Significant tokens [a, b) joined without spaces. */
+  private textOf(a: number, b: number): string {
+    let out = '';
+    for (let k = a; k < b; k++) out += (this.tk(k) as Token).text;
+    return out;
+  }
+
   private declarator(s: number, e: number): Declarator {
     const nameTok = this.tk(s) as Token;
     if (nameTok.kind !== 'id') throw new Bail('expected a variable name');
     let q = s + 1;
     let type: TokRange | null = null;
+    let typeText: string | null = null;
     if (q < e && this.isP(this.tk(q), ':')) {
       const te = this.typeEnd(q + 1);
       if (te < 0 || te > e) throw new Bail('unsupported type annotation');
       type = this.rangeOf(q + 1, te);
+      typeText = this.textOf(q + 1, te);
       q = te;
     }
     let init: TokRange | null = null;
@@ -809,7 +821,7 @@ class Scanner {
       init = this.rangeOf(q + 1, e);
       if (init === null) throw new Bail('missing initialiser');
     }
-    return { name: nameTok.text, nameIdx: this.sig[s], line: nameTok.line, type, init };
+    return { name: nameTok.text, nameIdx: this.sig[s], line: nameTok.line, type, typeText, init };
   }
 
   private functionNode(startP: number, modifiers: string[]): Node {
@@ -881,10 +893,12 @@ class Scanner {
     if (nameTok === undefined || nameTok.kind !== 'id') throw new Bail('expected a parameter name');
     q++;
     let type: TokRange | null = null;
+    let typeText: string | null = null;
     if (q < e && this.isP(this.tk(q), ':')) {
       const te = this.typeEnd(q + 1);
       if (te < 0 || te > e) throw new Bail('unsupported type annotation');
       type = this.rangeOf(q + 1, te);
+      typeText = this.textOf(q + 1, te);
       q = te;
     }
     let init: TokRange | null = null;
@@ -892,7 +906,7 @@ class Scanner {
       if (!this.isP(this.tk(q), '=')) throw new Bail('unexpected tokens in parameter');
       init = this.rangeOf(q + 1, e);
     }
-    return { name: nameTok.text, rest, line: nameTok.line, type, init };
+    return { name: nameTok.text, rest, line: nameTok.line, type, typeText, init };
   }
 
   // -- statements ----------------------------------------------------------

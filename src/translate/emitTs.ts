@@ -17,7 +17,7 @@
 import { normalizeNewlines, tokenize } from './tokenizer';
 import type { Token } from './tokenizer';
 import { scan } from './scanner';
-import { collectFunctionLocals } from './implicitThis';
+import { collectFunctionLocals, collectFunctionLocalTypes } from './implicitThis';
 import type {
   AccessorNode, Body, ClassNode, Declarator, FieldNode, InterfaceNode, MethodNode, Node, Param,
   StatementNode, TokRange, UnsupportedNode, VarDecl,
@@ -41,6 +41,8 @@ export interface RewriteContext {
   role?: TypeRole;
   /** Names of the enclosing function's parameters and local variables (empty outside functions). */
   locals?: ReadonlySet<string>;
+  /** Declared type text of those parameters and locals ('' when not annotated). */
+  localTypes?: ReadonlyMap<string, string>;
   /** True when the enclosing function's own body has a `return <expr>` (set for return types). */
   hasValueReturn?: boolean;
   /** The class member being emitted (method, accessor or field initialiser); absent outside a class. */
@@ -206,7 +208,7 @@ class Emitter {
   private readonly rw: Rewriter;
   private readonly hooks: EmitHooks;
   /** Facts about the function being emitted, passed to the Rewriter. */
-  private fn: { locals: ReadonlySet<string>; hasValueReturn: boolean } | null = null;
+  private fn: { locals: ReadonlySet<string>; localTypes: ReadonlyMap<string, string>; hasValueReturn: boolean } | null = null;
   /** Getters of the class being emitted, by name (for the accessor type check). */
   private getters: ReadonlyMap<string, AccessorNode> = new Map();
   /** The member being emitted, for implicit-this resolution. */
@@ -268,7 +270,7 @@ class Emitter {
   private expr(r: TokRange): string {
     const line = this.tokens[r.from].line;
     return this.take(this.rw.expression(this.slice(r), {
-      line, locals: this.fn?.locals, member: this.member ?? undefined,
+      line, locals: this.fn?.locals, localTypes: this.fn?.localTypes, member: this.member ?? undefined,
     }));
   }
 
@@ -613,7 +615,7 @@ class Emitter {
     const locals = collectFunctionLocals(n.params, n.body.nodes);
     const saved = this.fn;
     const savedMember = this.member;
-    this.fn = { locals, hasValueReturn: this.hasValueReturn(n.body.nodes) };
+    this.fn = { locals, localTypes: collectFunctionLocalTypes(n.params, n.body.nodes), hasValueReturn: this.hasValueReturn(n.body.nodes) };
     this.member = this.curClass === null
       ? null
       : { isStatic: n.modifiers.indexOf('static') >= 0, className: this.curClass.name };

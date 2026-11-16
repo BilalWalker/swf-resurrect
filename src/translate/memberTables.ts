@@ -21,6 +21,9 @@ export interface ClassMembers {
   simpleName: string;
   instance: ReadonlyMap<string, MemberKind>;
   statics: ReadonlyMap<string, MemberKind>;
+  /** Declared type text of each field (as written), by name; absent when the field has no annotation. */
+  instanceTypes: ReadonlyMap<string, string>;
+  staticTypes: ReadonlyMap<string, string>;
   base: BaseRef;
 }
 
@@ -74,9 +77,14 @@ function scanFile(nodes: readonly Node[], out: FileScan = { imports: [], classes
   return out;
 }
 
-function classTables(cls: ClassNode): { instance: Map<string, MemberKind>; statics: Map<string, MemberKind> } {
+function classTables(cls: ClassNode): {
+  instance: Map<string, MemberKind>; statics: Map<string, MemberKind>;
+  instanceTypes: Map<string, string>; staticTypes: Map<string, string>;
+} {
   const instance = new Map<string, MemberKind>();
   const statics = new Map<string, MemberKind>();
+  const instanceTypes = new Map<string, string>();
+  const staticTypes = new Map<string, string>();
   const add = (mods: readonly string[], name: string, kind: MemberKind): void => {
     const target = mods.includes('static') ? statics : instance;
     // A getter and a setter are one accessor; a repeated name keeps its first kind.
@@ -84,14 +92,18 @@ function classTables(cls: ClassNode): { instance: Map<string, MemberKind>; stati
   };
   for (const m of cls.body.nodes) {
     if (m.kind === 'field') {
-      for (const d of m.decl.declarators) add(m.modifiers, d.name, m.decl.isConst ? 'constant' : 'field');
+      for (const d of m.decl.declarators) {
+        add(m.modifiers, d.name, m.decl.isConst ? 'constant' : 'field');
+        const types = m.modifiers.includes('static') ? staticTypes : instanceTypes;
+        if (d.typeText !== null && !types.has(d.name)) types.set(d.name, d.typeText);
+      }
     } else if (m.kind === 'method') {
       if (!m.isConstructor) add(m.modifiers, m.name, 'method');
     } else if (m.kind === 'accessor') {
       add(m.modifiers, m.name, 'accessor');
     }
   }
-  return { instance, statics };
+  return { instance, statics, instanceTypes, staticTypes };
 }
 
 export function buildMemberTables(files: readonly FileForTables[], shim: ShimMemberTable): MemberTables {
@@ -139,9 +151,9 @@ export function buildMemberTables(files: readonly FileForTables[], shim: ShimMem
     for (const c of scan.classes) {
       const qualified = keyOf(file, c);
       if (classes.has(qualified)) continue;
-      const { instance, statics } = classTables(c);
+      const { instance, statics, instanceTypes, staticTypes } = classTables(c);
       const base: BaseRef = c.extendsName === null ? { kind: 'none' } : resolveBase(pkg, scan.imports, c.extendsName);
-      classes.set(qualified, { qualified, simpleName: c.name, instance, statics, base });
+      classes.set(qualified, { qualified, simpleName: c.name, instance, statics, instanceTypes, staticTypes, base });
     }
   }
   return { classes, shim };
@@ -230,4 +242,26 @@ export function lookupStatic(t: MemberTables, cls: QualifiedName, name: string):
     return true;
   });
   return found;
+}
+
+/** The declared type text of an instance field found along the translated chain of cls, or null. */
+export function instanceFieldType(t: MemberTables, cls: QualifiedName, name: string): string | null {
+  let out: string | null = null;
+  walkChain(t, cls, (_q, m) => {
+    if (!m.instance.has(name)) return false;
+    out = m.instanceTypes.get(name) ?? '';
+    return true;
+  });
+  return out;
+}
+
+/** The declared type text of a static field found along the translated chain of cls, or null. */
+export function staticFieldType(t: MemberTables, cls: QualifiedName, name: string): string | null {
+  let out: string | null = null;
+  walkChain(t, cls, (_q, m) => {
+    if (!m.statics.has(name)) return false;
+    out = m.staticTypes.get(name) ?? '';
+    return true;
+  });
+  return out;
 }

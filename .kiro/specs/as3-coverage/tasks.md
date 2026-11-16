@@ -250,7 +250,7 @@ Rules that apply to every task:
 
 - [ ] 14. Shim and Translate: `Dictionary` with identity keys (D10)
   - Commit area: `Shim` (Translate named). Verification V2. Read the design row D10 and Requirement 13. A JS `Proxy` cannot work (`d[fn]` stringifies `fn` before any trap), so the translator rewrites typed receivers.
-  - [~] 14.1 Add the Shim `Dictionary`
+  - [-] 14.1 Add the Shim `Dictionary`
     - A class over `Map`: identity for objects and functions, value for strings and numbers; the `weakKeys` constructor argument is ignored and recorded as a Named_Limit in `ADDED_APIS.md`. Regenerate and stage the member table.
     - Tests: `test/unit/dictionary.test.ts` (create): two different function keys are two entries; string and number keys by value.
     - _Requirements: 13.1, 13.3, 13.4_

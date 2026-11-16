@@ -15,7 +15,7 @@ import type { ClassNode, InterfaceNode, Node, TokRange } from './scanner';
 import type { Token } from './tokenizer';
 import type { MemberContext, RewriteContext, RewriteResult, Rewriter, TokenSlice } from './emitTs';
 import { isReference, resolveIdentifier } from './implicitThis';
-import { lookupInstance } from './memberTables';
+import { instanceFieldType, lookupInstance, staticFieldType } from './memberTables';
 import type { MemberKindFound, MemberTables } from './memberTables';
 import type { Diagnostic, ImportRecord } from './types';
 
@@ -58,6 +58,9 @@ const OPERAND_STOPS: ReadonlySet<string> = new Set([
   '&&', '||', '?', ':', ',', '=', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>=', '>>>=', '&&=', '||=',
   '==', '!=', '===', '!==', '&', '|', '^', '<', '>', '<=', '>=', ';',
 ]);
+const ASSIGN_OPS: ReadonlySet<string> = new Set([
+  '=', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>=', '>>>=',
+]);
 const OPERAND_STOP_WORDS: ReadonlySet<string> = new Set(['return', 'throw', 'case', 'in', 'is', 'as', 'instanceof', 'else']);
 
 /** Depth-0 operators that bind looser than `|` (they force `((X) | 0)`). */
@@ -94,6 +97,7 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
   const env: ExprEnv = {
     options, classNames, bindingOf: (q) => bindingOfTarget.get(q) ?? null, targetOfBinding,
     cut: options.cutTargets ?? EMPTY_SET,
+    usesDictionary: declaresDictionary(nodes),
   };
   // Forced imports and class uses in source order; the statement rollback of emitTs truncates it (design 21.8).
   const log: Array<{ forced: QualifiedName } | { use: ClassUse }> = [];
@@ -107,7 +111,7 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
     expression(slice: TokenSlice, ctx: RewriteContext): RewriteResult {
       const toks = sigTokens(slice);
       if (toks.length === 0) return { text: '' };
-      const rw = new ExprRewriter(slice.source, toks, env, ctx.locals ?? EMPTY_SET, ctx.member ?? null);
+      const rw = new ExprRewriter(slice.source, toks, env, ctx.locals ?? EMPTY_SET, ctx.member ?? null, ctx.localTypes ?? EMPTY_MAP);
       try {
         const text = rw.run();
         for (const target of rw.importTargets) {
@@ -335,6 +339,39 @@ export function collectOwnMethods(nodes: readonly Node[]): ReadonlySet<string> {
 // Types
 
 const EMPTY_SET: ReadonlySet<string> = new Set();
+const EMPTY_MAP: ReadonlyMap<string, string> = new Map();
+
+/** True when the file declares a field, parameter or local whose type is Dictionary. */
+function declaresDictionary(nodes: readonly Node[]): boolean {
+  const isDict = (t: string | null): boolean => t !== null && (t === 'Dictionary' || t.endsWith('.Dictionary'));
+  const walk = (list: readonly Node[]): boolean => {
+    for (const n of list) {
+      switch (n.kind) {
+        case 'package':
+          if (walk(n.body)) return true;
+          break;
+        case 'class':
+          if (walk(n.body.nodes)) return true;
+          break;
+        case 'field':
+          if (n.decl.declarators.some((d) => isDict(d.typeText))) return true;
+          break;
+        case 'method':
+        case 'accessor':
+          if (n.params.some((p) => isDict(p.typeText)) || walk(n.body.nodes)) return true;
+          break;
+        case 'statement':
+          if (n.decl !== null && n.decl.declarators.some((d) => isDict(d.typeText))) return true;
+          if ((n.body !== null && walk(n.body.nodes)) || (n.elseBody !== null && walk(n.elseBody.nodes))) return true;
+          break;
+        default:
+          break;
+      }
+    }
+    return false;
+  };
+  return walk(nodes);
+}
 
 function mapName(name: string): string {
   switch (name) {
@@ -363,6 +400,8 @@ interface ExprEnv {
   bindingOf(q: QualifiedName): string | null;
   targetOfBinding: ReadonlyMap<string, QualifiedName>;
   cut: ReadonlySet<QualifiedName>;
+  /** The file declares something of type Dictionary: undecided index sites are then named (Requirement 13.6). */
+  usesDictionary: boolean;
 }
 
 /** The registry read of a cut class; parenthesised so `new` and member access keep their meaning. */
@@ -484,6 +523,7 @@ class ExprRewriter {
     private readonly env: ExprEnv,
     private readonly locals: ReadonlySet<string>,
     private readonly member: MemberContext | null,
+    private readonly localTypes: ReadonlyMap<string, string> = EMPTY_MAP,
   ) {
     this.opts = env.options;
   }
@@ -547,6 +587,8 @@ class ExprRewriter {
     const cutRef = this.classValue(i);
     if (cutRef !== null) return cutRef;
     if (t.text === 'this') this.noteExplicitThis(i);
+    const dict = this.dictionaryIndex(i, hi);
+    if (dict !== null) return dict;
     switch (t.text) {
       case 'int':
       case 'uint':
@@ -561,6 +603,9 @@ class ExprRewriter {
         return this.raw(i);
       case 'delete':
         this.checkDelete(i);
+        return this.dictionaryDelete(i, hi) ?? this.raw(i);
+      case 'in':
+        if (i > 0) return this.dictionaryIn(i, lo, hi);
         return this.raw(i);
       default:
         break;
@@ -727,6 +772,134 @@ class ExprRewriter {
     return { text, next: close + 1 };
   }
 
+  // -- Dictionary index syntax (as3-coverage D10, Requirement 13.2, 13.6) --------------------------
+
+  /**
+   * The receiver that starts at token `i`: `this.name` or a bare name that is a parameter, a local or a field.
+   * `kind` is `dict` when its declared type is Dictionary, `unknown` when it has no annotation or is `*` or
+   * `Object` (a Dictionary may sit behind it), `other` for any other type. Null when it is none of these.
+   * `text` resolves the written name (implicit `this`, inherited statics) and records the imports it needs.
+   */
+  private receiver(i: number): { kind: 'dict' | 'unknown' | 'other'; name: string; next: number; text: () => string } | null {
+    const t = this.toks[i];
+    if (t === undefined || t.kind !== 'id') return null;
+    const classify = (declared: string | null): 'dict' | 'unknown' | 'other' | null => {
+      if (declared === null) return null;
+      if (declared === 'Dictionary' || declared.endsWith('.Dictionary')) return 'dict';
+      return declared === '' || declared === '*' || declared === 'Object' ? 'unknown' : 'other';
+    };
+    const member = this.member;
+    if (t.text === 'this') {
+      const nameTok = this.toks[i + 2];
+      if (member === null || member.isStatic || !this.isP(i + 1, '.') || nameTok === undefined || nameTok.kind !== 'id') return null;
+      const kind = classify(instanceFieldType(this.opts.tables, selfKey(this.opts.self, member.className), nameTok.text));
+      return kind === null ? null : { kind, name: nameTok.text, next: i + 3, text: () => `this.${nameTok.text}` };
+    }
+    if (!isReference(this.toks, i)) return null;
+    if (this.locals.has(t.text)) {
+      const kind = classify(this.localTypes.get(t.text) ?? '');
+      return kind === null ? null : { kind, name: t.text, next: i + 1, text: () => t.text };
+    }
+    if (member === null || this.env.classNames.has(t.text)) return null;
+    const self = selfKey(this.opts.self, member.className);
+    const declared = member.isStatic
+      ? staticFieldType(this.opts.tables, self, t.text)
+      : (instanceFieldType(this.opts.tables, self, t.text) ?? staticFieldType(this.opts.tables, self, t.text));
+    const kind = classify(declared);
+    return kind === null ? null : { kind, name: t.text, next: i + 1, text: () => this.resolveHead(i) };
+  }
+
+  private undecided(name: string, line: number, form: string): void {
+    this.diags.push({
+      kind: 'loose-type',
+      line,
+      message: `Dictionary index: "${name}" is not known to be a Dictionary, so ${form} is left as index syntax`,
+    });
+  }
+
+  /** `R[k]`, `R[k] = v` and `R[k] op= v` on a receiver typed Dictionary. Null when the tokens are not that. */
+  private dictionaryIndex(i: number, hi: number): Parsed | null {
+    const r = this.receiver(i);
+    if (r === null || !this.isP(r.next, '[') || r.kind === 'other') return null;
+    if (r.kind === 'unknown') {
+      if (this.env.usesDictionary) this.undecided(r.name, this.toks[i].line, `"${r.name}[...]"`);
+      return null;
+    }
+    const open = r.next;
+    const close = this.closeOf(open, hi);
+    if (close === open + 1) throw new ExprError('Dictionary index without a key');
+    const recv = r.text();
+    const key = this.range(open + 1, close);
+    const after = this.toks[close + 1];
+    if (after !== undefined && after.kind === 'punct' && (after.text === '++' || after.text === '--')) {
+      throw new ExprError(`"${after.text}" on a Dictionary index cannot be translated`);
+    }
+    if (after !== undefined && after.kind === 'punct' && ASSIGN_OPS.has(after.text)) {
+      const end = this.assignmentEnd(close + 2, hi);
+      if (end === close + 2) throw new ExprError('Dictionary index assignment without a value');
+      const value = this.range(close + 2, end);
+      if (after.text === '=') return { text: `${recv}.set(${key}, ${value})`, next: end };
+      if (!this.simpleKey(open + 1, close)) {
+        throw new ExprError(`"${after.text}" on a Dictionary index with a computed key cannot be translated`);
+      }
+      const op = after.text.slice(0, -1);
+      return { text: `${recv}.set(${key}, ${recv}.get(${key}) ${op} (${value}))`, next: end };
+    }
+    return { text: `${recv}.get(${key})`, next: close + 1 };
+  }
+
+  /** `delete R[k]` on a receiver typed Dictionary becomes `R.delete(k)`; null leaves the JS `delete`. */
+  private dictionaryDelete(i: number, hi: number): Parsed | null {
+    const r = this.receiver(i + 1);
+    if (r === null || r.kind !== 'dict' || !this.isP(r.next, '[')) return null;
+    const close = this.closeOf(r.next, hi);
+    if (close === r.next + 1 || this.isP(close + 1, '.') || this.isP(close + 1, '[')) return null;
+    return { text: `${r.text()}.delete(${this.range(r.next + 1, close)})`, next: close + 1 };
+  }
+
+  /** `k in R` on a receiver typed Dictionary becomes `R.has(k)`. */
+  private dictionaryIn(i: number, lo: number, hi: number): Parsed {
+    const r = this.receiver(i + 1);
+    if (r === null || r.kind === 'other' || this.isP(r.next, '.') || this.isP(r.next, '[') || this.isP(r.next, '(')) return this.raw(i);
+    if (r.kind === 'unknown') {
+      if (this.env.usesDictionary) this.undecided(r.name, this.toks[i].line, `"in ${r.name}"`);
+      return this.raw(i);
+    }
+    const from = this.operandStart(i, lo);
+    if (from >= i || r.next > hi) throw new ExprError('"in" without an operand');
+    return { text: '', next: r.next, wrap: { from, before: `${r.text()}.has(`, after: ')' } };
+  }
+
+  /** True when the key tokens `[lo, hi)` are names, literals and member access only (no call, no side effect). */
+  private simpleKey(lo: number, hi: number): boolean {
+    for (let q = lo; q < hi; q++) {
+      const t = this.toks[q];
+      if (t.kind === 'punct' && t.text !== '.') return false;
+    }
+    return true;
+  }
+
+  /** End of the assignment value that starts at `from`: before a depth-0 `,`, an unmatched `?:` colon or a closing bracket. */
+  private assignmentEnd(from: number, hi: number): number {
+    let depth = 0;
+    let pending = 0;
+    for (let q = from; q < hi; q++) {
+      const t = this.toks[q];
+      if (t.kind !== 'punct') continue;
+      if (t.text === '(' || t.text === '[' || t.text === '{') depth++;
+      else if (t.text === ')' || t.text === ']' || t.text === '}') {
+        if (depth === 0) return q;
+        depth--;
+      } else if (depth === 0) {
+        if (t.text === '?') pending++;
+        else if (t.text === ':') {
+          if (pending === 0) return q;
+          pending--;
+        } else if (t.text === ',' || t.text === ';') return q;
+      }
+    }
+    return hi;
+  }
   /** `delete` is kept as a JavaScript `delete` of a property; `delete x` of a plain name is not translatable. */
   private checkDelete(i: number): void {
     const operand = this.toks[i + 1];
