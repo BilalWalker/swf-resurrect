@@ -64,10 +64,10 @@ export class DisplayObject extends EventDispatcher {
       p._deliver(e);
     }
   }
-  /** True when the parent chain (this object included) ends at a root marked by the Player. */
+  /** True when the parent chain (this object included) reaches the Stage_Object or a root marked by the Player. */
   _onStage(): boolean {
     for (let p: DisplayObject | ParentNode | null = this; p !== null; p = p._parent) {
-      if (!isStage(p) && p._isStageRoot) return true;
+      if (isStage(p) || p._isStageRoot) return true;
     }
     return false;
   }

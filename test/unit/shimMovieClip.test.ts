@@ -303,7 +303,7 @@ describe('construction context', () => {
 describe('shim public surface', () => {
   it('does not export the internal API', () => {
     expect(Object.keys(publicShim).sort()).toEqual(
-      ['ArgumentError', 'DisplayObject', 'DisplayObjectContainer', 'Event', 'EventDispatcher', 'IllegalOperationError', 'Keyboard', 'KeyboardEvent', 'MouseEvent', 'MovieClip', 'Shape', 'Sprite', 'Stage', 'declareImplements', 'defineInterface', 'getDefinitionByName', 'getQualifiedClassName', 'getTimer', 'registerDefinitions', 'setTraceSink', 'trace'],
+      ['ArgumentError', 'DisplayObject', 'DisplayObjectContainer', 'Event', 'EventDispatcher', 'IllegalOperationError', 'Keyboard', 'KeyboardEvent', 'MouseEvent', 'MovieClip', 'Shape', 'Sprite', 'Stage', 'StageScaleMode', 'declareImplements', 'defineInterface', 'getDefinitionByName', 'getQualifiedClassName', 'getTimer', 'registerDefinitions', 'setTraceSink', 'trace'],
     );
   });
 });

@@ -24,7 +24,7 @@ import {
 import { setTimeSource } from '../shim/utils';
 import { MovieClip } from '../shim/MovieClip';
 import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
-import { isStage, Stage } from '../shim/Stage';
+import { isStage, Stage, type ParentNode } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
 import { computeClipLayout } from './clipLayout';
@@ -131,6 +131,8 @@ export class Player {
     },
     runGotoCycle: () => player.runGotoCycle(),
   }))(this);
+  /** Backend container of the Stage_Object: holds the root node, then the nodes of the Stage children. */
+  readonly stageNode!: NodeHandle;
   private lastNow: number;
   private accumulator = 0;
 
@@ -158,6 +160,7 @@ export class Player {
         },
         constructFrameOne: (mc) => this.constructFrameOne(mc),
       };
+      this.stage.frameRate = options.scene.stage.frameRate;
       this.lastNow = this.clock.now();
       setTimeSource(() => this.clock.now());
 
@@ -170,6 +173,7 @@ export class Player {
       // The root is named before frame 1 builds its children or runs any script (Requirement 8.3).
       this.root = this.createClip(this.scene.rootSymbolId, rootSymbol, 'root1');
       this.initialBuild();
+      this.stageNode = this.backend.createContainer();
       this.syncAll();
     } finally {
       this.busyCount--;
@@ -213,7 +217,7 @@ export class Player {
     this.scripts.drain();
   }
 
-  /** Backend node of the root clip; the adapter adds it to the stage. */
+  /** Backend node of the root clip alone, for the timeline-only page and tests. The adapter adds stageNode. */
   get rootNode(): NodeHandle {
     return this.nodes.nodeOf(this.root);
   }
@@ -435,8 +439,8 @@ export class Player {
    * Makes the backend children of `parent` match `parent._children`: creates nodes for
    * children added by script, removes nodes of children removed by script, fixes order.
    */
-  private reconcile(parent: DisplayObjectContainer): void {
-    const pNode = this.nodes.nodeOf(parent);
+  private reconcile(parent: ParentNode): void {
+    const pNode = isStage(parent) ? this.stageNode : this.nodes.nodeOf(parent);
     if (pNode === undefined) return;
     const want = parent._children;
     const plan = this.planClipGroups(want);
@@ -472,7 +476,7 @@ export class Player {
   /** The entry last given to each timeline child (`ClipHooks.entryUpdated`); script-added children have none. */
   private readonly entries = new WeakMap<DisplayObject, DisplayListEntry>();
   /** Parents whose children are laid out in clip groups; absent for a parent with no mask placement. */
-  private readonly layouts = new WeakMap<DisplayObject, GroupedLayout>();
+  private readonly layouts = new WeakMap<ParentNode, GroupedLayout>();
   /** The node that holds a child's node when that is a clip group instead of the parent's node. */
   private readonly holders = new WeakMap<DisplayObject, NodeHandle>();
   /** Mask placements: not hit targets (a mask layer is not one in Flash). */
@@ -509,7 +513,7 @@ export class Player {
    * Rebuilt whole when the children or the grouping change; the mask nodes keep following their frame matrix on their own.
    */
   private reconcileGrouped(
-    parent: DisplayObjectContainer,
+    parent: ParentNode,
     pNode: NodeHandle,
     want: readonly DisplayObject[],
     plan: ClipPlan,
@@ -563,7 +567,7 @@ export class Player {
   }
 
   /** Takes the children out of their clip groups, removes the groups and returns the parent to a flat child list. */
-  private dissolveGroups(parent: DisplayObjectContainer, pNode: NodeHandle, layout: GroupedLayout): void {
+  private dissolveGroups(parent: ParentNode, pNode: NodeHandle, layout: GroupedLayout): void {
     for (const c of layout.children) {
       const n = this.nodes.nodeOf(c);
       const holder = this.holders.get(c);
@@ -595,17 +599,17 @@ export class Player {
 
   /** Reconciles node lists for the whole tree, then pushes script-changed properties. */
   private syncAll(): void {
-    const walk = (o: DisplayObject): void => {
+    const walk = (o: DisplayObject | Stage): void => {
       const kids = (o as Partial<DisplayObjectContainer>)._children;
       if (kids === undefined) return;
-      this.reconcile(o as DisplayObjectContainer);
+      this.reconcile(o as ParentNode);
       for (const k of [...kids]) walk(k);
     };
-    walk(this.root);
-    this.nodes.syncTree(this.backend, this.root);
+    walk(this.stage);
+    for (const top of this.stage._children) this.nodes.syncTree(this.backend, top);
   }
 
-  private readonly attachedOrder = new WeakMap<DisplayObject, DisplayObject[]>();
+  private readonly attachedOrder = new WeakMap<ParentNode, DisplayObject[]>();
 
   /** Destroys the child's node; the backend releases the subtree below it with it. */
   private detach(parent: DisplayObjectContainer, child: DisplayObject): void {

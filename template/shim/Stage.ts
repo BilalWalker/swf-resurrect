@@ -1,33 +1,71 @@
-import { EventDispatcher } from './events';
+import { addChildTo, getChildAtOf, getChildByNameOf, removeChildFrom } from './containerOps';
 import type { DisplayObject } from './DisplayObject';
+import { ArgumentError, IllegalOperationError } from './errors';
+import { EventDispatcher } from './events';
 import { classNameOf, registerClassName } from './classNames';
+import { namedLimit } from './errorSink';
+import { getPointerPosition } from './pointerState';
 import type { DisplayObjectContainer } from './Sprite';
-
+import { StageScaleMode } from './StageScaleMode';
 /** What a display object's parent can be: a container, or the Stage_Object for the root. */
 export type ParentNode = DisplayObjectContainer | Stage;
-
 /**
- * The Stage_Object: the parent of the root clip, not an alias of it. It carries only the
- * dispatcher members; it has no backend node and is not a DisplayObject.
+ * The Stage_Object: the top of the display tree. It is not a DisplayObject (no transform, no name, no backend node) but
+ * it holds children: `_children[0]` is the root clip, and children added by script follow it in draw order. The
+ * container methods are the shared functions of containerOps.ts.
  */
 export class Stage extends EventDispatcher {
   readonly _isStage = true;
   readonly _parent: null = null;
   _children: DisplayObject[] = [];
-  /**
-   * The object that receives key events; null sends them to the Stage. Minimal field added by as3-coverage
-   * task 8.2 for `Player.dispatchKey`; task 9.2 owns the other Stage members.
-   */
+  /** The object that receives key events; null sends them to the Stage. Any object is accepted, the Stage included. */
   focus: object | null = null;
-
+  /** Frames per second of the movie. The Player sets it from Scene_JSON `stage.frameRate`. */
+  frameRate = 0;
+  private _scaleMode: string = StageScaleMode.SHOW_ALL;
+  /** Stored only; it has no effect on drawing (Named_Limit `stage-scaleMode`). */
+  get scaleMode(): string {
+    return this._scaleMode;
+  }
+  set scaleMode(v: string) {
+    this._scaleMode = v;
+    namedLimit('stage-scaleMode', 'Stage.scaleMode is stored and has no effect on drawing');
+  }
+  /** Pointer x in stage coordinates: the last position the Player received. */
+  get mouseX(): number {
+    return getPointerPosition().x;
+  }
+  /** Pointer y in stage coordinates. */
+  get mouseY(): number {
+    return getPointerPosition().y;
+  }
+  get numChildren(): number {
+    return this._children.length;
+  }
+  /** Appends above the other children. The root clip cannot be added again: it stays at index 0. */
+  addChild<T extends DisplayObject>(child: T): T {
+    if (child === this._children[0]) throw new ArgumentError('addChild: the root clip is already the first child of the Stage');
+    return addChildTo(this, child);
+  }
+  /** A non-child throws `ArgumentError` and leaves the list unchanged. The root clip cannot be removed. */
+  removeChild<T extends DisplayObject>(child: T): T {
+    if (child === this._children[0] && child._parent === this) {
+      throw new IllegalOperationError('removeChild: the root clip cannot be removed from the Stage');
+    }
+    return removeChildFrom(this, child, () => new ArgumentError('removeChild: the object is not a child of the Stage'));
+  }
+  getChildAt(index: number): DisplayObject {
+    return getChildAtOf(this, index);
+  }
+  getChildByName(name: string): DisplayObject | null {
+    return getChildByNameOf(this, name);
+  }
   /** `[object Stage]` from the class-name registration (Requirement 28.1). */
   toString(): string {
     return `[object ${classNameOf(this)}]`;
   }
 }
-
 registerClassName(Stage, 'Stage');
-
 /** True when `o` is a Stage_Object. */
 export function isStage(o: unknown): o is Stage {
   return typeof o === 'object' && o !== null && (o as { _isStage?: unknown })._isStage === true;

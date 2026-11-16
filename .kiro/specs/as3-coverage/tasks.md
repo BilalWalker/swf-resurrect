@@ -176,7 +176,7 @@ Rules that apply to every task:
 
 - [ ] 9. Shim and Runtime: the Stage as a tree and its members (D6)
   - Commit area: `Shim` (Runtime named). Verification V2. Read the design section "Stage as a real tree" (all of it) and Requirements 7 and 8. The Stage stays a non-DisplayObject that delegates to shared container functions in `Sprite.ts`; it does not extend `DisplayObjectContainer`.
-  - [~] 9.1 Add container behaviour to `Stage`
+  - [-] 9.1 Add container behaviour to `Stage`
     - `stage._children[0]` is the root. `addChild`, `removeChild`, `getChildAt`, `getChildByName`, `numChildren` share the container code. `removeChild` of a non-child throws `ArgumentError` and leaves the list unchanged. `announceAdded` and `announceRemoved` treat a parent chain that ends at the Stage as on stage (`_onStage()` is true when the chain reaches a Stage), and dispatch `ADDED`, `ADDED_TO_STAGE`, `REMOVED`, `REMOVED_FROM_STAGE`. A linked-class symbol instantiated by script and added to the Stage binds its named children before its constructor body (reuse `installScriptConstruction`).
     - Tests: `test/unit/stageTree.test.ts` (create). **Property 6: Stage children obey container laws**, in `test/property/stageTree.property.test.ts` (create): for any sequence of `addChild`, `removeChild` and `getChildAt`, the root stays at index 0, a removal of a non-child throws `ArgumentError` and leaves the list unchanged, and the FakeBackend node order equals the child order.
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 7.7**

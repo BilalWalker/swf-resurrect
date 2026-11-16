@@ -5,6 +5,7 @@ export type { Listener } from './events';
 export { DisplayObject } from './DisplayObject';
 export { DisplayObjectContainer, Sprite } from './Sprite';
 export { Stage } from './Stage';
+export { StageScaleMode } from './StageScaleMode';
 export { MovieClip } from './MovieClip';
 export { Shape } from './Shape';
 export { trace, setTraceSink } from './trace';

@@ -51,7 +51,7 @@ async function boot(): Promise<void> {
     classRegistry,
     shapeBounds,
   });
-  app.stage.addChild(player.rootNode as Parameters<typeof app.stage.addChild>[0]);
+  app.stage.addChild(player.stageNode as Parameters<typeof app.stage.addChild>[0]);
 
   // Pointer events cover mouse, touch and pen. Canvas pixels map to stage coordinates; the canvas may be
   // scaled by CSS. touch-action none keeps a touch drag from scrolling the page and cancelling the pointer.

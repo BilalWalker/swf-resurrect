@@ -69,4 +69,8 @@ Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handl
 | `internal.namedLimit`, `internal.takeNamedLimits` | Support only: the one sink for run-time Named_Limits (design "Data Models"). Once per id; the first detail is kept |
 | Named_Limit `useCapture-ignored` | `addEventListener(..., true)`: the capture phase does not exist in the Shim, the listener runs in the target and bubble phases |
 | Named_Limit `useWeakReference-ignored` | `addEventListener(..., false, 0, true)`: the listener is held strongly |
-| `Stage.focus` (`object \| null`, default null; minimal field) | No sample line yet: `Player.dispatchKey` reads it to pick the key target (as3-coverage task 8.2, Requirement 5.3). Task 9.2 adds the other Stage members |
+| `Stage.focus` (`object \| null`, default null; minimal field) | No sample line yet: `Player.dispatchKey` reads it to pick the key target (as3-coverage task 8.2, Requirement 5.3). Any object is accepted, the Stage included |
+| `Stage.addChild`, `removeChild`, `getChildAt`, `getChildByName`, `numChildren` (`_children[0]` is the root clip; `removeChild` of a non-child throws `ArgumentError`; the root can be neither added again nor removed: `ArgumentError`, `IllegalOperationError`) | No sample line yet: Stage children of `spacer` and `entity_game` (as3-coverage task 9.1, Requirement 7). The root rule is the Shim's, not read in Ruffle |
+| `Stage.mouseX`, `Stage.mouseY` (last pointer position), `Stage.frameRate` (set from Scene_JSON; settable, no effect on the Player's timing) | No sample line yet: Requirement 8.1 and 8.2 (task 9.2) |
+| `Stage.scaleMode` (settable, default `showAll`), `StageScaleMode` (`NO_SCALE`, `SHOW_ALL`, `EXACT_FIT`, `NO_BORDER`) | No sample line yet: Requirement 8.3 (task 9.2) |
+| Named_Limit `stage-scaleMode` | `Stage.scaleMode = ...`: the value is stored and has no effect on drawing |

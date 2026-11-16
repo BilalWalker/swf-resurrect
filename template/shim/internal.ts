@@ -170,20 +170,8 @@ export function detachChild(parent: DisplayObjectContainer, child: DisplayObject
 export { classNameOf, registerClassName } from './classNames';
 // The Caught_Error sink lives in errorSink.ts (events.ts needs it and must not import this file).
 export { namedLimit, reportCaughtError, setCaughtErrorSink, takeNamedLimits } from './errorSink';
-let pointerX = 0;
-let pointerY = 0;
-
-/** Publishes the pointer position, in stage coordinates, for `mouseX` / `mouseY`. Called by the Player. */
-export function setPointerPosition(x: number, y: number): void {
-  pointerX = x;
-  pointerY = y;
-}
-
-/** The last published pointer position in stage coordinates; (0, 0) before the first call. */
-export function getPointerPosition(): { x: number; y: number } {
-  return { x: pointerX, y: pointerY };
-}
-
+// The pointer position lives in pointerState.ts (Stage.ts needs it and internal.ts imports Stage.ts).
+export { getPointerPosition, setPointerPosition } from './pointerState';
 /**
  * Maps a stage point into the local space of `obj` through its parent chain (the inverse of
  * p' = T + R * S * local at each level, topmost ancestor first). Returns (0, 0) when any scale on the
