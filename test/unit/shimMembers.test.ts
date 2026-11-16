@@ -12,7 +12,7 @@ const names = (t: ReturnType<typeof extractShimMembers>, cls: string) => t[cls]!
 describe("extractShimMembers on the current Shim", () => {
   const table = extractShimMembers(readShim());
   it("lists the exported classes and their chains", () => {
-    expect(Object.keys(table)).toEqual(["ArgumentError", "DisplayObject", "DisplayObjectContainer", "Event", "EventDispatcher", "IllegalOperationError", "MouseEvent", "MovieClip", "Shape", "Sprite", "Stage"]);
+    expect(Object.keys(table)).toEqual(["ArgumentError", "DisplayObject", "DisplayObjectContainer", "Event", "EventDispatcher", "IllegalOperationError", "Keyboard", "KeyboardEvent", "MouseEvent", "MovieClip", "Shape", "Sprite", "Stage", "StageScaleMode"]);
     expect(table.MovieClip!.extends).toBe("Sprite");
     expect(table.EventDispatcher!.extends).toBeNull();
   });
