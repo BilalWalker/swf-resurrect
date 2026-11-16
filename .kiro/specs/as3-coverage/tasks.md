@@ -300,7 +300,7 @@ Rules that apply to every task:
     - **Validates: Requirements 16.1 to 16.5**
 
   - [x] 16.4 Add `MouseEvent.MOUSE_WHEEL` and `delta`
-    - `MOUSE_WHEEL` is `"mouseWheel"`, `delta` defaults to 0. If the Player does not dispatch the wheel event, record `wheel-not-dispatched` as a Named_Limit; if it does, set `delta` from the browser wheel direction and record which measurement fixed the sign.
+    - `MOUSE_WHEEL` is `"mouseWheel"`, `delta` defaults to 0. If the Player does not dispatch the wheel event, record `mouse-wheel-not-dispatched` as a Named_Limit; if it does, set `delta` from the browser wheel direction and record which measurement fixed the sign.
     - Tests: `test/unit/mouseEventShim.test.ts` (extend).
     - _Requirements: 17.1, 17.2, 17.3_
 
@@ -324,7 +324,7 @@ Rules that apply to every task:
 
 - [ ] 18. Verify: key entries in the Replay and the Ruffle recorder attempt (Requirements 24, 26)
   - Commit area: `Verify`. Verification V1. Read the design section "Input_Script extension". Ruffle's key entry format was read in `tests/input-format/src/format.rs` and `tests/framework/src/runner/automation.rs`: `{"type":"KeyDown","key":{"Char":"a"}}` or `{"type":"KeyDown","key":"ArrowUp"}`; a key is a name, not a code; the injector sends one entry and no repeat.
-  - [~] 18.1 Plan key entries
+  - [-] 18.1 Plan key entries
     - `src/verify/core/replayPlan.ts` classifies `KeyDown` and `KeyUp` and adds `keys: PlannedKey[]` (`tick`, `kind`, `keyCode`, `index`). The pure table `automatedKeyToFlashCode`: `Char(c)` letters and digits to ASCII upper case, `ArrowUp` 38, `ArrowDown` 40, `ArrowLeft` 37, `ArrowRight` 39, `Enter` 13, `Escape` 27, `Space` 32; anything else is `unsupported-input` as today. `planToEntries(plan)` serialises canonical entries (lower-case `Char`). Existing mouse planning and `clickgoto` ticks are unchanged.
     - Tests: `test/unit/replayPlan.test.ts` (extend): the real `clickgoto` plan is unchanged (21 groups, 32 ticks, no problems); key entries; an unsupported entry type. **Property 24: Input_Script keys round trip and keep order**, in `test/property/replayKeys.property.test.ts` (create), generator in `test/property/gen/genReferenceInput.ts` (extend): parse, plan and serialise gives an equal entry list, each key entry takes the tick of its group, and order inside a group is preserved.
     - **Validates: Requirements 24.1, 24.6, 24.7, 24.8**
@@ -387,7 +387,7 @@ Rules that apply to every task:
     - _Requirements: 27.1, 27.4, 27.5, 27.6, 27.8_
 
   - [~] 21.2 Record the Named_Limits in the reports
-    - Named_Limits raised while running (`drawPath-command`, `lineStyle-args`, `filter-not-drawn:*`, `wheel-not-dispatched`, `useCapture-ignored`, `scaleMode-no-effect`, `device-font-metrics`) flow through the sink into the Fidelity_Report `behaviour.namedLimits`; limits known without running come from the scene and translation facts. A sample below 100 lists the limits that explain it.
+    - Named_Limits raised while running (`drawPath-command`, `lineStyle-args`, `filter-not-drawn:*`, `mouse-wheel-not-dispatched`, `useCapture-ignored`, `scaleMode-no-effect`, `device-font-metrics`) flow through the sink into the Fidelity_Report `behaviour.namedLimits`; limits known without running come from the scene and translation facts. A sample below 100 lists the limits that explain it.
     - Tests: `test/unit/report.test.ts` (extend) with a sink fixture; `test/e2e/entityReport.e2e.test.ts` (create): the `entity_game` report lists what the Play_Test run raised.
     - _Requirements: 33.1, 33.2_
 
