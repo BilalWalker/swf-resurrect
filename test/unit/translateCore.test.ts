@@ -104,7 +104,7 @@ describe('translateCore: R3 (declare and bind accepted by tooling)', () => {
 
   it('MainTimeline output uses declare and passes the syntax check', () => {
     const out = t(fixture('MainTimeline'));
-    expect(out).toContain('public declare l_button: LeftButton;');
+    expect(out).toContain('public declare l_button: LeftButton | null;');
     expect(tsSyntaxCheck(out)).toEqual([]);
   });
 

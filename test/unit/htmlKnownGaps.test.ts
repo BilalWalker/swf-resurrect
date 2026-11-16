@@ -17,6 +17,14 @@ function baseReport(behaviour: FidelityReport['behaviour']): FidelityReport {
 
 const NONE = '<h3>Known behaviour gaps</h3>\n<p>none</p>';
 
+describe('html type check options (Requirement 3.8)', () => {
+  it('prints that the type check runs without strictNullChecks', () => {
+    const r = baseReport({ status: 'not-compared', reason: 'no-reference-trace', knownBehaviourGaps: [] } as never);
+    (r.translation as unknown as Record<string, unknown>).typeCheckOptions = { strictNullChecks: false };
+    expect(renderFidelityHtml(r)).toContain('without strictNullChecks');
+  });
+});
+
 describe('html known behaviour gaps', () => {
   it('prints none for an empty list when not compared', () => {
     const html = renderFidelityHtml(

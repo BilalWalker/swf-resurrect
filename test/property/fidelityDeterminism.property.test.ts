@@ -17,4 +17,16 @@ describe('Fidelity_Report determinism', () => {
       fcConfig,
     );
   });
+
+  // Requirement 3.8: the Fidelity_Report states that the type gate runs without strictNullChecks.
+  it('always states the strictNullChecks option of the type check', () => {
+    fc.assert(
+      fc.property(genReportInputs, (inputs) => {
+        const report = buildFidelityReport(inputs);
+        expect(report.translation.typeCheckOptions).toEqual({ strictNullChecks: false });
+        expect(serialiseFidelityReport(report)).toContain('"strictNullChecks": false');
+      }),
+      fcConfig,
+    );
+  });
 });

@@ -7,7 +7,7 @@ export class EventWatcher extends MovieClip {
     this.setup();
   }
 
-  trace_event(event: Event): void {
+  trace_event(event: Event | null): void {
     trace(this.name + " (frame " + this.currentFrame + "):" + event);
   }
 

@@ -64,26 +64,26 @@ Rules that apply to every task:
     - Test: `test/unit/repoHygiene.test.ts` still passes.
     - _Requirements: 36.8_
 
-- [ ] 3. Translate: generated Shim names and imports for type-position uses (D1)
+- [x] 3. Translate: generated Shim names and imports for type-position uses (D1)
   - Commit area: `Translate` (touches the generator script and the Shim index only through reading them). Verification V1. Read the design Block A table row D1 and `scripts/gen-shim-members.ts`. A Shim file edit is not part of this task, so no `shimMembers.generated.ts` commit is needed unless the generator output changes; if it does, commit the regenerated file with this task.
-  - [-] 3.1 Generate `SHIM_AS3_NAMES` from the exports of `template/shim/index.ts`
+  - [x] 3.1 Generate `SHIM_AS3_NAMES` from the exports of `template/shim/index.ts`
     - Extend `scripts/gen-shim-members.ts` to write the name list into `src/translate/shimMembers.generated.ts` (or the file `shimNames.ts` reads) and make `src/translate/shimNames.ts` read it, so `Stage` and every exported Shim class are importable (Requirement 2.3). Run `npm run gen:shim-members` and stage the regenerated file.
     - Test: `test/unit/shimNames.test.ts` (extend): every export of `template/shim/index.ts` is in `SHIM_AS3_NAMES`; `Stage` is present.
     - _Requirements: 2.3_
 
-  - [~] 3.2 Read type annotations in the import scan
+  - [x] 3.2 Read type annotations in the import scan
     - In `src/translate/importPlan.ts` count a Shim class named only in a type annotation (variable, field, parameter, return type, `as`/`is` type) as used, and emit one import per name when it is used as a type and in an expression.
     - Test: `test/unit/importPlan.test.ts` (extend) with Fixture_Classes: `var s:Stage` only, `var s:Stage` plus `Stage` expression, a parameter type only, a return type only. Regenerate the goldens that change and record each regenerated golden and why in the commit body.
     - _Requirements: 2.1, 2.2, 2.5_
 
-  - [~] 3.3 Write property test for type-position imports
+  - [x] 3.3 Write property test for type-position imports
     - **Property 1: Shim classes in type positions are imported once**
     - In `test/property/shimTypeImport.property.test.ts` (create), generator in `test/property/gen/genTypeUse.ts`: for any Fixture_Class that names a Shim class in a type position, an expression, or both, the emitted TypeScript has exactly one import of that name.
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4**
 
 - [ ] 4. Translate: nullable reference types with `strictNullChecks` off (D2)
   - Commit area: `Translate` (also touches `Emit` for the emitted `tsconfig.json`). Verification V1. Read the design D2 row and Requirement 3. Commit body records every regenerated golden and why (Requirement 3.6).
-  - [~] 4.1 Emit `T | null` for every reference type
+  - [-] 4.1 Emit `T | null` for every reference type
     - In `src/translate/types.ts` and `emitTs.ts` emit `T | null` for classes, interfaces, `Object`, `Array`, `Function` and `String` in variable, field, parameter and return positions; never for `int`, `uint`, `Number` or `Boolean`. The annotation text stays `T | null` whatever the compiler flag (Requirement 3.9).
     - Test: `test/unit/emitTs.test.ts` (extend) with Fixture_Classes covering the four positions and the primitives.
     - _Requirements: 3.1, 3.2, 3.9, 3.7_

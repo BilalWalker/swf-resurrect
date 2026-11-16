@@ -71,8 +71,8 @@ describe('rewrite: expressions', () => {
 
   it('maps Vector.<T> including nested >> and new Vector', () => {
     const { out } = run(fn('      var a:Vector.<Vector.<int>> = new Vector.<Vector.<int>>();\n      var b:Vector.<String>;'));
-    expect(out.text).toContain('var a: number[][] = new Array<number[]>();');
-    expect(out.text).toContain('var b: string[];');
+    expect(out.text).toContain('var a: number[][] | null = new Array<number[]>();');
+    expect(out.text).toContain('var b: string[] | null;');
     expect(tsSyntaxCheck(out.text)).toEqual([]);
   });
 
@@ -105,8 +105,8 @@ describe('rewrite: declarations', () => {
     expect(out.text).toContain('public n: number = 0;');
     expect(out.text).toContain('public u: number = NaN;');
     expect(out.text).toContain('b: boolean = false;');
-    expect(out.text).toContain('public declare c: Foo;');
-    expect(out.text).toContain('public static s: Foo;');
+    expect(out.text).toContain('public declare c: Foo | null;');
+    expect(out.text).toContain('public static s: Foo | null;');
     expect(out.text).toContain('readonly k: number = 3;');
   });
 
@@ -150,7 +150,7 @@ describe('rewrite: clickgoto fixtures', () => {
     const { out } = run(fixture('LeftButton'));
     expect(out.text.startsWith("import { Event, MouseEvent, trace } from '../shim';\nimport { EventWatcher } from './EventWatcher';\n")).toBe(true);
     expect(out.text).toContain('this.addFrameScript(0,this.frame1,1,this.frame2);');
-    expect(out.text).toContain('clicked(event: Event): void {');
+    expect(out.text).toContain('clicked(event: Event | null): void {');
     expect(out.text).toContain('(this.parent as any).r_button.gotoAndStop(1);');
     expect(out.diagnostics.map((d) => d.kind)).toEqual(['loose-type']);
   });
@@ -160,9 +160,9 @@ describe('rewrite: clickgoto fixtures', () => {
     expect(out.text).toContain(
       "import { DisplayObject, DisplayObjectContainer, Event, Shape, trace } from '../shim';\nimport { EventWatcher } from './EventWatcher';\nimport { LeftButton } from './LeftButton';\nimport { RightButton } from './RightButton';\n",
     );
-    expect(out.text).toContain('public declare l_button: LeftButton;');
+    expect(out.text).toContain('public declare l_button: LeftButton | null;');
     expect(out.text).toContain('invocation: any = 0;');
     expect(out.text).toContain('from instanceof DisplayObjectContainer');
-    expect(out.text).toContain('inspect(from: DisplayObject): void {');
+    expect(out.text).toContain('inspect(from: DisplayObject | null): void {');
   });
 });

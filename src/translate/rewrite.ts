@@ -412,7 +412,19 @@ function rewriteType(slice: TokenSlice | null, ctx: RewriteContext, chain: Chain
   if (parsed === null || parsed.next !== (toks as Token[]).length) {
     return { text: '', unsupported: 'unsupported type annotation' };
   }
-  return { text: parsed.text };
+  return { text: admitNull(parsed.text) };
+}
+
+/** TypeScript text that already admits `null`, or that must not (Requirement 3.2): left as written. */
+const NO_NULL_SUFFIX: ReadonlySet<string> = new Set(['number', 'boolean', 'void', 'any', 'never']);
+
+/**
+ * `T | null` for every AS3 reference type (Requirement 3.1, 3.9): classes, interfaces, `String`, `Array`,
+ * `Vector`, `Function`. `int`, `uint`, `Number` and `Boolean` (`number`, `boolean`) and `void` stay as they
+ * are; `any` (`Object`, `*`) already admits null. The text is the same whatever `strictNullChecks` is.
+ */
+export function admitNull(text: string): string {
+  return NO_NULL_SUFFIX.has(text) ? text : `${text} | null`;
 }
 
 // ---------------------------------------------------------------------------

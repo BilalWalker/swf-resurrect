@@ -41,9 +41,16 @@ export interface TranslationProblem {
   column?: number;
 }
 
+/** The gate runs without strictNullChecks; every other strict flag is on. */
+export interface TypeCheckOptionsNote {
+  strictNullChecks: false;
+}
+
 export interface TranslationReport {
   formatVersion: 1;
   typeCheck: 'ran' | 'skipped';
+  /** Options the gate ran with (Requirement 3.8, design D2). strictNullChecks is always false: AS3 reference types are nullable. */
+  typeCheckOptions: TypeCheckOptionsNote;
   classes: ClassReportEntry[]; // sorted by className
   omittedClasses: ClassOmission[]; // sorted by className
   otherErrors: GateError[]; // errors in non-class files
@@ -154,6 +161,7 @@ export function buildReport(
   return {
     formatVersion: 1,
     typeCheck: gate === null ? 'skipped' : 'ran',
+    typeCheckOptions: { strictNullChecks: false },
     classes: entries,
     omittedClasses: omissions,
     otherErrors,

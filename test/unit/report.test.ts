@@ -16,6 +16,16 @@ const loose: Diagnostic = { kind: 'loose-type', line: 3, message: 'declaration h
 const unsup: Diagnostic = { kind: 'unsupported-construct', line: 7, message: "statement kind 'try' is not supported" };
 const err = (file: string, line: number): GateError => gateError({ file, line });
 
+describe('type check options (Requirement 3.8)', () => {
+  it('the Translation_Report states that the gate runs without strictNullChecks', () => {
+    for (const gate of [null, { errors: [] }]) {
+      const r = buildReport([], gate);
+      expect(r.typeCheckOptions).toEqual({ strictNullChecks: false });
+      expect(serialiseReport(r)).toContain('\"strictNullChecks\": false');
+    }
+  });
+});
+
 describe('classStatus', () => {
   it('follows the truth table', () => {
     expect(classStatus([], 0)).toBe('clean');

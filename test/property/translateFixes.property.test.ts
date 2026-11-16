@@ -21,11 +21,11 @@ function run(source: string, known: readonly string[]) {
 function annotations(text: string): string[] {
   const grab = (re: RegExp): string => re.exec(text)?.[1] ?? "<missing>";
   return [
-    grab(/fld: ([\w.]+)/),
-    grab(/\(arg: ([\w.]+)\)/),
-    grab(/\): ([\w.]+) \{/),
-    grab(/loc: ([\w.]+) =/),
-    grab(/vec: ([\w.]+)\[\]/),
+    grab(/fld: ([\w.]+) \| null/),
+    grab(/\(arg: ([\w.]+) \| null\)/),
+    grab(/\): ([\w.]+) \| null \{/),
+    grab(/loc: ([\w.]+) \| null =/),
+    grab(/vec: ([\w.]+)\[\] \| null/),
   ];
 }
 

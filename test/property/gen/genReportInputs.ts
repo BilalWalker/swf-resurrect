@@ -168,6 +168,7 @@ const genTranslation: fc.Arbitrary<TranslationReport> = fc
   .map((r) => ({
     formatVersion: 1 as const,
     typeCheck: r.typeCheck,
+    typeCheckOptions: { strictNullChecks: false as const },
     classes: r.classes.map((c) => ({ ...c, diagnostics: [], typeErrors: [] })),
     omittedClasses: [],
     otherErrors: [],

@@ -183,7 +183,9 @@ export function typeCheckProject(input: GateInput): GateResult {
       converted.errors.map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n')).join('; '),
     );
   }
-  const options: ts.CompilerOptions = { ...converted.options, noEmit: true };
+  // AS3 reference types are nullable (Requirement 3.8, design D2): the gate runs without strictNullChecks and
+  // keeps every other strict flag. Set here as well as in the tsconfig so a project cannot switch it back on.
+  const options: ts.CompilerOptions = { ...converted.options, noEmit: true, strictNullChecks: false };
 
   // Roots: .ts files under the include directories.
   const includeDirs = (json.include ?? []).map((d) => toPosix(d).replace(/\/+$/, ''));

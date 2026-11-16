@@ -12,7 +12,7 @@ export class RightButton extends EventWatcher {
     this.stop();
   }
 
-  public clicked(event: Event): void {
+  public clicked(event: Event | null): void {
     trace("///(RightButton clicked...)");
     trace("///this.gotoAndPlay(1);");
     this.gotoAndPlay(1);

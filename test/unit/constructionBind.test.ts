@@ -168,7 +168,7 @@ describe('Construction_Bind: the declare pin', () => {
 
   it('the translator keeps declare for an uninitialised class-typed field (clickgoto golden)', () => {
     const golden = readFileSync('test/fixtures/clickgoto/translated/MainTimeline.ts.txt', 'utf8');
-    expect(golden).toMatch(/public declare l_button: LeftButton;/);
+    expect(golden).toMatch(/public declare l_button: LeftButton \| null;/);
   });
 });
 

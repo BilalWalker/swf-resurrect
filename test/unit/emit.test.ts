@@ -133,6 +133,14 @@ describe('planEmit', () => {
     expect(report.otherErrors).toEqual([]);
   });
 
+  it('3.8 the emitted tsconfig turns strictNullChecks off and keeps strict on', () => {
+    // Emit copies template/tsconfig.json into every project.
+    const text = readFileSync(resolve(__dirname, '../../template/tsconfig.json'), 'utf8');
+    const opts = (JSON.parse(text) as { compilerOptions: Record<string, unknown> }).compilerOptions;
+    expect(opts.strictNullChecks).toBe(false);
+    expect(opts.strict).toBe(true);
+  });
+
   it('uses LF line endings only', () => {
     for (const f of planEmit(input, svgs)) expect(f.content).not.toContain('\r');
   });

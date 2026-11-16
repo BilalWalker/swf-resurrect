@@ -4,8 +4,8 @@ import { LeftButton } from './LeftButton';
 import { RightButton } from './RightButton';
 
 export class MainTimeline extends EventWatcher {
-  public declare l_button: LeftButton;
-  public declare r_button: RightButton;
+  public declare l_button: LeftButton | null;
+  public declare r_button: RightButton | null;
   invocation: any = 0;
   destroy_me: any = false;
 
@@ -21,7 +21,7 @@ export class MainTimeline extends EventWatcher {
     this.addEventListener(Event.EXIT_FRAME,this.exit_frame_controller);
   }
 
-  inspect(from: DisplayObject): void {
+  inspect(from: DisplayObject | null): void {
     var child: any = undefined;
     var num_children: any = undefined;
     var i: any = undefined;
@@ -44,7 +44,7 @@ export class MainTimeline extends EventWatcher {
     }
   }
 
-  enter_frame_controller(evt: Event): void {
+  enter_frame_controller(evt: Event | null): void {
     ++this.invocation;
     if (this.invocation == 30) {
       this.destroy_me = true;
@@ -52,7 +52,7 @@ export class MainTimeline extends EventWatcher {
     this.inspect(this);
   }
 
-  exit_frame_controller(evt: Event): void {
+  exit_frame_controller(evt: Event | null): void {
     this.inspect(this);
     if (this.destroy_me) {
       this.destroy();

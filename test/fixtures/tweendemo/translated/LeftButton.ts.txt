@@ -12,7 +12,7 @@ export class LeftButton extends EventWatcher {
     this.stop();
   }
 
-  public clicked(event: Event): void {
+  public clicked(event: Event | null): void {
     trace("///(LeftButton clicked...)");
     trace("///this.gotoAndStop(2);");
     this.gotoAndStop(2);

@@ -142,7 +142,7 @@ export interface FidelityReport {
   };
   behaviour: BehaviourReport;
   problems: Problem[];
-  translation: { typeCheck: 'ran' | 'skipped'; classes: Array<{ className: string; status: ClassStatus; overridden: boolean; omitted: boolean }> };
+  translation: { typeCheck: 'ran' | 'skipped'; typeCheckOptions: { strictNullChecks: false }; classes: Array<{ className: string; status: ClassStatus; overridden: boolean; omitted: boolean }> };
 }
 
 function cmpStr(a: string, b: string): number {
@@ -284,6 +284,7 @@ export function buildFidelityReport(i: FidelityInputs): FidelityReport {
     problems: i.problems.map(cleanProblem).sort(compareProblems),
     translation: {
       typeCheck: i.translation.typeCheck,
+      typeCheckOptions: { strictNullChecks: false },
       classes: i.translation.classes
         .map((c) => ({ className: c.className, status: c.status, overridden: c.overridden, omitted: c.omitted }))
         .sort((a, b) => cmpStr(a.className, b.className)),

@@ -248,6 +248,9 @@ function translationSection(r: FidelityReport): string {
     '<h2 id="translation">Translation</h2>',
     `<p>Type check: ${e(r.translation.typeCheck)}</p>`,
   ];
+  if (r.translation.typeCheckOptions?.strictNullChecks === false) {
+    parts.push('<p>Type check runs without strictNullChecks (AS3 reference types are nullable); every other strict flag is on.</p>');
+  }
   if (r.translation.classes.length === 0) {
     parts.push('<p>No classes.</p>');
   } else {

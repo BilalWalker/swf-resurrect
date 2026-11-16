@@ -154,12 +154,12 @@ describe('AS3 interface declarations (Requirement 27.1, 27.6)', () => {
   it('makes an accessor pair one property, a getter alone readonly, and a default value optional', () => {
     const r = plan(sliderSources, sliderScene);
     const text = r.classes.find((x) => x.className === 'fl.managers.IFocusManager')?.text ?? '';
-    expect(text).toContain('  defaultButton: Button;\n');
+    expect(text).toContain('  defaultButton: Button | null;\n');
     expect(text).toContain('  readonly nextTabIndex: number;\n');
-    expect(text).toContain('  getNextFocusManagerComponent(param1?: boolean): InteractiveObject;\n');
+    expect(text).toContain('  getNextFocusManagerComponent(param1?: boolean): InteractiveObject | null;\n');
     expect(text).toContain("import { Button } from '../controls/Button';");
     const group = r.classes.find((x) => x.className === 'fl.managers.IFocusManagerGroup')?.text ?? '';
-    expect(group).toContain('  groupName: string;\n  selected: boolean;\n');
+    expect(group).toContain('  groupName: string | null;\n  selected: boolean;\n');
   });
 
   it('turns an interface that extends others into extends and token parents', () => {
@@ -362,7 +362,7 @@ describe('implements registration through translate() (Requirement 27.2, 27.3, 2
     const r = translate('package p { public class C { public function f(x:Object):void { var y:I = x as I; } } }', {
       shimNames: SHIM_AS3_NAMES, selfQualified: 'p.C', siblingClasses: new Set(['p.I', 'p.C']) as never, syntaxCheck: tsSyntaxCheck,
     });
-    expect(r.text).toContain('var y: I = x as I;');
+    expect(r.text).toContain('var y: I | null = x as I;');
   });
 });
 // The local copy of slider_component (Requirement 23.6, 27.5); skipped with a reason when Java, FFDec or the copy is absent.
