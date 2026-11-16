@@ -4,6 +4,7 @@ import { canvasToStage } from '../runtime/canvasToStage';
 import { flashKeyCode, preventsDefault } from '../runtime/keyMap';
 import { Player } from '../runtime/player';
 import { KeyboardEvent } from '../shim';
+import { setTextMeasure } from '../shim/textMeasure';
 import { PixiBackend } from '../runtime/pixi/pixiBackend';
 import { classRegistry } from './classes';
 import { parseTimelineOnly, runTimelineOnly } from './timelineOnly';
@@ -15,6 +16,14 @@ async function fetchText(url: string): Promise<string> {
 }
 
 async function boot(): Promise<void> {
+  // TextField.textWidth is measured in the browser (Named_Limit device-font-metrics).
+  const measureContext = document.createElement('canvas').getContext('2d');
+  if (measureContext !== null) {
+    setTextMeasure((text, font) => {
+      measureContext.font = font;
+      return measureContext.measureText(text).width;
+    });
+  }
   const backend = new PixiBackend();
 
   // Req 6.6 and 6.7: on failure an error is shown and no frame is rendered.

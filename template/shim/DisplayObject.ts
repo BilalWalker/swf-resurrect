@@ -2,6 +2,7 @@ import type { Graphics } from './Graphics';
 import { EventDispatcher, type Event } from './events';
 import { classNameOf, getPointerPosition, globalToLocal, registerClassName } from './internal';
 import type { DisplayObjectContainer } from './Sprite';
+import { namedLimit } from './errorSink';
 import { isStage, type ParentNode, type Stage } from './Stage';
 
 export class DisplayObject extends EventDispatcher {
@@ -25,6 +26,16 @@ export class DisplayObject extends EventDispatcher {
   /** The Graphics of a Sprite or Shape, created on first use of graphics; the runtime reads it. */
   _gfx: Graphics | null = null;
   private _alpha = 1;
+  private _filters: object[] = [];
+  /** A copy of the stored list (Requirement 16.1, 16.4). Filters are stored, not drawn. */
+  get filters(): object[] {
+    return this._filters.slice();
+  }
+  set filters(v: object[]) {
+    this._filters = Array.from(v ?? []);
+    // Each filter class is named once; no filter class is drawn yet (Requirement 16.3).
+    for (const f of this._filters) namedLimit(`filter-not-drawn:${classNameOf(f)}`, 'filters are stored and not drawn');
+  }
 
   get alpha(): number {
     return this._alpha;

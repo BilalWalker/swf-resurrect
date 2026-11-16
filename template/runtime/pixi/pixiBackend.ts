@@ -1,5 +1,5 @@
-import { ColorMatrixFilter, Container, FillGradient, FillPattern, Graphics, ImageSource, Matrix, Texture, type FillInput } from 'pixi.js';
-import type { NodeHandle, RenderBackend, ShapeBounds } from '../backend';
+import { ColorMatrixFilter, Container, FillGradient, FillPattern, Graphics, ImageSource, Matrix, Text, Texture, type FillInput } from 'pixi.js';
+import type { NodeHandle, RenderBackend, ShapeBounds, TextDraw } from '../backend';
 import { colourMatrix } from '../colourMatrix';
 import type { GfxDraw } from '../graphicsPlan';
 import type { ColorTransform8 } from '../scene';
@@ -244,6 +244,8 @@ export class PixiBackend implements RenderBackend {
   private readonly state = new WeakMap<Container, NodeState>();
   /** The code-made Graphics of a node; it is child 0 of that node once it exists. */
   private readonly gfx = new WeakMap<Container, Graphics>();
+  /** The Text child of a TextField node. */
+  private readonly texts = new WeakMap<Container, Text>();
   private readonly errorHost: HTMLElement | undefined;
   private readonly caps: DrawnFills;
   private errorElement: HTMLElement | null = null;
@@ -371,6 +373,24 @@ export class PixiBackend implements RenderBackend {
     }
     g.clear();
     if (ops !== null) drawGfx(g, ops);
+  }
+  /** One line, no wrap, 12px Times New Roman, 2 pixels in from the node origin (Flash's gutter). */
+  setText(node: NodeHandle, text: TextDraw | null): void {
+    const c = node as Container;
+    let t = this.texts.get(c);
+    if (text === null) {
+      if (t !== undefined) t.visible = false;
+      return;
+    }
+    if (t === undefined) {
+      t = new Text({ text: '', style: { fontFamily: 'Times New Roman', fontSize: 12, fill: 0 } });
+      t.position.set(2, 2);
+      this.texts.set(c, t);
+      c.addChild(t);
+    }
+    t.visible = true;
+    t.text = text.text;
+    t.style.fill = text.color;
   }
   destroyNode(node: NodeHandle): void {
     // Releases the subtree. The shared GraphicsContext belongs to the template; a code-made one is destroyed here.

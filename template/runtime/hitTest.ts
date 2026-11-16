@@ -87,6 +87,8 @@ export interface TargetNode<S = unknown> {
   /** Read only on containers. */
   readonly mouseEnabled: boolean;
   readonly mouseChildren: boolean;
+  /** An interactive object with no children, such as a TextField: it is its own Hit_Target (Ruffle: it is interactive). */
+  readonly interactiveLeaf?: boolean;
 }
 
 type Pick<N> = { kind: 'hit'; target: N } | { kind: 'propagate' };
@@ -131,12 +133,17 @@ export function resolveHitTarget<N extends TargetNode<S>, S>(hits: readonly N[],
   const pick = (k: N): Pick<N> => {
     const list = kids.get(k) ?? [];
     let propagated = false;
-    for (const c of [...list.filter((n) => n.isContainer), ...list.filter((n) => !n.isContainer)]) {
+    const interactive = (n: N): boolean => n.isContainer || n.interactiveLeaf === true;
+    for (const c of [...list.filter(interactive), ...list.filter((n) => !interactive(n))]) {
       const res: Pick<N> = c.isContainer
         ? pick(c)
-        : k.mouseEnabled
-          ? { kind: 'hit', target: k }
-          : { kind: 'propagate' };
+        : c.interactiveLeaf === true
+          ? c.mouseEnabled
+            ? { kind: 'hit', target: c }
+            : { kind: 'propagate' }
+          : k.mouseEnabled
+            ? { kind: 'hit', target: k }
+            : { kind: 'propagate' };
       if (res.kind === 'hit') return combine(res, k);
       propagated = true;
     }

@@ -1,4 +1,5 @@
-import { DisplayObject } from './DisplayObject';
+import type { DisplayObject } from './DisplayObject';
+import { InteractiveObject } from './InteractiveObject';
 import type { DisplayListEntry } from '../runtime/scene';
 import { addChildTo, announceAdded, announceRemoved, getChildAtOf, getChildByNameOf, removeChildFrom } from './containerOps';
 import { Event } from './events';
@@ -16,10 +17,8 @@ import {
 } from './internal';
 import type { ParentNode } from './Stage';
 
-export class DisplayObjectContainer extends DisplayObject {
+export class DisplayObjectContainer extends InteractiveObject {
   _children: DisplayObject[] = [];
-  /** Stored only here; the Hit_Target rule that honours the two flags is Task 26.2. */
-  mouseEnabled = true;
   mouseChildren = true;
 
   get numChildren(): number {

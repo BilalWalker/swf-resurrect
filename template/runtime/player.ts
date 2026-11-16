@@ -23,9 +23,11 @@ import {
   type ConstructionContext,
 } from '../shim/internal';
 import { setTimeSource } from '../shim/utils';
+import { InteractiveObject } from '../shim/InteractiveObject';
 import { MovieClip } from '../shim/MovieClip';
 import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage, type ParentNode } from '../shim/Stage';
+import { TextField } from '../shim/TextField';
 import { resetBroadcast } from './broadcast';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
@@ -96,7 +98,8 @@ function targetViewOf(o: DisplayObject, cache: Map<unknown, TargetView>): Target
     source: o,
     parent: p === null || isStage(p) ? (p as Stage | null) : targetViewOf(p as DisplayObject, cache),
     isContainer: container !== null,
-    mouseEnabled: container?.mouseEnabled ?? true,
+    interactiveLeaf: o instanceof TextField,
+    mouseEnabled: container?.mouseEnabled ?? (o instanceof InteractiveObject ? o.mouseEnabled : true),
     mouseChildren: container?.mouseChildren ?? true,
   };
   cache.set(o, view);

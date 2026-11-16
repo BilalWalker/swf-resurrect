@@ -13,6 +13,13 @@ export interface ShapeBounds {
   height: number;
 }
 
+/** What a TextField asks the backend to draw. width and height are the text box. */
+export interface TextDraw {
+  text: string;
+  color: number;
+  width: number;
+  height: number;
+}
 /** The only surface the PixiJS adapter implements. */
 export interface RenderBackend {
   /**
@@ -49,6 +56,11 @@ export interface RenderBackend {
    * stroke scales with the node. null clears them. Child indices of addChildAt are unaffected by it.
    */
   setGraphics(node: NodeHandle, ops: readonly GfxDraw[] | null): void;
+  /**
+   * Draws one line of text in the node, in the device font (12px Times New Roman), 2 pixels in from the node origin;
+   * null removes it. It is a child of the node and does not count in addChildAt indices.
+   */
+  setText(node: NodeHandle, text: TextDraw | null): void;
   destroyNode(node: NodeHandle): void;
   /** On-page error text. */
   showError(message: string): void;

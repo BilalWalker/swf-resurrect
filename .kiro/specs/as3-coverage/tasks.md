@@ -282,24 +282,24 @@ Rules that apply to every task:
     - In `test/property/graphicsPlan.property.test.ts` (create): for any sequence of `lineStyle`, `beginFill`, `endFill`, `drawCircle`, `moveTo`, `lineTo`, `drawPath` and `clear`, the draw operations on the FakeBackend equal the plan computed from the issued calls, `drawPath` consumes two values per command and unknown commands are skipped.
     - **Validates: Requirements 14.1, 14.3, 14.9, 14.11**
 
-- [ ] 16. Shim and Runtime: `InteractiveObject`, `TextField`, `filters` and `MouseEvent` additions (D11)
+- [x] 16. Shim and Runtime: `InteractiveObject`, `TextField`, `filters` and `MouseEvent` additions (D11)
   - Commit area: `Shim` (Runtime named). Verification V2. Read the design section "TextField and filters" and Requirements 15, 16 and 17.
-  - [~] 16.1 Add `InteractiveObject` and the minimal `TextField`
+  - [x] 16.1 Add `InteractiveObject` and the minimal `TextField`
     - `InteractiveObject` sits between `DisplayObject` and `DisplayObjectContainer` and takes `mouseEnabled`. `TextField extends InteractiveObject` with `text`, `textColor`, `selectable`, `width`, `height`, `textWidth`; defaults `text` empty, `textColor` 0x000000, `width` 100, `height` 100, `selectable` true. The `width` setter sets the box and never `scaleX`. `textWidth` is computed in the `text` setter with an injected measure function `(text, font) => number`, so it is valid at once. A TextField is a hit target (an interactive leaf) and a pointer event on it bubbles. The Translation_Report names `htmlText`, `autoSize`, `defaultTextFormat` and `multiline` as not provided. Regenerate and stage the member table.
     - Tests: `test/unit/textField.test.ts` (create) with a fixed-width measure. **Property 16: textWidth grows with the text**, in `test/property/textWidth.property.test.ts` (create): for any two strings where one is a prefix of the other, `textWidth` of the longer is at least that of the shorter under the fixed-width function.
     - **Validates: Requirements 15.1 to 15.4, 15.7 to 15.10**
 
-  - [~] 16.2 Draw the text in the runtime
+  - [x] 16.2 Draw the text in the runtime
     - `RenderBackend.setText(node, { text, color, width, height } | null)`; Pixi uses a `Text` child, one line, no wrap, `12px "Times New Roman"`, in `textColor`; the page measure uses canvas `measureText`. Record the Named_Limit `device-font-metrics` (device-font metrics differ and `textWidth` is measured in the browser).
     - Tests: `test/unit/textBackend.test.ts` (create) on the FakeBackend; one Chromium check that a created TextField shows in a screenshot (use an existing e2e file pattern).
     - _Requirements: 15.5, 15.6_
 
-  - [~] 16.3 Add `filters` and `GlowFilter`
+  - [x] 16.3 Add `filters` and `GlowFilter`
     - `DisplayObject.filters` copies on set and on get. `GlowFilter(color, alpha, blurX, blurY, strength)` stores its five values with same-named properties. Setting a non-empty list calls `namedLimit('filter-not-drawn:GlowFilter')` unless the Runtime draws that class. Regenerate and stage the member table.
     - Tests: `test/unit/filters.test.ts` (create). **Property 17: filters are copied**, in `test/property/filtersCopy.property.test.ts` (create): for any array assigned to `filters` the getter returns an equal array that is not the same object, and changing the returned array does not change the stored list.
     - **Validates: Requirements 16.1 to 16.5**
 
-  - [~] 16.4 Add `MouseEvent.MOUSE_WHEEL` and `delta`
+  - [x] 16.4 Add `MouseEvent.MOUSE_WHEEL` and `delta`
     - `MOUSE_WHEEL` is `"mouseWheel"`, `delta` defaults to 0. If the Player does not dispatch the wheel event, record `wheel-not-dispatched` as a Named_Limit; if it does, set `delta` from the browser wheel direction and record which measurement fixed the sign.
     - Tests: `test/unit/mouseEventShim.test.ts` (extend).
     - _Requirements: 17.1, 17.2, 17.3_

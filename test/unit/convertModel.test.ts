@@ -198,9 +198,13 @@ describe('convertModel', () => {
     expect(texts.filter((u) => u.context !== undefined)).toHaveLength(1);
   });
 
-  it('keeps TextField out of the Shim, so a TextField member stays a type-check diagnostic (11.3)', async () => {
+  // as3-coverage Requirement 15 replaced the old rule that the Shim has no TextField: the class exists and still leaves
+  // htmlText, autoSize, defaultTextFormat and multiline out, so a script that uses one stays a type-check diagnostic.
+  it('provides a minimal TextField and leaves htmlText, autoSize, defaultTextFormat and multiline out (15.8)', async () => {
     const shim = await import('../../template/shim');
-    expect(Object.keys(shim)).not.toContain('TextField');
+    expect(Object.keys(shim)).toContain('TextField');
+    const tf = new shim.TextField();
+    for (const m of ['htmlText', 'autoSize', 'defaultTextFormat', 'multiline']) expect(m in tf).toBe(false);
   });
 
   it('still throws UnknownSymbolError for an id nobody defines', () => {

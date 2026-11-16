@@ -1,4 +1,4 @@
-import type { NodeHandle, RenderBackend, ShapeBounds } from '../../../template/runtime/backend';
+import type { NodeHandle, RenderBackend, ShapeBounds, TextDraw } from '../../../template/runtime/backend';
 import type { ColorTransform8 } from '../../../template/runtime/scene';
 import type { GfxDraw } from '../../../template/runtime/graphicsPlan';
 import { assertShapeDrawn, DRAWN_FILLS, type DrawnFills, type ShapeJson } from '../../../template/runtime/shapeJson';
@@ -19,6 +19,8 @@ export interface FakeNode {
   mask: FakeNode | null;
   /** The ops last given to setGraphics; null when none or cleared. */
   graphics: readonly GfxDraw[] | null;
+  /** What setText last drew; null when none or removed. */
+  text: TextDraw | null;
   destroyed: boolean;
 }
 
@@ -96,6 +98,9 @@ export class FakeBackend implements RenderBackend {
   setGraphics(node: NodeHandle, ops: readonly GfxDraw[] | null): void {
     (node as FakeNode).graphics = ops === null ? null : ops.map((o) => structuredClone(o));
   }
+  setText(node: NodeHandle, text: TextDraw | null): void {
+    (node as FakeNode).text = text === null ? null : { ...text };
+  }
   destroyNode(node: NodeHandle): void {
     markDestroyed(node as FakeNode);
   }
@@ -129,6 +134,7 @@ export class FakeBackend implements RenderBackend {
       colorOffset: null,
       mask: null,
       graphics: null,
+      text: null,
       destroyed: false,
     };
     this.nodes.push(node);

@@ -1,5 +1,6 @@
 import type { DisplayObject } from '../shim/DisplayObject';
 import { Shape } from '../shim/Shape';
+import { TextField } from '../shim/TextField';
 import type { DisplayObjectContainer } from '../shim/Sprite';
 import { isStage, type Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
@@ -57,6 +58,8 @@ interface NodeRecord {
   visible: boolean;
   /** The Graphics and its version last pushed; version -1 when nothing was pushed. */
   gfxVersion: number;
+  /** The TextField state last pushed, as one key; null when none was pushed. */
+  textKey: string | null;
 }
 
 /** Maps display objects to backend nodes and remembers what was last pushed to each. */
@@ -74,6 +77,7 @@ export class NodeRegistry {
       alpha: 1,
       visible: true,
       gfxVersion: -1,
+      textKey: null,
     });
   }
 
@@ -128,6 +132,13 @@ export class NodeRegistry {
       r.gfxVersion = gfx.version;
       backend.setGraphics(r.node, gfx._prims.length === 0 ? null : planGraphics(gfx._prims));
     }
+    if (obj instanceof TextField) {
+      const key = JSON.stringify([obj.text, obj.textColor, obj.width, obj.height]);
+      if (key !== r.textKey) {
+        r.textKey = key;
+        backend.setText(r.node, obj.text === '' ? null : { text: obj.text, color: obj.textColor, width: obj.width, height: obj.height });
+      }
+    }
     if (r.visible !== obj.visible) {
       r.visible = obj.visible;
       backend.setVisible(r.node, r.visible);
@@ -172,5 +183,8 @@ export function buildHitView(obj: DisplayObject, isMask: (o: DisplayObject) => b
     visible: obj.visible,
     children: kids.map((k) => buildHitView(k, isMask)),
   };
-  return obj instanceof ShapeObject ? { ...view, bounds: obj.bounds } : view;
+  if (obj instanceof ShapeObject) return { ...view, bounds: obj.bounds };
+  // A TextField is hit over its whole box, empty or not (Ruffle: the box is the hit area).
+  if (obj instanceof TextField) return { ...view, bounds: { x: 0, y: 0, width: obj.width, height: obj.height } };
+  return view;
 }

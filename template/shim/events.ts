@@ -2,7 +2,11 @@ import { registerBroadcastListener } from '../runtime/broadcast';
 import { listenerSite, messageOf } from '../runtime/errorReport';
 import { namedLimit, reportCaughtError } from './errorSink';
 
-export type Listener = (e: Event) => void;
+/**
+ * A listener. Declared as a method signature so that a parameter is compared bivariantly: AS3 lets a listener take any
+ * Event subclass ((e: MouseEvent) => void), and MouseEvent and KeyboardEvent have members that Event lacks.
+ */
+export type Listener = { bivarianceHack(e: Event): void }['bivarianceHack'];
 
 export class Event {
   static readonly ENTER_FRAME = 'enterFrame';
@@ -60,6 +64,9 @@ export class MouseEvent extends Event {
   static readonly MOUSE_DOWN = 'mouseDown';
   static readonly MOUSE_UP = 'mouseUp';
   static readonly MOUSE_MOVE = 'mouseMove';
+  static readonly MOUSE_WHEEL = 'mouseWheel';
+  /** Lines scrolled by a wheel event; 0 for every other type. The Player does not dispatch the wheel (Named_Limit). */
+  delta = 0;
 }
 
 /** Key events bubble by default, as in Flash (Requirement 4.1). `keyCode` is a Flash key code (see `Keyboard`). */
@@ -95,6 +102,7 @@ export class EventDispatcher {
   addEventListener(type: string, listener: Listener, useCapture = false, priority = 0, useWeakReference = false): void {
     if (useCapture) namedLimit('useCapture-ignored', type);
     if (useWeakReference) namedLimit('useWeakReference-ignored', type);
+    if (type === MouseEvent.MOUSE_WHEEL) namedLimit('mouse-wheel-not-dispatched', 'the Player does not dispatch mouseWheel; the listener is registered and never called');
     registerBroadcastListener(this, type);
     const entry: Registration = { listener, priority: Math.trunc(priority) };
     const list = this.listeners.get(type);
