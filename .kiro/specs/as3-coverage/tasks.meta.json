@@ -340,6 +340,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794762555283
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794763624601
       }
     ],
     "9.2 Add Stage members": [
@@ -347,6 +352,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755210977
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794763624779
       }
     ],
     "9.3 Add `stageNode`, `syncAll` and `reconcile` over the Stage": [
@@ -354,6 +364,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755211228
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794763624907
       }
     ],
     "10.1 Add `runtime/broadcast.ts` and generalise the step to tops": [
@@ -361,6 +376,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755211475
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794763625152
       }
     ],
     "10.2 Hit-test Stage children": [
@@ -907,6 +927,13 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794762052353
+      }
+    ],
+    "9. Shim and Runtime: the Stage as a tree and its members (D6)": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794763625014
       }
     ]
   }

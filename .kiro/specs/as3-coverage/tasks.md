@@ -174,26 +174,26 @@ Rules that apply to every task:
     - `test/e2e/keyCodes.e2e.test.ts` (create, uses a `chromium` slot): press each of the 14 required keys with Playwright in headless Chromium and check that `keyCode` and `flashKeyCode` equal the table values (Requirement 5.10). Record that this proves a US layout only (Open_Item O7).
     - _Requirements: 5.10_
 
-- [ ] 9. Shim and Runtime: the Stage as a tree and its members (D6)
+- [x] 9. Shim and Runtime: the Stage as a tree and its members (D6)
   - Commit area: `Shim` (Runtime named). Verification V2. Read the design section "Stage as a real tree" (all of it) and Requirements 7 and 8. The Stage stays a non-DisplayObject that delegates to shared container functions in `Sprite.ts`; it does not extend `DisplayObjectContainer`.
-  - [-] 9.1 Add container behaviour to `Stage`
+  - [x] 9.1 Add container behaviour to `Stage`
     - `stage._children[0]` is the root. `addChild`, `removeChild`, `getChildAt`, `getChildByName`, `numChildren` share the container code. `removeChild` of a non-child throws `ArgumentError` and leaves the list unchanged. `announceAdded` and `announceRemoved` treat a parent chain that ends at the Stage as on stage (`_onStage()` is true when the chain reaches a Stage), and dispatch `ADDED`, `ADDED_TO_STAGE`, `REMOVED`, `REMOVED_FROM_STAGE`. A linked-class symbol instantiated by script and added to the Stage binds its named children before its constructor body (reuse `installScriptConstruction`).
     - Tests: `test/unit/stageTree.test.ts` (create). **Property 6: Stage children obey container laws**, in `test/property/stageTree.property.test.ts` (create): for any sequence of `addChild`, `removeChild` and `getChildAt`, the root stays at index 0, a removal of a non-child throws `ArgumentError` and leaves the list unchanged, and the FakeBackend node order equals the child order.
     - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 7.7**
 
-  - [~] 9.2 Add Stage members
+  - [x] 9.2 Add Stage members
     - `mouseX`/`mouseY` from the last pointer position (`getPointerPosition()`), `frameRate` from `Scene_JSON.stage.frameRate`, settable `scaleMode` (stored, no effect, a Named_Limit in `ADDED_APIS.md` and through the sink), `StageScaleMode` (`NO_SCALE`, `SHOW_ALL`, `EXACT_FIT`, `NO_BORDER`), settable `focus` defaulting to null and accepting any object including the Stage itself. Regenerate and stage the member table.
     - Tests: `test/unit/stageMembers.test.ts` (create): defaults, `focus = stage` does not throw, `scaleMode` stored. **Property 9: frameRate comes from the scene**, in `test/property/stageFrameRate.property.test.ts` (create): for any positive frame rate in a generated Scene_JSON `Stage.frameRate` equals it; an example row each for 30 and 60.
     - **Validates: Requirements 8.1 to 8.7**
 
-  - [~] 9.3 Add `stageNode`, `syncAll` and `reconcile` over the Stage
+  - [x] 9.3 Add `stageNode`, `syncAll` and `reconcile` over the Stage
     - `Player.stageNode` is a backend container holding the root node and the Stage children; `rootNode` stays for `timelineOnly` and tests. `syncAll` walks from the Stage; `reconcile` takes a `ParentNode`; `main.ts` adds `stageNode` to the Pixi stage. A Stage child is drawn above the root in index order.
     - Tests: `test/unit/stageNodes.test.ts` (create) on the FakeBackend: a child added to the Stage appears above the root and disappears on removal; existing sample floors unchanged (V2).
     - _Requirements: 7.4_
 
 - [ ] 10. Runtime: tick phases, broadcast order and hit test over Stage children (D6)
   - Commit area: `Runtime`. Verification V2 (this is the task that can move an existing floor). Read the design "Player tick" diagram, the Stage tree section (Tops, Phases, Broadcast, Guard, Hit test) and the findings F4, Open_Items O3 and O11. Registration order was read in the Ruffle_Source (`core/src/avm2.rs` `register_broadcast_listener`, `broadcast_event`; `core/src/frame_lifecycle.rs`; `core/src/display_object/stage.rs`); say so in the commit body and add the rule to `flash-behaviour.md`.
-  - [~] 10.1 Add `runtime/broadcast.ts` and generalise the step to tops
+  - [-] 10.1 Add `runtime/broadcast.ts` and generalise the step to tops
     - `tops = [root, ...stage._children.slice(1)]` snapshotted per frame step. `Sprite._step` becomes `stepTops(tops)` in `shim/internal.ts` (`_step()` stays as `stepTops([this])`). Phases: A advance (post-order per top), B broadcast `enterFrame`, C flush adds and broadcast `frameConstructed`, D frame scripts (root top first), E broadcast `exitFrame`; timers run after the frame loop. `EventDispatcher.addEventListener` registers an object in an ordered list for those three types on first registration; delivery walks the list, skips objects with no listener and prunes them; only `DisplayObject` instances and the Stage take part. `ENTER_FRAME` is dispatched to the Stage once per tick.
     - Tests: `test/unit/broadcast.test.ts` (create). **Property 7: Broadcast events follow registration order**, in `test/property/broadcastOrder.property.test.ts` (create): for any generated tree under the root and the Stage with listeners registered in a random order, each of the three events is delivered once per frame step to each registered listener, in the order of first registration.
     - **Validates: Requirements 7.5, 7.8, 7.9**

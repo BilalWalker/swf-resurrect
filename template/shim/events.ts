@@ -1,3 +1,4 @@
+import { registerBroadcastListener } from '../runtime/broadcast';
 import { listenerSite, messageOf } from '../runtime/errorReport';
 import { namedLimit, reportCaughtError } from './errorSink';
 
@@ -94,6 +95,7 @@ export class EventDispatcher {
   addEventListener(type: string, listener: Listener, useCapture = false, priority = 0, useWeakReference = false): void {
     if (useCapture) namedLimit('useCapture-ignored', type);
     if (useWeakReference) namedLimit('useWeakReference-ignored', type);
+    registerBroadcastListener(this, type);
     const entry: Registration = { listener, priority: Math.trunc(priority) };
     const list = this.listeners.get(type);
     if (list === undefined) {

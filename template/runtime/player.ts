@@ -12,6 +12,7 @@ import {
   setCaughtErrorSink,
   setContextForConstructor,
   setPointerPosition,
+  stepTops,
   withConstructionContext,
   defaultInstanceName,
   resetInstanceCounter,
@@ -25,6 +26,7 @@ import { setTimeSource } from '../shim/utils';
 import { MovieClip } from '../shim/MovieClip';
 import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage, type ParentNode } from '../shim/Stage';
+import { resetBroadcast } from './broadcast';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { Clock } from './clock';
 import { computeClipLayout } from './clipLayout';
@@ -170,6 +172,7 @@ export class Player {
       }
       this.installScriptConstruction();
       resetInstanceCounter();
+      resetBroadcast();
       // The root is named before frame 1 builds its children or runs any script (Requirement 8.3).
       this.root = this.createClip(this.scene.rootSymbolId, rootSymbol, 'root1');
       this.initialBuild();
@@ -184,9 +187,9 @@ export class Player {
   private runGotoCycle(): void {
     this.busyCount++;
     try {
-      frameConstructed(this.root);
+      frameConstructed();
       this.scripts.drain();
-      exitFrame(this.root);
+      exitFrame();
     } finally {
       this.busyCount--;
     }
@@ -211,7 +214,7 @@ export class Player {
       atTarget(clip, Event.ADDED);
       atTarget(clip, Event.ADDED_TO_STAGE);
     }
-    for (const clip of post) clip.dispatchEvent(new Event(Event.FRAME_CONSTRUCTED));
+    frameConstructed();
     // Only MovieClips have frame scripts; a Sprite has one frame and none.
     for (const clip of clipsPreOrder(this.root)) if (clip instanceof MovieClip) this.scripts.enqueue(clip, 1);
     this.scripts.drain();
@@ -220,6 +223,13 @@ export class Player {
   /** Backend node of the root clip alone, for the timeline-only page and tests. The adapter adds stageNode. */
   get rootNode(): NodeHandle {
     return this.nodes.nodeOf(this.root);
+  }
+
+  /** The tops of a frame step: the root, then the Stage children in index order (snapshot). */
+  private tops(): Sprite[] {
+    const tops: Sprite[] = [this.root];
+    for (const c of this.stage._children.slice(1)) if (c instanceof Sprite) tops.push(c);
+    return tops;
   }
 
   /** Reads the clock and runs whole frame steps. */
@@ -234,8 +244,8 @@ export class Player {
       while (this.accumulator >= this.frameIntervalMs - EPSILON_MS && steps < this.maxCatchUp) {
         this.accumulator -= this.frameIntervalMs;
         steps++;
-        this.root._step();
-        exitFrame(this.root);
+        stepTops(this.tops());
+        exitFrame();
       }
     } finally {
       this.busyCount--;
@@ -313,8 +323,13 @@ export class Player {
    */
   private pointerEntry(x: number, y: number, sync = true): PointerTarget {
     const cache = new Map<unknown, TargetView>();
-    const hits = hitTestAll(buildHitView(this.root, (o) => this.maskObjects.has(o)), x, y).map((h) => targetViewOf(h.source, cache));
-    const picked = resolveHitTarget(hits, this.stage);
+    // One hit view per top; the highest index is tried first and the root clip last (Requirement 7.6).
+    let picked: TargetView | Stage = this.stage;
+    const tops = this.tops();
+    for (let i = tops.length - 1; i >= 0 && picked === this.stage; i--) {
+      const hits = hitTestAll(buildHitView(tops[i]!, (o) => this.maskObjects.has(o)), x, y).map((h) => targetViewOf(h.source, cache));
+      picked = resolveHitTarget(hits, this.stage, this.root === tops[i] ? targetViewOf(this.root, cache) : null);
+    }
     const target = picked === this.stage ? this.stage : ((picked as TargetView).source as DisplayObjectContainer);
     if (x !== this.pointerX || y !== this.pointerY) {
       this.pointerX = x;

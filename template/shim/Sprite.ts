@@ -4,12 +4,10 @@ import { addChildTo, announceAdded, announceRemoved, getChildAtOf, getChildByNam
 import { Event } from './events';
 import {
   attachChild,
-  clipsPostOrder,
-  clipsPreOrder,
   defaultInstanceName,
   detachChild,
-  isAttachedTo,
   registerClassName,
+  stepTops,
   takeConstructionContext,
   takeInstanceNumber,
   type ClipScripts,
@@ -126,25 +124,7 @@ export class Sprite extends DisplayObjectContainer {
    * Backward moves remove in A and add (`added`) in C, before `frameConstructed`.
    */
   _step(): void {
-    const pre = clipsPreOrder(this);
-    const post = clipsPostOrder(this);
-    const alive = (c: Sprite): boolean => isAttachedTo(c, this);
-    const changed = new Set<Sprite>();
-
-    // A. advance, children first (a child's `removed` bubbles while the parent is still on its old frame)
-    for (const clip of post) if (alive(clip) && clip._advance()) changed.add(clip);
-    // B. enterFrame, children first
-    for (const clip of post) if (alive(clip)) clip.dispatchEvent(new Event(Event.ENTER_FRAME));
-    // C. added for children created by backward moves, then frameConstructed, children first
-    for (const clip of post) if (alive(clip)) clip._flushAdds();
-    for (const clip of post) if (alive(clip)) clip.dispatchEvent(new Event(Event.FRAME_CONSTRUCTED));
-    // D. frame scripts, root first
-    let queuedOn: ClipScripts | null = null;
-    for (const clip of pre) {
-      if (!changed.has(clip) || !alive(clip)) continue;
-      queuedOn = clip._enqueueFrameScript() ?? queuedOn;
-    }
-    queuedOn?.drain();
+    stepTops([this]);
   }
 
   /** Dispatches EXIT_FRAME to this clip only. The runtime walks the tree (see internal.exitFrame). */

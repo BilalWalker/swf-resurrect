@@ -99,9 +99,11 @@ type Pick<N> = { kind: 'hit'; target: N } | { kind: 'propagate' };
  * a shape hit picks its container when that has `mouseEnabled`, else it propagates; a result is combined with
  * each container on the way up (`mouseChildren` false absorbs a hit; a propagate is absorbed by the first
  * enabled container). The root clip is never a target (Ruffle's loader root), so a result of the root, a
- * propagation out of the root and no hit at all give the Stage_Object.
+ * propagation out of the root and no hit at all give the Stage_Object. With Stage children (Requirement 7.6) the
+ * caller resolves one top at a time and passes the root clip as `rootClip`: only that clip is excluded, so a Stage child
+ * can be the target.
  */
-export function resolveHitTarget<N extends TargetNode<S>, S>(hits: readonly N[], stage: S): N | S {
+export function resolveHitTarget<N extends TargetNode<S>, S>(hits: readonly N[], stage: S, rootClip?: N | null): N | S {
   // Children of each container that hold a hit, in first-appearance (= z) order.
   const kids = new Map<N, N[]>();
   let top: N | null = null;
@@ -142,5 +144,7 @@ export function resolveHitTarget<N extends TargetNode<S>, S>(hits: readonly N[],
     return propagated ? combine({ kind: 'propagate' }, k) : { kind: 'propagate' };
   };
   const result = pick(root);
-  return result.kind === 'hit' && result.target !== root ? result.target : stage;
+  // rootClip omitted: the topmost ancestor is the root clip (one tree under the Stage). null: no clip is excluded.
+  const excluded = rootClip === undefined ? root : rootClip;
+  return result.kind === 'hit' && result.target !== excluded ? result.target : stage;
 }

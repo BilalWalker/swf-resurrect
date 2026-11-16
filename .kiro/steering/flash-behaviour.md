@@ -91,6 +91,25 @@ say which you did. The spec that holds the evidence is named with each item.
   in any priority's `Vec`. Ruffle's handler identity includes `use_capture`; the Shim ignores
   capture (Named_Limit `useCapture-ignored`), so identity is the function alone. (as3-coverage,
   design D5, Requirement 6.)
+- **`enterFrame`, `frameConstructed` and `exitFrame` are broadcast in registration order.** Each object
+  that adds a listener for one of the three types goes to the end of that type's list the first time,
+  and delivery walks the list: any display object and the Stage_Object take part, on the display list or
+  not. A frame step is A advance (post-order, per top: the root, then each Stage child), B `enterFrame`,
+  C `frameConstructed`, D frame scripts (root first), E `exitFrame`. Read again in Ruffle at the commit
+  above: `core/src/avm2.rs` `register_broadcast_listener` (pushes a weak reference unless the same
+  object is already in the bucket; ignores types outside `BROADCAST_WHITELIST`) and `broadcast_event`
+  (loops over `0..len` taken before the loop, so a registration during delivery waits for the next
+  event; drops only dead references afterwards). Read earlier and not read again here: `core/src/frame_lifecycle.rs`,
+  `core/src/display_object/stage.rs`. The Shim differs in one point: it drops an object whose listeners
+  are all removed, so a later registration goes to the end (as3-coverage Open_Item O3). Code:
+  `runtime/broadcast.ts`, `shim/internal.ts` `stepTops`. Existing samples keep their scores (children
+  register before their parents, so the order equals the old post-order there): measured before and after
+  for all ten committed samples (as3-coverage task 10.3).
+- **Hit_Target over Stage children.** One hit view per top; tops are tried from the highest index down,
+  the root clip last. Only the root clip is never a target (`resolveHitTarget(hits, stage, rootClip)`);
+  a Stage child can be. Follows the rule above (Ruffle `mouse_pick_avm2`); the cross-top order is the
+  display order of the Stage's children, not read separately in Ruffle.
+
 ## Keyboard
 - **Key events go to `Stage.focus` when it is a display object on the stage, else to the Stage; they
   bubble; each browser repeat is a further `keyDown`.** `Player.dispatchKey` is the one dispatch

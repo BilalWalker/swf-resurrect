@@ -1,4 +1,5 @@
 // Internal API used by the runtime. Not re-exported from index.ts; translated code never sees it.
+import { broadcast } from '../runtime/broadcast';
 import type { DisplayListEntry, SpriteSymbol } from '../runtime/scene';
 import type { DisplayObject } from './DisplayObject';
 import { Event } from './events';
@@ -250,27 +251,53 @@ export function isAttachedTo(o: DisplayObject, root: DisplayObject): boolean {
   return false;
 }
 
+
 /**
- * EXIT_FRAME pass: snapshots every MovieClip under `root`, children first (post-order, root last),
- * then dispatches EXIT_FRAME once to each one that is still attached to `root`.
- * User decision (a), verify task 12.1: children-first, because reference/output.txt lines 13-15 and
- * 29-31 show the children's exitFrame before the root's (Requirement 8.9).
+ * EXIT_FRAME pass (phase E): one `exitFrame` to every registered listener, in registration order (Broadcast_Event,
+ * as3-coverage Requirement 7.9). The argument is kept for callers that pass the root; the order no longer depends on it.
  */
-export function exitFrame(root: Sprite): void {
-  for (const clip of clipsPostOrder(root)) if (isAttachedTo(clip, root)) clip._exitFrame();
+export function exitFrame(_root?: Sprite): void {
+  broadcast(Event.EXIT_FRAME, () => new Event(Event.EXIT_FRAME));
+}
+
+/** FRAME_CONSTRUCTED pass (Goto_Extra_Cycle, design G7): one `frameConstructed` per registered listener. */
+export function frameConstructed(_root?: Sprite): void {
+  broadcast(Event.FRAME_CONSTRUCTED, () => new Event(Event.FRAME_CONSTRUCTED));
 }
 
 /**
- * FRAME_CONSTRUCTED pass: snapshots every MovieClip under `root`, children first, then dispatches
- * the event once to each one that is still attached to `root` (Goto_Extra_Cycle, design G7).
+ * One frame step over the tops (the root and the Stage children), phases A to D of design "Player tick":
+ * A advance, post-order per top; B broadcast `enterFrame`; C flush adds per top, broadcast `frameConstructed`;
+ * D frame scripts, pre-order per top, root top first. Phase E (`exitFrame`) is `exitFrame()`, run by the Player.
+ * The clip lists are snapshots taken before the step, so clips created during it are not stepped.
  */
-export function frameConstructed(root: Sprite): void {
-  for (const clip of clipsPostOrder(root)) {
-    if (isAttachedTo(clip, root)) clip.dispatchEvent(new Event(Event.FRAME_CONSTRUCTED));
-  }
+export function stepTops(tops: readonly Sprite[]): void {
+  const posts = tops.map((t) => clipsPostOrder(t));
+  const pres = tops.map((t) => clipsPreOrder(t));
+  const changed = new Set<Sprite>();
+  // A. advance, children first (a child's `removed` bubbles while the parent is still on its old frame)
+  tops.forEach((top, i) => {
+    for (const clip of posts[i]!) if (isAttachedTo(clip, top) && clip._advance()) changed.add(clip);
+  });
+  // B. enterFrame
+  broadcast(Event.ENTER_FRAME, () => new Event(Event.ENTER_FRAME));
+  // C. added for children created by backward moves, then frameConstructed
+  tops.forEach((top, i) => {
+    for (const clip of posts[i]!) if (isAttachedTo(clip, top)) clip._flushAdds();
+  });
+  broadcast(Event.FRAME_CONSTRUCTED, () => new Event(Event.FRAME_CONSTRUCTED));
+  // D. frame scripts, root first, only clips whose frame changed
+  let queuedOn: ClipScripts | null = null;
+  tops.forEach((top, i) => {
+    for (const clip of pres[i]!) {
+      if (!changed.has(clip) || !isAttachedTo(clip, top)) continue;
+      queuedOn = clip._enqueueFrameScript() ?? queuedOn;
+    }
+  });
+  (queuedOn as ClipScripts | null)?.drain();
 }
 
 /** Advances one tick for `mc` and every clip below it. */
 export function step(mc: Sprite): void {
-  mc._step();
+  stepTops([mc]);
 }
