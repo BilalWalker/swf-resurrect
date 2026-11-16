@@ -215,19 +215,19 @@ Rules that apply to every task:
 
 ### Block B: `entity_game` plays (about 170 credits; stop and report above 227)
 
-- [ ] 12. Translate: inherited instance members resolve before a same-named static (D7)
+- [x] 12. Translate: inherited instance members resolve before a same-named static (D7)
   - Commit area: `Translate`. Verification V1. Block B starts here: restate the Block B share of about 170 credits. Read the design row D7, Requirement 9 and the breadth spec's resolution order (`memberTables.ts`). The scope order (instance `this` scope before the class static scope) was read in the Ruffle_Source `core/src/avm2/scope.rs` (`ScopeChain::find`); that `this` sits above the class scope is AVM2 convention, not read: Open_Item O4, confirmed in practice by the `entity_game` Play_Test.
-  - [~] 12.1 Change the member lookup order in `memberTables.ts`
+  - [x] 12.1 Change the member lookup order in `memberTables.ts`
     - In an instance context the lookup is two passes: every instance member along the chain (translated classes, then the Shim chain), then the statics. A bare identifier in a static method resolves to a static as today. Every earlier outcome of the breadth order that this does not cover stays (Requirement 9.3). No class or sample name appears in `src/`.
     - Tests: `test/unit/memberTables.test.ts` (extend) with Fixture_Classes: inherited `stage` plus own static `stage` in an instance method resolves to `this.stage`; the same name in a static method resolves to the static; an own instance member still wins over an inherited one.
     - _Requirements: 9.1, 9.2, 9.3, 9.6_
 
-  - [~] 12.2 Write property test for the lookup order
+  - [x] 12.2 Write property test for the lookup order
     - **Property 10: Inherited instance members win over statics**
     - In `test/property/memberOrder.property.test.ts` (create): for any class names, member names and `extends` depth with a static and an inherited instance member of the same name, `S.name = name` in an instance method emits `S.name = this.name`; in a static method it resolves to the static.
     - **Validates: Requirements 9.1, 9.2, 9.5**
 
-  - [~] 12.3 Record the evidence
+  - [x] 12.3 Record the evidence
     - Add the scope-order rule with its evidence (the Ruffle file and the Open_Item for `this`) to `.kiro/steering/flash-behaviour.md`. State the existing samples' scores before and after.
     - _Requirements: 9.4, 36.5, 36.7_
 

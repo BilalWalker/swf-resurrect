@@ -182,27 +182,12 @@ function shimLookup(t: MemberTables, start: string, name: string): MemberKindFou
 }
 
 /**
- * Instance context: one walk of the chain, nearest class first. In each translated class the instance
- * table is tried before the static table; after the last translated class the Shim chain (instance
- * members only) is walked.
+ * Instance context, two passes (as3-coverage D7, Requirement 9): every instance member along the chain
+ * (translated classes nearest first, then the Shim chain), then the statics of the translated chain. An
+ * inherited instance member therefore wins over a static of the same name in a nearer class.
  */
 export function lookupMember(t: MemberTables, cls: QualifiedName, name: string): MemberKindFound | null {
-  let found: MemberKindFound | null = null;
-  const end = walkChain(t, cls, (q, m) => {
-    const inst = m.instance.get(name);
-    if (inst !== undefined) {
-      found = q === cls ? { rule: 'own-instance', kind: inst } : { rule: 'translated-super', owner: q, kind: inst };
-      return true;
-    }
-    const st = m.statics.get(name);
-    if (st !== undefined) {
-      found = q === cls ? { rule: 'own-static', kind: st } : { rule: 'inherited-static', owner: q, kind: st };
-      return true;
-    }
-    return false;
-  });
-  if (found !== null) return found;
-  return end.kind === 'shim' ? shimLookup(t, end.name, name) : null;
+  return lookupInstance(t, cls, name) ?? lookupStatic(t, cls, name);
 }
 
 /** Instance members only (rules 1, 3, 4 in that order). */

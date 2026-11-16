@@ -124,3 +124,16 @@ say which you did. The spec that holds the evidence is named with each item.
   `test/e2e/keyboardIframe.e2e.test.ts` (sandbox="allow-scripts", host never calls `iframe.focus()`).
   Open_Item: web UI parent should call `iframe.focus()` on load (`web/client/src/result.ts`); passed to
   the web owner, not changed here.
+
+## Name resolution (translation)
+- **A bare identifier in an instance method resolves to an inherited instance member before a
+  same-named static.** Two passes: every instance member along the chain (translated classes, then the
+  Shim chain), then the statics. A static method still resolves to the static. Evidence: the scope order
+  (innermost scope first, so the instance `this` scope before the class static scope) was read in Ruffle
+  `core/src/avm2/scope.rs` (`ScopeChain::find` iterates `scopes.iter().skip(1).rev()`) at the commit
+  named above. That `this` is pushed above the class scope is AVM2 convention and was NOT read or
+  measured: Open_Item O4, to be confirmed by the `entity_game` Play_Test. Code:
+  `src/translate/memberTables.ts` `lookupMember`. Scores before and after (task 12, `--verify`):
+  `entity_game` Overall_Match 100.00 / Trace_Score not-compared / 18 type errors in both;
+  `clickgoto` 100.00 / 100.00 / 0 in both. The 18 errors are unchanged in count; the six
+  `Game.stage` statements now emit `this.stage`.

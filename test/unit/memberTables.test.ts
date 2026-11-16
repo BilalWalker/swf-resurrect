@@ -64,11 +64,30 @@ describe("memberTables", () => {
     expect(lookupMember(t, "C", "xml")).toBeNull();
   });
 
-  it("a nearer declaration decides, the instance member wins within one class", () => {
+  it("an inherited instance member wins over an own static of the same name", () => {
     const t = build(
       ["B", "package { public class B { public function v():void {} } }"],
       ["C", "package { public class C extends B { public static function v():void {} } }"],
     );
-    expect(lookupMember(t, "C", "v")).toMatchObject({ rule: "own-static" });
+    expect(lookupMember(t, "C", "v")).toMatchObject({ rule: "translated-super", owner: "B" });
+    // static context is unchanged
+    expect(lookupStatic(t, "C", "v")).toMatchObject({ rule: "own-static" });
+  });
+
+  it("an inherited Shim instance member wins over an own static", () => {
+    const t = build(
+      ["S", "package { import flash.display.Sprite; public class S extends Sprite { public static var stage:int; } }"],
+    );
+    expect(lookupMember(t, "S", "stage")).toMatchObject({ rule: "shim", owner: "DisplayObject" });
+    expect(lookupStatic(t, "S", "stage")).toMatchObject({ rule: "own-static" });
+  });
+
+  it("an own instance member still wins over an inherited one, and a lone static still resolves", () => {
+    const t = build(
+      ["B", "package { public class B { public function v():void {} public static var k:int; } }"],
+      ["C", "package { public class C extends B { public var v:int; } }"],
+    );
+    expect(lookupMember(t, "C", "v")).toMatchObject({ rule: "own-instance", kind: "field" });
+    expect(lookupMember(t, "C", "k")).toMatchObject({ rule: "inherited-static", owner: "B" });
   });
 });

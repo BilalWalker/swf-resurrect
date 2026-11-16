@@ -84,17 +84,18 @@ function chainEnv(decls: Decl[], isStatic: boolean, locals: string[] = []): Reso
 
 describe("Property 30: Bare identifiers resolve by the rules, in order, along one walk of the chain", () => {
   /** **Validates: Requirements 22.1, 22.6** */
-  it("the nearest declaring class decides, and its instance member wins over its static", () => {
+  it("any instance member on the chain wins; otherwise the nearest static decides (as3-coverage D7)", () => {
     fc.assert(
       fc.property(genDecls, (decls) => {
         const r = resolveIdentifier("zzX", 3, chainEnv(decls, false));
         const idx = decls.findIndex((d) => d !== "none");
         if (idx < 0) {
           expect(r.kind).toBe("diagnose");
-        } else if (decls[idx] === "instance") {
+        } else if (decls.includes("instance")) {
           expect(r).toMatchObject({ kind: "rewrite", text: "this.zzX", importTarget: null });
         } else if (idx === 0) {
           expect(r).toMatchObject({ kind: "rewrite", text: "C0.zzX", importTarget: null });
+          // (every non-"none" entry here is a static)
         } else {
           expect(r).toMatchObject({ kind: "rewrite", text: `C${idx}.zzX`, importTarget: `C${idx}` });
         }
