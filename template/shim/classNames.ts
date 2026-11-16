@@ -21,3 +21,7 @@ export function classNameOf(object: object): string {
   }
   return 'Object';
 }
+/** The registered name of exactly cls (no prototype walk), or undefined when it was never registered. */
+export function registeredNameOf(cls: Function): string | undefined {
+  return classNames.get(cls);
+}

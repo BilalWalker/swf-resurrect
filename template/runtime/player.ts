@@ -21,6 +21,7 @@ import {
   type ClipHooks,
   type ConstructionContext,
 } from '../shim/internal';
+import { setTimeSource } from '../shim/utils';
 import { MovieClip } from '../shim/MovieClip';
 import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage } from '../shim/Stage';
@@ -158,6 +159,7 @@ export class Player {
         constructFrameOne: (mc) => this.constructFrameOne(mc),
       };
       this.lastNow = this.clock.now();
+      setTimeSource(() => this.clock.now());
 
       const rootSymbol = this.scene.symbols[String(this.scene.rootSymbolId)];
       if (rootSymbol === undefined || rootSymbol.type !== 'sprite') {

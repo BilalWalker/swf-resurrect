@@ -103,31 +103,31 @@ Rules that apply to every task:
     - In `test/property/nullableTypes.property.test.ts` (create): over generated AS3 types from the primitive set and the reference set, the emitted type text admits `null` if and only if the AS3 type is a reference type.
     - **Validates: Requirements 3.1, 3.2, 3.5**
 
-- [ ] 5. Translate, Emit and Runtime: import-cycle hazard rule and load-error listener (D13)
+- [x] 5. Translate, Emit and Runtime: import-cycle hazard rule and load-error listener (D13)
   - Commit area: `Translate` (names Emit and Runtime; the `index.html` change is under `template/`, so verification V2). Read the design section "Module-cycle hazards (new work item D13)" and findings F1 to F3. `spacer` fails at page load (`Class extends value undefined`) and never reaches a frame, so this task comes before every Block C task. The rule is general: no test of 5.1 to 5.3 names a sample.
-  - [-] 5.1 Add `src/translate/initHazards.ts` (pure)
+  - [x] 5.1 Add `src/translate/initHazards.ts` (pure)
     - Input: the value-import graph of the emitted classes, the `extends` edges, and for each import whether any use is in an `extends` clause, a static initialiser or top-level code. A hazard is a class `C` with translated base `S` such that `S` reaches `C` through value imports. The cut is the lexicographically first import of `S` on a shortest path from `S` to `C` whose uses are all inside method bodies or instance field initialisers. If no import can be cut the result carries an `import-cycle` problem with the path. Add the file to the purity test list.
     - Tests: `test/unit/initHazards.test.ts` (create): a two-class cycle, a three-class cycle, a cycle with no cuttable import (problem named, class stays), type-only imports ignored, lexicographic tie-break.
     - Add **Property 28 (Requirement 37.10): Cuttable cycles load in any order** in `test/property/initHazards.property.test.ts` (create): for generated class graphs with at least one hazard with a cuttable import, after the rewrite the modules load in an order-independent bundle check without an import-time error (build a tiny evaluator over the emitted import graph in the test; no browser).
     - _Requirements: 37.2, 37.5, 37.6, 37.10, 37.11_
 
-  - [~] 5.2 Rewrite the cut and fill the all-class registry
+  - [x] 5.2 Rewrite the cut and fill the all-class registry
     - Rewrite each use of the cut import to `getDefinitionByName('<Qualified.Name>')` and remove the import (Requirement 37.3, 37.9; a field initialiser such as `private var levelScene:* = LevelScene;` is the standard case). Add `getDefinitionByName` to the Shim (`template/shim/utils.ts`) reading a registry that `classes.ts` fills with every emitted class (not only linked ones) before the Player is constructed. Record each rewritten site in the Translation_Report. Do not reorder imports and do not route every cross-class reference through the registry (Requirement 37.6). List the new Shim function in `ADDED_APIS.md`; regenerate and stage `shimMembers.generated.ts`.
     - Tests: `test/unit/importCutRewrite.test.ts` (create) with Fixture_Classes: the emitted file has no import of the cut class and holds `getDefinitionByName`; `test/unit/classesRegistry.test.ts` (extend): `classes.ts` registers non-linked classes; `test/unit/translationReport.test.ts` (extend): the rewritten sites and an `import-cycle` problem are reported.
     - _Requirements: 37.1, 37.3, 37.4, 37.5, 37.9_
 
-  - [~] 5.3 Install the load-error listener in `index.html` and report it in Verify
+  - [x] 5.3 Install the load-error listener in `index.html` and report it in Verify
     - The emitted `index.html` gets a first inline script (before the module script) with an `error` and an `unhandledrejection` listener that sets `window.__swfResurrect = { ready: false, error }` (the Load_Error_Report). In `src/verify/edge/renderFrames.ts` (and the Play_Test driver later) report that error as the reason of the failure instead of a render timeout. A successful `main.ts` still sets `ready` true.
     - Tests: `test/unit/emit.test.ts` (extend): the script is first and holds both listeners; `test/e2e/loadError.e2e.test.ts` (create, uses a `chromium` slot): a generated project with a deliberate import-time throw reports the error text and does not time out; a normal project is unchanged.
     - _Requirements: 37.7, 37.8_
 
-  - [~] 5.4 Measure the `spacer` page load
+  - [x] 5.4 Measure the `spacer` page load
     - Skip with the fetch message when the `spacer` SWF is absent (Requirement 28.7). Otherwise run `npm run pipeline -- .work/samples/spacer/test.swf .work/as3-spacer/out --force` and load the built page in headless Chromium (use the `playwright` MCP or `test/support`). Record in the commit body whether `Class extends value undefined` is gone and the new first error if any. This is the one test of this block that names `spacer` (Requirement 37.11); the check is `test/e2e/spacerLoad.e2e.test.ts` (create), it asserts `window.__swfResurrect.ready === true` or, when it is false, that `error` is a string, and is skipped when the SWF is absent. If the page still fails for a cause outside Block A, record the cause for Block C and keep the test asserting only that the failure is reported with its reason.
     - _Requirements: 37.1, 37.11, 27.7_
 
 - [ ] 6. Shim: error classes, `getQualifiedClassName` and `getTimer`
   - Commit area: `Shim` (Runtime for the clock read). Verification V2. Read Requirement 12 and the design Data Models. These are needed by Task 9 (`ArgumentError`) and by Task 19 (`Signal`).
-  - [~] 6.1 Add error classes and `getQualifiedClassName`
+  - [-] 6.1 Add error classes and `getQualifiedClassName`
     - Export `ArgumentError` and `IllegalOperationError` as subclasses of `Error` whose `name` equals the class name, and `getQualifiedClassName(value)` returning the registered class name of an instance and of a class object from the registry, never `constructor.name`; an unregistered class returns the JavaScript function name. Add the three names to `ADDED_APIS.md`; regenerate and stage the member table.
     - Tests: `test/unit/errorsShim.test.ts` (create). **Property 12: Qualified class names come from the registry**, in `test/property/qualifiedName.property.test.ts` (create): for any registered class name, an instance and the class return the registered name; an unregistered class returns the function name.
     - **Validates: Requirements 12.1, 12.2, 12.3**

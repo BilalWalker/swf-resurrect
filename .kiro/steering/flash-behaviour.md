@@ -73,3 +73,11 @@ say which you did. The spec that holds the evidence is named with each item.
   make a number better. A sample under 100 names its cause in the report.
 - AS3 `x as T` returns null on a mismatch. The translation is a plain cast today; this is a known
   gap, not settled behaviour.
+## Utility functions
+- **`getTimer()` counts from Player construction.** It returns `floor(clock.now() - startTime)` from
+  the Player clock. Neither read in Ruffle nor measured: it follows as3-coverage Requirement 12.4 and
+  the design. Real Flash counts from the start of the runtime; with one movie per Player the two agree.
+  Open: check Ruffle `core/src/avm2/globals/flash/utils.rs` (`getTimer`) and measure.
+- **`getQualifiedClassName` uses the registry name.** Unqualified (`registerClassName` strips the package),
+  so a packaged class returns `Name`, not Flash's `pkg::Name`. Neither read nor measured; an unregistered
+  class gives the JavaScript function name (Requirement 12.3).

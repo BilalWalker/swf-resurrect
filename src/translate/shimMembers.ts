@@ -494,7 +494,8 @@ export function extractShimMembers(files: readonly ShimSource[]): ShimMemberTabl
     const c = byName.get(name);
     if (c === undefined) return;
     wanted.add(name);
-    if (c.extendsName !== null) {
+    if (c.extendsName !== null && c.extendsName !== 'Error') {
+      // `Error` is the JavaScript built-in (ArgumentError, IllegalOperationError); the chain walk stops there.
       if (!byName.has(c.extendsName)) {
         throw new ShimDeclarationError(`${c.path}:${c.line}: class ${c.name} extends ${c.extendsName}, which is not declared in the Shim`);
       }
