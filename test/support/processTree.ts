@@ -1,5 +1,6 @@
 // Lists the descendants of a process, for tests that check no browser process is left behind (task 29.1).
 // No shell is used: Windows asks PowerShell (Get-CimInstance Win32_Process), elsewhere `ps`.
+// Liveness afterwards is checked per pid with process.kill(pid, 0).
 import { execFile } from 'node:child_process';
 
 interface Row {
@@ -35,7 +36,7 @@ function parse(out: string): Row[] {
   return rows;
 }
 
-/** `pid` and every process below it, from one snapshot of the process table. */
+/** `pid` and every process below it, from one snapshot of the process table (the only table query a test makes). */
 export async function processTree(pid: number): Promise<number[]> {
   const rows = await processTable();
   const found = new Set<number>([pid]);
@@ -46,8 +47,17 @@ export async function processTree(pid: number): Promise<number[]> {
   return [...found];
 }
 
-/** Those of `pids` that are in the process table now. */
+/** True when `pid` exists: signal 0 throws ESRCH for a gone process and EPERM for one we may not signal. */
+export function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return (e as NodeJS.ErrnoException).code === 'EPERM';
+  }
+}
+
+/** Those of `pids` that are alive now. A direct check per pid, no process-table query. */
 export async function alivePids(pids: readonly number[]): Promise<number[]> {
-  const table = new Set((await processTable()).map((r) => r.pid));
-  return pids.filter((p) => table.has(p));
+  return pids.filter(isAlive);
 }
