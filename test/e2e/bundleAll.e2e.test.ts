@@ -10,6 +10,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { afterAll, describe, expect, it } from 'vitest';
+import { holdPipelineSlot } from '../support/holdPipelineSlot';
 import { checkClassFiles } from '../../src/emit/bundlerGuard';
 import { emit } from '../../src/emit/emit';
 import { main } from '../../src/pipeline/cli';
@@ -106,6 +107,7 @@ const tc = (className: string, text: string): TranslatedClass => ({
 });
 
 describe.skipIf(reason !== null)(`whole bundle after the guard${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
+  holdPipelineSlot();
   let tempRoot = '';
   afterAll(async () => {
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });

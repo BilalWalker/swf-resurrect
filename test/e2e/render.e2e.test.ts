@@ -10,6 +10,7 @@ import { chromium, type Page } from 'playwright';
 import { build } from 'vite';
 import { launchChromium, type LaunchedChromium } from '../support/launchChromium';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { holdPipelineSlot } from '../support/holdPipelineSlot';
 import type { ShapeJson } from '../../template/runtime/shapeJson';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
@@ -46,6 +47,7 @@ function strokeShape(points: Array<[number, number]>, cap: Cap, join: Join, widt
 }
 
 describe.skipIf(reason !== null)(`PixiBackend strokes read back from Chromium${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
+  holdPipelineSlot();
   let tempRoot = '';
   let bundle = '';
   let launched: LaunchedChromium | null = null;

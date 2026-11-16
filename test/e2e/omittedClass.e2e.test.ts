@@ -8,6 +8,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { afterAll, describe, expect, it } from 'vitest';
+import { holdPipelineSlot } from '../support/holdPipelineSlot';
 import { emit } from '../../src/emit/emit';
 import type { TranslatedClass } from '../../src/translate/planTranslate';
 import { typeCheckProject } from '../../src/translate/typeCheckGate';
@@ -63,6 +64,7 @@ const tc = (className: string, text: string): TranslatedClass => ({
 });
 
 describe.skipIf(reason !== null)(`emitted project with a non-loading or loose class${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
+  holdPipelineSlot();
   let tempRoot = '';
   afterAll(async () => {
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });

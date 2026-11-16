@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { launchChromium, type LaunchedChromium } from '../support/launchChromium';
 import { afterAll, describe, expect, it } from 'vitest';
+import { holdPipelineSlot } from '../support/holdPipelineSlot';
 import { emit } from '../../src/emit/emit';
 import type { TranslatedClass } from '../../src/translate/planTranslate';
 import { typeCheckProject } from '../../src/translate/typeCheckGate';
@@ -73,6 +74,7 @@ const MIME: Record<string, string> = {
 };
 
 describe.skipIf(reason !== null)(`browser boot with a throwing root class${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
+  holdPipelineSlot();
   let tempRoot = '';
   let built: BuiltProject | null = null;
   let launched: LaunchedChromium | null = null;
