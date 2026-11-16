@@ -5,6 +5,7 @@ import { ManualClock } from '../../template/runtime/clock';
 import { Player } from '../../template/runtime/player';
 import type { DisplayListEntry, SceneJson } from '../../template/runtime/scene';
 import { takeNamedLimits } from '../../template/shim/errorSink';
+import { Stage } from '../../template/shim/Stage';
 import { MouseEvent } from '../../template/shim/events';
 import { InteractiveObject } from '../../template/shim/InteractiveObject';
 import { DisplayObjectContainer, Sprite } from '../../template/shim/Sprite';
@@ -88,5 +89,19 @@ describe('TextField on the Player', () => {
     holder.addEventListener(MouseEvent.CLICK, (e) => seen.push(e.target));
     player.dispatchClick(20, 15);
     expect(seen).toEqual([holder]);
+  });
+});
+describe('TextField on the Stage', () => {
+  it('records textfield-on-stage-not-hit when it becomes a direct Stage child, not when inside a Sprite', () => {
+    takeNamedLimits();
+    const stage = new Stage();
+    stage._children.push(new Sprite()); // the root clip slot
+    new Sprite().addChild(new TextField());
+    takeNamedLimits();
+    stage.addChild(new Sprite());
+    expect(takeNamedLimits()).toEqual([]);
+    stage.addChild(new TextField());
+    stage.addChild(new TextField());
+    expect(takeNamedLimits().map((l) => l.id)).toEqual(['device-font-metrics', 'textfield-on-stage-not-hit']);
   });
 });

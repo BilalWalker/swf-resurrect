@@ -11,6 +11,8 @@ import { measureText } from './textMeasure';
  * names the member in the Translation_Report).
  */
 export class TextField extends InteractiveObject {
+  /** Marker read by the Stage (it cannot import this file). */
+  readonly _isTextField = true;
   selectable = true;
   private _text = '';
   private _textColor = 0x000000;

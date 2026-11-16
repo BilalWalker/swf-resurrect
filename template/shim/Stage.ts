@@ -57,6 +57,9 @@ export class Stage extends EventDispatcher {
   /** Appends above the other children. The root clip cannot be added again: it stays at index 0. */
   addChild<T extends DisplayObject>(child: T): T {
     if (child === this._children[0]) throw new ArgumentError('addChild: the root clip is already the first child of the Stage');
+    if ((child as { _isTextField?: unknown })._isTextField === true) {
+      namedLimit('textfield-on-stage-not-hit', 'a TextField that is a direct child of the Stage is not hit-tested');
+    }
     return addChildTo(this, child);
   }
   /** A non-child throws `ArgumentError` and leaves the list unchanged. The root clip cannot be removed. */

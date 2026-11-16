@@ -71,4 +71,33 @@ describe('Graphics shim', () => {
     expect(g._prims).toEqual([]);
     expect(g.version).toBe(3);
   });
-});
+  it('records beginFill-alpha only for an alpha other than 1, once', () => {
+    takeNamedLimits();
+    const g = new Graphics();
+    g.beginFill(1);
+    g.beginFill(1, 1);
+    expect(takeNamedLimits()).toEqual([]);
+    g.beginFill(1, 0.5);
+    g.beginFill(2, 0.2);
+    expect(takeNamedLimits().map((l) => l.id)).toEqual(['beginFill-alpha']);
+  });
+  it('records fill-multiple-subpaths for a second subpath in one fill, not for a leading moveTo or separate fills', () => {
+    takeNamedLimits();
+    const g = new Graphics();
+    g.beginFill(1);
+    g.moveTo(0, 0);
+    g.lineTo(5, 0);
+    g.lineTo(5, 5);
+    g.endFill();
+    g.beginFill(2);
+    g.moveTo(9, 9);
+    g.lineTo(8, 8);
+    g.endFill();
+    g.moveTo(1, 1);
+    expect(takeNamedLimits()).toEqual([]);
+    g.beginFill(3);
+    g.lineTo(5, 0);
+    g.moveTo(2, 2);
+    g.endFill();
+    expect(takeNamedLimits().map((l) => l.id)).toEqual(['fill-multiple-subpaths']);
+  });});

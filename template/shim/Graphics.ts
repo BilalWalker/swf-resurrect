@@ -24,6 +24,9 @@ export class Graphics {
   _prims: GfxPrim[] = [];
   /** Increments on every call, so the runtime can tell whether the content changed. */
   version = 0;
+  /** A fill is open, and it already has a segment or circle (a further subpath makes Named_Limit `fill-multiple-subpaths`). */
+  private _fillOpen = false;
+  private _fillHasShape = false;
 
   lineStyle(thickness?: number, color = 0, ..._ignored: unknown[]): void {
     // Flash reads alpha, pixelHinting, scaleMode, caps, joints and miterLimit too (Requirement 14.12).
@@ -33,29 +36,45 @@ export class Graphics {
     this.version++;
   }
 
-  beginFill(color = 0, _alpha = 1): void {
+  beginFill(color = 0, alpha = 1): void {
+    // The alpha is accepted and not drawn (Requirement 14.12).
+    if (alpha !== 1) namedLimit('beginFill-alpha', 'beginFill: an alpha other than 1 is not drawn');
+    this._fillOpen = true;
+    this._fillHasShape = false;
     this._prims.push({ k: 'beginFill', color: num(color) });
     this.version++;
   }
 
   endFill(): void {
+    this._fillOpen = false;
+    this._fillHasShape = false;
     this._prims.push({ k: 'endFill' });
     this.version++;
   }
 
   drawCircle(x: number, y: number, radius: number): void {
+    this._noteSubpath(true);
     this._prims.push({ k: 'circle', x: num(x), y: num(y), r: Math.abs(num(radius)) });
     this.version++;
   }
 
   moveTo(x: number, y: number): void {
+    this._noteSubpath(false);
     this._prims.push({ k: 'moveTo', x: num(x), y: num(y) });
     this.version++;
   }
 
   lineTo(x: number, y: number): void {
+    if (this._fillOpen) this._fillHasShape = true;
     this._prims.push({ k: 'lineTo', x: num(x), y: num(y) });
     this.version++;
+  }
+
+  /** A moveTo or circle inside a fill that already has a shape starts another subpath: drawn separately, no hole cut. */
+  private _noteSubpath(isShape: boolean): void {
+    if (!this._fillOpen) return;
+    if (this._fillHasShape) namedLimit('fill-multiple-subpaths', 'a fill with more than one subpath is drawn as separate shapes; no hole is cut');
+    if (isShape) this._fillHasShape = true;
   }
 
   /**
@@ -76,6 +95,8 @@ export class Graphics {
   }
 
   clear(): void {
+    this._fillOpen = false;
+    this._fillHasShape = false;
     this._prims = [];
     this.version++;
   }
