@@ -207,7 +207,7 @@ Rules that apply to every task:
     - Run `test/unit/clickgotoReplay.test.ts`, `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score tests. State the Overall_Match and Trace_Score of every existing sample before and after in the commit body (Requirement 7.11). If registration order lowers any of them, keep post-order for objects under the root and apply registration order among the Stage and Stage children only (Requirement 7.10), and name the fallback in the commit body and at Checkpoint 1. Never lower a floor.
     - _Requirements: 7.10, 7.11_
 
-- [-] 11. Checkpoint 1: Block A done
+- [x] 11. Checkpoint 1: Block A done
   - STOP. Follow the Checkpoint procedure of the rules. Block A shares: Requirements 2 to 8, 12 (errors and `getTimer`), 28 (both sample admissions), 37 and the Stage tasks.
   - Run the full suite `npm test -- --run`. Hand the review to the `fidelity-reviewer` agent and commit its report as `.kiro/specs/as3-coverage/reviews/checkpoint-1.md`. Act on its findings in a new commit before reporting.
   - The report also states: the Overall_Match and Trace_Score of every committed sample before and after Block A (existing samples must be unchanged, Requirement 7.11), whether the registration-order fallback of Task 10.3 was needed, the result of the `spacer` page-load check of Task 5.4 (or its skip), the Chromium key-code measurement of Task 8.4 and the iframe focus check of Task 8.3, the Open_Items touched (O3, O4, O7, O10 with the `publicHost` duration if it failed), and the Credits_Line against the Block A share of about 130.
