@@ -90,8 +90,14 @@ async function compareTrees(a: string, b: string): Promise<string[]> {
   return diffs;
 }
 
-/** TS2552 is TS2304 plus a spelling suggestion; the gate (TS 6.0.3) and `tsc` (TS 7) differ on when they add it. */
-const normaliseCode = (code: number | string): number => (Number(code) === 2552 ? 2304 : Number(code));
+/**
+ * The gate (TS 6.0.3) and `tsc` (TS 7) word some errors differently: TS2552 is TS2304 plus a spelling suggestion, and an
+ * object-to-class assignment is TS2740 (missing properties) in 6.0.3 but TS2322 in 7. Both map to one code here.
+ */
+const normaliseCode = (code: number | string): number => {
+  const n = Number(code);
+  return n === 2552 ? 2304 : n === 2740 ? 2322 : n;
+};
 
 /** Sorted `file|TScode` keys of the errors the type-check gate reported, or null when the gate was skipped. */
 async function reportedErrorKeys(projectDir: string): Promise<string[] | null> {
