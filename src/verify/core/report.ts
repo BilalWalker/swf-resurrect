@@ -141,6 +141,8 @@ export interface FidelityReport {
     residual: ResidualCounts;
   };
   behaviour: BehaviourReport;
+  /** Hand-written classes of the Handwritten_Set used by the project, sorted by className (Requirement 33.3). */
+  handwritten: Array<{ className: string; reason: string; licence?: string }>;
   problems: Problem[];
   translation: { typeCheck: 'ran' | 'skipped'; typeCheckOptions: { strictNullChecks: false }; classes: Array<{ className: string; status: ClassStatus; overridden: boolean; omitted: boolean }> };
 }
@@ -281,6 +283,9 @@ export function buildFidelityReport(i: FidelityInputs): FidelityReport {
       residual: i.residual === undefined ? { regions: 0, attributed: 0, unattributed: 0 } : { ...i.residual },
     },
     behaviour: buildBehaviour(i.behaviour, gaps),
+    handwritten: (i.translation.handwritten ?? [])
+      .map((h) => ({ className: h.className, reason: h.reason, ...(h.licence === undefined ? {} : { licence: h.licence }) }))
+      .sort((x, y) => cmpStr(x.className, y.className)),
     problems: i.problems.map(cleanProblem).sort(compareProblems),
     translation: {
       typeCheck: i.translation.typeCheck,

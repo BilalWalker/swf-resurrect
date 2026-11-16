@@ -18,6 +18,8 @@ import type { GateResult } from '../translate/typeCheckGate';
 import type { VerifyRequest, VerifySummary } from '../verify/edge/verifyStage';
 import { PipelineError } from './errors';
 import type { PipelineStage } from './errors';
+import { classifyOverrides } from './handwrittenSet';
+import type { HandwrittenEntry, HandwrittenReportEntry } from './handwrittenSet';
 import { serialiseUnsupported } from './unsupported';
 import type { UnsupportedFeatureEntry } from './unsupported';
 
@@ -57,6 +59,8 @@ export interface PipelineArgs {
   handwrittenDir: string | null;
   /** Class names that have a handwritten translation in handwrittenDir. */
   handwrittenClasses: readonly string[];
+  /** The Handwritten_Set (handwritten/SET.json); absent means empty, so every applied override is reported as not in the set. */
+  handwrittenSet?: readonly HandwrittenEntry[];
   cwd: string;
   homeDir: string;
   /** Set by --verify; frames is K from --verify-frames. */
@@ -134,6 +138,7 @@ function reportOf(
   loose: readonly LooseClass[] = [],
   classPaths: readonly ClassPathEntry[] = [],
   problems: readonly TranslationProblem[] = [],
+  handwritten: readonly HandwrittenReportEntry[] = [],
 ): TranslationReport {
   const pathOf = new Map(classPaths.map((p) => [p.className, p.path]));
   return buildReport(
@@ -145,7 +150,7 @@ function reportOf(
     })),
     gate,
     {
-      omissions, loose, classPaths,
+      omissions, loose, classPaths, handwritten,
       problems: [...problems, ...(translated?.importCycles ?? []).map((c) => importCycleProblem(c.className, c.path))],
       importCuts: (translated?.classes ?? []).flatMap((c) => (c.cutSites ?? []).map((s) => ({ className: c.className, target: s.target, line: s.line }))),
     },
@@ -224,6 +229,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let loose: LooseClass[] = [];
   let classPaths: ClassPathEntry[] = [];
   let problems: TranslationProblem[] = [];
+  let handwritten: HandwrittenReportEntry[] = [];
   const overridden = new Set(args.handwrittenClasses);
 
   try {
@@ -276,6 +282,19 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       if (p.kind === 'handwritten-override-unparsable') io.err(overrideWarning(p));
       else io.err(`warn [emit]: the bundler guard could not run, class files are not checked with Vite: ${p.message}\n`);
     }
+    // Applied overrides: in the set they are listed with their reason, outside it they are a problem (Requirement 33.3 to 33.5).
+    const sorted = classifyOverrides(
+      basename(dirname(resolve(args.swfPath))),
+      result.overrides ?? [],
+      args.handwrittenSet ?? [],
+      new Set(translated.classes.map((c) => c.className)),
+    );
+    handwritten = sorted.listed;
+    for (const className of sorted.unlisted) {
+      const message = `${className} is a hand-written class that is not in handwritten/SET.json`;
+      problems = [...problems, { kind: 'handwritten-not-in-set', path: className, message }];
+      io.err(`warn [emit]: ${message}\n`);
+    }
     unsupported = [...unsupported, ...omissionEntries(omissions)];
 
     stage = 'pipeline';
@@ -299,7 +318,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
         projectDir: result.outputDir,
         scene: artifact.scene,
         unsupported,
-        translationReport: reportOf(translated, overridden, gate, omissions, loose, classPaths, problems),
+        translationReport: reportOf(translated, overridden, gate, omissions, loose, classPaths, problems, handwritten),
         sampleName: basename(swfDir),
         referenceDir: args.referenceDir == null && !existsSync(referenceDir) ? null : referenceDir,
       };
@@ -321,7 +340,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       {
         name: 'translation-report.json',
         label: 'translation report',
-        text: serialiseReport(reportOf(translated, overridden, gate, omissions, loose, classPaths, problems)),
+        text: serialiseReport(reportOf(translated, overridden, gate, omissions, loose, classPaths, problems, handwritten)),
       },
     ];
     for (const f of files) {

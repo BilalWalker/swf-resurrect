@@ -1,7 +1,7 @@
 // Task 23.3: the Pipeline runs the Bundler_Guard on the planned final text before it decides the omitted set.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { SceneJson } from '../../template/runtime/scene';
 import type { ConvertedArtifact } from '../../src/convert/writeConverted';
@@ -202,7 +202,7 @@ describe('pipeline: a handwritten override that fails the guard is loud', { time
     const hw = await withOverride('export class Hand {}\n');
     const guard: PipelineStages['guard'] = async (files) =>
       new Map([...files.keys()].map((p) => [p, p === 'src/Hand.ts' ? fail('Unexpected token', 1, 8) : ok]));
-    expect(await runPipeline(args({ handwrittenDir: hw, handwrittenClasses: ['Hand'] }), stages(guard, [classes[2]]), io)).toBe(0);
+    expect(await runPipeline(args({ handwrittenDir: hw, handwrittenClasses: ['Hand'], handwrittenSet: [{ sample: basename(tmp), className: 'Hand', reason: 'fixture' }] }), stages(guard, [classes[2]]), io)).toBe(0);
     const report = await readJson('translation-report.json');
     expect(report.problems).toEqual([
       { kind: 'handwritten-override-unparsable', path: 'Hand.ts', message: 'Unexpected token', line: 1, column: 8 },
@@ -218,7 +218,7 @@ describe('pipeline: a handwritten override that fails the guard is loud', { time
 
   it('does the same with the real guard on a file that holds `with ({}) {}`', async () => {
     const hw = await withOverride('export class Hand {\n  run(): void {\n    with ({}) {}\n  }\n}\n');
-    expect(await runPipeline(args({ handwrittenDir: hw, handwrittenClasses: ['Hand'] }), stages(checkClassFiles, [classes[2]]), io)).toBe(0);
+    expect(await runPipeline(args({ handwrittenDir: hw, handwrittenClasses: ['Hand'], handwrittenSet: [{ sample: basename(tmp), className: 'Hand', reason: 'fixture' }] }), stages(checkClassFiles, [classes[2]]), io)).toBe(0);
     const report = await readJson('translation-report.json');
     expect(report.problems).toHaveLength(1);
     expect(report.problems[0]).toMatchObject({ kind: 'handwritten-override-unparsable', path: 'Hand.ts' });

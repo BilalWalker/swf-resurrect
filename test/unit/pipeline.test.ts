@@ -433,3 +433,51 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
     expect(calls).toContain('typeCheck');
   });
 });
+
+describe('runPipeline: hand-written classes in the Translation_Report (Requirement 33)', () => {
+  const emitWith = (overrides: string[]): Partial<PipelineStages> => ({
+    async translate() {
+      calls.push('translate');
+      return { classes: [{ className: 'LeftButton', text: '', diagnostics: [] } as never], skippedScripts: [] };
+    },
+    async emit(_a, o) {
+      await mkdir(o.outputDir, { recursive: true });
+      return { outputDir: o.outputDir, files: [], omissions: [], loose: [], classPaths: [], gate: null, overrides };
+    },
+  });
+  const readReport = async (): Promise<{ handwritten?: unknown[]; problems?: Array<{ kind: string; path?: string }>; classes: Array<{ className: string; overridden: boolean }> }> =>
+    JSON.parse(await readFile(join(outDir, 'translation-report.json'), 'utf8'));
+  const sample = (): string => tmp.split(/[\\/]/).pop() as string;
+
+  it('lists an override in the set with its reason, marks the translated class replaced, and carries the optional licence', async () => {
+    const set = [{ sample: sample(), className: 'LeftButton', reason: 'needs a proxy', licence: 'GPL-3.0' }];
+    expect(await runPipeline(args({ handwrittenSet: set }), makeStages(emitWith(['LeftButton'])), io)).toBe(0);
+    const r = await readReport();
+    expect(r.handwritten).toEqual([{ className: 'LeftButton', licence: 'GPL-3.0', reason: 'needs a proxy', replacesTranslated: true }]);
+    expect(r.problems).toBeUndefined();
+    expect(r.classes.find((c) => c.className === 'LeftButton')?.overridden).toBe(true);
+    expect(err).not.toContain('SET.json');
+  });
+
+  it('omits licence when the entry has none', async () => {
+    const set = [{ sample: sample(), className: 'LeftButton', reason: 'r' }];
+    await runPipeline(args({ handwrittenSet: set }), makeStages(emitWith(['LeftButton'])), io);
+    expect(JSON.stringify((await readReport()).handwritten)).not.toContain('licence');
+  });
+
+  it('gives handwritten-not-in-set and a CLI warning for an override outside the set, also for another sample', async () => {
+    const set = [{ sample: 'someOtherSample', className: 'LeftButton', reason: 'r' }];
+    expect(await runPipeline(args({ handwrittenSet: set }), makeStages(emitWith(['LeftButton'])), io)).toBe(0);
+    const r = await readReport();
+    expect(r.handwritten).toBeUndefined();
+    expect(r.problems).toEqual([expect.objectContaining({ kind: 'handwritten-not-in-set', path: 'LeftButton' })]);
+    expect(err).toContain('warn [emit]: LeftButton is a hand-written class that is not in handwritten/SET.json');
+  });
+
+  it('reports nothing when no override was applied', async () => {
+    await runPipeline(args({ handwrittenSet: [] }), makeStages(emitWith([])), io);
+    const r = await readReport();
+    expect(r.handwritten).toBeUndefined();
+    expect(r.problems).toBeUndefined();
+  });
+});

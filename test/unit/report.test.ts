@@ -1,4 +1,8 @@
+import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { genReportInputs } from '../property/gen/genReportInputs';
+import { renderFidelityHtml } from '../../src/verify/core/html';
+import { buildFidelityReport, serialiseFidelityReport } from '../../src/verify/core/report';
 import type { TranslatedClass } from '../../src/translate/planTranslate';
 import {
   buildReport,
@@ -203,5 +207,37 @@ describe('buildReport: classPaths (spec task 5.8)', () => {
     expect(r.classes.find((c) => c.className === 'Main')!.typeErrors).toHaveLength(1);
     expect(r.otherErrors.map((e) => e.file)).toEqual(['src/Main.ts']);
     expect(buildReport([], null).classPaths).toEqual([]);
+  });
+});
+
+describe('hand-written classes in the reports (Requirement 33.3, 33.4)', () => {
+  const entries = [
+    { className: 'b.Z', reason: 'second <x>', replacesTranslated: false },
+    { className: 'A', reason: 'first', licence: 'GPL-3.0', replacesTranslated: true },
+  ];
+
+  it('lists the entries sorted, with the licence only when present, and nothing when empty', () => {
+    const r = buildReport([], null, { handwritten: entries });
+    expect(r.handwritten).toEqual([
+      { className: 'A', reason: 'first', licence: 'GPL-3.0', replacesTranslated: true },
+      { className: 'b.Z', reason: 'second <x>', replacesTranslated: false },
+    ]);
+    expect('handwritten' in buildReport([], null)).toBe(false);
+  });
+
+  it('copies them into the Fidelity_Report and the HTML shows them escaped; none shows "none"', () => {
+    const base = fc.sample(genReportInputs, 1)[0];
+    const withSet = buildFidelityReport({ ...base, translation: buildReport([], null, { handwritten: entries }) });
+    expect(withSet.handwritten).toEqual([
+      { className: 'A', reason: 'first', licence: 'GPL-3.0' },
+      { className: 'b.Z', reason: 'second <x>' },
+    ]);
+    const html = renderFidelityHtml(withSet);
+    expect(html).toContain('<li>A: first, licence GPL-3.0</li>');
+    expect(html).toContain('<li>b.Z: second &lt;x&gt;</li>');
+    const none = buildFidelityReport({ ...base, translation: buildReport([], null) });
+    expect(none.handwritten).toEqual([]);
+    expect(serialiseFidelityReport(none)).toContain('"handwritten": []');
+    expect(renderFidelityHtml(none)).toContain('<h2 id="handwritten">Hand-written classes</h2>\n<p>none</p>');
   });
 });

@@ -1,5 +1,5 @@
 // Command line entry: swf-resurrect <input.swf> <output-dir> [options].
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +10,8 @@ import { emit } from '../emit/emit';
 import { translateStage } from '../translate/translateStage';
 import { typeCheckProject } from '../translate/typeCheckGate';
 import { unpack } from '../unpack/unpack';
+import { listOverrideClasses, readHandwrittenSet } from './handwrittenSet';
+import type { HandwrittenEntry } from './handwrittenSet';
 import { runPipeline } from './pipeline';
 import type { PipelineArgs, PipelineStages } from './pipeline';
 
@@ -156,10 +158,14 @@ export async function main(argv: readonly string[]): Promise<number> {
     }
   }
 
-  const handwrittenClasses =
-    handwrittenDir === null
-      ? []
-      : (await readdir(handwrittenDir)).filter((n) => n.endsWith('.ts')).map((n) => n.replace(/\.ts$/, ''));
+  const handwrittenClasses = handwrittenDir === null ? [] : await listOverrideClasses(handwrittenDir);
+  let handwrittenSet: HandwrittenEntry[];
+  try {
+    handwrittenSet = await readHandwrittenSet(join(REPO_ROOT, 'handwritten'));
+  } catch (err) {
+    io.err("error [pipeline]: ${err instanceof Error ? err.message : String(err)}\n");
+    return 2;
+  }
 
   const args: PipelineArgs = {
     swfPath: o.swfPath,
@@ -170,6 +176,7 @@ export async function main(argv: readonly string[]): Promise<number> {
     templateDir: join(REPO_ROOT, 'template'),
     handwrittenDir,
     handwrittenClasses,
+    handwrittenSet,
     referenceDir,
     cwd: process.cwd(),
     homeDir: homedir(),

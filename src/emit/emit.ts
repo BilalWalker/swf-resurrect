@@ -51,6 +51,8 @@ export interface EmitResult {
   gate: GateResult | null;
   /** `bundler-guard-unavailable` and `handwritten-override-unparsable` (Requirements 26.7, 26.13). */
   problems?: TranslationProblem[];
+  /** Class names of the overrides that were applied (linked or in the emit closure), sorted. Ignored overrides are in warnings. */
+  overrides?: string[];
 }
 
 function byCodeUnit(a: string, b: string): number {
@@ -255,7 +257,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
     await cleanupRun(writtenFiles, createdTops);
     throw new EmitWriteError(failing, err);
   }
-  return { outputDir, files: [...plan.map((f) => f.path), ...imageFiles].sort(byCodeUnit), warnings: planned.warnings, omissions, loose, classPaths: planned.classPaths, gate, problems };
+  return { outputDir, files: [...plan.map((f) => f.path), ...imageFiles].sort(byCodeUnit), warnings: planned.warnings, omissions, loose, classPaths: planned.classPaths, gate, problems, overrides: [...overrides].sort(byCodeUnit) };
 }
 
 function linkedSymbols(scene: SceneJson): LinkedSymbol[] {

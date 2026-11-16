@@ -170,6 +170,18 @@ function caughtErrorsTable(c: CaughtErrorsSummary | undefined): string {
   );
 }
 
+function handwrittenSection(r: FidelityReport): string {
+  const list = r.handwritten ?? [];
+  const parts: string[] = ['<section aria-labelledby="handwritten">', '<h2 id="handwritten">Hand-written classes</h2>'];
+  if (list.length === 0) parts.push('<p>none</p>');
+  else {
+    const items = list.map((h) => `<li>${e(h.className)}: ${e(h.reason)}${h.licence === undefined ? '' : `, licence ${e(h.licence)}`}</li>`);
+    parts.push('<p>These classes are not translated; they are written by hand.</p>', `<ul>\n${items.join('\n')}\n</ul>`);
+  }
+  parts.push('</section>');
+  return parts.join('\n');
+}
+
 function behaviourSection(r: FidelityReport): string {
   const b = r.behaviour;
   const parts: string[] = ['<section aria-labelledby="behaviour">', '<h2 id="behaviour">Behaviour comparison</h2>'];
@@ -281,6 +293,7 @@ export function renderFidelityHtml(report: FidelityReport): string {
     summarySection(report),
     visualSection(report),
     behaviourSection(report),
+    handwrittenSection(report),
     problemsSection(report),
     translationSection(report),
     '</body>',

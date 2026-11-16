@@ -3,6 +3,7 @@ import { canonicalJson } from '../pipeline/canonicalJson';
 import type { ClassOmission, LooseClass } from '../emit/classOmissions';
 import { omissionMessage } from '../emit/classOmissions';
 import type { ClassPathEntry } from '../emit/classPaths';
+import type { HandwrittenReportEntry } from '../pipeline/handwrittenSet';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
 import type { TranslatedClass } from './planTranslate';
 import type { GateError, GateResult } from './typeCheckGate';
@@ -33,7 +34,7 @@ export interface ClassReportEntry {
 
 /** A condition of the run that the reader must see (Requirements 26.7 and 26.13). */
 export interface TranslationProblem {
-  kind: 'bundler-guard-unavailable' | 'handwritten-override-unparsable' | 'import-cycle';
+  kind: 'bundler-guard-unavailable' | 'handwritten-override-unparsable' | 'handwritten-not-in-set' | 'import-cycle';
   /** Override path relative to the handwritten directory, for handwritten-override-unparsable. */
   path?: string;
   message: string;
@@ -60,6 +61,8 @@ export interface TranslationReport {
   problems?: TranslationProblem[];
   /** Imports read through getDefinitionByName to cut an import cycle (Requirement 37.3); absent when none. Sorted by (className, line, target). */
   importCuts?: ImportCutSite[];
+  /** Hand-written classes of the Handwritten_Set that the project uses, sorted by className (Requirement 33.3, 33.4); absent when none. */
+  handwritten?: HandwrittenReportEntry[];
 }
 
 /** One rewritten site of the import-cycle cut: a use of 	arget in className at emitted line line. */
@@ -95,6 +98,7 @@ export interface ReportExtras {
   classPaths?: readonly ClassPathEntry[];
   problems?: readonly TranslationProblem[];
   importCuts?: readonly ImportCutSite[];
+  handwritten?: readonly HandwrittenReportEntry[];
 }
 
 /** Line of the class-omitted Diagnostic: the first error line for a syntax error or an unresolved import, else 1. */
@@ -169,6 +173,9 @@ export function buildReport(
 
   const problems = [...(extras.problems ?? [])].sort((a, b) => cmp(a.kind, b.kind) || cmp(a.path ?? '', b.path ?? '') || cmp(a.message, b.message));
   const importCuts = [...(extras.importCuts ?? [])].sort((a, b) => cmp(a.className, b.className) || a.line - b.line || cmp(a.target, b.target));
+  const handwritten = [...(extras.handwritten ?? [])]
+    .map((h) => ({ className: h.className, reason: h.reason, ...(h.licence === undefined ? {} : { licence: h.licence }), replacesTranslated: h.replacesTranslated }))
+    .sort((a, b) => cmp(a.className, b.className));
   return {
     formatVersion: 1,
     typeCheck: gate === null ? 'skipped' : 'ran',
@@ -179,6 +186,7 @@ export function buildReport(
     classPaths,
     ...(problems.length === 0 ? {} : { problems }),
     ...(importCuts.length === 0 ? {} : { importCuts }),
+    ...(handwritten.length === 0 ? {} : { handwritten }),
   };
 }
 

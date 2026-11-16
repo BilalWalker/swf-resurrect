@@ -304,20 +304,20 @@ Rules that apply to every task:
     - Tests: `test/unit/mouseEventShim.test.ts` (extend).
     - _Requirements: 17.1, 17.2, 17.3_
 
-- [ ] 17. Pipeline and Verify: the Handwritten_Set and its report entries (Requirement 33)
+- [x] 17. Pipeline and Verify: the Handwritten_Set and its report entries (Requirement 33)
   - Commit area: `Pipeline` (Verify and Test named). Verification V1. Read the design section "Hand-written classes in the reports" and the breadth handwritten rule in `structure.md`. The committed `handwritten/SET.json` starts empty (`[]`) here: the `spacer` entries are added by Task 28 only together with their files, so that the "every listed entry has a file" test holds on a clean checkout (Requirement 28.13).
-  - [~] 17.1 Add `handwritten/SET.json` and its reader
+  - [x] 17.1 Add `handwritten/SET.json` and its reader
     - A list of `{ sample, className, reason }` read by generic code; no class or sample name appears in `src/`. A `.ts` override is looked up by the sample (parent folder of the SWF) and the class name (a packaged override path `a/b/Cls.ts` is class `a.b.Cls`).
     - Tests: `test/unit/handwrittenSet.test.ts` (create): a schema check, the packaged-path rule, and a consistency test: every `.ts` file under `handwritten/` is listed and every listed entry has a file (passes on the empty set).
     - _Requirements: 33.8, 33.9_
 
-  - [~] 17.2 Report hand-written classes
-    - After the overrides load, an override in the set is listed in the Translation_Report with its reason and the translated class of the same name is marked replaced; an override not in the set gives the problem `handwritten-not-in-set`, a CLI warning, and a failing test on the committed samples. The Fidelity_Report gets `handwritten: [{ className, reason }]` next to `behaviour`, and the HTML shows it. No licence is claimed for hand-written `spacer` files (Requirement 33.10). The existing rule (an override of a class that is not linked and not in the emit closure is ignored with a warning) stays unchanged.
+  - [x] 17.2 Report hand-written classes
+    - After the overrides load, an override in the set is listed in the Translation_Report with its reason and the translated class of the same name is marked replaced; an override not in the set gives the problem `handwritten-not-in-set`, a CLI warning, and a failing test on the committed samples. The Fidelity_Report gets `handwritten: [{ className, reason }]` next to `behaviour`, and the HTML shows it. The set entry may carry an optional `licence` string that the reports copy; it is omitted when absent (owner decision: Task 28.3 fills `GPL-3.0`). The existing rule (an override of a class that is not linked and not in the emit closure is ignored with a warning) stays unchanged.
     - Also fix the CLI list of overrides (`handwrittenClasses` in `src/pipeline/cli.ts`) to recognise packaged overrides so they are not reported as missing; this is needed only if Task 19.3 runs, but is cheap and covered by a test here (Requirement 18.6).
     - Tests: `test/unit/report.test.ts` and `test/unit/pipelineCli.test.ts` (extend): listed with reason, replaced class marked, `handwritten-not-in-set` for an unlisted override, a packaged override not reported as missing.
     - _Requirements: 33.3, 33.4, 33.5, 33.6, 18.6_
 
-  - [~] 17.3 Write property test and the committed-sample test
+  - [x] 17.3 Write property test and the committed-sample test
     - **Property 27: Overrides outside the set are reported**
     - In `test/property/handwrittenReport.property.test.ts` (create): for any generated set of overrides and any generated `SET.json`, the pipeline warns for exactly the overrides that are not listed and lists the others with their reason. Add `test/e2e/handwrittenSamples.test.ts` (create): over the committed samples' shared runs, every Hand_Written_Class in a Fidelity_Report is a member of the set (Requirement 33.7).
     - **Validates: Requirements 33.3, 33.4, 33.5, 33.7**
