@@ -10,7 +10,8 @@
 // colour and alpha are read; a miter-clip join, a gradient stroke, an unresolved stroke paint and a dash array are each
 // returned as a `stroke-style` limit (decided F8), and so is a round join at a corner under 30 degrees (sub-tasks 28.1, 29.3). No limit is
 // recorded for a cap, a bevel join at 10 degrees or wider, a miter join within its miter limit or a wider round corner
-// (measured in 11.1 and 29.3). A plain miter join past its miter limit is a limit too (29.3 follow-up).
+// (measured in 11.1 and 29.3). A plain miter join past its miter limit and a bevel join under 10 degrees are limits too
+// (29.3 follow-up).
 //
 // Elements that cannot be read at all (malformed XML, path data outside M L H V Q C Z, non-finite numbers) are
 // dropped without a limit: FFDec does not write them, and ShapeLimitKind has no kind for them.
@@ -278,6 +279,15 @@ function miterCos(limit: number): number {
   return 2 / (limit * limit) - 1 - 1e-9;
 }
 
+/**
+ * 29.3 follow-up. Bevel joins, measured with the 29.3 method (open path, flat caps, 250 px legs, widths 2, 10, 20 px; FFDec
+ * writes a bevel as stroke-linejoin bevel): differing pixels at 3 degrees 6, 4, 0; at 5 degrees 2, 2, 2; at 7 degrees 0, 0,
+ * 2; exact (0, 0, 0) at 10, 12, 15, 30, 45 and 60 degrees. So a bevel join is named at every corner whose interior angle is
+ * under 10 degrees. Corners under 3 degrees were not measured, and the boundary between 7 and 10 degrees is not known.
+ */
+const BEVEL_JOIN_LIMIT = 'approximated: bevel join at a corner under 10 degrees is not drawn exactly (2 to 6 px differ at 3, 5 and 7 degrees, strokes 2 to 20 px wide; exact from 10 degrees up; the boundary between 7 and 10 degrees and corners under 3 degrees were not measured)';
+const BEVEL_COS = -Math.cos((10 * Math.PI) / 180) - 1e-9; // turning angle 170 degrees, an interior angle of 10 degrees, less a rounding margin
+
 type Vec = readonly [number, number];
 
 /** Start and end direction of a segment from `p`, or null when it has no length. */
@@ -423,6 +433,9 @@ class Builder {
     // A plain miter join: drawn differently where the miter tip passes the stroke's own miter limit (29.3 follow-up).
     if (stroke !== null && own['stroke-linejoin'] === 'miter' && hasSharpCorner(subpaths, miterCos(stroke.miterLimit))) {
       this.limits.push({ kind: 'stroke-style', message: MITER_JOIN_LIMIT });
+    }
+    if (stroke !== null && stroke.join === 'bevel' && hasSharpCorner(subpaths, BEVEL_COS)) {
+      this.limits.push({ kind: 'stroke-style', message: BEVEL_JOIN_LIMIT });
     }
     // A path without a fill keeps every subpath as its own outer contour (design section 2).
     const contours = fill === null ? subpaths.map((outer) => ({ outer, holes: [] })) : groupContours(subpaths);

@@ -152,8 +152,18 @@ describe("svgToShapeJson strokes", () => {
     const { limits } = svgToShapeJson(`${head}<g transform="matrix(1,0,0,1,0,0)">${path}${path}${path}</g></svg>`, "shape");
     expect(limits).toEqual([{ kind: "stroke-style", message: ROUND_JOIN }]);
   });
-  it("records nothing for a bevel join at a 7 degree corner (the bevel limit is a separate follow-up)", () => {
-    expect(sharp("bevel").limits).toEqual([]);
+  const BEVEL_JOIN = "approximated: bevel join at a corner under 10 degrees is not drawn exactly (2 to 6 px differ at 3, 5 and 7 degrees, strokes 2 to 20 px wide; exact from 10 degrees up; the boundary between 7 and 10 degrees and corners under 3 degrees were not measured)";
+  it("records one approximated stroke-style limit for a bevel join under 10 degrees (29.3 follow-up)", () => {
+    expect(sharp("bevel").limits).toEqual([{ kind: "stroke-style", message: BEVEL_JOIN }]); // 7 degrees
+    expect(sharp("bevel", "M100 0 L0 0 L100 5.2").limits).toEqual([{ kind: "stroke-style", message: BEVEL_JOIN }]); // 3 degrees
+    expect(sharp("bevel", "M100 0 L0 0 L100 17.4").limits).toHaveLength(1); // 9.9 degrees
+    expect(sharp("bevel").shape.paths[0]!.stroke).toMatchObject({ join: "bevel" });
+  });
+  it("records nothing for a bevel join at 10 degrees or wider, or without a corner", () => {
+    expect(sharp("bevel", "M100 0 L0 0 L100 17.6327").limits).toEqual([]); // 10 degrees
+    expect(sharp("bevel", "M100 0 L0 0 L100 21.3").limits).toEqual([]); // 12 degrees
+    expect(sharp("bevel", "M100 0 L0 0 L100 26.8").limits).toEqual([]); // 15 degrees
+    expect(sharp("bevel", "M0 0 L100 0").limits).toEqual([]);
   });
   const MITER_JOIN = "approximated: miter join at a corner past its miter limit is not drawn exactly (2 to 358 px differ at 7 to 45 degrees with miter limit 2.0, strokes 2 to 20 px wide; exact at 60 degrees; other limits and the boundary between 45 and 60 degrees were not measured)";
   const miter = (d: string, limit: string): ReturnType<typeof svgToShapeJson> =>

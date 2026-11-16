@@ -86,10 +86,13 @@ describe('convertModel writes Shape_JSON', () => {
     expect(sym?.type === 'shape' && sym.size).toEqual({ width: 9, height: 9 });
   });
 
-  it('a plain miter join past its miter limit reaches unsupported-features and the visual limits (29.3 follow-up)', () => {
+  it.each([
+    ['a plain miter join past its miter limit', 'stroke-linejoin="miter" stroke-miterlimit="2.0"', 'approximated: miter join at a corner past its miter limit'],
+    ['a bevel join under 10 degrees', 'stroke-linejoin="bevel"', 'approximated: bevel join at a corner under 10 degrees'],
+  ])('%s reaches unsupported-features and the visual limits (29.3 follow-up)', (_n, join, prefix) => {
     const svg =
       '<svg xmlns="http://www.w3.org/2000/svg" width="100px" height="12px"><g transform="matrix(1,0,0,1,0,0)">' +
-      '<path d="M100 0 L0 0 L100 12" fill="none" stroke="#000000" stroke-linejoin="miter" stroke-miterlimit="2.0"/></g></svg>';
+      `<path d="M100 0 L0 0 L100 12" fill="none" stroke="#000000" ${join}/></g></svg>`;
     const model: TagsModel = {
       xmlVersion: { major: 4, minor: 2 },
       header: { widthPx: 100, heightPx: 100, frameRate: 12, frameCount: 1 },
@@ -109,7 +112,7 @@ describe('convertModel writes Shape_JSON', () => {
     const r = convertModel(model);
     const entries = r.unsupported.filter((u) => u.kind === 'stroke-style');
     expect(entries).toHaveLength(1);
-    expect(entries[0]).toMatchObject({ id: 7, message: expect.stringContaining('approximated: miter join at a corner past its miter limit') });
+    expect(entries[0]).toMatchObject({ id: 7, message: expect.stringContaining(prefix) });
     const known = knownVisualLimits(r.scene, r.unsupported, { allComparedFramesExact: false });
     expect(known.filter((k) => k.kind === 'stroke-style').map((k) => k.message)).toEqual([entries[0]!.message]);
   });
