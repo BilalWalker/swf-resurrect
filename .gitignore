@@ -16,3 +16,4 @@ out/
 
 # Local Claude Code preview config
 .claude/
+.vitest/
