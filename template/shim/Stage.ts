@@ -14,6 +14,11 @@ export class Stage extends EventDispatcher {
   readonly _isStage = true;
   readonly _parent: null = null;
   _children: DisplayObject[] = [];
+  /**
+   * The object that receives key events; null sends them to the Stage. Minimal field added by as3-coverage
+   * task 8.2 for `Player.dispatchKey`; task 9.2 owns the other Stage members.
+   */
+  focus: object | null = null;
 
   /** `[object Stage]` from the class-name registration (Requirement 28.1). */
   toString(): string {

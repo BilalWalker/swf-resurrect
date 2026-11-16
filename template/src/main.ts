@@ -1,7 +1,9 @@
 import { Application } from 'pixi.js';
 import { loadScene } from '../runtime/loader';
 import { canvasToStage } from '../runtime/canvasToStage';
+import { flashKeyCode, preventsDefault } from '../runtime/keyMap';
 import { Player } from '../runtime/player';
+import { KeyboardEvent } from '../shim';
 import { PixiBackend } from '../runtime/pixi/pixiBackend';
 import { classRegistry } from './classes';
 import { parseTimelineOnly, runTimelineOnly } from './timelineOnly';
@@ -72,6 +74,26 @@ async function boot(): Promise<void> {
     const p = toStage(ev);
     if (p !== null) player.dispatchMouseUp(p.x, p.y);
   });
+
+  // Keyboard (as3-coverage D4): the listener is on window, not the canvas. Each browser repeat is a further keyDown.
+  const onKey = (type: typeof KeyboardEvent.KEY_DOWN | typeof KeyboardEvent.KEY_UP) => (ev: globalThis.KeyboardEvent): void => {
+    const code = flashKeyCode(ev);
+    if (code === null) return;
+    if (preventsDefault(code)) ev.preventDefault();
+    player.dispatchKey(type, code);
+  };
+  window.addEventListener('keydown', onKey(KeyboardEvent.KEY_DOWN));
+  window.addEventListener('keyup', onKey(KeyboardEvent.KEY_UP));
+  // Focus: a page inside an iframe gets key events only once the frame has focus. A click in the frame focuses it;
+  // window.focus() on pointerdown and the focusable canvas on load keep that true when the parent does not focus it.
+  canvas.tabIndex = 0;
+  canvas.style.outline = 'none';
+  canvas.addEventListener('pointerdown', () => {
+    window.focus();
+    canvas.focus({ preventScroll: true });
+  });
+  window.focus();
+  canvas.focus({ preventScroll: true });
 
   const loop = (): void => {
     player.update();

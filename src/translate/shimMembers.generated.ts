@@ -14,5 +14,5 @@ export const SHIM_MEMBER_TABLE: ShimMemberTable = {
   "MovieClip": {"extends":"Sprite","members":[{"name":"addFrameScript","kind":"method"},{"name":"currentFrame","kind":"property"},{"name":"currentLabels","kind":"property"},{"name":"frameScripts","kind":"property"},{"name":"gotoAndPlay","kind":"method"},{"name":"gotoAndStop","kind":"method"},{"name":"play","kind":"method"},{"name":"stop","kind":"method"},{"name":"totalFrames","kind":"property"}]},
   "Shape": {"extends":"DisplayObject","members":[{"name":"graphics","kind":"property"}]},
   "Sprite": {"extends":"DisplayObjectContainer","members":[{"name":"buttonMode","kind":"property"},{"name":"useHandCursor","kind":"property"}]},
-  "Stage": {"extends":"EventDispatcher","members":[{"name":"toString","kind":"method"}]}
+  "Stage": {"extends":"EventDispatcher","members":[{"name":"focus","kind":"property"},{"name":"toString","kind":"method"}]}
 };

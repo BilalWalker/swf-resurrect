@@ -371,3 +371,19 @@ describe('planEmit: class paths', () => {
     expect(plan.classPaths).toEqual([]);
   });
 });
+
+describe('keyboard wiring in the emitted main.ts (as3-coverage 8.3)', () => {
+  // Emit copies template/src/main.ts into every project, so the template text is the emitted text.
+  const main = readFileSync(resolve(__dirname, '../../template/src/main.ts'), 'utf8');
+  it('registers keydown and keyup on window, maps with flashKeyCode and prevents default by preventsDefault', () => {
+    expect(main).toContain("window.addEventListener('keydown'");
+    expect(main).toContain("window.addEventListener('keyup'");
+    expect(main).toContain('flashKeyCode(ev)');
+    expect(main).toContain('preventsDefault(code)');
+    expect(main).toContain('player.dispatchKey(type, code)');
+  });
+  it('focuses the window on pointerdown and on load', () => {
+    expect(main).toMatch(/addEventListener\('pointerdown', \(\) => \{\s*window\.focus\(\);/);
+    expect(main).toMatch(/\n  window\.focus\(\);\n/);
+  });
+});

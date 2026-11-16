@@ -69,3 +69,4 @@ Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handl
 | `internal.namedLimit`, `internal.takeNamedLimits` | Support only: the one sink for run-time Named_Limits (design "Data Models"). Once per id; the first detail is kept |
 | Named_Limit `useCapture-ignored` | `addEventListener(..., true)`: the capture phase does not exist in the Shim, the listener runs in the target and bubble phases |
 | Named_Limit `useWeakReference-ignored` | `addEventListener(..., false, 0, true)`: the listener is held strongly |
+| `Stage.focus` (`object \| null`, default null; minimal field) | No sample line yet: `Player.dispatchKey` reads it to pick the key target (as3-coverage task 8.2, Requirement 5.3). Task 9.2 adds the other Stage members |

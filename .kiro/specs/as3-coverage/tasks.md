@@ -137,40 +137,40 @@ Rules that apply to every task:
     - Tests: `test/unit/getTimer.test.ts` (create): a manual clock advanced by 1000 ms grows `getTimer()` by 1000. **Property 13: getTimer sums the clock**, in `test/property/getTimer.property.test.ts` (create): for any sequence of advances `getTimer()` is non-decreasing and equals the truncated sum.
     - **Validates: Requirements 12.4, 12.5, 12.6**
 
-- [ ] 7. Shim: `KeyboardEvent`, `Keyboard` and five-argument `addEventListener` (D3, D5)
+- [x] 7. Shim: `KeyboardEvent`, `Keyboard` and five-argument `addEventListener` (D3, D5)
   - Commit area: `Shim`. Verification V2. Read Requirements 4 and 6, the design rows D3 and D5, and `.kiro/steering/flash-behaviour.md`. The equal-priority order was read in Ruffle `core/src/avm2/events.rs` (design D5); say so in the commit body and add it to `flash-behaviour.md`.
-  - [-] 7.1 Add `KeyboardEvent` and `Keyboard`
+  - [x] 7.1 Add `KeyboardEvent` and `Keyboard`
     - `KeyboardEvent` extends the Shim `Event` with `KEY_DOWN` `"keyDown"`, `KEY_UP` `"keyUp"` and a numeric `keyCode`. `Keyboard` exports `UP` 38, `DOWN` 40, `LEFT` 37, `RIGHT` 39, `ENTER` 13, `ESCAPE` 27, `SPACE` 32; the design records that the values come from the `flash.ui.Keyboard` documentation (Requirement 4.6). The Translator resolves `KeyboardEvent` to the Shim class and never the DOM global (the Shim import shadows it). Regenerate and stage the member table; list both in `ADDED_APIS.md` with the line that needs them.
     - Tests: `test/unit/keyboardShim.test.ts` (create): constants; `test/unit/shimNames.test.ts` (extend) and a translation example with a Fixture_Class using `KeyboardEvent.KEY_DOWN` that imports the Shim class.
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
-  - [~] 7.2 Extend `addEventListener` and `removeEventListener`
+  - [x] 7.2 Extend `addEventListener` and `removeEventListener`
     - `addEventListener(type, listener, useCapture=false, priority=0, useWeakReference=false)`; `removeEventListener(type, listener, useCapture=false)`. Dispatch order: descending `priority`, insertion order within one priority; a listener already present at any priority is ignored (Ruffle `events.rs`). `useCapture` and `useWeakReference` are ignored and recorded as Named_Limits in `ADDED_APIS.md` and through the sink.
     - Test: `test/unit/eventPriority.test.ts` (create). **Property 5: Listener order follows priority**, in `test/property/listenerPriority.property.test.ts` (create): for any sequence of calls with random priorities and duplicates, distinct listeners are called in descending priority and insertion order within a priority, and a listener added twice is called once.
     - **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6**
 
-  - [~] 7.3 Check the table and the floors
+  - [x] 7.3 Check the table and the floors
     - Confirm `src/translate/shimMembers.generated.ts` is regenerated and staged, and the existing samples' Overall_Match and Trace_Score are unchanged (V2 floor tests).
     - _Requirements: 4.4, 35.7_
 
-- [ ] 8. Runtime: key mapping, key dispatch and browser wiring (D4)
+- [x] 8. Runtime: key mapping, key dispatch and browser wiring (D4)
   - Commit area: `Runtime` (the iframe focus line is `Web`). Verification V2. Read the design section "Keyboard path" and Requirement 5. Tests that run the Player use the FakeBackend and a manual clock (Requirement 5.9).
-  - [~] 8.1 Add `template/runtime/keyMap.ts` (pure)
+  - [x] 8.1 Add `template/runtime/keyMap.ts` (pure)
     - `flashKeyCode({ code, keyCode }): number | null` reads `event.code` first (`KeyA`..`KeyZ` to 65..90, `Digit0`..`Digit9` to 48..57, arrows 37 to 40, `Enter` 13, `Escape` 27, `Space` 32), then `keyCode` when `code` is unknown, else null. `preventsDefault(code)` is true for 37 to 40 and 32. Add it to the purity list.
     - Tests: `test/unit/keyMap.test.ts` (create): one example per code of 13, 27, 32, 37, 38, 39, 40, 65, 67, 68, 83, 87, 88, 90 (Requirement 5.8). **Property 3: Key mapping is total and consistent**, in `test/property/keyMap.property.test.ts` (create): never throws, returns a number or null, each of the 14 required codes is reachable from some `code`, `preventsDefault` true exactly for 37 to 40 and 32.
     - **Validates: Requirements 5.5, 5.8**
 
-  - [~] 8.2 Add `Player.dispatchKey(type, code)`
+  - [x] 8.2 Add `Player.dispatchKey(type, code)`
     - Dispatches a `KeyboardEvent` (bubbling) at `Stage.focus` when it is a display object on the stage, otherwise at the Stage_Object; each browser repeat is a further `KEY_DOWN`; calls `syncAll()` afterwards like the pointer methods. This is the one dispatch function the browser listener, the Replay runner and the Play_Tests use (Requirement 24.2). `Stage.focus` exists as a settable member in Task 9.2; add the minimal `focus` field here if Task 9 has not run (it has not, so add the field and let Task 9.2 own the rest).
     - Test: `test/unit/playerKeys.test.ts` (create). **Property 4: Key events reach the right target**, in `test/property/playerKeys.property.test.ts` (create): for any key code, focus state (null, on stage, off stage) and repeat count, each dispatch delivers one event of the requested type to the focus object when on stage and to the Stage otherwise, and the Stage listener sees it by bubbling.
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.6, 5.9**
 
-  - [~] 8.3 Wire the browser and the iframe
+  - [x] 8.3 Wire the browser and the iframe
     - In `template/src/main.ts` register `keydown` and `keyup` on `window`, map with `flashKeyCode`, call `preventDefault` when `preventsDefault` holds, call `window.focus()` on `pointerdown`. In `web/client/src/result.ts` call `iframe.focus()` on `load` and when the user clicks the frame (the project runs in `sandbox="allow-scripts"`).
     - Tests: `test/unit/emit.test.ts` (extend): the emitted `main.ts` holds the listeners; a unit test of the web result module (`test/web/` jsdom or the existing pattern) checks the focus call. Check the iframe focus once by hand with the `playwright` MCP and report the result (Requirement 5.7); it is a report, not a code change, unless it fails.
     - _Requirements: 5.1, 5.2, 5.5, 5.7_
 
-  - [~] 8.4 Measure browser key codes against Flash
+  - [x] 8.4 Measure browser key codes against Flash
     - `test/e2e/keyCodes.e2e.test.ts` (create, uses a `chromium` slot): press each of the 14 required keys with Playwright in headless Chromium and check that `keyCode` and `flashKeyCode` equal the table values (Requirement 5.10). Record that this proves a US layout only (Open_Item O7).
     - _Requirements: 5.10_
 

@@ -91,3 +91,17 @@ say which you did. The spec that holds the evidence is named with each item.
   in any priority's `Vec`. Ruffle's handler identity includes `use_capture`; the Shim ignores
   capture (Named_Limit `useCapture-ignored`), so identity is the function alone. (as3-coverage,
   design D5, Requirement 6.)
+## Keyboard
+- **Key events go to `Stage.focus` when it is a display object on the stage, else to the Stage; they
+  bubble; each browser repeat is a further `keyDown`.** `Player.dispatchKey` is the one dispatch
+  function. Follows as3-coverage Requirement 5 and design D4; the target rule was not read in Ruffle.
+  The Ruffle test injector sends one `KeyDown` per entry and no repeat (design, "Keyboard path").
+- **Flash key codes come from the physical key (`event.code`)**: `KeyA`..`KeyZ` 65..90, `Digit0`..`Digit9`
+  48..57, arrows 37..40, Enter 13, Escape 27, Space 32; `keyCode` only for an unknown `code`.
+  Measured (task 8.4, `test/e2e/keyCodes.e2e.test.ts`, headless Chromium, Playwright key presses):
+  for the 14 codes the games read (13, 27, 32, 37, 38, 39, 40, 65, 67, 68, 83, 87, 88, 90) the
+  browser `keyCode` and `flashKeyCode` both equal the table. This proves a US layout only (Open_Item O7).
+- **Inside an iframe the emitted page gets keys after a click in the frame.** Measured in
+  `test/e2e/keyboardIframe.e2e.test.ts` (sandbox="allow-scripts", host never calls `iframe.focus()`).
+  Open_Item: web UI parent should call `iframe.focus()` on load (`web/client/src/result.ts`); passed to
+  the web owner, not changed here.

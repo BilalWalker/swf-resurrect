@@ -1,5 +1,5 @@
 import type { DisplayObject } from '../shim/DisplayObject';
-import { Event, MouseEvent } from '../shim/events';
+import { Event, KeyboardEvent, MouseEvent } from '../shim/events';
 import {
   attachRoot,
   buildFrameOne,
@@ -282,6 +282,19 @@ export class Player {
     }
     this.syncAll();
     return outcome;
+  }
+
+  /**
+   * A key event (Requirement 5): a bubbling `KeyboardEvent` at `Stage.focus` when that is a display object on
+   * the stage, otherwise at the Stage_Object. The one dispatch function of the browser listener, the Replay
+   * runner and the Play_Tests. Each browser repeat is a further call with `KEY_DOWN`.
+   */
+  dispatchKey(type: typeof KeyboardEvent.KEY_DOWN | typeof KeyboardEvent.KEY_UP, keyCode: number): void {
+    const focus = this.stage.focus as Partial<DisplayObject> | null;
+    const onStage = focus !== null && typeof focus._onStage === 'function' && focus._onStage();
+    const target = onStage ? (focus as DisplayObject) : this.stage;
+    target.dispatchEvent(new KeyboardEvent(type, true, false, keyCode));
+    this.syncAll();
   }
 
   /** A click at a point: down then up. */
