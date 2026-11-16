@@ -4,9 +4,10 @@ import { spawn } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { mkdir, mkdtemp, readdir, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { sharedPipelineRun } from '../support/sharedPipelineRun';
 import { PIPELINE_SLOTS, withSlot } from '../support/slots';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -116,6 +117,33 @@ function typecheckErrorKeys(output: string): string[] {
   return keys.sort();
 }
 
+/**
+ * What a `--verify` run adds to the tree of a run without it: the fidelity report and the `verify/` directory (frames).
+ * Emit and the two JSON reports are written the same way in both modes (pipeline.ts: `verify` is not passed to the
+ * emit stage, and the reports do not read the verify summary), and the verify stage builds in a staging copy.
+ */
+function isVerifyOnly(file: string): boolean {
+  return file === 'fidelity-report.json' || file === 'fidelity-report.html' || file.startsWith('verify/');
+}
+/**
+ * Compares a fresh run without --verify (`fresh`) with the tree of a run with --verify (`verified`) on exactly the file
+ * set the fresh run wrote. `comparable` is false unless `verified` holds every file of `fresh` and nothing else besides
+ * the verify-only files; then the caller falls back to two real runs.
+ */
+async function compareWithVerifiedTree(fresh: string, verified: string): Promise<{ comparable: boolean; diffs: string[] }> {
+  const [filesFresh, filesVerified] = await Promise.all([listFiles(fresh), listFiles(verified)]);
+  const inVerified = new Set(filesVerified);
+  const inFresh = new Set(filesFresh);
+  const missing = filesFresh.filter((f) => !inVerified.has(f));
+  const unexpected = filesVerified.filter((f) => !inFresh.has(f) && !isVerifyOnly(f));
+  if (missing.length > 0 || unexpected.length > 0) return { comparable: false, diffs: [] };
+  const diffs: string[] = [];
+  for (const f of filesFresh) {
+    const [x, y] = await Promise.all([readFile(join(fresh, f)), readFile(join(verified, f))]);
+    if (!x.equals(y)) diffs.push(`differs: ${f}`);
+  }
+  return { comparable: true, diffs };
+}
 describe('pipeline end to end', () => {
   let tempRoot = '';
   const swfs = findSwfs(SAMPLES_DIR);
@@ -151,14 +179,22 @@ describe('pipeline end to end', () => {
       async () => {
         const problems: string[] = [];
         const outA = join(tempRoot, 'a', name);
-        const outB = join(tempRoot, 'b', name);
-        const [runA, runB] = await Promise.all([main([swf, outA]), main([swf, outB])]);
+        // Run A is FRESH: a pipeline child process started by this test, without --verify, into its own directory.
+        // The second run is the shared `--verify` run of this sample (possibly cached, never compared with itself), used
+        // only when its tree holds exactly the files run A wrote plus the verify-only files; otherwise (or when it
+        // failed) the second run is a real run B without --verify.
+        const sample = basename(dirname(swf));
+        const [runA, shared] = await Promise.all([main([swf, outA]), sharedPipelineRun(sample, swf)]);
         expect(runA.code, `pipeline run 1 for ${swf}\n${runA.output}`).toBe(0);
-        expect(runB.code, `pipeline run 2 for ${swf}\n${runB.output}`).toBe(0);
-
+        let comparison = shared.code === 0 ? await compareWithVerifiedTree(outA, shared.outDir) : { comparable: false, diffs: [] as string[] };
+        if (!comparison.comparable) {
+          const outB = join(tempRoot, 'b', name);
+          const runB = await main([swf, outB]);
+          expect(runB.code, `pipeline run 2 for ${swf}\n${runB.output}`).toBe(0);
+          comparison = { comparable: true, diffs: await compareTrees(outA, outB) };
+        }
         // Same input, same output tree, byte for byte (before npm adds node_modules).
-        expect(await compareTrees(outA, outB), `output trees differ for ${swf}`).toEqual([]);
-
+        expect(comparison.diffs, `output trees differ for ${swf}`).toEqual([]);
         // One npm install at a time across workers, as when this file ran its samples in one loop.
         const install = await withSlot('npm', 1, () => npm(['install', '--no-audit', '--no-fund'], outA));
         if (install.code !== 0) problems.push(`npm install in ${outA}\n${install.output}`);
