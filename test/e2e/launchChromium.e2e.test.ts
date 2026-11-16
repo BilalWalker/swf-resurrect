@@ -27,7 +27,7 @@ describe.skipIf(reason !== null)(`launchChromium stop${reason === null ? '' : ` 
   let slot: string | null = null;
   beforeEach(async () => {
     slot = await acquireSlot('pipeline', PIPELINE_SLOTS);
-  }, 20 * 60_000);
+  }, 5 * 60_000); // queueing for a slot only
   afterEach(async () => {
     if (slot !== null) await releaseSlot(slot);
     slot = null;
