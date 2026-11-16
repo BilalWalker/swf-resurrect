@@ -82,6 +82,8 @@ export interface Rewriter {
   forcedRollback?(mark: number): void;
   /** Classes that expressions kept so far want imported, in source order. */
   forcedTargets?(): readonly string[];
+  /** Value uses of imported classes that expressions kept so far (import-cycle analysis, Requirement 37). */
+  classUses?(): ReadonlyArray<{ target: string; cuttable: boolean }>;
 }
 
 /** Copies source text unchanged. Used until rewrite.ts exists, and in tests. */

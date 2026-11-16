@@ -3,6 +3,8 @@
 import type { SceneJson } from '../../template/runtime/scene';
 import { qualifiedFromScriptPath } from '../convert/qualifiedName';
 import { DuplicateClassError } from './errors';
+import { findImportCuts } from './initHazards';
+import type { ImportCycleProblem } from './initHazards';
 import { buildMemberTables } from './memberTables';
 import { scan } from './scanner';
 import { SHIM_MEMBER_TABLE } from './shimMembers.generated';
@@ -32,12 +34,18 @@ export interface TranslatedClass {
   importRecords: ImportRecord[];
   /** The source declares an AS3 interface that could not be translated: nothing is emitted for it but comments. */
   as3Interface?: boolean;
+  /** Where a cut import is read through getDefinitionByName (Requirement 37.3); absent when none. */
+  cutSites?: Array<{ target: string; line: number }>;
+  /** Value imports of other classes, with cuttable as the import-cycle analysis read them. */
+  valueImports?: Array<{ target: string; cuttable: boolean }>;
 }
 
 export interface TranslateArtifact {
   classes: TranslatedClass[]; // emitted set only, sorted by className
   /** Script paths (relative, posix) that give no Qualified_Name; sorted. */
   skippedScripts: string[];
+  /** Import cycles that could not be cut (problem import-cycle, Requirement 37.5); sorted by className. */
+  importCycles?: ImportCycleProblem[];
 }
 
 function compareCodeUnits(a: string, b: string): number {
@@ -97,7 +105,7 @@ export function planTranslate(
   );
 
   const translated = new Map<string, TranslatedClass>();
-  for (const s of sorted) {
+  const translateOne = (s: ScriptSource, cuts?: ReadonlySet<string>): TranslatedClass => {
     const dot = s.className.lastIndexOf('.');
     const pathPackage = dot < 0 ? '' : s.className.slice(0, dot);
     const simple = s.className.slice(dot + 1);
@@ -108,6 +116,7 @@ export function planTranslate(
       siblingClasses,
       childNames: childNamesByClass?.get(s.className),
       syntaxCheck,
+      ...(cuts !== undefined ? { cuts } : {}),
     });
     const info = r.classes.find((c) => c.name === simple) ?? r.classes[0];
     const diagnostics = r.diagnostics;
@@ -120,7 +129,7 @@ export function planTranslate(
       });
       diagnostics.sort((a, b) => a.line - b.line || compareCodeUnits(a.kind, b.kind) || compareCodeUnits(a.message, b.message));
     }
-    translated.set(s.className, {
+    return {
       className: s.className,
       fileName: `${s.className}.ts`,
       text: r.text,
@@ -130,8 +139,11 @@ export function planTranslate(
       extendsQualified: info?.extendsQualified ?? null,
       importRecords: r.importRecords,
       as3Interface: as3InterfaceName(s.source) !== null && r.interfaceTranslated !== true,
-    });
-  }
+      ...(r.cutSites !== undefined ? { cutSites: r.cutSites } : {}),
+      ...(r.valueImports !== undefined ? { valueImports: r.valueImports } : {}),
+    };
+  };
+  for (const s of sorted) translated.set(s.className, translateOne(s));
 
   const emitted = new Set<string>();
   const queue: string[] = [];
@@ -154,7 +166,22 @@ export function planTranslate(
     }
   }
 
+  // Import cycles (Requirement 37): a class whose translated base reaches it through value imports.
+  const bases = new Map<string, string>();
+  const edges: Array<{ from: string; to: string; cuttable: boolean }> = [];
+  for (const name of emitted) {
+    const cls = translated.get(name) as TranslatedClass;
+    if (cls.extendsQualified !== null && emitted.has(cls.extendsQualified)) bases.set(name, cls.extendsQualified);
+    for (const v of cls.valueImports ?? []) if (emitted.has(v.target)) edges.push({ from: name, to: v.target, cuttable: v.cuttable });
+  }
+  const hazards = findImportCuts({ bases, edges });
+  const cutsOf = new Map<string, Set<string>>();
+  for (const c of hazards.cuts) cutsOf.set(c.from, (cutsOf.get(c.from) ?? new Set<string>()).add(c.to));
+  const sourceOf = new Map(sorted.map((s) => [s.className, s]));
+  for (const [name, cuts] of cutsOf) translated.set(name, translateOne(sourceOf.get(name) as ScriptSource, cuts));
+
   return {
+    importCycles: hazards.problems,
     classes: [...emitted].sort(compareCodeUnits).map((n) => translated.get(n) as TranslatedClass),
     skippedScripts: [...skippedScripts].sort(compareCodeUnits),
   };

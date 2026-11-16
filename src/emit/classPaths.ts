@@ -121,7 +121,7 @@ export function resolveImportLines(
       spec = relativeSpecifier(fromPath, to);
     }
     const names = r.names.map((n) => (n.alias === undefined ? n.name : `${n.name} as ${n.alias}`)).join(', ');
-    lines[idx] = `import { ${names} } from '${spec}';`;
+    lines[idx] = `import ${r.typeOnly === true ? 'type ' : ''}{ ${names} } from '${spec}';`;
   }
   return lines.join('\n');
 }

@@ -81,31 +81,31 @@ Rules that apply to every task:
     - In `test/property/shimTypeImport.property.test.ts` (create), generator in `test/property/gen/genTypeUse.ts`: for any Fixture_Class that names a Shim class in a type position, an expression, or both, the emitted TypeScript has exactly one import of that name.
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4**
 
-- [ ] 4. Translate: nullable reference types with `strictNullChecks` off (D2)
+- [x] 4. Translate: nullable reference types with `strictNullChecks` off (D2)
   - Commit area: `Translate` (also touches `Emit` for the emitted `tsconfig.json`). Verification V1. Read the design D2 row and Requirement 3. Commit body records every regenerated golden and why (Requirement 3.6).
-  - [-] 4.1 Emit `T | null` for every reference type
+  - [x] 4.1 Emit `T | null` for every reference type
     - In `src/translate/types.ts` and `emitTs.ts` emit `T | null` for classes, interfaces, `Object`, `Array`, `Function` and `String` in variable, field, parameter and return positions; never for `int`, `uint`, `Number` or `Boolean`. The annotation text stays `T | null` whatever the compiler flag (Requirement 3.9).
     - Test: `test/unit/emitTs.test.ts` (extend) with Fixture_Classes covering the four positions and the primitives.
     - _Requirements: 3.1, 3.2, 3.9, 3.7_
 
-  - [~] 4.2 Set `strictNullChecks` to false in the emitted tsconfig and the gate
+  - [x] 4.2 Set `strictNullChecks` to false in the emitted tsconfig and the gate
     - In the emitted `tsconfig.json` (template) and in `src/translate/typeCheckGate.ts` options set `strictNullChecks: false` and keep every other `strict` flag on. Check `npm run typecheck:template`.
     - Test: `test/unit/typeCheckGate.test.ts` (extend): a Fixture_Class that assigns `null` to a class-typed variable and dereferences a class-typed field gives no error; a primitive assigned `null` is not widened by the emitter. `test/unit/emit.test.ts` (extend): the emitted tsconfig holds `strictNullChecks: false` and `strict: true`.
     - _Requirements: 3.3, 3.8_
 
-  - [~] 4.3 Regenerate goldens and check the registry
+  - [x] 4.3 Regenerate goldens and check the registry
     - Regenerate the goldens that change (only where a reference type gains `| null`). Run the pipeline on `clickgoto`, `tweendemo`, `radial`, `gradients`, `acid-color-2`, `mask_reapply`, `click_block`, `3_joystick`, `slider_component` and `entity_game` and confirm no class that was omitted only for a null assignment error stays omitted (`translation-report.json`), and that no Overall_Match or Trace_Score changed.
     - Test: `test/unit/translateGolden.test.ts` (extend) passes; a registry test in `test/unit/classOmissions.test.ts` (extend) keeps a class with only a null-assignment error.
     - _Requirements: 3.4, 3.6_
 
-  - [~] 4.4 Write property test for null admission
+  - [x] 4.4 Write property test for null admission
     - **Property 2: Null admission follows the type kind**
     - In `test/property/nullableTypes.property.test.ts` (create): over generated AS3 types from the primitive set and the reference set, the emitted type text admits `null` if and only if the AS3 type is a reference type.
     - **Validates: Requirements 3.1, 3.2, 3.5**
 
 - [ ] 5. Translate, Emit and Runtime: import-cycle hazard rule and load-error listener (D13)
   - Commit area: `Translate` (names Emit and Runtime; the `index.html` change is under `template/`, so verification V2). Read the design section "Module-cycle hazards (new work item D13)" and findings F1 to F3. `spacer` fails at page load (`Class extends value undefined`) and never reaches a frame, so this task comes before every Block C task. The rule is general: no test of 5.1 to 5.3 names a sample.
-  - [~] 5.1 Add `src/translate/initHazards.ts` (pure)
+  - [-] 5.1 Add `src/translate/initHazards.ts` (pure)
     - Input: the value-import graph of the emitted classes, the `extends` edges, and for each import whether any use is in an `extends` clause, a static initialiser or top-level code. A hazard is a class `C` with translated base `S` such that `S` reaches `C` through value imports. The cut is the lexicographically first import of `S` on a shortest path from `S` to `C` whose uses are all inside method bodies or instance field initialisers. If no import can be cut the result carries an `import-cycle` problem with the path. Add the file to the purity test list.
     - Tests: `test/unit/initHazards.test.ts` (create): a two-class cycle, a three-class cycle, a cycle with no cuttable import (problem named, class stays), type-only imports ignored, lexicographic tie-break.
     - Add **Property 28 (Requirement 37.10): Cuttable cycles load in any order** in `test/property/initHazards.property.test.ts` (create): for generated class graphs with at least one hazard with a cuttable import, after the rewrite the modules load in an order-independent bundle check without an import-time error (build a tiny evaluator over the emitted import graph in the test; no browser).

@@ -7,5 +7,6 @@ export { Stage } from './Stage';
 export { MovieClip } from './MovieClip';
 export { Shape } from './Shape';
 export { trace, setTraceSink } from './trace';
+export { getDefinitionByName, registerDefinitions } from './utils';
 export { defineInterface, declareImplements } from './interfaces';
 export type { AS3InterfaceToken } from './interfaces';

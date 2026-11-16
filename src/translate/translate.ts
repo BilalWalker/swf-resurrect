@@ -90,6 +90,57 @@ function findPackageName(nodes: readonly Node[]): string {
   return '';
 }
 
+/** Targets of extends, implements and interface-extends names that have a source (load-time uses). */
+function collectHeritageTargets(nodes: readonly Node[], plan: ImportPlan, out: Set<string>): void {
+  const add = (name: string): void => {
+    const target = name.indexOf('.') >= 0 ? plan.bindingOfChain.has(name) ? name : null : (plan.bindingOfBare.get(name) ?? null);
+    if (target !== null) out.add(target);
+  };
+  for (const n of nodes) {
+    if (n.kind === 'package') collectHeritageTargets(n.body, plan, out);
+    else if (n.kind === 'class') {
+      if (n.extendsName !== null) add(n.extendsName);
+      for (const x of n.implementsNames) add(x);
+    } else if (n.kind === 'interface') {
+      for (const x of n.extendsNames) add(x);
+    }
+  }
+}
+
+/** Identifiers of translated text that do not follow a `.`; the import lines do not count. */
+function identifiersOf(text: string): Set<string> {
+  const out = new Set<string>();
+  const toks = tokenize(text);
+  for (let i = 0; i < toks.length; i++) {
+    const t = toks[i];
+    if (t.kind !== 'id') continue;
+    const prev = toks[i - 1];
+    if (prev !== undefined && prev.kind === 'punct' && prev.text === '.') continue;
+    out.add(t.text);
+  }
+  return out;
+}
+
+const CUT_MARK = "getDefinitionByName('";
+
+/** Every place a cut import is read through the registry, in (line, target) order. */
+function findCutSites(text: string): Array<{ target: string; line: number }> {
+  const sites: Array<{ target: string; line: number }> = [];
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    let from = 0;
+    for (;;) {
+      const at = lines[i].indexOf(CUT_MARK, from);
+      if (at < 0) break;
+      const start = at + CUT_MARK.length;
+      const end = lines[i].indexOf("'", start);
+      if (end < 0) break;
+      sites.push({ target: lines[i].slice(start, end), line: i + 1 });
+      from = end;
+    }
+  }
+  return sites.sort((a, b) => a.line - b.line || cmp(a.target, b.target));
+}
 function cmp(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
@@ -247,27 +298,66 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   }
   // A class that implements an interface with a source file calls declareImplements after its declaration.
   if (hasImplementedToken(nodes, plan) && !shimUsed.includes('declareImplements')) shimUsed.push('declareImplements');
-  const imports = createImportLines(plan, selfPath, shimUsed);
+  // Heritage uses are load-time uses: never cuttable (Requirement 37.2).
+  const fixedTargets = new Set<string>();
+  collectHeritageTargets(nodes, plan, fixedTargets);
 
   // Class info is read before the heritage names are rewritten to their bindings.
   const classes: ClassInfo[] = [];
   collectClasses(nodes, classes, plan);
   bindHeritage(nodes, plan);
 
-  const rwOptions = { shimNames: options.shimNames, plan, tables, self: options.selfQualified };
-  const out = emitTs(nodes, {
-    source: src,
-    tokens,
-    rewriter: createRewriter(nodes, rwOptions),
-    hooks: {
-      importLines: () => imports.lines,
-      constructorBody: constructorHook(tokens, constructorBinds),
-      syntheticConstructorHead: forwardingHead,
-      firstInstanceMember: (cls: ClassNode) => bindsField(cls.name, fieldBinds.get(cls.name) ?? []),
-      childFieldNames: () => options.childNames ?? null,
-      interfaceQualifiedName: () => options.selfQualified,
-    },
+  const cutActive = new Set<string>([...(options.cuts ?? [])].filter((q) => plan.imports.some((p) => p.target === q)));
+  const rewriter = createRewriter(nodes, {
+    shimNames: options.shimNames, plan, tables, self: options.selfQualified, cutTargets: cutActive,
   });
+  const emitOnce = (imports: { lines: string[] }): ReturnType<typeof emitTs> =>
+    emitTs(nodes, {
+      source: src,
+      tokens,
+      rewriter,
+      hooks: {
+        importLines: () => imports.lines,
+        constructorBody: constructorHook(tokens, constructorBinds),
+        syntheticConstructorHead: forwardingHead,
+        firstInstanceMember: (cls: ClassNode) => bindsField(cls.name, fieldBinds.get(cls.name) ?? []),
+        childFieldNames: () => options.childNames ?? null,
+        interfaceQualifiedName: () => options.selfQualified,
+      },
+    });
+
+  let imports: ReturnType<typeof createImportLines>;
+  let out: ReturnType<typeof emitTs>;
+  if (cutActive.size === 0) {
+    imports = createImportLines(plan, selfPath, shimUsed);
+    out = emitOnce(imports);
+  } else {
+    // Pass 1 drops every cut import; a cut class still named in a type position gets `import type` in pass 2.
+    const drop = new Map<string, 'drop' | 'type'>([...cutActive].map((q) => [q, 'drop']));
+    imports = createImportLines(plan, selfPath, [...shimUsed, 'getDefinitionByName'], drop);
+    out = emitOnce(imports);
+    const remaining = identifiersOf(out.text);
+    const typed = new Map<string, 'drop' | 'type'>();
+    for (const q of cutActive) {
+      const binding = plan.imports.find((p) => p.target === q)?.binding as string;
+      typed.set(q, remaining.has(binding) ? 'type' : 'drop');
+    }
+    const usesRegistry = out.text.indexOf("getDefinitionByName('") >= 0;
+    const needsPass2 = [...typed.values()].some((m) => m === 'type') || !usesRegistry;
+    if (needsPass2) {
+      imports = createImportLines(plan, selfPath, usesRegistry ? [...shimUsed, 'getDefinitionByName'] : shimUsed, typed);
+      out = emitOnce(imports);
+    }
+  }
+  const classUses = rewriter.classUses?.() ?? [];
+  const byTarget = new Map<string, boolean>();
+  for (const u of classUses) byTarget.set(u.target, (byTarget.get(u.target) ?? true) && u.cuttable);
+  for (const t of fixedTargets) byTarget.set(t, false);
+  const valueImports = [...byTarget.entries()]
+    .filter(([t]) => t !== options.selfQualified)
+    .sort((x, y) => cmp(x[0], y[0]))
+    .map(([target, cuttable]) => ({ target, cuttable }));
+  const cutSites = findCutSites(out.text);
   // The interface is translated when its node survived the emit (a rolled-back node is an unsupported span).
   const interfaces = findInterfaces(nodes);
   const interfaceTranslated =
@@ -286,6 +376,8 @@ export function translateCore(source: string, options: TranslateOptions): Transl
     classes,
     packageName: findPackageName(nodes),
     importRecords: imports.records,
+    valueImports,
+    ...(cutSites.length > 0 ? { cutSites } : {}),
     ...(interfaceTranslated ? { interfaceTranslated } : {}),
   };
 }

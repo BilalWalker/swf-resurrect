@@ -33,7 +33,7 @@ export interface ClassReportEntry {
 
 /** A condition of the run that the reader must see (Requirements 26.7 and 26.13). */
 export interface TranslationProblem {
-  kind: 'bundler-guard-unavailable' | 'handwritten-override-unparsable';
+  kind: 'bundler-guard-unavailable' | 'handwritten-override-unparsable' | 'import-cycle';
   /** Override path relative to the handwritten directory, for handwritten-override-unparsable. */
   path?: string;
   message: string;
@@ -58,6 +58,15 @@ export interface TranslationReport {
   classPaths: ClassPathEntry[];
   /** Absent when there is none. Sorted by kind, then path. */
   problems?: TranslationProblem[];
+  /** Imports read through getDefinitionByName to cut an import cycle (Requirement 37.3); absent when none. Sorted by (className, line, target). */
+  importCuts?: ImportCutSite[];
+}
+
+/** One rewritten site of the import-cycle cut: a use of 	arget in className at emitted line line. */
+export interface ImportCutSite {
+  className: string;
+  target: string;
+  line: number;
 }
 
 export interface ReportClassInput {
@@ -85,6 +94,7 @@ export interface ReportExtras {
   loose?: readonly LooseClass[];
   classPaths?: readonly ClassPathEntry[];
   problems?: readonly TranslationProblem[];
+  importCuts?: readonly ImportCutSite[];
 }
 
 /** Line of the class-omitted Diagnostic: the first error line for a syntax error or an unresolved import, else 1. */
@@ -158,6 +168,7 @@ export function buildReport(
     .sort((a, b) => cmp(a.className, b.className));
 
   const problems = [...(extras.problems ?? [])].sort((a, b) => cmp(a.kind, b.kind) || cmp(a.path ?? '', b.path ?? '') || cmp(a.message, b.message));
+  const importCuts = [...(extras.importCuts ?? [])].sort((a, b) => cmp(a.className, b.className) || a.line - b.line || cmp(a.target, b.target));
   return {
     formatVersion: 1,
     typeCheck: gate === null ? 'skipped' : 'ran',
@@ -167,6 +178,7 @@ export function buildReport(
     otherErrors,
     classPaths,
     ...(problems.length === 0 ? {} : { problems }),
+    ...(importCuts.length === 0 ? {} : { importCuts }),
   };
 }
 

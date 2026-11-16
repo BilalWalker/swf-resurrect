@@ -26,6 +26,8 @@ export interface TranslateOptions {
    * A field of the class with one of these names is emitted with `declare`. Absent: the rule is off.
    */
   childNames?: ReadonlySet<string>;
+  /** Qualified_Names of imports the file reads through `getDefinitionByName` (import-cycle cut, Requirement 37.3). */
+  cuts?: ReadonlySet<string>;
   /** Injected parser (decision D4). */
   syntaxCheck: SyntaxCheck;
 }
@@ -60,6 +62,13 @@ export interface TranslateResult {
   importRecords: ImportRecord[];
   /** The file declares AS3 interfaces and all of them were emitted as a TypeScript interface and a token. */
   interfaceTranslated?: boolean;
+  /**
+   * Value imports of other classes (the input of the import-cycle analysis), sorted by target.
+   * `cuttable` is false when any use is in an extends or implements clause, a static initialiser or top-level code.
+   */
+  valueImports?: Array<{ target: string; cuttable: boolean }>;
+  /** Places where a cut import is read through `getDefinitionByName`, sorted by (line, target). */
+  cutSites?: Array<{ target: string; line: number }>;
 }
 
 /** One generated import line (design 14.1). */
@@ -67,6 +76,8 @@ export interface ImportRecord {
   /** 1-based line of the import in 	ext. */
   line: number;
   kind: 'shim' | 'class';
+  /** `import type { ... }`: a cut import whose name is still used in a type position. */
+  typeOnly?: boolean;
   names: Array<{ name: string; alias?: string }>;
   /** Qualified_Name of the imported class, for kind class. */
   target?: string;

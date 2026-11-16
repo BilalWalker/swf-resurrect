@@ -35,6 +35,17 @@ export interface RewriteOptions {
    * expression uses as a value, once per use, in source order (Requirement 22.13); used by the dry pass.
    */
   onMethodValue?: (className: string, name: string, inFieldInit: boolean) => void;
+  /**
+   * Classes whose value uses are read through `getDefinitionByName` (the import-cycle cut, Requirement 37.3).
+   * Their import line is dropped or made type-only by the caller.
+   */
+  cutTargets?: ReadonlySet<QualifiedName>;
+}
+
+/** A value use of an imported class in an expression (Requirement 37.2): `cuttable` inside a method body or an instance field initialiser. */
+export interface ClassUse {
+  target: QualifiedName;
+  cuttable: boolean;
 }
 
 /** Right-hand sides of `is` / `instanceof` that JS `instanceof` gets wrong. */
@@ -71,15 +82,21 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
   for (const p of options.plan.imports) classNames.add(p.binding);
   const bindingOfTarget = new Map<QualifiedName, string>();
   for (const p of options.plan.imports) bindingOfTarget.set(p.target, p.binding);
-  const env: ExprEnv = { options, classNames, bindingOf: (q) => bindingOfTarget.get(q) ?? null };
-  // Forced imports in source order; the statement rollback of emitTs truncates it (design 21.8).
-  const forced: QualifiedName[] = [];
+  const targetOfBinding = new Map<string, QualifiedName>();
+  for (const p of options.plan.imports) targetOfBinding.set(p.binding, p.target);
+  const env: ExprEnv = {
+    options, classNames, bindingOf: (q) => bindingOfTarget.get(q) ?? null, targetOfBinding,
+    cut: options.cutTargets ?? EMPTY_SET,
+  };
+  // Forced imports and class uses in source order; the statement rollback of emitTs truncates it (design 21.8).
+  const log: Array<{ forced: QualifiedName } | { use: ClassUse }> = [];
   return {
-    forcedMark: () => forced.length,
+    forcedMark: () => log.length,
     forcedRollback: (n: number) => {
-      forced.length = Math.min(forced.length, n);
+      log.length = Math.min(log.length, n);
     },
-    forcedTargets: () => forced,
+    forcedTargets: () => log.flatMap((e) => ('forced' in e ? [e.forced] : [])),
+    classUses: () => log.flatMap((e) => ('use' in e ? [e.use] : [])),
     expression(slice: TokenSlice, ctx: RewriteContext): RewriteResult {
       const toks = sigTokens(slice);
       if (toks.length === 0) return { text: '' };
@@ -87,9 +104,10 @@ export function createRewriter(nodes: readonly Node[], options: RewriteOptions):
       try {
         const text = rw.run();
         for (const target of rw.importTargets) {
-          forced.push(target);
+          log.push({ forced: target });
           options.onImportTarget?.(target);
         }
+        for (const use of rw.classUses) log.push({ use });
         if (ctx.member !== undefined && options.onMethodValue !== undefined) {
           for (const name of rw.methodValues) options.onMethodValue(ctx.member.className, name, ctx.member.fieldInit === true);
         }
@@ -202,6 +220,8 @@ export function collectReferences(
 /** The lines of the generated imports and their records (design 14.3, step 5). */
 export function createImportLines(
   plan: ImportPlan, selfPath: string, shimUsed: readonly string[],
+  /** Cut imports: 'drop' writes no line, 'type' writes `import type`. */
+  cut: ReadonlyMap<QualifiedName, 'drop' | 'type'> = new Map(),
 ): { lines: string[]; records: ImportRecord[] } {
   const lines: string[] = [];
   const records: ImportRecord[] = [];
@@ -214,14 +234,17 @@ export function createImportLines(
     .map((p) => ({ p, spec: relativeSpecifier(selfPath, canonicalClassPath(p.target)) }))
     .sort((a, b) => cmp(a.spec, b.spec) || cmp(a.p.binding, b.p.binding));
   for (const { p, spec } of classes) {
+    const mode = cut.get(p.target);
+    if (mode === 'drop') continue;
     const simple = p.target.slice(p.target.lastIndexOf('.') + 1);
     const text = p.aliased ? `${simple} as ${p.binding}` : simple;
-    lines.push(`import { ${text} } from '${spec}';`);
+    lines.push(`import ${mode === 'type' ? 'type ' : ''}{ ${text} } from '${spec}';`);
     records.push({
       line: lines.length,
       kind: 'class',
       names: [p.aliased ? { name: simple, alias: p.binding } : { name: simple }],
       target: p.target,
+      ...(mode === 'type' ? { typeOnly: true } : {}),
     });
   }
   return { lines, records };
@@ -331,6 +354,13 @@ interface ExprEnv {
   options: RewriteOptions;
   classNames: ReadonlySet<string>;
   bindingOf(q: QualifiedName): string | null;
+  targetOfBinding: ReadonlyMap<string, QualifiedName>;
+  cut: ReadonlySet<QualifiedName>;
+}
+
+/** The registry read of a cut class; parenthesised so `new` and member access keep their meaning. */
+function cutRead(target: QualifiedName): string {
+  return `(getDefinitionByName('${target}'))`;
 }
 
 /** Key of a class of the file in the member tables (design 18.3): the file's Qualified_Name for the class named like the file. */
@@ -436,6 +466,8 @@ class ExprRewriter {
   readonly methodValues: string[] = [];
   /** Classes this expression wants imported; kept only when the expression is not unsupported. */
   readonly importTargets: string[] = [];
+  /** Value uses of imported classes in this expression (for the import-cycle analysis). */
+  readonly classUses: ClassUse[] = [];
 
   constructor(
     private readonly src: string,
@@ -494,6 +526,8 @@ class ExprRewriter {
     if (i > 0 && (this.isP(i - 1, '.') || this.isP(i - 1, '::'))) return this.raw(i);
     const bound = this.chainBinding(i);
     if (bound !== null) return bound;
+    const cutRef = this.classValue(i);
+    if (cutRef !== null) return cutRef;
     if (t.text === 'this') this.noteExplicitThis(i);
     switch (t.text) {
       case 'int':
@@ -538,7 +572,14 @@ class ExprRewriter {
         this.diags.push(r.diagnostic);
         return t.text;
       default:
-        if (r.importTarget !== null) this.importTargets.push(r.importTarget);
+        if (r.importTarget !== null) {
+          this.importTargets.push(r.importTarget);
+          this.noteUse(r.importTarget);
+          const binding = this.env.bindingOf(r.importTarget);
+          if (this.env.cut.has(r.importTarget) && binding !== null && r.text.startsWith(binding + '.')) {
+            return cutRead(r.importTarget) + r.text.slice(binding.length);
+          }
+        }
         if (isBindableMethod(r.found) && this.isValuePosition(i + 1)) this.methodValues.push(t.text);
         return r.text;
     }
@@ -569,9 +610,31 @@ class ExprRewriter {
     for (let k = j; k > i; k -= 2) {
       const text = this.toks.slice(i, k + 1).map((x) => x.text).join('');
       const binding = this.opts.plan.bindingOfChain.get(text);
-      if (binding !== undefined) return { text: binding, next: k + 1 };
+      if (binding !== undefined) {
+        const target = this.env.targetOfBinding.get(binding);
+        if (target !== undefined) {
+          this.noteUse(target);
+          if (this.env.cut.has(target)) return { text: cutRead(target), next: k + 1 };
+        }
+        return { text: binding, next: k + 1 };
+      }
     }
     return null;
+  }
+
+  /** Records a value use of an imported class. Cuttable inside a method body or an instance field initialiser. */
+  private noteUse(target: QualifiedName): void {
+    const m = this.member;
+    this.classUses.push({ target, cuttable: m !== null && m.fieldInit !== false });
+  }
+
+  /** A bare identifier that is an imported class in a value position: noted, and read through the registry when cut. */
+  private classValue(i: number): Parsed | null {
+    const t = this.toks[i];
+    const target = this.env.targetOfBinding.get(t.text);
+    if (target === undefined || this.locals.has(t.text) || !isReference(this.toks, i)) return null;
+    this.noteUse(target);
+    return this.env.cut.has(target) ? { text: cutRead(target), next: i + 1 } : null;
   }
 
   private closeOf(open: number, hi: number): number {
@@ -640,7 +703,15 @@ class ExprRewriter {
       }
     }
     const kw = word === 'as' ? 'as' : 'instanceof';
-    return { text: kw + this.gap(i) + rhs.text, next: rhs.next };
+    let text = rhs.text;
+    if (word !== 'as' && rhs.next === i + 2) {
+      const target = this.env.targetOfBinding.get(text);
+      if (target !== undefined && !this.locals.has(text)) {
+        this.noteUse(target);
+        if (this.env.cut.has(target)) text = cutRead(target);
+      }
+    }
+    return { text: kw + this.gap(i) + text, next: rhs.next };
   }
 
   /**

@@ -11,6 +11,7 @@ const CORE_FILES = [
   "src/emit/exportedNames.ts", // 23.1
   "src/convert/qualifiedName.ts",
   "src/translate/importPlan.ts",
+  "src/translate/initHazards.ts", // as3-coverage 5.1
   "src/emit/classPaths.ts",
   "src/translate/shimMembers.ts",
   "src/translate/memberTables.ts",

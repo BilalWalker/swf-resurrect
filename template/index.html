@@ -11,6 +11,19 @@
     </style>
   </head>
   <body>
+    <script>
+      // Load_Error_Report: a module that fails to evaluate never reaches main.ts, so this runs first.
+      (function () {
+        function fail(reason) {
+          var text = reason && reason.message ? reason.message : String(reason);
+          var o = window.__swfResurrect;
+          if (o && o.ready) return;
+          window.__swfResurrect = { ready: false, error: text };
+        }
+        window.addEventListener('error', function (e) { fail(e.error || e.message); });
+        window.addEventListener('unhandledrejection', function (e) { fail(e.reason); });
+      })();
+    </script>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

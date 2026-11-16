@@ -144,8 +144,17 @@ function reportOf(
       diagnostics: c.diagnostics,
     })),
     gate,
-    { omissions, loose, classPaths, problems },
+    {
+      omissions, loose, classPaths,
+      problems: [...problems, ...(translated?.importCycles ?? []).map((c) => importCycleProblem(c.className, c.path))],
+      importCuts: (translated?.classes ?? []).flatMap((c) => (c.cutSites ?? []).map((s) => ({ className: c.className, target: s.target, line: s.line }))),
+    },
   );
+}
+
+/** The Translation_Report problem for an import cycle that has no cuttable import (Requirement 37.5). */
+function importCycleProblem(className: string, path: readonly string[]): TranslationProblem {
+  return { kind: 'import-cycle', message: `${className} extends ${path[0]}, which reaches it through value imports: ${path.join(' -> ')} -> ${className}`, path: className };
 }
 
 /** The CLI line for an omitted handwritten override (Requirement 26.13, D40). */

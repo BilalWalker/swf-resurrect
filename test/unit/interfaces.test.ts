@@ -394,7 +394,9 @@ describe('slider_component interfaces (Requirement 27.5, Task 24.4)', () => {
       expect(report.omittedClasses.filter((o) => o.reason.kind === 'missing-export')).toEqual([]);
       for (const n of interfaces) expect(report.classes.find((c) => c.className === n)).toMatchObject({ omitted: false });
       const registry = readFileSync(join(out, 'p', 'src', 'classes.ts'), 'utf8');
-      for (const n of interfaces) expect(registry).not.toContain(`"${n}"`); // interfaces are not linked classes
+      // The linked-class registry holds no interface; the all-class definitions of an import cut (Requirement 37.4) may.
+      const linked = registry.slice(registry.indexOf('export const classRegistry'));
+      for (const n of interfaces) expect(linked).not.toContain(`"${n}"`); // interfaces are not linked classes
     },
     10 * 60 * 1000,
   );
