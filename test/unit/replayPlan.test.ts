@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseNumFrames, parseTickOptions, planReplay } from '../../src/verify/core/replayPlan';
+import { parseNumFrames, parseTickOptions, planReplay, planToEntries } from '../../src/verify/core/replayPlan';
 
 describe('parseTickOptions / parseNumFrames', () => {
   it('num_frames only', () => {
@@ -100,5 +100,43 @@ describe('planReplay pointer entries', () => {
     expect(p.problems.map((q) => q.kind)).toEqual(['unsupported-input', 'unsupported-input', 'unsupported-input']);
     expect(p.tickCount).toBe(4);
     expect(p.pointers).toEqual([{ tick: 3, kind: 'move', x: 3, y: 3, index: 3, unpaired: false }]);
+  });
+});
+describe('planReplay key entries', () => {
+  const plan = (entries: unknown[]) => {
+    const p = planReplay(JSON.stringify(entries), null);
+    if ('error' in p) throw new Error(p.error);
+    return p;
+  };
+  it('maps Char and named keys to Flash codes at the tick of their group', () => {
+    const p = plan([
+      { type: 'KeyDown', key: { Char: 'a' } },
+      { type: 'KeyDown', key: 'ArrowLeft' },
+      { type: 'Wait' },
+      { type: 'KeyUp', key: { Char: '5' } },
+      { type: 'KeyUp', key: 'Space' },
+    ]);
+    expect(p.problems).toEqual([]);
+    expect(p.keys).toEqual([
+      { tick: 0, kind: 'down', keyCode: 65, index: 0 },
+      { tick: 0, kind: 'down', keyCode: 37, index: 1 },
+      { tick: 1, kind: 'up', keyCode: 53, index: 3 },
+      { tick: 1, kind: 'up', keyCode: 32, index: 4 },
+    ]);
+    expect(planToEntries(p)).toEqual([
+      { type: 'KeyDown', key: { Char: 'a' } },
+      { type: 'KeyDown', key: 'ArrowLeft' },
+      { type: 'Wait' },
+      { type: 'KeyUp', key: { Char: '5' } },
+      { type: 'KeyUp', key: 'Space' },
+    ]);
+  });
+  it('a key without a table entry is unsupported-input and ends its group like any unsupported entry', () => {
+    const p = plan([{ type: 'KeyDown', key: 'F1' }, { type: 'KeyDown', key: { Char: '!' } }, { type: 'KeyDown', key: 'Enter' }]);
+    expect(p.problems.map((x) => x.kind)).toEqual(['unsupported-input', 'unsupported-input']);
+    expect(p.keys).toEqual([{ tick: 2, kind: 'down', keyCode: 13, index: 2 }]);
+  });
+  it('a plan with no keys has an empty keys list', () => {
+    expect(plan([{ type: 'MouseMove', pos: [1, 2] }]).keys).toEqual([]);
   });
 });

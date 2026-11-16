@@ -1,0 +1,226 @@
+[
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "MouseMove",
+    "pos": [
+      400,
+      300
+    ]
+  },
+  {
+    "type": "MouseDown",
+    "pos": [
+      400,
+      300
+    ],
+    "btn": "Left"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "MouseUp",
+    "pos": [
+      400,
+      300
+    ],
+    "btn": "Left"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "KeyDown",
+    "key": "ArrowLeft"
+  },
+  {
+    "type": "KeyDown",
+    "key": "ArrowUp"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "KeyDown",
+    "key": "Space"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "KeyUp",
+    "key": "Space"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "KeyUp",
+    "key": "ArrowUp"
+  },
+  {
+    "type": "KeyUp",
+    "key": "ArrowLeft"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  },
+  {
+    "type": "Wait"
+  }
+]

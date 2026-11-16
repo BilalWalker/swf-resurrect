@@ -7,6 +7,15 @@ export type PlanProblem =
 
 export type PointerKind = 'move' | 'down' | 'up';
 
+export interface PlannedKey {
+  tick: number;
+  kind: 'down' | 'up';
+  /** Flash key code (see automatedKeyToFlashCode). */
+  keyCode: number;
+  /** Index of the Reference_Input entry. */
+  index: number;
+}
+
 export interface PlannedPointer {
   tick: number;
   kind: PointerKind;
@@ -24,6 +33,7 @@ export interface ReplayPlan {
   tickCount: number;
   tickSource: TickSource;
   pointers: PlannedPointer[];
+  keys: PlannedKey[];
   /** MouseUp entries that followed a MouseDown (report field `clicks`). */
   pressReleasePairs: number;
   problems: PlanProblem[];
@@ -70,7 +80,32 @@ export function parseNumFrames(tomlText: string | null): number | null {
 type Entry =
   | { kind: 'wait' }
   | { kind: 'move' | 'down' | 'up'; x: number; y: number }
+  | { kind: 'keydown'; keyCode: number }
+  | { kind: 'keyup'; keyCode: number }
   | { kind: 'unsupported'; detail: string };
+
+const NAMED_KEYS: Record<string, number> = {
+  ArrowUp: 38,
+  ArrowDown: 40,
+  ArrowLeft: 37,
+  ArrowRight: 39,
+  Enter: 13,
+  Escape: 27,
+  Space: 32,
+};
+
+/**
+ * Ruffle input.json key to Flash key code. A key is {"Char":"a"} (letters and digits, to ASCII upper case)
+ * or a name string; anything else is null.
+ */
+export function automatedKeyToFlashCode(key: unknown): number | null {
+  if (typeof key === 'string') return Object.prototype.hasOwnProperty.call(NAMED_KEYS, key) ? NAMED_KEYS[key]! : null;
+  if (typeof key === 'object' && key !== null && !Array.isArray(key)) {
+    const c = (key as Record<string, unknown>)['Char'];
+    if (typeof c === 'string' && /^[A-Za-z0-9]$/.test(c)) return c.toUpperCase().charCodeAt(0);
+  }
+  return null;
+}
 
 function classify(raw: unknown): Entry {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
@@ -78,6 +113,11 @@ function classify(raw: unknown): Entry {
   }
   const e = raw as Record<string, unknown>;
   if (e['type'] === 'Wait') return { kind: 'wait' };
+  if (e['type'] === 'KeyDown' || e['type'] === 'KeyUp') {
+    const keyCode = automatedKeyToFlashCode(e['key']);
+    if (keyCode === null) return { kind: 'unsupported', detail: `${String(e['type'])} with key ${JSON.stringify(e['key'])}` };
+    return { kind: e['type'] === 'KeyDown' ? 'keydown' : 'keyup', keyCode };
+  }
   if (e['type'] === 'MouseDown' || e['type'] === 'MouseUp' || e['type'] === 'MouseMove') {
     if (e['type'] !== 'MouseMove' && e['btn'] !== 'Left') {
       return { kind: 'unsupported', detail: `button ${String(e['btn'])}` };
@@ -118,6 +158,7 @@ export function planReplay(
 
   const problems: PlanProblem[] = [];
   const pointers: PlannedPointer[] = [];
+  const keys: PlannedKey[] = [];
   // groupFirst[k] is the index of the first entry in group k.
   const groupFirst: number[] = [];
   let group = 0;
@@ -132,6 +173,8 @@ export function planReplay(
     const entry = classify(parsed[i]);
     if (entry.kind === 'unsupported') {
       problems.push({ kind: 'unsupported-input', index: i, detail: entry.detail });
+    } else if (entry.kind === 'keydown' || entry.kind === 'keyup') {
+      keys.push({ tick: group, kind: entry.kind === 'keydown' ? 'down' : 'up', keyCode: entry.keyCode, index: i });
     } else if (entry.kind !== 'wait') {
       let unpaired = false;
       if (entry.kind === 'down') {
@@ -154,13 +197,35 @@ export function planReplay(
   const tickCount = numFrames ?? groupCount;
 
   let planPointers = pointers;
+  let planKeys = keys;
   if (groupCount > tickCount) {
     problems.push({ kind: 'unused-input', index: groupFirst[tickCount]! });
     planPointers = pointers.filter((p) => p.tick < tickCount);
+    planKeys = keys.filter((k) => k.tick < tickCount);
   }
 
   problems.sort((a, b) => a.index - b.index || (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0));
   const tickSource: TickSource = numFrames === null ? 'input-groups' : source;
   const pressReleasePairs = planPointers.filter((p) => p.kind === 'up' && !p.unpaired).length;
-  return { tickCount, tickSource, pointers: planPointers, pressReleasePairs, problems };
+  return { tickCount, tickSource, pointers: planPointers, keys: planKeys, pressReleasePairs, problems };
+}
+
+const KEY_NAMES: Record<number, string> = { 38: 'ArrowUp', 40: 'ArrowDown', 37: 'ArrowLeft', 39: 'ArrowRight', 13: 'Enter', 27: 'Escape', 32: 'Space' };
+
+/**
+ * Canonical Reference_Input entries for the key and Wait entries of a plan (lower-case Char):
+ * one Wait ends each tick; key entries keep their order inside a tick. Mouse entries are not written.
+ */
+export function planToEntries(plan: ReplayPlan): unknown[] {
+  const out: unknown[] = [];
+  const ticks = plan.tickCount;
+  for (let t = 0; t < ticks; t++) {
+    for (const k of plan.keys.filter((x) => x.tick === t).sort((a, b) => a.index - b.index)) {
+      const name = KEY_NAMES[k.keyCode];
+      const key = name !== undefined ? name : { Char: String.fromCharCode(k.keyCode).toLowerCase() };
+      out.push({ type: k.kind === 'down' ? 'KeyDown' : 'KeyUp', key });
+    }
+    if (t < ticks - 1 || plan.keys.every((x) => x.tick !== t) ) out.push({ type: 'Wait' });
+  }
+  return out;
 }

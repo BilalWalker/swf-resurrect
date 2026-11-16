@@ -322,24 +322,24 @@ Rules that apply to every task:
     - In `test/property/handwrittenReport.property.test.ts` (create): for any generated set of overrides and any generated `SET.json`, the pipeline warns for exactly the overrides that are not listed and lists the others with their reason. Add `test/e2e/handwrittenSamples.test.ts` (create): over the committed samples' shared runs, every Hand_Written_Class in a Fidelity_Report is a member of the set (Requirement 33.7).
     - **Validates: Requirements 33.3, 33.4, 33.5, 33.7**
 
-- [ ] 18. Verify: key entries in the Replay and the Ruffle recorder attempt (Requirements 24, 26)
+- [x] 18. Verify: key entries in the Replay and the Ruffle recorder attempt (Requirements 24, 26)
   - Commit area: `Verify`. Verification V1. Read the design section "Input_Script extension". Ruffle's key entry format was read in `tests/input-format/src/format.rs` and `tests/framework/src/runner/automation.rs`: `{"type":"KeyDown","key":{"Char":"a"}}` or `{"type":"KeyDown","key":"ArrowUp"}`; a key is a name, not a code; the injector sends one entry and no repeat.
-  - [-] 18.1 Plan key entries
+  - [x] 18.1 Plan key entries
     - `src/verify/core/replayPlan.ts` classifies `KeyDown` and `KeyUp` and adds `keys: PlannedKey[]` (`tick`, `kind`, `keyCode`, `index`). The pure table `automatedKeyToFlashCode`: `Char(c)` letters and digits to ASCII upper case, `ArrowUp` 38, `ArrowDown` 40, `ArrowLeft` 37, `ArrowRight` 39, `Enter` 13, `Escape` 27, `Space` 32; anything else is `unsupported-input` as today. `planToEntries(plan)` serialises canonical entries (lower-case `Char`). Existing mouse planning and `clickgoto` ticks are unchanged.
     - Tests: `test/unit/replayPlan.test.ts` (extend): the real `clickgoto` plan is unchanged (21 groups, 32 ticks, no problems); key entries; an unsupported entry type. **Property 24: Input_Script keys round trip and keep order**, in `test/property/replayKeys.property.test.ts` (create), generator in `test/property/gen/genReferenceInput.ts` (extend): parse, plan and serialise gives an equal entry list, each key entry takes the tick of its group, and order inside a group is preserved.
     - **Validates: Requirements 24.1, 24.6, 24.7, 24.8**
 
-  - [~] 18.2 Run key entries in the Replay
+  - [x] 18.2 Run key entries in the Replay
     - `src/verify/edge/replayRunner.ts` calls `player.dispatchKey` after that tick's update, using the same function as the browser wiring. `clickgoto` keeps Trace_Score 100 at 32 ticks (CC condition: state it in the commit body).
     - Tests: `test/unit/replayRunner.test.ts` (extend) with a Fixture_Class that records key events; `test/unit/clickgotoReplay.test.ts` unchanged and green.
     - _Requirements: 24.2, 24.5_
 
-  - [~] 18.3 Teach the recorder keys and try Ruffle on `entity_game`
+  - [x] 18.3 Teach the recorder keys and try Ruffle on `entity_game`
     - The Ruffle recorder writes `KeyDown` and `KeyUp` entries into `input.json` in the format above (the format is read in the Ruffle_Source; record the file names in the commit body). Build `test/support/playScript.ts` (create) as the one Input_Script builder for a game: the same script is the recorder input and the Play_Test input (Requirement 26.6); add the `entity_game` script (start click, hold a direction, fire) and a unit test that the committed `samples/entity_game/reference/input.json` equals the builder output. Then try Ruffle on `entity_game` headlessly (the optional `@ruffle-rs/ruffle` in Playwright, Open_Item O9): record whether it ran and what trace it produced; the game calls no `trace()` (F8), so the expected result is an empty trace. Commit only our own script and the options file under `samples/entity_game/reference/`; commit no `output.txt` that is empty unless an empty file is what the verify spec expects (check `samples/*/reference/` conventions first; if unsure, STOP and ask). State at Checkpoint 2 whether Ruffle ran the game headlessly (Requirement 26.4).
     - Tests: `test/unit/playScript.test.ts` (create).
     - _Requirements: 24.3, 24.4, 26.1, 26.3, 26.4, 26.6_
 
-  - [~] 18.4 Report an empty Reference_Trace as not compared
+  - [x] 18.4 Report an empty Reference_Trace as not compared
     - For a game whose Reference_Trace is empty the Verify_Stage reports behaviour `not-compared` with the reason `empty-reference-trace` (existing breadth rule). Confirm this on `entity_game` and add a report test; no Trace_Score floor is set for it (Requirement 26.2, 26.3).
     - Tests: `test/e2e/traceScore.e2e.test.ts` (extend) or a report unit test with the `entity_game` shared run.
     - _Requirements: 26.2, 26.3_

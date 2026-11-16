@@ -52,7 +52,7 @@ async function main(): Promise<void> {
   let setTraceSink: ((fn: ((...args: unknown[]) => void) | null) => void) | null = null;
 
   try {
-    const [playerMod, clockMod, loaderMod, traceMod, internalMod, classesMod, treeMod] = await Promise.all([
+    const [playerMod, clockMod, loaderMod, traceMod, internalMod, classesMod, treeMod, eventsMod] = await Promise.all([
       load('runtime/player.ts'),
       load('runtime/clock.ts'),
       load('runtime/loader.ts'),
@@ -60,6 +60,7 @@ async function main(): Promise<void> {
       load('shim/internal.ts'),
       load('src/classes.ts'),
       load('runtime/stageTree.ts'),
+      load('shim/events.ts'),
     ]);
     setTraceSink = traceMod.setTraceSink;
 
@@ -122,6 +123,11 @@ async function main(): Promise<void> {
             });
           }
         }
+      }
+      // Key entries go through the same dispatch function as the browser wiring (Requirement 24.2).
+      for (const k of plan.keys ?? []) {
+        if (k.tick !== tick) continue;
+        player.dispatchKey(k.kind === 'down' ? eventsMod.KeyboardEvent.KEY_DOWN : eventsMod.KeyboardEvent.KEY_UP, k.keyCode);
       }
       ticksRun = tick + 1;
     }

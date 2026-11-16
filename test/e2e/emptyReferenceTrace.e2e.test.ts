@@ -1,7 +1,8 @@
 // Pins the report for samples whose reference output.txt is empty (Empty_Reference_Trace, task 15.3).
 // This is not a floor: it asserts the status and reason, and that no Trace_Score field exists.
 // Skipped with a reason when Java, tools/ffdec or Chromium is missing.
-// Validates: Requirements 3.7, 14.24
+// entity_game (task 18.4): its reference output.txt is empty because the game calls no trace() (Requirement 26.2, 26.3).
+// Validates: Requirements 3.7, 14.24, 26.2, 26.3
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -37,7 +38,7 @@ interface BehaviourReport {
 
 describe.skipIf(reason !== null)(`empty reference trace report${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
 
-  it.each(['radial', 'gradients', 'acid-color-2'])(
+  it.each(['radial', 'gradients', 'acid-color-2', 'entity_game'])(
     '%s reports behaviour not-compared with empty-reference-trace and no Trace_Score',
     async (sample) => {
       const { outDir, code } = await sharedPipelineRun(sample, resolve(repoRoot, 'samples', sample, 'test.swf'));
