@@ -16,12 +16,20 @@ import { sharedPipelineRun } from '../support/sharedPipelineRun';
 /** Measured in task 17.12 (1 frame, 0 differing pixels). Never lower. */
 const OVERALL_MATCH_FLOOR_STATIC_TEXT = 100;
 /**
- * Measured in task 17.12 (0 of 3 lines matched, missing 3, extra 0). Never lower.
- * Cause: `Test`, the root-package class that the frame script calls as `new Test(this)`, is not translated,
- * so the frame script throws "Test is not defined" and the constructor that traces the lines never runs.
+ * Measured in task 17.12 (0 of 3 lines matched, missing 3, extra 0), and again in 29.2 after `Test` is translated
+ * (0 of 3 matched, missing 3, extra 1). Never lower.
+ * Before 29.2 the frame script threw "Test is not defined". Now `Test` runs, but its try/catch is left untranslated
+ * ("try is not supported"), so the first two lines never print; the third differs by class name (see EXPECTED_EXTRA).
  * Requirement 20.8 accepts the three reference lines as missing; no line is removed from the comparison.
  */
 const TRACE_SCORE_FLOOR_STATIC_TEXT = 0;
+/**
+ * The one line we print that Flash does not: `Child: [object Shape]`. It pairs with the reference line
+ * `Child: [object StaticText]` (reference line 3), which is one of the three missing lines above.
+ * Cause: the runtime draws static text as a Shape and has no StaticText class, so the printed class name
+ * differs from Flash. Named_Limit recorded in samples/static_text/PROVENANCE.md.
+ */
+const EXPECTED_EXTRA = ['Child: [object Shape]'];
 const EXPECTED_MISSING = [
   'Caught error: ArgumentError: Error #2012: StaticText$ class cannot be instantiated.',
   'e.errorID: 2012',
@@ -91,7 +99,7 @@ describe.skipIf(decision.action === 'skip' || reason !== null)(
         expect(report.behaviour.status).toBe('compared');
         expect(report.behaviour.traceScore).toBeGreaterThanOrEqual(TRACE_SCORE_FLOOR_STATIC_TEXT);
         expect((report.behaviour.missing ?? []).map((l) => l.text)).toEqual(EXPECTED_MISSING);
-        expect(report.behaviour.extra ?? []).toEqual([]);
+        expect((report.behaviour.extra ?? []).map((l) => l.text)).toEqual(EXPECTED_EXTRA);
       },
       TIMEOUT_MS,
     );
