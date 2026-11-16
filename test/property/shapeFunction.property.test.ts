@@ -118,11 +118,14 @@ describe("svgToShapeJson strokes", () => {
           const messages = limits.filter((l) => l.kind === "stroke-style").map((l) => l.message);
           expect(limits.every((l) => l.kind === "stroke-style")).toBe(true);
           const ROUND = "approximated: round join at a corner under 30 degrees is not drawn exactly (2 to 140 px differ at 7 and 15 degrees, strokes 2 to 20 px wide)";
+          const MITER = "approximated: miter join at a corner past its miter limit is not drawn exactly (2 to 358 px differ at 7 to 45 degrees with miter limit 2.0, strokes 2 to 20 px wide; exact at 60 degrees; other limits and the boundary between 45 and 60 degrees were not measured)";
           const expected = [
             ...new Set(
               items.flatMap(([v, , join]) => [
                 ...(v.limit === null ? [] : [v.limit]),
                 ...(!dropped(v.attrs) && (v.attrs.includes("stroke-linejoin") ? false : join === "round") ? [ROUND] : []),
+                // the path is a 6 degree corner and the default miter limit is 4, so a plain miter join is named
+                ...(!dropped(v.attrs) && (v.attrs.includes("stroke-linejoin") ? false : join === "miter") ? [MITER] : []),
               ]),
             ),
           ].sort();

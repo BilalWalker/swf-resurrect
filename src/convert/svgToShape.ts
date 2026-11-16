@@ -9,8 +9,8 @@
 // one entry per id; with `caps.bitmap` false the fill is a limit. Strokes (sub-task 10.5): cap, join, miter limit, width,
 // colour and alpha are read; a miter-clip join, a gradient stroke, an unresolved stroke paint and a dash array are each
 // returned as a `stroke-style` limit (decided F8), and so is a round join at a corner under 30 degrees (sub-tasks 28.1, 29.3). No limit is
-// recorded for a cap, a bevel join, a miter join or a wider round corner (measured in 11.1 and 29.3; the 29.3 bevel and miter
-// controls at 7 degrees differ by 0 to 2 px and 4 to 358 px and are not limited here).
+// recorded for a cap, a bevel join at 10 degrees or wider, a miter join within its miter limit or a wider round corner
+// (measured in 11.1 and 29.3). A plain miter join past its miter limit is a limit too (29.3 follow-up).
 //
 // Elements that cannot be read at all (malformed XML, path data outside M L H V Q C Z, non-finite numbers) are
 // dropped without a limit: FFDec does not write them, and ShapeLimitKind has no kind for them.
@@ -265,6 +265,19 @@ function decodeDataUrl(href: string | undefined): { ext: 'png' | 'jpg'; bytes: U
 const ROUND_JOIN_LIMIT = 'approximated: round join at a corner under 30 degrees is not drawn exactly (2 to 140 px differ at 7 and 15 degrees, strokes 2 to 20 px wide)';
 const SHARP_COS = -Math.cos((30 * Math.PI) / 180); // cos of the turning angle 150 degrees, that is an interior angle of 30 degrees
 
+/**
+ * 29.3 follow-up. Plain miter joins, measured with the 29.3 method (miterLimit 2.0, open path, 250 px legs, widths 2, 10,
+ * 20 px; the SVG join was miter-clip, which is drawn as miter): differing pixels at 7 degrees 4, 96, 358; at 15 degrees
+ * 4, 78, 332; at 30 degrees 4, 68, 246; at 45 degrees 2, 46, 188; exact (0, 0, 0) at 60 degrees, where the miter ratio
+ * equals the limit. So a miter join is named at every corner whose miter ratio 1 / sin(interior angle / 2) is above the
+ * stroke's miter limit; for limit 2.0 that is an interior angle under 60 degrees. Other limits were not measured.
+ */
+const MITER_JOIN_LIMIT = 'approximated: miter join at a corner past its miter limit is not drawn exactly (2 to 358 px differ at 7 to 45 degrees with miter limit 2.0, strokes 2 to 20 px wide; exact at 60 degrees; other limits and the boundary between 45 and 60 degrees were not measured)';
+/** Cosine of the turn at a corner whose miter ratio equals limit, less a rounding margin so the boundary corner is not named. */
+function miterCos(limit: number): number {
+  return 2 / (limit * limit) - 1 - 1e-9;
+}
+
 type Vec = readonly [number, number];
 
 /** Start and end direction of a segment from `p`, or null when it has no length. */
@@ -284,8 +297,8 @@ function segmentDirs(c: PathCmd, p: Vec): { dirs: [Vec, Vec]; end: Vec } | null 
   return { dirs: [start, fin], end };
 }
 
-/** True when some corner of the subpaths has an interior angle under 30 degrees (a turn of more than 150 degrees). */
-function hasSharpCorner(subpaths: readonly PathCmd[][]): boolean {
+/** True when some corner of the subpaths turns by a cosine below maxCos (round join: an interior angle under 30 degrees). */
+function hasSharpCorner(subpaths: readonly PathCmd[][], maxCos: number = SHARP_COS): boolean {
   for (const sp of subpaths) {
     const segs: Array<[Vec, Vec]> = [];
     let cur: Vec = [0, 0];
@@ -308,8 +321,8 @@ function hasSharpCorner(subpaths: readonly PathCmd[][]): boolean {
     }
     if (cur[0] === first[0] && cur[1] === first[1]) closed = true;
     const turn = (a: Vec, b: Vec): number => (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]));
-    for (let i = 0; i + 1 < segs.length; i++) if (turn(segs[i]![1], segs[i + 1]![0]) < SHARP_COS) return true;
-    if (closed && segs.length > 1 && turn(segs[segs.length - 1]![1], segs[0]![0]) < SHARP_COS) return true;
+    for (let i = 0; i + 1 < segs.length; i++) if (turn(segs[i]![1], segs[i + 1]![0]) < maxCos) return true;
+    if (closed && segs.length > 1 && turn(segs[segs.length - 1]![1], segs[0]![0]) < maxCos) return true;
   }
   return false;
 }
@@ -406,6 +419,10 @@ class Builder {
     if (subpaths.length === 0) return;
     if (stroke !== null && stroke.join === 'round' && hasSharpCorner(subpaths)) {
       this.limits.push({ kind: 'stroke-style', message: ROUND_JOIN_LIMIT });
+    }
+    // A plain miter join: drawn differently where the miter tip passes the stroke's own miter limit (29.3 follow-up).
+    if (stroke !== null && own['stroke-linejoin'] === 'miter' && hasSharpCorner(subpaths, miterCos(stroke.miterLimit))) {
+      this.limits.push({ kind: 'stroke-style', message: MITER_JOIN_LIMIT });
     }
     // A path without a fill keeps every subpath as its own outer contour (design section 2).
     const contours = fill === null ? subpaths.map((outer) => ({ outer, holes: [] })) : groupContours(subpaths);

@@ -7,6 +7,7 @@ import { convertModel } from '../../src/convert/convertModel';
 import { readDumpHeader } from '../../src/convert/ffdecXml';
 import type { TagsModel } from '../../src/convert/model';
 import { readUnpacked } from '../../src/convert/readUnpacked';
+import { knownVisualLimits } from '../../src/verify/core/limits';
 import { parseShapeJson } from '../../template/runtime/shapeJson';
 
 async function fixtureModel(name: string): Promise<TagsModel> {
@@ -83,5 +84,33 @@ describe('convertModel writes Shape_JSON', () => {
     expect(paths[0]?.fill?.kind).toBe('bitmap');
     const sym = r.scene.symbols['7'];
     expect(sym?.type === 'shape' && sym.size).toEqual({ width: 9, height: 9 });
+  });
+
+  it('a plain miter join past its miter limit reaches unsupported-features and the visual limits (29.3 follow-up)', () => {
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="100px" height="12px"><g transform="matrix(1,0,0,1,0,0)">' +
+      '<path d="M100 0 L0 0 L100 12" fill="none" stroke="#000000" stroke-linejoin="miter" stroke-miterlimit="2.0"/></g></svg>';
+    const model: TagsModel = {
+      xmlVersion: { major: 4, minor: 2 },
+      header: { widthPx: 100, heightPx: 100, frameRate: 12, frameCount: 1 },
+      background: null,
+      root: { declaredFrameCount: 1, ops: [{ kind: 'place', depth: 1, characterId: 7, move: false }, { kind: 'showFrame' }] },
+      sprites: [],
+      declaredShapeIds: [7],
+      morphShapeIds: [],
+      staticTextIds: [],
+      bitmapIds: [],
+      shapeAssets: [{ id: 7, svg, origin: { x: 0, y: 0 } }],
+      textAssets: [],
+      symbolClasses: [],
+      classSources: [],
+      unsupported: [],
+    };
+    const r = convertModel(model);
+    const entries = r.unsupported.filter((u) => u.kind === 'stroke-style');
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ id: 7, message: expect.stringContaining('approximated: miter join at a corner past its miter limit') });
+    const known = knownVisualLimits(r.scene, r.unsupported, { allComparedFramesExact: false });
+    expect(known.filter((k) => k.kind === 'stroke-style').map((k) => k.message)).toEqual([entries[0]!.message]);
   });
 });

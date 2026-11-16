@@ -152,9 +152,26 @@ describe("svgToShapeJson strokes", () => {
     const { limits } = svgToShapeJson(`${head}<g transform="matrix(1,0,0,1,0,0)">${path}${path}${path}</g></svg>`, "shape");
     expect(limits).toEqual([{ kind: "stroke-style", message: ROUND_JOIN }]);
   });
-  it("records nothing for a bevel or miter join at a 7 degree corner", () => {
+  it("records nothing for a bevel join at a 7 degree corner (the bevel limit is a separate follow-up)", () => {
     expect(sharp("bevel").limits).toEqual([]);
-    expect(sharp("miter").limits).toEqual([]);
+  });
+  const MITER_JOIN = "approximated: miter join at a corner past its miter limit is not drawn exactly (2 to 358 px differ at 7 to 45 degrees with miter limit 2.0, strokes 2 to 20 px wide; exact at 60 degrees; other limits and the boundary between 45 and 60 degrees were not measured)";
+  const miter = (d: string, limit: string): ReturnType<typeof svgToShapeJson> =>
+    svgToShapeJson(`${head}<g transform="matrix(1,0,0,1,0,0)"><path d="${d}" fill="none" stroke="#000000" stroke-linejoin="miter" stroke-miterlimit="${limit}"/></g></svg>`, "shape");
+  it("records one approximated stroke-style limit for a plain miter join past its miter limit (29.3 follow-up)", () => {
+    expect(miter("M100 0 L0 0 L100 12", "2.0").limits).toEqual([{ kind: "stroke-style", message: MITER_JOIN }]); // 7 degrees
+    expect(miter("M100 0 L0 0 L100 100", "2.0").limits).toEqual([{ kind: "stroke-style", message: MITER_JOIN }]); // 45 degrees
+    expect(miter("M100 0 L0 0 L100 166.4", "2.0").limits).toHaveLength(1); // 59 degrees
+    expect(sharp("miter").limits).toEqual([{ kind: "stroke-style", message: MITER_JOIN }]); // default limit 4, 7 degrees
+  });
+  it("records no miter limit for a miter corner within the miter limit, or for miter-clip beyond the plain rule", () => {
+    expect(miter("M100 0 L0 0 L100 173.2051", "2.0").limits).toEqual([]); // 60 degrees, the ratio equals the limit
+    expect(miter("M100 0 L0 0 L100 180.4", "2.0").limits).toEqual([]); // 61 degrees
+    expect(miter("M100 0 L0 0 L100 100", "4").limits).toEqual([]); // 45 degrees under limit 4
+    expect(miter("M100 0 L0 0 L100 100", "4").shape.paths[0]!.stroke).toMatchObject({ join: "miter", miterLimit: 4 });
+    expect(miter("M0 0 L100 0", "2.0").limits).toEqual([]); // no corner
+    const clip = one('stroke="#000000" stroke-linejoin="miter-clip" stroke-miterlimit="2.0"').limits;
+    expect(clip).toEqual([{ kind: "stroke-style", message: "approximated: miter-clip join is drawn as miter" }]);
   });
   it("records nothing for a round join at corners of 30 degrees or wider, open or closed", () => {
     expect(sharp("round", "M100 0 L0 0 L100 60.1").limits).toEqual([]); // interior angle 31 degrees
