@@ -1,4 +1,8 @@
-// A TextField through the real PixiBackend in headless Chromium (as3-coverage task 16.2, Requirements 15.5, 15.7): a\n// generated project whose root class creates a TextField; the screenshot shows red text pixels, the page measures\n// textWidth with canvas measureText, and a pointer click on the field bubbles to its parent.\n// Skipped with a reason when Chromium is missing. Validates: Requirements 14.5, 14.7, 14.8
+// A TextField through the real PixiBackend in headless Chromium (as3-coverage task 16.2, Requirements 15.5, 15.7):
+// a generated project whose root class creates a TextField; the screenshot shows red text pixels, the page measures
+// textWidth with canvas measureText, and a pointer click on the field bubbles to its parent.
+// Skipped with a reason when Chromium is missing.
+// Validates: Requirements 15.5, 15.7
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { extname, join, relative, isAbsolute, resolve } from 'node:path';
