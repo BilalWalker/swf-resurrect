@@ -47,26 +47,26 @@ Rules that apply to every task:
     - Test: `test/unit/provenance.test.ts` passes for `entity_game`.
     - _Requirements: 28.10, 28.7_
 
-- [ ] 2. Samples and Build: `spacer` as a Fetched_Sample
+- [x] 2. Samples and Build: `spacer` as a Fetched_Sample
   - Commit area: `Samples` (the script and test are `Build` and `Test`; the message names all). Verification V1. Read the design section "Fetched sample (spacer)". Model the work on `scripts/fetch-static-text.ts` and `src/samples/fetchedSample.ts`, which already take a source argument. Neither the `spacer` SWF nor its output is ever committed (Requirement 35.8).
-  - [-] 2.1 Generalise the fetch core and add `scripts/fetch-spacer.ts`
+  - [x] 2.1 Generalise the fetch core and add `scripts/fetch-spacer.ts`
     - Reuse `fetchStaticText(deps, source)` under the name `fetchSample` in `src/samples/fetchedSample.ts` (keep the old name exported if other code imports it, so the `static_text` sample is unchanged). Add `scripts/fetch-spacer.ts` and the npm script `fetch:spacer` (`tsx scripts/fetch-spacer.ts`). Target `.work/samples/spacer/test.swf`. Expected SHA-256 `368926f94eb4de93918df9d06655ea2a4dd0ff28a06df725e61751c92552a50a` (85334 bytes). A path argument (`npm run fetch:spacer -- .work/games/spacer/test.swf`) copies a local file after the hash check. A mismatch writes nothing and exits 1; a download failure exits 2; an unreadable local path exits 3. With no path argument and no download URL (Open_Item O2), the script exits 2 with a message that asks for the path. The `.part` file is renamed only after the check.
     - Tests: `test/unit/fetchedSample.test.ts` (extend): hash match writes once; mismatch writes nothing and returns the mismatch outcome; missing path exits with the distinct code; no argument exits 2 with the message. Add **Property 25: A wrong hash writes nothing** in `test/property/fetchSample.property.test.ts` (create): for any bytes with a different SHA-256 the function returns the mismatch outcome and writes no target file; bytes with the expected hash are written once.
     - _Requirements: 28.3, 28.4, 28.5, 28.12_
 
-  - [~] 2.2 Add `samples/spacer/PROVENANCE.md` and the skip helper
+  - [x] 2.2 Add `samples/spacer/PROVENANCE.md` and the skip helper
     - `samples/spacer/PROVENANCE.md` states GPL-3.0, the author Zabuzard, the SHA-256, the reason the SWF is not committed, the licence text pointer (`samples/LICENSES/GPL-3.0.txt`, copied unmodified from the FSF text; if the owner has not supplied the licence text source, use the FSF `gpl-3.0.txt` and say so), and the upstream URL and commit as `pending (owner decision O2)`. Add `test/support/fetchedSpacer.ts` (create): `spacerSwfPath()` and `describeIfSpacer` that skip with a message naming `npm run fetch:spacer` when `.work/samples/spacer/test.swf` is absent. Extend the provenance validator for a Fetched_Sample entry (SWF not required to exist) as `static_text` already does.
     - Tests: `test/unit/provenance.test.ts` (example: `spacer` PROVENANCE passes without a SWF; a committed `samples/spacer/*.swf` fails), `test/unit/fetchedSpacer.test.ts` (create: the skip helper reports the skip).
     - _Requirements: 28.3, 28.6, 28.7, 28.11_
 
-  - [~] 2.3 Update the steering status
+  - [x] 2.3 Update the steering status
     - In the same commit update `.kiro/steering/tech.md` (the `fetch:spacer` command) and `.kiro/steering/structure.md` (the two samples, the fetched `spacer`, the `handwritten/SET.json` file as planned) as Requirement 36.8 requires. No other steering text changes.
     - Test: `test/unit/repoHygiene.test.ts` still passes.
     - _Requirements: 36.8_
 
 - [ ] 3. Translate: generated Shim names and imports for type-position uses (D1)
   - Commit area: `Translate` (touches the generator script and the Shim index only through reading them). Verification V1. Read the design Block A table row D1 and `scripts/gen-shim-members.ts`. A Shim file edit is not part of this task, so no `shimMembers.generated.ts` commit is needed unless the generator output changes; if it does, commit the regenerated file with this task.
-  - [~] 3.1 Generate `SHIM_AS3_NAMES` from the exports of `template/shim/index.ts`
+  - [-] 3.1 Generate `SHIM_AS3_NAMES` from the exports of `template/shim/index.ts`
     - Extend `scripts/gen-shim-members.ts` to write the name list into `src/translate/shimMembers.generated.ts` (or the file `shimNames.ts` reads) and make `src/translate/shimNames.ts` read it, so `Stage` and every exported Shim class are importable (Requirement 2.3). Run `npm run gen:shim-members` and stage the regenerated file.
     - Test: `test/unit/shimNames.test.ts` (extend): every export of `template/shim/index.ts` is in `SHIM_AS3_NAMES`; `Stage` is present.
     - _Requirements: 2.3_

@@ -1,5 +1,10 @@
 {
-  "pbtResults": {},
+  "pbtResults": {
+    "3.3 Write property test for type-position imports": {
+      "status": "passed",
+      "lastRunTimestamp": 1794756146583
+    }
+  },
   "executionHistory": {
     "1.1 Add the SWF, PROVENANCE.md and the MIT text": [
       {
@@ -40,6 +45,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755368256
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755877879
       }
     ],
     "2.2 Add `samples/spacer/PROVENANCE.md` and the skip helper": [
@@ -47,6 +57,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755206009
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755878022
       }
     ],
     "2.3 Update the steering status": [
@@ -54,6 +69,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755206193
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755878178
       }
     ],
     "3.1 Generate `SHIM_AS3_NAMES` from the exports of `template/shim/index.ts`": [
@@ -61,6 +81,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755206457
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755885434
       }
     ],
     "3.2 Read type annotations in the import scan": [
@@ -726,6 +751,13 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755355256
+      }
+    ],
+    "2. Samples and Build: `spacer` as a Fetched_Sample": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755878277
       }
     ]
   }

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { planFileImports } from "../../src/translate/importPlan";
 import type { ImportPlanInput } from "../../src/translate/importPlan";
+import { SHIM_AS3_NAMES } from "../../src/translate/shimNames";
+import { translate } from "../../src/translate/translate";
+import { tsSyntaxCheck } from "../../src/translate/tsSyntaxCheck";
 
 function input(over: Partial<ImportPlanInput>): ImportPlanInput {
   return {
@@ -141,5 +144,37 @@ describe("planFileImports root package precedence", () => {
   it("leaves the name unbound when no level has the class", () => {
     const plan = planFileImports(input({ known: new Set(["lib.Test"]), bare }));
     expect(plan.bindingOfBare.has("Test")).toBe(false);
+  });
+});
+
+describe("Shim classes in type positions are imported (Requirements 2.1, 2.2, 2.5)", () => {
+  const importLines = (members: string): string[] => {
+    const r = translate(`package p { public class C { ${members} } }`, {
+      shimNames: SHIM_AS3_NAMES,
+      selfQualified: "p.C",
+      siblingClasses: new Set(["p.C"]) as never,
+      syntaxCheck: tsSyntaxCheck,
+    });
+    return r.text.split("\n").filter((l) => l.startsWith("import "));
+  };
+  const stageImports = (members: string): string[] => importLines(members).filter((l) => /\bStage\b/.test(l));
+
+  it("a field type only", () => {
+    expect(stageImports("private var s:Stage;")).toHaveLength(1);
+  });
+  it("a local variable type only", () => {
+    expect(stageImports("public function f():void { var s:Stage; }")).toHaveLength(1);
+  });
+  it("a parameter type only", () => {
+    expect(stageImports("public function f(s:Stage):void { }")).toHaveLength(1);
+  });
+  it("a return type only", () => {
+    expect(stageImports("public function f():Stage { return null; }")).toHaveLength(1);
+  });
+  it("an as cast type only", () => {
+    expect(stageImports("public function f(o:Object):void { var x:* = o as Stage; }")).toHaveLength(1);
+  });
+  it("a type and an expression give one import of the name", () => {
+    expect(stageImports("public function f(s:Stage):void { var c:* = Stage; }")).toHaveLength(1);
   });
 });
