@@ -744,7 +744,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: the two floor tests.
     - _Requirements: 3.6, 3.7, 18.13, 21.7_
 
-- [ ] 17. Samples: admit `3_joystick`, `slider_component` and the fetched `static_text`
+- [x] 17. Samples: admit `3_joystick`, `slider_component` and the fetched `static_text`
   - Commit area: `Samples`. Verification V1. This admission sits last, after Tasks 15 and 16. `3_joystick` and `slider_component` are `Apache-2.0` only; `static_text` is never committed (decided F9, F10): its 17 glyph outlines of "Times New Roman" under a Monotype copyright have no established licence, so the Repository gets only `samples/static_text/PROVENANCE.md`, `reference/output.txt` and `reference/test.toml`, no `test.swf`, no `input.json` and no `test/fixtures/static_text/` (Requirement 20). The Fetch_Script and its measurement are sub-tasks 17.7 to 17.13. What the Replay does with `3_joystick` depends on the implicit-`this` outcome of Task 8; report the outcome as measured. Decided items touched, reported as measured counts and not as questions: O3 (the binding count on `3_joystick` and `slider_component`), O4 (the `fl.*` classes that cannot load and are omitted, versus the Loose_Classes with only type errors, which stay registered) and O1 (names resolved to `Declaring.x`). Capture and report the exit code of every pipeline run; every sample under 100 on either score (Overall_Match or Trace_Score) gets its cause recorded in the report, including `static_text` trace 0, `clipDepth` trace 25 and `edit_text_linkage` trace 0 when they are run.
   - [x] 17.1 `3_joystick`: files, PROVENANCE.md and fixtures
     - `test.toml` sets `num_ticks = 21`; `input.json` holds `MouseMove` entries without a `btn` field. Copy `test.swf` unmodified into `samples/3_joystick/` (SHA-256 prefix `9f21a582`; verify the full value), the reference files unchanged, `PROVENANCE.md` (`Apache-2.0`, pointer to `samples/LICENSES/Apache-2.0.txt`, Shumway attribution, the no-NOTICE statement, `no embedded fonts`, SHA-256, reason) and `test/fixtures/3_joystick/` with the structure dump, symbol list and the class source `code/Interactivity3.as`.
@@ -811,12 +811,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/e2e/staticText.e2e.test.ts`; with the file absent the suite is reported as skipped, not failed.
     - _Requirements: 3.6, 10.6, 20.3, 20.8, 20.9_
 
-  - [-] 17.14 Final measurement of every floor
+  - [x] 17.14 Final measurement of every floor
     - Run `npm run pipeline -- samples/<name>/test.swf out/<name> --verify --force` for every admitted sample, for `clickgoto` and `tweendemo`, and for `static_text` when the fetched file is present. Raise any Overall_Match or Trace_Score floor in `test/e2e/overallMatch.e2e.test.ts`, `test/e2e/traceScore.e2e.test.ts`, `test/e2e/staticText.e2e.test.ts` and `test/unit/clickgotoReplay.test.ts` whose measured value rose (Ratchet_Rule); never lower one. If a value is below its floor, fix the cause or STOP; do not touch a floor or the tolerance. Add a determinism test: two Pipeline runs on `radial` and on `mask_reapply` give byte-identical `*.shape.json`, `images/*`, `scene.json`, `fidelity-report.json` and `fidelity-report.html`.
     - Test: the floor tests above and `test/e2e/determinism.e2e.test.ts` (create; same skip rules as the other e2e tests).
     - _Requirements: 1.3, 1.4, 1.5, 3.6, 3.7, 15.5_
 
-- [ ] 18. Checkpoint: browser review of fidelity-report.html
+- [-] 18. Checkpoint: browser review of fidelity-report.html
   - STOP. Commit nothing.
   - Run `npm run pipeline -- samples/<name>/test.swf out/<name> --verify --force` on every Approved_Sample_List SWF (and report any that was not admitted and why). `avm2/static_text` is run on `.work/samples/static_text/test.swf` with `--reference-dir samples/static_text/reference` after `npm run fetch:static-text`, or is reported as `skipped: file absent` with the reason. Give the paths of each `fidelity-report.html` and `fidelity-report.json`, the Overall_Match, the Trace_Score or `not-compared`, the `missing` and `extra` counts, the `release-outside`, `unsupported-input` and `unpaired-mouse-event` notes, the Known_Visual_Limits and the Residual_Cause list of each. Include `clickgoto` and `tweendemo` for comparison and the figures before and after this spec for every sample.
   - Report the measured effect of every decided item O1 to O9 and of F19 to F21 (counts, and which sample or task it affected), as information. Name the three empty-trace samples as `not-compared: empty-reference-trace` and the `Main` of `mask_reapply` as a registered Loose_Class with its measured Trace_Score.
