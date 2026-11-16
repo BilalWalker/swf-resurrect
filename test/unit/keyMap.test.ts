@@ -44,3 +44,11 @@ describe("preventsDefault", () => {
     for (const [flash] of REQUIRED) expect(preventsDefault(flash)).toBe([32, 37, 38, 39, 40].includes(flash));
   });
 });
+describe("flashKeyCode with Object.prototype names", () => {
+  it("does not read inherited properties as key codes", () => {
+    for (const code of ["constructor", "toString", "__proto__", "hasOwnProperty"]) {
+      expect(flashKeyCode({ code })).toBeNull();
+      expect(flashKeyCode({ code, keyCode: 7 })).toBe(7);
+    }
+  });
+});

@@ -9,22 +9,22 @@ export interface KeyLike {
   readonly keyCode?: number;
 }
 
-const NAMED: Readonly<Record<string, number>> = {
-  ArrowLeft: 37,
-  ArrowUp: 38,
-  ArrowRight: 39,
-  ArrowDown: 40,
-  Enter: 13,
-  NumpadEnter: 13,
-  Escape: 27,
-  Space: 32,
-};
+const NAMED: ReadonlyMap<string, number> = new Map([
+  ['ArrowLeft', 37],
+  ['ArrowUp', 38],
+  ['ArrowRight', 39],
+  ['ArrowDown', 40],
+  ['Enter', 13],
+  ['NumpadEnter', 13],
+  ['Escape', 27],
+  ['Space', 32],
+]);
 
 /** The Flash key code of a browser key event, or null when neither `code` nor `keyCode` gives one. */
 export function flashKeyCode(event: KeyLike): number | null {
   const code = event.code;
   if (typeof code === 'string') {
-    const named = NAMED[code];
+    const named = NAMED.get(code);
     if (named !== undefined) return named;
     const letter = /^Key([A-Z])$/.exec(code);
     if (letter !== null) return letter[1]!.charCodeAt(0);
