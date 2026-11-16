@@ -129,6 +129,7 @@ function isAbsoluteHttpUrl(s: string): boolean {
 
 export const MIT_LICENCE_PATH = "samples/LICENSES/MIT-Ruffle.txt";
 export const APACHE_LICENCE_PATH = "samples/LICENSES/Apache-2.0.txt";
+export const GPL_LICENCE_PATH = "samples/LICENSES/GPL-3.0.txt";
 
 /** Paths under samples/LICENSES/ that the note mentions. */
 export function licencePointers(text: string): string[] {
@@ -184,7 +185,7 @@ function checkFontsSection(text: string): string[] {
  */
 export function validateProvenance(
   text: string,
-  opts: { clickSample: boolean; legacy?: boolean },
+  opts: { clickSample: boolean; legacy?: boolean; fetched?: boolean },
 ): string[] {
   const problems: string[] = [];
   const fields = parseFields(text);
@@ -202,6 +203,11 @@ export function validateProvenance(
   const licence = fields.get("licence") ?? fields.get("license");
   if (licence === undefined || licence === "") {
     problems.push("field 'licence' is missing or empty");
+  } else if (opts.fetched === true && licence === "GPL-3.0") {
+    // Only a Fetched_Sample may be GPL-3.0: its SWF is never committed (Requirement 28.3).
+    if (!licencePointers(text).includes(GPL_LICENCE_PATH)) {
+      problems.push(`licence 'GPL-3.0': missing pointer to ${GPL_LICENCE_PATH}`);
+    }
   } else if (!isAllowedLicence(licence)) {
     problems.push(`field 'licence' has no allow-listed term: ${licence}`);
   } else {

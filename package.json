@@ -13,6 +13,7 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "web:start": "tsx web/server/main.ts",
     "fetch:static-text": "tsx scripts/fetch-static-text.ts",
+    "fetch:spacer": "tsx scripts/fetch-spacer.ts",
     "web": "tsx web/server/main.ts --dev",
     "web:build": "vite build --config web/client/vite.config.ts",
     "web:prewarm": "tsx web/server/prewarm.ts"

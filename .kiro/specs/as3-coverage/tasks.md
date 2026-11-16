@@ -35,21 +35,21 @@ Rules that apply to every task:
 
 ### Block A: shared (about 130 credits; stop and report above 173)
 
-- [ ] 1. Samples: admit `entity_game`
+- [x] 1. Samples: admit `entity_game`
   - Commit area: `Samples`. Verification V1. Read Requirement 28 and the "Fetched sample" and "Decisions at a glance" sections of the design. Block A starts here: note the Credits_Line at the start (Requirement 34.4 gives the baseline) and restate the Block A share of about 130 credits.
-  - [-] 1.1 Add the SWF, PROVENANCE.md and the MIT text
+  - [x] 1.1 Add the SWF, PROVENANCE.md and the MIT text
     - Copy `.work/games/entity/test.swf` to `samples/entity_game/test.swf` after checking its SHA-256 equals `688ffa8e030c567559e65ff515e845d88f6b3c0f5f6fc7360eb1bff2e5c9d0c0` (12607 bytes). Write `samples/entity_game/PROVENANCE.md` with author (Iain Lobb), licence MIT, the SHA-256, the date, the modifications (none), the embedded-fonts section (`no embedded fonts`, as the SWF holds no text tag) and the Licence_Directory pointer. The upstream URL and commit are not known: write them as `pending (owner decision O2)`. Add the MIT licence text under `samples/LICENSES/` (reuse `MIT-Ruffle.txt` only if the licence holder line is not Ruffle's; otherwise add `MIT-EntityAsteroids.txt` with the author's copyright line from the upstream licence, which the owner supplies; if that line is not available, STOP and ask).
     - Use the sample name `entity_game` everywhere; the folder, the report display name and any UI string contain no third-party trademark (Requirement 28.8).
     - _Requirements: 28.1, 28.2, 28.8, 28.11, 28.12_
 
-  - [~] 1.2 Run the provenance and licence checks
+  - [x] 1.2 Run the provenance and licence checks
     - The hook `shim-table-and-sample-checks` runs the checks on a write under `samples/`; also run `npx vitest --run test/unit/provenance.test.ts`. If `validateProvenance` rejects the word `pending`, extend `test/support/provenance.ts` and `test/unit/provenance.test.ts` so that an explicitly marked pending upstream field is accepted for `entity_game` and `spacer` only while the Open_Item O2 is open, with an example test for a missing field that stays rejected. Extend the committed-samples tests that list sample names (floors, residual causes) only in the tasks that measure them (Task 21).
     - Test: `test/unit/provenance.test.ts` passes for `entity_game`.
     - _Requirements: 28.10, 28.7_
 
 - [ ] 2. Samples and Build: `spacer` as a Fetched_Sample
   - Commit area: `Samples` (the script and test are `Build` and `Test`; the message names all). Verification V1. Read the design section "Fetched sample (spacer)". Model the work on `scripts/fetch-static-text.ts` and `src/samples/fetchedSample.ts`, which already take a source argument. Neither the `spacer` SWF nor its output is ever committed (Requirement 35.8).
-  - [~] 2.1 Generalise the fetch core and add `scripts/fetch-spacer.ts`
+  - [-] 2.1 Generalise the fetch core and add `scripts/fetch-spacer.ts`
     - Reuse `fetchStaticText(deps, source)` under the name `fetchSample` in `src/samples/fetchedSample.ts` (keep the old name exported if other code imports it, so the `static_text` sample is unchanged). Add `scripts/fetch-spacer.ts` and the npm script `fetch:spacer` (`tsx scripts/fetch-spacer.ts`). Target `.work/samples/spacer/test.swf`. Expected SHA-256 `368926f94eb4de93918df9d06655ea2a4dd0ff28a06df725e61751c92552a50a` (85334 bytes). A path argument (`npm run fetch:spacer -- .work/games/spacer/test.swf`) copies a local file after the hash check. A mismatch writes nothing and exits 1; a download failure exits 2; an unreadable local path exits 3. With no path argument and no download URL (Open_Item O2), the script exits 2 with a message that asks for the path. The `.part` file is renamed only after the check.
     - Tests: `test/unit/fetchedSample.test.ts` (extend): hash match writes once; mismatch writes nothing and returns the mismatch outcome; missing path exits with the distinct code; no argument exits 2 with the message. Add **Property 25: A wrong hash writes nothing** in `test/property/fetchSample.property.test.ts` (create): for any bytes with a different SHA-256 the function returns the mismatch outcome and writes no target file; bytes with the expected hash are written once.
     - _Requirements: 28.3, 28.4, 28.5, 28.12_

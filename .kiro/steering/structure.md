@@ -1,6 +1,6 @@
 # Project Structure
 
-Status: unpack, convert, translate, emit, verify and the pipeline CLI exist. The web app and hosting are planned. Scene_JSON is formatVersion 2 and shapes are Shape_JSON. `samples/` holds nine committed samples (clickgoto, tweendemo, radial, gradients, acid-color-2, mask_reapply, click_block, 3_joystick, slider_component) and the fetched `static_text` (only its PROVENANCE.md and reference files are committed; `npm run fetch:static-text` downloads the SWF).
+Status: unpack, convert, translate, emit, verify and the pipeline CLI exist. The web app and hosting are planned. Scene_JSON is formatVersion 2 and shapes are Shape_JSON. `samples/` holds ten committed samples (clickgoto, tweendemo, radial, gradients, acid-color-2, mask_reapply, click_block, 3_joystick, slider_component, entity_game) and two fetched ones. `static_text` keeps only its PROVENANCE.md and reference files in the repository (`npm run fetch:static-text` downloads the SWF). `spacer` (GPL-3.0) keeps only `PROVENANCE.md` and `reference/test.toml` (`npm run fetch:spacer` downloads the release SWF or copies a local file); its SWF and converted output are never committed.
 
 ## Current repo layout (tool itself)
 ```
@@ -33,6 +33,7 @@ LICENSE
 Gitignored: `tools/`, `node_modules/`, `out/`, `.work/`, `dist/`.
 
 ## Planned
+- Licence layout: the repository is MIT except handwritten/spacer/, which is GPL-3.0 (the directory does not exist yet; the README line is added in as3-coverage task 28.3). handwritten/SET.json (list of sample, class name, reason) is planned with it.
 - Web app (drag-in SWF, stage progress, side-by-side preview, zip download, fidelity report).
 
 ## Emitted project layout (what we generate)

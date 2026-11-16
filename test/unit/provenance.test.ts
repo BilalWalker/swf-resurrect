@@ -194,13 +194,27 @@ describe("sample directories and the Fetched_Sample (Requirement 20)", () => {
         const dir = join(samplesDir, name);
         expect(existsSync(join(dir, "reference")), `samples/${name}/reference`).toBe(true);
         const text = readFileSync(join(dir, "PROVENANCE.md"), "utf8");
-        expect(validateProvenance(text, { clickSample: false }), name).toEqual([]);
+        expect(validateProvenance(text, { clickSample: false, fetched: true }), name).toEqual([]);
         expect(validateFetchedNoteRows(text), name).toEqual([]);
       }
     });
   }
   it("does not commit samples/static_text/test.swf", () => {
     expect(existsSync(join(samplesDir, "static_text", "test.swf"))).toBe(false);
+  });
+  it("accepts the spacer note without a SWF and rejects a committed samples/spacer/*.swf", () => {
+    const dir = join(samplesDir, "spacer");
+    const text = readFileSync(join(dir, "PROVENANCE.md"), "utf8");
+    expect(validateProvenance(text, { clickSample: false, fetched: true })).toEqual([]);
+    expect(readdirSync(dir).filter((n) => n.toLowerCase().endsWith(".swf"))).toEqual([]);
+    expect(classifySampleDir(readdirSync(dir))).toBe("fetched");
+    expect(classifySampleDir([...readdirSync(dir), "test.swf"])).toBe("committed");
+  });
+  it("admits GPL-3.0 only for a Fetched_Sample that points to the GPL text", () => {
+    const text = readFileSync(join(samplesDir, "spacer", "PROVENANCE.md"), "utf8");
+    expect(validateProvenance(text, { clickSample: false }).join()).toMatch(/allow-listed/);
+    const noPtr = text.replace(/samples\/LICENSES\/GPL-3\.0\.txt/g, "samples/LICENSES/MIT-Ruffle.txt");
+    expect(validateProvenance(noPtr, { clickSample: false, fetched: true }).join()).toMatch(/GPL-3\.0\.txt/);
   });
   it("checks the extra rows of a fetched note on a synthetic directory", () => {
     const tmp = mkdtempSync(join(tmpdir(), "fetched-"));
