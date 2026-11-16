@@ -1,7 +1,7 @@
 // A counting semaphore shared by every vitest worker process, for the e2e work that starts FFDec, Chromium or npm
 // (task 29.1). A slot is a directory `.work/slots/<pool>/<n>` created atomically with mkdir and holding the owner's
 // pid; a slot whose owner process is gone is taken over, so a killed run never blocks the next one.
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,10 +40,12 @@ async function acquire(pool: string, size: number): Promise<string> {
         return slot;
       } catch {
         // Taken. Reclaim it when its owner has exited (a pid file is written right after mkdir, so wait for it).
-        const pidFile = join(slot, 'pid');
-        if (existsSync(pidFile)) {
-          const pid = Number(readFileSync(pidFile, 'utf8'));
+        // The owner may release the slot between the check and the read, so a failed read means "free or gone".
+        try {
+          const pid = Number(readFileSync(join(slot, 'pid'), 'utf8'));
           if (Number.isInteger(pid) && pid > 0 && !alive(pid)) await rm(slot, { recursive: true, force: true });
+        } catch {
+          // pid file not written yet, or the slot was just released: retry on the next pass.
         }
       }
     }
