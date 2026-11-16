@@ -845,7 +845,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: rows in `test/unit/svgToShape.test.ts` (a round join below the cutoff gives no `stroke-style` limit and one above gives one) and the `tsSyntaxCheck` determinism test.
     - _Requirements: 13.8, 13.9, 13.12, 2.4_
 
-- [ ] 19. Steering: status, ADDED_APIS.md and final summary
+- [x] 19. Steering: status, ADDED_APIS.md and final summary
   - Commit area: `Steering` (the `ADDED_APIS.md` check is part of the same commit). Verification V1. The steering status lines are the only edit to `.kiro/steering/` in this plan; the git-workflow test list is not edited (Requirement 15.14: the plan's V2 rule carries the drift test, so the steering file's test list is not edited).
   - [x] 19.1 Update the steering status and the added-API log
     - Update the status lines of `.kiro/steering/tech.md` and `.kiro/steering/structure.md` (render path is Shape_JSON; Scene_JSON v2; package-qualified classes; Stage_Object; implicit `this` and the generated Shim_Member_Table with `npm run gen:shim-members`; class fallback; fetched sample and `npm run fetch:static-text`; residual register; new modules; samples count) and verify the commands against `package.json`. Confirm that every API the Shim gained in this spec has a row in `template/shim/ADDED_APIS.md` with the fixture line that needs it, and that no row exists for an API that was not added. Do not edit `requirements.md` or `design.md`.
@@ -857,7 +857,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: the file above is the test; it must pass with the repository as committed.
     - _Requirements: 15.4, 15.6, 15.8, 15.11, 15.13_
 
-  - [-] 19.3 Final summary
+  - [x] 19.3 Final summary
     - Write the final summary in the commit message and in the reply: for each sample, the Overall_Match and Trace_Score before and after this spec (the three empty-trace samples as `not-compared: empty-reference-trace`); the Known_Visual_Limits and Residual_Causes left; the new stage results of every Appendix A candidate; the measured effect of the decided items O1 to O9 and F19 to F21 (the user owes no decision); what was not verified (alpha add term beyond the three variants, caps on strokes of the real samples beyond the floors, focal radial gradients, `nonzero` fills, hit testing through masks, texture cost, `acid-gradient` if not downloaded, `static_text` if the file was absent, the run-time behaviour of a registered Loose_Class that throws). State that no test is optional and that all required tests passed.
     - Evidence is the full `npm run typecheck` and `npm test -- --run` run recorded in the message; no new code (guarded by the suites above).
     - _Requirements: 1.6, 14.1, 14.2, 15.3, 15.7_
