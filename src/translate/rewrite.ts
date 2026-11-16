@@ -53,6 +53,13 @@ const PRIMITIVE_IS_TYPES: ReadonlySet<string> = new Set([
   'int', 'uint', 'Number', 'String', 'Boolean', 'Object', 'Array',
 ]);
 
+/** Depth-0 tokens that end the left operand of `is`: operators that bind looser than a relational one. */
+const OPERAND_STOPS: ReadonlySet<string> = new Set([
+  '&&', '||', '?', ':', ',', '=', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>=', '>>>=', '&&=', '||=',
+  '==', '!=', '===', '!==', '&', '|', '^', '<', '>', '<=', '>=', ';',
+]);
+const OPERAND_STOP_WORDS: ReadonlySet<string> = new Set(['return', 'throw', 'case', 'in', 'is', 'as', 'instanceof', 'else']);
+
 /** Depth-0 operators that bind looser than `|` (they force `((X) | 0)`). */
 const LOOSE_OPERATORS: ReadonlySet<string> = new Set([
   '||', '&&', '?', ',', '=', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>=', '>>>=',
@@ -387,6 +394,8 @@ const noChain: ChainBinding = () => null;
 
 interface Parsed {
   text: string;
+  /** Wrap the already written operand that starts at token `from` (see `range`). */
+  wrap?: { from: number; before: string; after: string };
   /** Index of the first token after the type. */
   next: number;
 }
@@ -501,10 +510,19 @@ class ExprRewriter {
     let out = '';
     let prevEnd = this.toks[lo].start;
     let i = lo;
+    /** Output offset where each token's text starts (after the gap before it). */
+    const starts = new Map<number, number>();
     while (i < hi) {
       const t = this.toks[i];
       out += this.src.slice(prevEnd, t.start);
-      const r = this.step(i, hi);
+      starts.set(i, out.length);
+      const r = this.step(i, hi, lo);
+      if (r.wrap !== undefined) {
+        // A postfix type test: the operand is already written; surround it and drop the gap before the operator.
+        const at = starts.get(r.wrap.from) ?? out.length;
+        const operand = out.slice(at).trimEnd();
+        out = out.slice(0, at) + r.wrap.before + operand + r.wrap.after;
+      }
       out += r.text;
       prevEnd = this.toks[r.next - 1].end;
       i = r.next;
@@ -520,7 +538,7 @@ class ExprRewriter {
     return this.src.slice(this.toks[i].end, this.toks[i + 1].start);
   }
 
-  private step(i: number, hi: number): Parsed {
+  private step(i: number, hi: number, lo: number): Parsed {
     const t = this.toks[i];
     if (t.kind !== 'id') return this.raw(i);
     if (i > 0 && (this.isP(i - 1, '.') || this.isP(i - 1, '::'))) return this.raw(i);
@@ -534,12 +552,15 @@ class ExprRewriter {
       case 'uint':
         return this.intCall(i, hi);
       case 'Vector':
-        if (this.isP(i + 1, '.<')) return this.vector(i);
+        if (this.isP(i + 1, '.<')) return this.vector(i, hi);
         return this.raw(i);
       case 'is':
       case 'instanceof':
       case 'as':
-        if (i > 0) return this.typeOperator(i);
+        if (i > 0) return this.typeOperator(i, lo);
+        return this.raw(i);
+      case 'delete':
+        this.checkDelete(i);
         return this.raw(i);
       default:
         break;
@@ -678,16 +699,60 @@ class ExprRewriter {
     return false;
   }
 
-  private vector(i: number): Parsed {
+  private vector(i: number, hi: number): Parsed {
     const inner = parseType(this.toks, i + 2, this.chainOfType);
     if (inner === null || !this.isP(inner.next, '>')) throw new ExprError('unsupported Vector type');
     const next = inner.next + 1;
     if (this.isId(i - 1, 'new')) return { text: `Array<${inner.text}>`, next };
-    if (this.isP(next, '(')) throw new ExprError('Vector conversion call is not supported');
+    if (this.isP(next, '(')) return this.vectorCopy(i, inner, next, hi);
     return { text: inner.text + '[]', next };
   }
 
-  private typeOperator(i: number): Parsed {
+  /** `Vector.<T>(x)`: a copy of x as an array; int and uint elements go through the int and uint coercion. */
+  private vectorCopy(i: number, inner: Parsed, open: number, hi: number): Parsed {
+    const close = this.closeOf(open, hi);
+    if (close === open + 1) throw new ExprError('Vector conversion call without an argument');
+    let depth = 0;
+    for (let q = open + 1; q < close; q++) {
+      const t = this.toks[q];
+      if (t.kind !== 'punct') continue;
+      if (t.text === '(' || t.text === '[' || t.text === '{') depth++;
+      else if (t.text === ')' || t.text === ']' || t.text === '}') depth--;
+      else if (depth === 0 && t.text === ',') throw new ExprError('Vector conversion call with more than one argument');
+    }
+    const arg = this.range(open + 1, close);
+    const elem = inner.next === i + 3 ? this.toks[i + 2].text : '';
+    const op = elem === 'int' ? '| 0' : elem === 'uint' ? '>>> 0' : null;
+    const text = op === null ? `Array.from(${arg})` : `Array.from(${arg}, (v: any) => (v ${op}))`;
+    return { text, next: close + 1 };
+  }
+
+  /** `delete` is kept as a JavaScript `delete` of a property; `delete x` of a plain name is not translatable. */
+  private checkDelete(i: number): void {
+    const operand = this.toks[i + 1];
+    const named = operand !== undefined && operand.kind === 'id' && (this.isP(i + 2, '.') || this.isP(i + 2, '['));
+    if (!named) throw new ExprError('"delete" of something other than a property access cannot be translated');
+  }
+
+  /** Start of the left operand of the type operator at `i`: after the nearest looser operator or open bracket, but not before `lo`. */
+  private operandStart(i: number, lo: number): number {
+    let depth = 0;
+    for (let q = i - 1; q >= lo; q--) {
+      const t = this.toks[q];
+      if (t.kind === 'punct') {
+        if (t.text === ')' || t.text === ']' || t.text === '}') depth++;
+        else if (t.text === '(' || t.text === '[' || t.text === '{') {
+          if (depth === 0) return q + 1;
+          depth--;
+        } else if (depth === 0 && OPERAND_STOPS.has(t.text)) return q + 1;
+      } else if (t.kind === 'id' && depth === 0 && OPERAND_STOP_WORDS.has(t.text)) {
+        return q + 1;
+      }
+    }
+    return lo;
+  }
+
+  private typeOperator(i: number, lo: number): Parsed {
     const word = this.toks[i].text;
     if (i + 1 >= this.toks.length) throw new ExprError(`"${word}" without a type`);
     const rhs = parseType(this.toks, i + 1, this.chainOfType);
@@ -695,6 +760,13 @@ class ExprRewriter {
     if (word !== 'as') {
       const first = this.toks[i + 1].text;
       const single = rhs.next === i + 2;
+      if (single && (first === 'Array' || first === 'Class')) {
+        const from = this.operandStart(i, lo);
+        if (from >= i) throw new ExprError(`"${word} ${first}" without an operand`);
+        return first === 'Array'
+          ? { text: '', next: rhs.next, wrap: { from, before: 'Array.isArray(', after: ')' } }
+          : { text: '', next: rhs.next, wrap: { from, before: '(typeof ', after: ' === "function")' } };
+      }
       if (single && PRIMITIVE_IS_TYPES.has(first)) {
         throw new ExprError(`"${word} ${first}" cannot be translated to instanceof`);
       }

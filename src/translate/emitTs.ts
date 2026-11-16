@@ -151,6 +151,28 @@ export function emitTs(nodes: readonly Node[], input: EmitInput): EmitOutput {
 
 // ---------------------------------------------------------------------------
 
+/** Words the Translation_Report names when the construct is commented out (Requirement 11.2). */
+const NAMED_WORDS: readonly string[] = ['Class', 'Dictionary', 'delete', 'flash_proxy'];
+
+/**
+ * `reason` followed by the words of NAMED_WORDS (and `is Array`) that occur in the commented-out tokens and
+ * that the reason does not already contain. Deterministic: fixed word order.
+ */
+export function nameConstructs(reason: string, tokens: readonly Token[], range: TokRange): string {
+  const found = new Set<string>();
+  for (let i = range.from; i < range.to; i++) {
+    const t = tokens[i];
+    if (t.kind !== 'id') continue;
+    if (NAMED_WORDS.includes(t.text)) found.add(t.text);
+    else if (t.text === 'is' || t.text === 'instanceof') {
+      const next = tokens.slice(i + 1, range.to).find((x) => x.kind !== 'comment');
+      if (next !== undefined && next.kind === 'id' && next.text === 'Array') found.add('is Array');
+    }
+  }
+  const words = ['is Array', ...NAMED_WORDS].filter((w) => found.has(w) && !reason.includes(w));
+  return words.length === 0 ? reason : `${reason} (names: ${words.join(', ')})`;
+}
+
 class UnsupportedSignal extends Error {
   constructor(readonly reason: string) {
     super(reason);
@@ -361,7 +383,7 @@ class Emitter {
     }
     if (prefix !== '') this.lines.push(this.ind(d) + '}');
     this.span(n.startLine, n.endLine, 'unsupported');
-    this.diags.push({ kind: 'unsupported-construct', line: n.startLine, message: reason });
+    this.diags.push({ kind: 'unsupported-construct', line: n.startLine, message: nameConstructs(reason, this.tokens, n.range) });
   }
 
   // -- classes and members -------------------------------------------------

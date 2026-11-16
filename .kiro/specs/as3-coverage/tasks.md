@@ -231,19 +231,19 @@ Rules that apply to every task:
     - Add the scope-order rule with its evidence (the Ruffle file and the Open_Item for `this`) to `.kiro/steering/flash-behaviour.md`. State the existing samples' scores before and after.
     - _Requirements: 9.4, 36.5, 36.7_
 
-- [ ] 13. Translate: `Vector.<T>(x)`, `is Array`, `is Class`, `delete` and reported constructs (D8)
+- [x] 13. Translate: `Vector.<T>(x)`, `is Array`, `is Class`, `delete` and reported constructs (D8)
   - Commit area: `Translate`. Verification V1. Read the design rows D8 and D9 and Requirements 10 and 11.
-  - [~] 13.1 Translate the constructs
+  - [x] 13.1 Translate the constructs
     - `Vector.<T>(x)` becomes `Array.from(x)`; for `int` and `uint` each element goes through the existing int and uint coercion. `is Array` becomes `Array.isArray(x)`; `x is Class` becomes `typeof x === "function"`; `delete obj[key]` on an object becomes a JavaScript `delete`. A statement containing `Vector.<T>(x)` is never commented out.
     - Tests: `test/unit/rewrite.test.ts` (extend) with Fixture_Classes for each construct, including `int`/`uint` and a non-integer `T`.
     - _Requirements: 10.1, 10.2, 10.3, 11.3, 11.6_
 
-  - [~] 13.2 Write property test for the vector copy
+  - [x] 13.2 Write property test for the vector copy
     - **Property 11: Vector conversion copies**
     - In `test/property/vectorCopy.property.test.ts` (create): for any array `x`, the emitted copy for a non-integer `T` has the same length and elements and is a different object; for `int` and `uint` every element is coerced.
     - **Validates: Requirements 10.1, 10.2, 10.4**
 
-  - [~] 13.3 Name every commented-out construct in the Translation_Report
+  - [x] 13.3 Name every commented-out construct in the Translation_Report
     - When the Translator comments out a statement or declaration, the Translation_Report names the construct, the class and the line; `delete` (not translatable case), `is Array`, a `Dictionary` index, `Class` as a type, `flash_proxy` and a `this` read before `super` are named by that word. A construct that cannot be translated keeps its class in the Unsupported_Feature_List as today.
     - Tests: `test/unit/translationReport.test.ts` (extend) with Fixture_Classes per construct word.
     - _Requirements: 11.1, 11.2, 11.5, 11.6_

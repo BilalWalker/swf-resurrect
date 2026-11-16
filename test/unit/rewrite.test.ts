@@ -166,3 +166,52 @@ describe('rewrite: clickgoto fixtures', () => {
     expect(out.text).toContain('inspect(from: DisplayObject | null): void {');
   });
 });
+
+describe('rewrite: Vector conversion, type tests and delete', () => {
+  const body = (stmts: string) => run(fn(stmts)).out;
+  const unsupported = (o: ReturnType<typeof body>) => o.diagnostics.filter((d) => d.kind === 'unsupported-construct');
+
+  it('copies Vector.<T>(x) with Array.from and keeps the statement', () => {
+    const out = body('      var a:Vector.<String> = Vector.<String>(src);\n      var b:Vector.<Foo> = Vector.<Foo>([1, 2]);');
+    expect(out.text).toContain('var a: string[] | null = Array.from(src);');
+    expect(out.text).toContain('Array.from([1, 2]);');
+    expect(out.text).not.toContain('// AS3:');
+    expect(unsupported(out)).toEqual([]);
+    expect(tsSyntaxCheck(out.text)).toEqual([]);
+  });
+
+  it('coerces each element for Vector.<int> and Vector.<uint>', () => {
+    const out = body('      var a:Vector.<int> = Vector.<int>(src);\n      var b:Vector.<uint> = Vector.<uint>(h(1, 2));');
+    expect(out.text).toContain('Array.from(src, (v: any) => (v | 0))');
+    expect(out.text).toContain('Array.from(h(1, 2), (v: any) => (v >>> 0))');
+    expect(unsupported(out)).toEqual([]);
+  });
+
+  it('keeps new Vector.<T>() and refuses a conversion call with no or several arguments', () => {
+    const ok = body('      var a:Vector.<int> = new Vector.<int>(3);');
+    expect(ok.text).toContain('new Array<number>(3)');
+    expect(unsupported(body('      var a:* = Vector.<int>();'))).toHaveLength(1);
+    expect(unsupported(body('      var a:* = Vector.<int>(p, q);'))).toHaveLength(1);
+  });
+
+  it('translates is Array to Array.isArray and is Class to typeof', () => {
+    const out = body('      var a:Boolean = x is Array;\n      var b:Boolean = o.k is Class;\n      if (p && h(q) is Array) { g(); }\n      var c:Boolean = !(x is Array);');
+    expect(out.text).toContain('var a: boolean = Array.isArray(x);');
+    expect(out.text).toContain('var b: boolean = (typeof o.k === "function");');
+    expect(out.text).toContain('p && Array.isArray(h(q))');
+    expect(out.text).toContain('!(Array.isArray(x))');
+    expect(unsupported(out)).toEqual([]);
+    expect(tsSyntaxCheck(out.text)).toEqual([]);
+  });
+
+  it('turns delete of a property into a JavaScript delete and reports delete of a plain name', () => {
+    const ok = body('      delete obj[key];\n      delete this.table.k;');
+    expect(ok.text).toContain('delete obj[key];');
+    expect(ok.text).toContain('delete this.table.k;');
+    expect(unsupported(ok)).toEqual([]);
+    const bad = body('      delete local;');
+    expect(unsupported(bad)).toHaveLength(1);
+    expect(unsupported(bad)[0].message).toContain('delete');
+    expect(bad.text).toContain('// AS3:');
+  });
+});

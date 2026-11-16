@@ -275,7 +275,7 @@ function unsupportedLines(form: UnsupportedForm, m: string): string[] {
     case "with":
       return ["with(x)", "{", `   trace("${m}");`, "}"];
     case "delete":
-      return [`delete x["${m}"];`];
+      return [`delete "${m}";`];
     case "nestedFn":
       return ["function inner() : void", "{", `   trace("${m}");`, "}"];
     case "e4x":

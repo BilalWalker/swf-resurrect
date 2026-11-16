@@ -224,7 +224,7 @@ const MODIFIERS: ReadonlySet<string> = new Set([
 ]);
 
 const UNSUPPORTED_KEYWORDS: ReadonlySet<string> = new Set([
-  'try', 'switch', 'with', 'delete', 'namespace', 'use', 'include', 'function',
+  'try', 'switch', 'with', 'namespace', 'use', 'include', 'function',
 ]);
 
 const OPEN_TO_CLOSE: Readonly<Record<string, string>> = { '(': ')', '[': ']', '{': '}' };
@@ -359,7 +359,6 @@ class Scanner {
       } else if (t.kind === 'id') {
         if (t.text === 'XML' || t.text === 'XMLList') return 'E4X (XML) is not supported';
         if (t.text === 'function') return 'function expressions are not supported';
-        if (t.text === 'delete') return 'delete is not supported';
       }
     }
     return null;
