@@ -847,12 +847,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 19. Steering: status, ADDED_APIS.md and final summary
   - Commit area: `Steering` (the `ADDED_APIS.md` check is part of the same commit). Verification V1. The steering status lines are the only edit to `.kiro/steering/` in this plan; the git-workflow test list is not edited (Requirement 15.14: the plan's V2 rule carries the drift test, so the steering file's test list is not edited).
-  - [-] 19.1 Update the steering status and the added-API log
+  - [x] 19.1 Update the steering status and the added-API log
     - Update the status lines of `.kiro/steering/tech.md` and `.kiro/steering/structure.md` (render path is Shape_JSON; Scene_JSON v2; package-qualified classes; Stage_Object; implicit `this` and the generated Shim_Member_Table with `npm run gen:shim-members`; class fallback; fetched sample and `npm run fetch:static-text`; residual register; new modules; samples count) and verify the commands against `package.json`. Confirm that every API the Shim gained in this spec has a row in `template/shim/ADDED_APIS.md` with the fixture line that needs it, and that no row exists for an API that was not added. Do not edit `requirements.md` or `design.md`.
     - Test: `test/unit/addedApis.test.ts` (create) checks that every `MouseEvent.MOUSE_*`, `mouseX`, `mouseY`, `Stage`, `DisplayObject.stage` and `ClipHooks.entryUpdated` named in the Shim source has a row in `ADDED_APIS.md` with a fixture line reference or the stated support reason.
     - _Requirements: 14.10, 14.17, 19.5, 15.10_
 
-  - [ ] 19.2 Repository hygiene test
+  - [-] 19.2 Repository hygiene test
     - Create `test/unit/repoHygiene.test.ts` (reads `git ls-files` through a child process; skipped with a reason when `.git` is absent; it prints a path and never a matched text): no tracked path under `tools/`, `out/`, `.work/` or `dist/` and no tracked PNG named like a Reference_Frame, Rendered_Frame or Diff_Image outside `test/fixtures/` (Requirement 15.11); every version in `package.json` is exact (no `^`, `~`, `*`, `>`) and every dependency name is in a list held in the test, built once from `package.json` as it was before Task 1 (`git show` of the parent of the first commit of this spec) so that a New_Dependency fails the test (Requirement 15.8); no tracked file contains a token-like string (`ghp_` or `github_pat_` followed by 20 or more word characters, `AKIA` followed by 16 capitals or digits, a `-----BEGIN` line for a private key), with the patterns built by string concatenation so that the test does not match itself (Requirement 15.13); every Core file named in the purity test of 5.1 is named by at least one test file under `test/` (Requirements 15.4, 15.6).
     - Test: the file above is the test; it must pass with the repository as committed.
     - _Requirements: 15.4, 15.6, 15.8, 15.11, 15.13_
