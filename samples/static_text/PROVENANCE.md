@@ -45,6 +45,24 @@ Copied unedited from the same Ruffle test directory at the same commit:
 - `reference/test.toml`: `num_frames = 1`.
 Upstream has no `input.json` for this test.
 
+## Known limits as a sample
+Trace comparison against `reference/output.txt`, measured in task 29.2
+(Overall_Match 100, Trace_Score 0, 3 missing lines, 1 extra line).
+Named_Limit `static-text-class-name` (trace, not visual; there is no entry in
+a `residual-causes.json`, which covers visual regions only):
+- Reference line 3 is `Child: [object StaticText]`. Flash prints exactly that.
+- We print `Child: [object Shape]`.
+- Cause: static text is drawn as a shape symbol, the Shim has no `StaticText`
+  class, and `getChildAt(0)` returns the `ShapeObject`, whose class name is
+  `Shape`.
+- The comparison counts the reference line `Child: [object StaticText]` as one
+  of the 3 missing lines and our `Child: [object Shape]` as the 1 extra line.
+  `test/e2e/staticText.e2e.test.ts` pins both lists.
+Open items, not fixed here:
+- The `try`/`catch` in `Test` is still left untranslated as comments ("try is
+  not supported"), so reference lines 1 and 2 (`Caught error: ArgumentError:
+  Error #2012: ...` and `e.errorID: 2012`) never print.
+- Trace_Score is still 0, with the same 3 missing reference lines.
 ## Generated, not committed
 The FFDec structure dump and the symbol list are generated from the fetched
 SWF under `.work/samples/static_text/` and are not committed, because a dump
