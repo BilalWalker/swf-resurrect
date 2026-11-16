@@ -823,7 +823,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
   - Run the full suite `npm test -- --run` before stopping. Wait for the user's answer before Task 19.
   - _Requirements: 16.4, 16.5_
 
-- [ ] 29. Checkpoint 18 follow-ups
+- [x] 29. Checkpoint 18 follow-ups
   - Commit area: `Test`, `Translate` or `Convert` per sub-task (each commit names its area). The user accepted Checkpoint 18 with these changes. They run before Task 19. One commit per sub-task, not one commit for the task. Each commit message has a blank second line (check with `git log -1 --format=%B` before moving on). Verification V1 (V2 where a sub-task changes `template/`). Sub-task 29.3 amends the `design.md` lines it names (the Strokes measurement table); this is the one exception to the rule that no task edits those files, and the commit message lists the lines.
   - [x] 29.1 Suite time
     - Find why `test/e2e/omittedClass.e2e.test.ts` hung (300 s timeout in the Checkpoint 18 suite run) and report the cause; do not raise the timeout. Then bring the full suite back under about 150 s (it is now about 485 s; it was about 100 s before Tasks 15 to 17 added e2e files that each run the pipeline per sample). Run the pipeline once per sample and share the output across the e2e files that need it (for example a vitest `globalSetup`, or a shared cached run keyed by sample under `.work/`). No test is weakened or removed: every assertion stays.
@@ -837,8 +837,9 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - The class `Test` is referenced only from a frame script (`new Test(this)` in `MainTimeline` frame 1) and is never translated. Diagnose why. If the fix is in the translation closure (classes reachable from frame scripts), fix it with tests and measure `static_text` again (Overall_Match and Trace_Score); raise the floors per the Ratchet_Rule. If the fix is larger than that, STOP and report.
     - Test: a unit row in the translate closure tests (a class referenced only from a frame script is in the closure) and the `static_text` floor tests.
     - _Requirements: 10.6, 20.3, 3.6, 3.7, 2.5_
+    - Correction (recorded in 19.1): the body of commit 90b0b2e (Convert: set the round-join cutoff to 30 degrees from data (29.3), the commit that changed 	est/unit/svgToShape.test.ts) says the closed 60-degree test row was replaced; the closed 60-degree test row was kept and a new row was added beside it, not replaced. Open item: commit 05f412d has an 82-character subject (over the 72 limit); it was not amended, for the user to fix when landing.
 
-  - [-] 29.3 Round-join cutoff from measurement (amends 28.1) and syntax-check determinism
+  - [x] 29.3 Round-join cutoff from measurement (amends 28.1) and syntax-check determinism
     - Render round joins at several corner angles and stroke widths (FFDec Reference_Frame against the real backend, unchanged Verify_Tolerance), record where the difference exceeds the tolerance, set the cutoff in `src/convert/svgToShape.ts` from that, and put the numbers in `design.md` (the Strokes measurement table). Delete the variants.
     - Also (28.6 follow-up): the memoised syntax check used in `translateDeterminism` removed that coverage from **Property 1**. Add a small separate test that `tsSyntaxCheck` gives the same result for the same text on repeated calls.
     - Test: rows in `test/unit/svgToShape.test.ts` (a round join below the cutoff gives no `stroke-style` limit and one above gives one) and the `tsSyntaxCheck` determinism test.
@@ -846,7 +847,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 19. Steering: status, ADDED_APIS.md and final summary
   - Commit area: `Steering` (the `ADDED_APIS.md` check is part of the same commit). Verification V1. The steering status lines are the only edit to `.kiro/steering/` in this plan; the git-workflow test list is not edited (Requirement 15.14: the plan's V2 rule carries the drift test, so the steering file's test list is not edited).
-  - [ ] 19.1 Update the steering status and the added-API log
+  - [-] 19.1 Update the steering status and the added-API log
     - Update the status lines of `.kiro/steering/tech.md` and `.kiro/steering/structure.md` (render path is Shape_JSON; Scene_JSON v2; package-qualified classes; Stage_Object; implicit `this` and the generated Shim_Member_Table with `npm run gen:shim-members`; class fallback; fetched sample and `npm run fetch:static-text`; residual register; new modules; samples count) and verify the commands against `package.json`. Confirm that every API the Shim gained in this spec has a row in `template/shim/ADDED_APIS.md` with the fixture line that needs it, and that no row exists for an API that was not added. Do not edit `requirements.md` or `design.md`.
     - Test: `test/unit/addedApis.test.ts` (create) checks that every `MouseEvent.MOUSE_*`, `mouseX`, `mouseY`, `Stage`, `DisplayObject.stage` and `ClipHooks.entryUpdated` named in the Shim source has a row in `ADDED_APIS.md` with a fixture line reference or the stated support reason.
     - _Requirements: 14.10, 14.17, 19.5, 15.10_

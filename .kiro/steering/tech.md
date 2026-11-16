@@ -1,6 +1,6 @@
 # Tech Stack
 
-Status: unpack, convert, translate and emit are built; verify, UI and hosting are not. Update this file as tooling is added, and verify commands against `package.json` before relying on them.
+Status: unpack, convert, translate, emit and verify are built; UI and hosting are not. The render path is Shape_JSON (one shape JSON per symbol, drawn by the runtime on PixiJS) with gradients, bitmap fills, colour offsets (ColorMatrixFilter, the alpha add term is stripped), strokes, static text as shapes, filters and blend modes kept with limits, and trivial masks as clip groups. Scene_JSON is formatVersion 2. Translation resolves package-qualified classes, models the Stage_Object, adds implicit `this` from the generated Shim_Member_Table (`npm run gen:shim-members`) and has a class fallback for classes it cannot translate. Verify compares against Reference_Frames that FFDec renders (Ruffle is not used) and writes a fidelity report with a residual register. The `static_text` sample is fetched, not committed (`npm run fetch:static-text`). `npm test` runs `scripts/runTests.ts`, two vitest phases. Update this file as tooling is added, and verify commands against `package.json` before relying on them.
 
 ## Stack
 - Language: TypeScript (strict) for the pipeline, runtime, and emitted projects. The repo's `typescript` is 7.0.2 (`tsc`).
@@ -12,7 +12,7 @@ Status: unpack, convert, translate and emit are built; verify, UI and hosting ar
 - Tests: property-based (e.g. fast-check) plus unit tests.
 
 ## Pipeline
-`unpack (FFDec) -> convert (SVG/PNG/audio/timeline JSON) -> translate (AS3 -> TS) -> emit (Vite+Pixi project)`, then the in-process type-check gate on the emitted files. `verify (Ruffle vs output)` is planned.
+`unpack (FFDec) -> convert (SVG/PNG/audio/timeline JSON) -> translate (AS3 -> TS) -> emit (Vite+Pixi project)`, then the in-process type-check gate on the emitted files. `verify` (FFDec Reference_Frames vs the output rendered in headless Chromium) runs with `--verify` and writes `fidelity-report.json` and `fidelity-report.html`; the web app and hosting are planned.
 
 Outputs next to the project: `unsupported-features.json` and `translation-report.json`. Type errors are reported, not fatal.
 
@@ -30,8 +30,10 @@ Repo root (`package.json`):
 npm install
 npm run typecheck           # tsc --noEmit
 npm run typecheck:template  # tsc --noEmit -p tsconfig.template.json
-npm test -- --run           # single run, no watch mode
-npm run pipeline -- <in.swf> <outdir> [--force]   # tsx src/pipeline/cli.ts
+npm test -- --run           # scripts/runTests.ts: main vitest run, then launchChromium.e2e alone
+npm run gen:shim-members    # regenerate src/translate/shimMembers.generated.ts from template/shim/
+npm run fetch:static-text   # fetch the static_text sample into .work/ (never committed)
+npm run pipeline -- <in.swf> <outdir> [--force] [--verify] [--verify-frames <n>] [--reference-dir <dir>]   # tsx src/pipeline/cli.ts
 ```
 Inside an emitted project (`out/<sample>`): `npm install`, `npm run dev` (run manually, do not block on it), `npm run build`, `npm run typecheck`.
 

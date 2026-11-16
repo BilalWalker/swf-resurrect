@@ -1,6 +1,6 @@
 # Project Structure
 
-Status: unpack, convert, translate, emit and the pipeline CLI exist. Verify, web app and hosting are planned.
+Status: unpack, convert, translate, emit, verify and the pipeline CLI exist. The web app and hosting are planned. Scene_JSON is formatVersion 2 and shapes are Shape_JSON. `samples/` holds nine committed samples (clickgoto, tweendemo, radial, gradients, acid-color-2, mask_reapply, click_block, 3_joystick, slider_component) and the fetched `static_text` (only its PROVENANCE.md and reference files are committed; `npm run fetch:static-text` downloads the SWF).
 
 ## Current repo layout (tool itself)
 ```
@@ -14,13 +14,18 @@ samples/          SWFs, each with PROVENANCE.md
 src/unpack/       FFDec wrapper
 src/convert/      FFDec output -> Scene_JSON, assets, unsupported list
 src/translate/    AS3 -> TS: tokenizer, scanner, rewrite, emitTs, translate, planTranslate,
-                  report, shimNames; IO and typescript-js use only in translateStage,
+                  report, shimNames, implicitThis, importPlan, interfaceDecl, memberTables,
+                  shimMembers (+ generated shimMembers.generated.ts); IO and typescript-js use only in translateStage,
                   tsSyntaxCheck, typeCheckGate
 src/emit/         Writes the Vite+Pixi project from template/ plus translated classes
+src/verify/       core/ (pure: pixel diff, trace compare, residual register, report) and edge/
+                  (FFDec Reference_Frames, Chromium render, replay, verifyStage)
+src/samples/      Fetched-sample core (static_text)
+scripts/          runTests.ts (`npm test`), gen-shim-members.ts, fetch-static-text.ts
 src/pipeline/     Stage wiring, CLI (npm run pipeline), report writing
 mcp/              MCP servers for Kiro: swf-inspector (npm run mcp:swf-inspector)
 scripts/hooks/    Scripts run by the hooks in .kiro/hooks/ (plain Node, no tsx)
-template/         Files copied into every emitted project: runtime/, shim/, src/
+template/         Files copied into every emitted project: runtime/, shim/, src/ (shim/ includes Stage)
 test/             unit/, property/ (fast-check), e2e/, fixtures/, support/
 handwritten/      Optional override directory (see Rules); empty by default
 LICENSE
@@ -28,9 +33,7 @@ LICENSE
 Gitignored: `tools/`, `node_modules/`, `out/`, `.work/`, `dist/`.
 
 ## Planned
-- Verify stage (Ruffle vs output) as its own module with explicit inputs and outputs.
 - Web app (drag-in SWF, stage progress, side-by-side preview, zip download, fidelity report).
-- `samples/`: 3-4 SWFs in total (two so far).
 
 ## Emitted project layout (what we generate)
 ```
