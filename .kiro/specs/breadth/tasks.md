@@ -852,12 +852,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Test: `test/unit/addedApis.test.ts` (create) checks that every `MouseEvent.MOUSE_*`, `mouseX`, `mouseY`, `Stage`, `DisplayObject.stage` and `ClipHooks.entryUpdated` named in the Shim source has a row in `ADDED_APIS.md` with a fixture line reference or the stated support reason.
     - _Requirements: 14.10, 14.17, 19.5, 15.10_
 
-  - [-] 19.2 Repository hygiene test
+  - [x] 19.2 Repository hygiene test
     - Create `test/unit/repoHygiene.test.ts` (reads `git ls-files` through a child process; skipped with a reason when `.git` is absent; it prints a path and never a matched text): no tracked path under `tools/`, `out/`, `.work/` or `dist/` and no tracked PNG named like a Reference_Frame, Rendered_Frame or Diff_Image outside `test/fixtures/` (Requirement 15.11); every version in `package.json` is exact (no `^`, `~`, `*`, `>`) and every dependency name is in a list held in the test, built once from `package.json` as it was before Task 1 (`git show` of the parent of the first commit of this spec) so that a New_Dependency fails the test (Requirement 15.8); no tracked file contains a token-like string (`ghp_` or `github_pat_` followed by 20 or more word characters, `AKIA` followed by 16 capitals or digits, a `-----BEGIN` line for a private key), with the patterns built by string concatenation so that the test does not match itself (Requirement 15.13); every Core file named in the purity test of 5.1 is named by at least one test file under `test/` (Requirements 15.4, 15.6).
     - Test: the file above is the test; it must pass with the repository as committed.
     - _Requirements: 15.4, 15.6, 15.8, 15.11, 15.13_
 
-  - [ ] 19.3 Final summary
+  - [-] 19.3 Final summary
     - Write the final summary in the commit message and in the reply: for each sample, the Overall_Match and Trace_Score before and after this spec (the three empty-trace samples as `not-compared: empty-reference-trace`); the Known_Visual_Limits and Residual_Causes left; the new stage results of every Appendix A candidate; the measured effect of the decided items O1 to O9 and F19 to F21 (the user owes no decision); what was not verified (alpha add term beyond the three variants, caps on strokes of the real samples beyond the floors, focal radial gradients, `nonzero` fills, hit testing through masks, texture cost, `acid-gradient` if not downloaded, `static_text` if the file was absent, the run-time behaviour of a registered Loose_Class that throws). State that no test is optional and that all required tests passed.
     - Evidence is the full `npm run typecheck` and `npm test -- --run` run recorded in the message; no new code (guarded by the suites above).
     - _Requirements: 1.6, 14.1, 14.2, 15.3, 15.7_
