@@ -51,12 +51,22 @@ async function acquire(pool: string, size: number): Promise<string> {
   }
 }
 
+/** Takes one of `size` slots of `pool`, waiting until one is free. Pair with `releaseSlot`. */
+export function acquireSlot(pool: string, size: number): Promise<string> {
+  return acquire(pool, size);
+}
+
+/** Frees a slot returned by `acquireSlot`. Safe to call twice. */
+export async function releaseSlot(slot: string): Promise<void> {
+  await rm(slot, { recursive: true, force: true });
+}
+
 /** Runs `fn` while holding one of `size` slots of `pool`. */
 export async function withSlot<T>(pool: string, size: number, fn: () => Promise<T>): Promise<T> {
-  const slot = await acquire(pool, size);
+  const slot = await acquireSlot(pool, size);
   try {
     return await fn();
   } finally {
-    await rm(slot, { recursive: true, force: true });
+    await releaseSlot(slot);
   }
 }

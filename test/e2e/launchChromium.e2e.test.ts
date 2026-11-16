@@ -2,10 +2,11 @@
 // Skipped with a reason when Chromium is missing.
 import { existsSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { GRACEFUL_CLOSE_MS } from '../../src/verify/edge/launchChromium';
 import { launchChromium } from '../support/launchChromium';
 import { alivePids, processTree } from '../support/processTree';
+import { acquireSlot, PIPELINE_SLOTS, releaseSlot } from '../support/slots';
 
 function skipReason(): string | null {
   let p = '';
@@ -19,6 +20,18 @@ function skipReason(): string | null {
 const reason = skipReason();
 
 describe.skipIf(reason !== null)(`launchChromium stop${reason === null ? '' : ` (skipped: ${reason})`}`, () => {
+  // Chromium launches share the 'pipeline' pool with the pipeline runs that start Chromium, so this file adds no
+  // fourth concurrent browser on top of PIPELINE_SLOTS (a pool of its own would). The slot is taken here and not
+  // inside the tests, so the wait for it is not counted in their 20 s limit. This hook's timeout only covers that
+  // queueing; the tests keep their own limits.
+  let slot: string | null = null;
+  beforeEach(async () => {
+    slot = await acquireSlot('pipeline', PIPELINE_SLOTS);
+  }, 20 * 60_000);
+  afterEach(async () => {
+    if (slot !== null) await releaseSlot(slot);
+    slot = null;
+  });
   it('leaves no process of the browser alive, and the page was usable before', async () => {
     const launched = await launchChromium();
     const page = await launched.browser.newPage();
