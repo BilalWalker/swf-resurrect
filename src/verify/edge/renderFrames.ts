@@ -1,9 +1,10 @@
 /** Renders Timeline_Only frames of a built Emitted_Project in headless Chromium (design section 5, D4, D5). */
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { chromium, type Browser, type Page } from 'playwright';
+import type { Browser, Page } from 'playwright';
 import type { RgbaImage } from '../core/pixelDiff';
 import { sanitizeDetail } from '../core/sanitize';
+import { launchChromium, type LaunchedChromium } from './launchChromium';
 import { decodePng } from './png';
 
 export const RENDER_WAIT_TIMEOUT_MS = 10_000;
@@ -104,17 +105,16 @@ export async function renderFrames(
   const ordered = [...frames].sort((a, b) => a - b);
   if (ordered.length === 0) return result;
   const root = path.resolve(distDir);
-  let browser: Browser | null = null;
-  let closing: Promise<void> | null = null;
+  let launched: LaunchedChromium | null = null;
   try {
     try {
-      browser = await chromium.launch({ headless: true });
+      launched = await launchChromium();
     } catch (err) {
       const detail = describe(err);
       for (const n of ordered) result.set(n, { renderFailed: detail });
       return result;
     }
-    const context = await browser.newContext({
+    const context = await launched.browser.newContext({
       viewport: { width: stage.width, height: stage.height },
       deviceScaleFactor: 1,
     });
@@ -125,9 +125,7 @@ export async function renderFrames(
     for (const n of ordered) if (!result.has(n)) result.set(n, { renderFailed: detail });
     return result;
   } finally {
-    if (browser) {
-      closing = browser.close().catch(() => undefined);
-      await closing;
-    }
+    // Kill Chromium instead of waiting for its graceful exit, which can take tens of seconds under load (task 29.1).
+    await launched?.stop();
   }
 }
