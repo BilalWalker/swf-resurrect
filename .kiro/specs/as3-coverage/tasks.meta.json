@@ -1,0 +1,710 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add the SWF, PROVENANCE.md and the MIT text": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755205335
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755234943
+      }
+    ],
+    "1.2 Run the provenance and licence checks": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755205624
+      }
+    ],
+    "2.1 Generalise the fetch core and add `scripts/fetch-spacer.ts`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755205820
+      }
+    ],
+    "2.2 Add `samples/spacer/PROVENANCE.md` and the skip helper": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755206009
+      }
+    ],
+    "2.3 Update the steering status": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755206193
+      }
+    ],
+    "3.1 Generate `SHIM_AS3_NAMES` from the exports of `template/shim/index.ts`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755206457
+      }
+    ],
+    "3.2 Read type annotations in the import scan": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755206667
+      }
+    ],
+    "3.3 Write property test for type-position imports": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755206876
+      }
+    ],
+    "4.1 Emit `T | null` for every reference type": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755207063
+      }
+    ],
+    "4.2 Set `strictNullChecks` to false in the emitted tsconfig and the gate": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755207250
+      }
+    ],
+    "4.3 Regenerate goldens and check the registry": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755207431
+      }
+    ],
+    "4.4 Write property test for null admission": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755207694
+      }
+    ],
+    "5.1 Add `src/translate/initHazards.ts` (pure)": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755207879
+      }
+    ],
+    "5.2 Rewrite the cut and fill the all-class registry": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755208061
+      }
+    ],
+    "5.3 Install the load-error listener in `index.html` and report it in Verify": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755208260
+      }
+    ],
+    "5.4 Measure the `spacer` page load": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755208489
+      }
+    ],
+    "6.1 Add error classes and `getQualifiedClassName`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755208751
+      }
+    ],
+    "6.2 Add `getTimer()` on the Player clock": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755208976
+      }
+    ],
+    "7.1 Add `KeyboardEvent` and `Keyboard`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755209170
+      }
+    ],
+    "7.2 Extend `addEventListener` and `removeEventListener`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755209385
+      }
+    ],
+    "7.3 Check the table and the floors": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755209589
+      }
+    ],
+    "8.1 Add `template/runtime/keyMap.ts` (pure)": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755209848
+      }
+    ],
+    "8.2 Add `Player.dispatchKey(type, code)`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755210079
+      }
+    ],
+    "8.3 Wire the browser and the iframe": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755210259
+      }
+    ],
+    "8.4 Measure browser key codes against Flash": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755210491
+      }
+    ],
+    "9.1 Add container behaviour to `Stage`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755210741
+      }
+    ],
+    "9.2 Add Stage members": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755210977
+      }
+    ],
+    "9.3 Add `stageNode`, `syncAll` and `reconcile` over the Stage": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755211228
+      }
+    ],
+    "10.1 Add `runtime/broadcast.ts` and generalise the step to tops": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755211475
+      }
+    ],
+    "10.2 Hit-test Stage children": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755211669
+      }
+    ],
+    "10.3 Guard the existing floors": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755211905
+      }
+    ],
+    "11. Checkpoint 1: Block A done": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755212240
+      }
+    ],
+    "12.1 Change the member lookup order in `memberTables.ts`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755212452
+      }
+    ],
+    "12.2 Write property test for the lookup order": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755212648
+      }
+    ],
+    "12.3 Record the evidence": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755212906
+      }
+    ],
+    "13.1 Translate the constructs": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755213125
+      }
+    ],
+    "13.2 Write property test for the vector copy": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755213332
+      }
+    ],
+    "13.3 Name every commented-out construct in the Translation_Report": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755213561
+      }
+    ],
+    "14.1 Add the Shim `Dictionary`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755213753
+      }
+    ],
+    "14.2 Rewrite index syntax on a typed receiver": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755213980
+      }
+    ],
+    "14.3 Write property test for the identity model": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755214189
+      }
+    ],
+    "15.1 Record primitives in the Shim `Graphics`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755214416
+      }
+    ],
+    "15.2 Add `runtime/graphicsPlan.ts` and the backend hooks": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755214730
+      }
+    ],
+    "15.3 Write property test for the plan replay": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755214973
+      }
+    ],
+    "16.1 Add `InteractiveObject` and the minimal `TextField`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755215213
+      }
+    ],
+    "16.2 Draw the text in the runtime": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755215513
+      }
+    ],
+    "16.3 Add `filters` and `GlowFilter`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755215749
+      }
+    ],
+    "16.4 Add `MouseEvent.MOUSE_WHEEL` and `delta`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755215986
+      }
+    ],
+    "17.1 Add `handwritten/SET.json` and its reader": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755216218
+      }
+    ],
+    "17.2 Report hand-written classes": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755216481
+      }
+    ],
+    "17.3 Write property test and the committed-sample test": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755216687
+      }
+    ],
+    "18.1 Plan key entries": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755216902
+      }
+    ],
+    "18.2 Run key entries in the Replay": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755217115
+      }
+    ],
+    "18.3 Teach the recorder keys and try Ruffle on `entity_game`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755217333
+      }
+    ],
+    "18.4 Report an empty Reference_Trace as not compared": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755217538
+      }
+    ],
+    "19.1 Translate and type-check the three classes": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755217755
+      }
+    ],
+    "19.2 Check the behaviour of the translated `Signal`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755217972
+      }
+    ],
+    "19.3 Fallback, only if 19.1 or 19.2 fails": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755218302
+      }
+    ],
+    "20.1 Add the inspection hook": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755218514
+      }
+    ],
+    "20.2 Add the `?play=1` driver": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755218715
+      }
+    ],
+    "20.3 Write the `entity_game` scenario for the Node layer": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755218938
+      }
+    ],
+    "20.4 Run the same scenario in headless Chromium": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755219185
+      }
+    ],
+    "21.1 Measure Overall_Match and set the floor": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755219383
+      }
+    ],
+    "21.2 Record the Named_Limits in the reports": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755219577
+      }
+    ],
+    "22. Checkpoint 2: `entity_game` plays": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755219817
+      }
+    ],
+    "23.1 Hoist initialised fields used in `super(...)`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755220126
+      }
+    ],
+    "23.2 Write property test for field identity": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755220330
+      }
+    ],
+    "24.1 Write scenes in Convert": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755220515
+      }
+    ],
+    "24.2 Read versions 2 and 3 and test the round trip": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755220789
+      }
+    ],
+    "24.3 Add `currentLabel`, scene-relative `currentFrame` and scene `goto`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755221045
+      }
+    ],
+    "25.1 Add the Shim `Timer` and `TimerEvent`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755221292
+      }
+    ],
+    "25.2 Fire timers from the Player clock": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755221525
+      }
+    ],
+    "25.3 Write property test for the timer model": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755221738
+      }
+    ],
+    "26.1 Add `Rectangle`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755221995
+      }
+    ],
+    "26.2 Add `contentBounds` and `DisplayObject.getBounds(targetSpace)`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755222252
+      }
+    ],
+    "26.3 Add `runtime/overlap.ts` (`pixelsOverlap`)": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755222431
+      }
+    ],
+    "26.4 Check the hitbox symbols of `spacer`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755222620
+      }
+    ],
+    "27.1 Name the unsupported base class": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755222815
+      }
+    ],
+    "27.2 Check that the Shim has no `Proxy`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755223006
+      }
+    ],
+    "28.1 Write the two files locally, uncommitted": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755223205
+      }
+    ],
+    "28.2 STOP and ask the owner for the licence decision (O1)": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755223412
+      }
+    ],
+    "28.3 Commit the files and the set entries, if the owner approves": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755223604
+      }
+    ],
+    "29.1 Run the full pipeline on `spacer` and fix the load path": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755223806
+      }
+    ],
+    "29.2 Explain and record the render timeout": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755224018
+      }
+    ],
+    "29.3 Measure Overall_Match and set the floor": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755224226
+      }
+    ],
+    "29.4 Try Ruffle on `spacer` and write the input script": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755224434
+      }
+    ],
+    "30.1 Measure what can be measured": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755224631
+      }
+    ],
+    "30.2 Update `flash-behaviour.md`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755224831
+      }
+    ],
+    "30.3 Record the Open_Items": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755225034
+      }
+    ],
+    "31.1 Add the `spacer` scenario for the Node layer": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755225257
+      }
+    ],
+    "31.2 Run the same scenario in headless Chromium": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755225467
+      }
+    ],
+    "32. Checkpoint 3: `spacer` plays": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755225710
+      }
+    ],
+    "33.1 Measure Overall_Match before Block D": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755226008
+      }
+    ],
+    "33.2 Export and convert static edit text": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755226193
+      }
+    ],
+    "33.3 Write property test for the shape bounds": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755226391
+      }
+    ],
+    "34.1 Return Rotated_Bounds from `width` and `height`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755226602
+      }
+    ],
+    "34.2 Write property test for Rotated_Bounds": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755226814
+      }
+    ],
+    "35.1 Measure again and raise the floor": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755227039
+      }
+    ],
+    "35.2 Attribute the remaining regions": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755227248
+      }
+    ],
+    "36. Checkpoint 4: Block D done": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794755227454
+      }
+    ]
+  }
+}
