@@ -107,7 +107,7 @@ describe("svgToShapeJson strokes", () => {
           const els = items
             .map(([v, cap, join]) => {
               const a = v.attrs.includes("stroke-linejoin") ? v.attrs : `${v.attrs} stroke-linejoin="${join}"`;
-              return `<path d="M0 0 L9 0 9 9 Z" fill="none" ${a} stroke-linecap="${cap}" stroke-width="3"/>`;
+              return `<path d="M0 0 L9 0 9 1 Z" fill="none" ${a} stroke-linecap="${cap}" stroke-width="3"/>`;
             })
             .join("");
           const { shape, limits } = svgToShapeJson(`${head}<g transform="matrix(1,0,0,1,0,0)">${els}</g></svg>`, "shape");
@@ -117,7 +117,7 @@ describe("svgToShapeJson strokes", () => {
           expect(shape.paths).toHaveLength(kept);
           const messages = limits.filter((l) => l.kind === "stroke-style").map((l) => l.message);
           expect(limits.every((l) => l.kind === "stroke-style")).toBe(true);
-          const ROUND = "approximated: round join at a corner under 60 degrees is not drawn exactly (34 px differ at 7 degrees)";
+          const ROUND = "approximated: round join at a corner under 30 degrees is not drawn exactly (2 to 140 px differ at 7 and 15 degrees, strokes 2 to 20 px wide)";
           const expected = [
             ...new Set(
               items.flatMap(([v, , join]) => [

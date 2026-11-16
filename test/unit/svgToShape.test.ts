@@ -108,7 +108,7 @@ describe("svgToShapeJson on synthetic input", () => {
   });
 });
 
-const ROUND_JOIN = "approximated: round join at a corner under 60 degrees is not drawn exactly (34 px differ at 7 degrees)";
+const ROUND_JOIN = "approximated: round join at a corner under 30 degrees is not drawn exactly (2 to 140 px differ at 7 and 15 degrees, strokes 2 to 20 px wide)";
 
 describe("svgToShapeJson strokes", () => {
   const head =
@@ -135,7 +135,7 @@ describe("svgToShapeJson strokes", () => {
     for (const cap of ["butt", "round", "square"] as const) {
       for (const join of ["miter", "round", "bevel"] as const) {
         const { shape, limits } = one(`stroke="#000000" stroke-width="10" stroke-linecap="${cap}" stroke-linejoin="${join}"`);
-        expect(limits).toEqual([]); // the 90 degree corner of `one` is wider than 60 degrees
+        expect(limits).toEqual([]); // the 90 degree corner of `one` is wider than 30 degrees
         expect(shape.paths[0]!.stroke).toEqual({ color: "#000000", alpha: 1, width: 10, cap, join, miterLimit: 4 });
       }
     }
@@ -156,10 +156,16 @@ describe("svgToShapeJson strokes", () => {
     expect(sharp("bevel").limits).toEqual([]);
     expect(sharp("miter").limits).toEqual([]);
   });
-  it("records nothing for a round join at corners of 60 degrees or wider, open or closed", () => {
-    expect(sharp("round", "M0 0 L100 0 50 86.7").limits).toEqual([]); // interior angle just over 60 degrees
+  it("records nothing for a round join at corners of 30 degrees or wider, open or closed", () => {
+    expect(sharp("round", "M100 0 L0 0 L100 60.1").limits).toEqual([]); // interior angle 31 degrees
+    expect(sharp("round", "M0 0 L100 0 50 86.7").limits).toEqual([]); // 60 degrees, formerly a limit
+    expect(sharp("round", "M0 0 L100 0 L100 100 L50 100 Z").limits).toEqual([]);
     expect(sharp("round", "M0 0 L100 0 100 100 0 100 Z").limits).toEqual([]);
     expect(sharp("round", "M0 0 L100 0").limits).toEqual([]); // no corner
+  });
+  it("records the limit for a round join at an interior angle of 29 degrees and at 15 degrees", () => {
+    expect(sharp("round", "M100 0 L0 0 L100 55.4").limits).toHaveLength(1);
+    expect(sharp("round", "M100 0 L0 0 L100 26.8").limits).toHaveLength(1);
   });
   it("finds the sharp corner at the closing edge, in a curve tangent, and for a reversal", () => {
     expect(sharp("round", "M0 0 L100 0 L100 12 Z").limits).toHaveLength(1); // closes back to the start at about 7 degrees

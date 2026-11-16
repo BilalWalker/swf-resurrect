@@ -2834,6 +2834,18 @@
         "executionId": "409b900e-24f4-4f8e-af00-e4222fe39cc1",
         "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
         "timestamp": 1794741604825
+      },
+      {
+        "executionId": "409b900e-24f4-4f8e-af00-e4222fe39cc1",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794742480759
+      }
+    ],
+    "29.3 Round-join cutoff from measurement (amends 28.1) and syntax-check determinism": [
+      {
+        "executionId": "409b900e-24f4-4f8e-af00-e4222fe39cc1",
+        "chatSessionId": "sess_4d87135b-8e29-49d2-84f5-8406441c5087",
+        "timestamp": 1794742480975
       }
     ]
   }

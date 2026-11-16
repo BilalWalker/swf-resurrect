@@ -833,12 +833,12 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Open item (machine freeze, not resolved): in a full-suite run at peak load (16 JVMs, about 48 node processes and about 40 headless Chromium processes at once) Chromium launch, page loads and process exit froze machine-wide for 2 to 5 minutes. CPU stayed at 0 to 6 %, about 5 GB of memory was free and JVMs still started; Chromium processes that were killed did not exit until the freeze released, so a `launched.stop()` in the afterAll hook of `render.e2e` timed out at 30 s. The OS-level cause is unknown. Capping Chromium-using pipeline runs at 3 at once (`PIPELINE_SLOTS` in `test/support/slots.ts`, npm install 1) is a workaround, not a diagnosis; no timeout was raised.
     - Measured (2026-11-15, after every in-process Chromium launch takes a `pipeline` slot and `launchChromium.e2e` runs alone after the other files through `scripts/runTests.ts`): `npm test -- --run` green cold in 174.9 s (`.work/shared-runs` and `.work/slots` deleted; 1222 tests in 154 files in 159.5 s, then 2 tests in `launchChromium.e2e` in 8.9 s) and warm in 102.3 s (92.1 s and 8.2 s). Cold is over 150 s because `pipeline.e2e` (153.9 s) is the critical path; accepted.
 
-  - [-] 29.2 `static_text`: class `Test` is never translated
+  - [x] 29.2 `static_text`: class `Test` is never translated
     - The class `Test` is referenced only from a frame script (`new Test(this)` in `MainTimeline` frame 1) and is never translated. Diagnose why. If the fix is in the translation closure (classes reachable from frame scripts), fix it with tests and measure `static_text` again (Overall_Match and Trace_Score); raise the floors per the Ratchet_Rule. If the fix is larger than that, STOP and report.
     - Test: a unit row in the translate closure tests (a class referenced only from a frame script is in the closure) and the `static_text` floor tests.
     - _Requirements: 10.6, 20.3, 3.6, 3.7, 2.5_
 
-  - [ ] 29.3 Round-join cutoff from measurement (amends 28.1) and syntax-check determinism
+  - [-] 29.3 Round-join cutoff from measurement (amends 28.1) and syntax-check determinism
     - Render round joins at several corner angles and stroke widths (FFDec Reference_Frame against the real backend, unchanged Verify_Tolerance), record where the difference exceeds the tolerance, set the cutoff in `src/convert/svgToShape.ts` from that, and put the numbers in `design.md` (the Strokes measurement table). Delete the variants.
     - Also (28.6 follow-up): the memoised syntax check used in `translateDeterminism` removed that coverage from **Property 1**. Add a small separate test that `tsSyntaxCheck` gives the same result for the same text on repeated calls.
     - Test: rows in `test/unit/svgToShape.test.ts` (a round join below the cutoff gives no `stroke-style` limit and one above gives one) and the `tsSyntaxCheck` determinism test.

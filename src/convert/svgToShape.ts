@@ -8,8 +8,9 @@
 // patternTransform, the decoded bytes (never re-encoded) and `ffdec:fill-bitmapId`; `images` is sorted by bitmapId with
 // one entry per id; with `caps.bitmap` false the fill is a limit. Strokes (sub-task 10.5): cap, join, miter limit, width,
 // colour and alpha are read; a miter-clip join, a gradient stroke, an unresolved stroke paint and a dash array are each
-// returned as a `stroke-style` limit (decided F8), and so is a round join at a corner under 60 degrees (sub-task 28.1). No limit is
-// recorded for a cap, a bevel join, a miter join or a wider round corner (sub-task 11.1 measures them exact).
+// returned as a `stroke-style` limit (decided F8), and so is a round join at a corner under 30 degrees (sub-tasks 28.1, 29.3). No limit is
+// recorded for a cap, a bevel join, a miter join or a wider round corner (measured in 11.1 and 29.3; the 29.3 bevel and miter
+// controls at 7 degrees differ by 0 to 2 px and 4 to 358 px and are not limited here).
 //
 // Elements that cannot be read at all (malformed XML, path data outside M L H V Q C Z, non-finite numbers) are
 // dropped without a limit: FFDec does not write them, and ShapeLimitKind has no kind for them.
@@ -255,12 +256,14 @@ function decodeDataUrl(href: string | undefined): { ext: 'png' | 'jpg'; bytes: U
 }
 
 /**
- * Sub-task 28.1. Measured in 11.1 (a9c787e): a round join at a corner below the miter limit 2.0 (interior angle above
- * 60 degrees) is exact, and a round join at a 7 degree corner differs by 34 px. Nothing between is measured, so a round
- * join is named at every corner whose interior angle is under 60 degrees.
+ * Sub-task 29.3 (amends 28.1). Measured in this commit (design.md, "Strokes measurement table"): a round join
+ * differs from the Reference_Frame at interior angles 7 and 15 degrees (2 px at width 2, 28 to 38 px at 10, 138 to 140 px
+ * at 20) and is exact at 30, 45, 60, 75, 90 and 120 degrees at every width measured (2, 10, 20 px). The differences form
+ * one threshold, independent of width, between 15 and 30 degrees, so a round join is named at every corner whose
+ * interior angle is under 30 degrees.
  */
-const ROUND_JOIN_LIMIT = 'approximated: round join at a corner under 60 degrees is not drawn exactly (34 px differ at 7 degrees)';
-const SHARP_COS = -0.5; // cos of the turning angle 120 degrees, that is an interior angle of 60 degrees
+const ROUND_JOIN_LIMIT = 'approximated: round join at a corner under 30 degrees is not drawn exactly (2 to 140 px differ at 7 and 15 degrees, strokes 2 to 20 px wide)';
+const SHARP_COS = -Math.cos((30 * Math.PI) / 180); // cos of the turning angle 150 degrees, that is an interior angle of 30 degrees
 
 type Vec = readonly [number, number];
 
@@ -281,7 +284,7 @@ function segmentDirs(c: PathCmd, p: Vec): { dirs: [Vec, Vec]; end: Vec } | null 
   return { dirs: [start, fin], end };
 }
 
-/** True when some corner of the subpaths has an interior angle under 60 degrees (a turn of more than 120 degrees). */
+/** True when some corner of the subpaths has an interior angle under 30 degrees (a turn of more than 150 degrees). */
 function hasSharpCorner(subpaths: readonly PathCmd[][]): boolean {
   for (const sp of subpaths) {
     const segs: Array<[Vec, Vec]> = [];
