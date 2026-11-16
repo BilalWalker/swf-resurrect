@@ -2,7 +2,7 @@
 // Requirements: 4.8, 5.5, 5.6, 5.7, 9.1, 10.5, 10.6, 10.8.
 import { spawn } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
-import { mkdir, mkdtemp, readdir, readFile, rm, stat } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, stat, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -118,31 +118,78 @@ function typecheckErrorKeys(output: string): string[] {
 }
 
 /**
- * What a `--verify` run adds to the tree of a run without it: the fidelity report and the `verify/` directory (frames).
+ * What a `--verify` run adds to the tree of a run without it, and nothing else: the two fidelity report files and the
+ * frame images of the verify stage (`verify/frames/<n>-reference|rendered|diff.png`, checked on a real shared run).
  * Emit and the two JSON reports are written the same way in both modes (pipeline.ts: `verify` is not passed to the
  * emit stage, and the reports do not read the verify summary), and the verify stage builds in a staging copy.
  */
-function isVerifyOnly(file: string): boolean {
-  return file === 'fidelity-report.json' || file === 'fidelity-report.html' || file.startsWith('verify/');
-}
+const VERIFY_OUTPUTS: readonly (string | RegExp)[] = [
+  'fidelity-report.json',
+  'fidelity-report.html',
+  /^verify\/frames\/\d+-(reference|rendered|diff)\.png$/,
+];
+const isVerifyOutput = (file: string): boolean => VERIFY_OUTPUTS.some((o) => (typeof o === 'string' ? o === file : o.test(file)));
+
 /**
- * Compares a fresh run without --verify (`fresh`) with the tree of a run with --verify (`verified`) on exactly the file
- * set the fresh run wrote. `comparable` is false unless `verified` holds every file of `fresh` and nothing else besides
- * the verify-only files; then the caller falls back to two real runs.
+ * Compares a fresh run without --verify (`fresh`) with the tree of a run with --verify (`verified`): the file set of
+ * `verified` must equal that of `fresh` plus verify outputs only. Returns the problems: files missing from `verified`,
+ * files in `verified` that are neither in `fresh` nor verify outputs, and files whose bytes differ.
  */
-async function compareWithVerifiedTree(fresh: string, verified: string): Promise<{ comparable: boolean; diffs: string[] }> {
+async function compareWithVerifiedTree(fresh: string, verified: string): Promise<string[]> {
   const [filesFresh, filesVerified] = await Promise.all([listFiles(fresh), listFiles(verified)]);
   const inVerified = new Set(filesVerified);
   const inFresh = new Set(filesFresh);
-  const missing = filesFresh.filter((f) => !inVerified.has(f));
-  const unexpected = filesVerified.filter((f) => !inFresh.has(f) && !isVerifyOnly(f));
-  if (missing.length > 0 || unexpected.length > 0) return { comparable: false, diffs: [] };
   const diffs: string[] = [];
+  for (const f of filesFresh) if (!inVerified.has(f)) diffs.push(`missing from the verify run: ${f}`);
+  for (const f of filesVerified) if (!inFresh.has(f) && !isVerifyOutput(f)) diffs.push(`unexpected in the verify run: ${f}`);
+  if (diffs.length > 0) return diffs;
   for (const f of filesFresh) {
     const [x, y] = await Promise.all([readFile(join(fresh, f)), readFile(join(verified, f))]);
     if (!x.equals(y)) diffs.push(`differs: ${f}`);
   }
-  return { comparable: true, diffs };
+  return diffs;
+}
+
+/**
+ * npm install happens once: the first sample to reach it installs for real, the others reuse its node_modules when
+ * their package.json is byte-identical to the installed one. Emit writes no package-lock.json (npm creates it during the
+ * install), so package.json is the only emitted dependency input. `node_modules` is made available by a directory
+ * junction, so nothing is copied and nothing the test later modifies is shared (typecheck and build write elsewhere).
+ */
+interface InstalledProject {
+  dir: string;
+  packageJson: Buffer;
+}
+let installer: Promise<InstalledProject | null> | null = null;
+/** Which samples installed and which reused, with the identity check that backed each reuse (asserted per test). */
+const installLog: { sample: string; how: 'installed' | 'reused'; from?: string }[] = [];
+/** Gives `projectDir` its node_modules: a real install for the first caller, else a junction when package.json is identical. */
+async function provideNodeModules(name: string, projectDir: string): Promise<RunResult> {
+  const packageJson = await readFile(join(projectDir, 'package.json'));
+  const realInstall = () => withSlot('npm', 1, () => npm(['install', '--no-audit', '--no-fund'], projectDir));
+  if (installer === null) {
+    let settle!: (p: InstalledProject | null) => void;
+    installer = new Promise((r) => (settle = r));
+    let result: RunResult | undefined;
+    try {
+      result = await realInstall();
+    } finally {
+      settle(result !== undefined && result.code === 0 ? { dir: projectDir, packageJson } : null);
+    }
+    installLog.push({ sample: name, how: 'installed' });
+    return result;
+  }
+  const first = await installer;
+  if (first !== null && packageJson.equals(first.packageJson)) {
+    // The identity that makes the reuse valid.
+    expect(packageJson.equals(first.packageJson), `package.json of ${name} must be byte-identical to ${first.dir} to reuse its node_modules`).toBe(true);
+    await symlink(join(first.dir, 'node_modules'), join(projectDir, 'node_modules'), 'junction');
+    installLog.push({ sample: name, how: 'reused', from: first.dir });
+    return { code: 0, output: '' };
+  }
+  const result = await realInstall();
+  installLog.push({ sample: name, how: 'installed' });
+  return result;
 }
 describe('pipeline end to end', () => {
   let tempRoot = '';
@@ -163,6 +210,7 @@ describe('pipeline end to end', () => {
   }, 60_000);
 
   afterAll(async () => {
+    for (const e of installLog) console.info(`npm install: ${e.sample} ${e.how}${e.from === undefined ? '' : ` from ${e.from}`}`);
     if (tempRoot !== '') await rm(tempRoot, { recursive: true, force: true });
   }, 60_000);
 
@@ -180,26 +228,26 @@ describe('pipeline end to end', () => {
         const problems: string[] = [];
         const outA = join(tempRoot, 'a', name);
         // Run A is FRESH: a pipeline child process started by this test, without --verify, into its own directory.
-        // The second run is the shared `--verify` run of this sample (possibly cached, never compared with itself), used
-        // only when its tree holds exactly the files run A wrote plus the verify-only files; otherwise (or when it
-        // failed) the second run is a real run B without --verify.
+        // The second run is the shared `--verify` run of this sample (possibly cached, never compared with itself): its
+        // file set must be run A's plus the verify outputs, and any other difference fails the test. Only when the
+        // shared run is missing or failed is the second run a real run B without --verify.
         const sample = basename(dirname(swf));
         const [runA, shared] = await Promise.all([main([swf, outA]), sharedPipelineRun(sample, swf)]);
         expect(runA.code, `pipeline run 1 for ${swf}\n${runA.output}`).toBe(0);
-        let comparison = shared.code === 0 ? await compareWithVerifiedTree(outA, shared.outDir) : { comparable: false, diffs: [] as string[] };
-        if (!comparison.comparable) {
+        let diffs: string[];
+        if (shared.code === 0) {
+          diffs = await compareWithVerifiedTree(outA, shared.outDir);
+        } else {
           const outB = join(tempRoot, 'b', name);
           const runB = await main([swf, outB]);
           expect(runB.code, `pipeline run 2 for ${swf}\n${runB.output}`).toBe(0);
-          comparison = { comparable: true, diffs: await compareTrees(outA, outB) };
+          diffs = await compareTrees(outA, outB);
         }
         // Same input, same output tree, byte for byte (before npm adds node_modules).
-        expect(comparison.diffs, `output trees differ for ${swf}`).toEqual([]);
-        // One npm install at a time across workers, as when this file ran its samples in one loop.
-        const install = await withSlot('npm', 1, () => npm(['install', '--no-audit', '--no-fund'], outA));
-        if (install.code !== 0) problems.push(`npm install in ${outA}\n${install.output}`);
-
-        // Type errors are reported, not fatal (tech steering; Requirements 23.2 and 25): a project with
+        expect(diffs, `output trees differ for ${swf}`).toEqual([]);
+        // One real npm install in total; other samples reuse it when their package.json is identical.
+        const install = await provideNodeModules(name, outA);
+        if (install.code !== 0) problems.push(`npm install in ${outA}\n${install.output}`);        // Type errors are reported, not fatal (tech steering; Requirements 23.2 and 25): a project with
         // gate-reported errors must show exactly those errors (same files, same codes), and a project
         // with none must type-check clean.
         const reported = await reportedErrorKeys(outA);
