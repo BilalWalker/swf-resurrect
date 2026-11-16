@@ -61,6 +61,37 @@ describe('planTranslate', () => {
     expect(r.classes.map((c) => c.className)).toEqual(['A']);
   });
 
+  const timeline = (pkg: string, body: string) =>
+    `package ${pkg} {\n  import flash.display.MovieClip;\n  public class MainTimeline extends MovieClip {\n    public function MainTimeline() { addFrameScript(0, this.frame1); }\n    internal function frame1():* { ${body} }\n  }\n}\n`;
+
+  it('adds a root-package class referenced only from a frame script of a packaged class', () => {
+    const r = planTranslate(
+      [
+        { className: 'test_fla.MainTimeline', source: timeline('test_fla', 'new Test(this);') },
+        { className: 'Test', source: cls('Test') },
+        { className: 'Unused', source: cls('Unused') },
+      ],
+      sceneWith(['test_fla.MainTimeline']),
+      tsSyntaxCheck,
+    );
+    expect(r.classes.map((c) => c.className)).toEqual(['Test', 'test_fla.MainTimeline']);
+    expect(r.classes[1].text).toContain("import { Test } from '../Test';");
+  });
+
+  it('adds a same-package class named without an import, and what that class names in turn', () => {
+    const r = planTranslate(
+      [
+        { className: 'p.MainTimeline', source: timeline('p', 'new Helper(this);') },
+        { className: 'p.Helper', source: 'package p {\n  public class Helper {\n    public function Helper(x:*) { new Deep(); }\n  }\n}\n' },
+        { className: 'Deep', source: cls('Deep') },
+        { className: 'p.Other', source: 'package p {\n  public class Other {\n  }\n}\n' },
+      ],
+      sceneWith(['p.MainTimeline']),
+      tsSyntaxCheck,
+    );
+    expect(r.classes.map((c) => c.className)).toEqual(['Deep', 'p.Helper', 'p.MainTimeline']);
+  });
+
   it('emits EventWatcher for the clickgoto fixtures', () => {
     const dir = join(__dirname, '..', 'fixtures', 'clickgoto', 'scripts');
     const names = ['EventWatcher', 'LeftButton', 'MainTimeline', 'RightButton'];

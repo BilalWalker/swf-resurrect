@@ -92,3 +92,54 @@ describe("planFileImports scoping", () => {
     expect(plan.bindingOfChain.get("b.X")).toBe("b_X");
   });
 });
+
+describe("planFileImports root package", () => {
+  const bare = new Map([["Test", 1]]);
+  it("binds a root-package class named without an import from a named package", () => {
+    const plan = planFileImports(input({ known: new Set(["Test"]), bare }));
+    expect(plan.bindingOfBare.get("Test")).toBe("Test");
+    expect(plan.imports).toEqual([{ target: "Test", binding: "Test", aliased: false }]);
+  });
+
+  it("prefers a same-package class over the root-package class", () => {
+    const plan = planFileImports(input({ known: new Set(["Test", "app.Test"]), bare }));
+    expect(plan.bindingOfBare.get("Test")).toBe("app.Test");
+  });
+
+  it("binds a root-package class from a root-package file (same-package rule)", () => {
+    const plan = planFileImports(input({ selfQualified: "Main", known: new Set(["Test"]), bare }));
+    expect(plan.bindingOfBare.get("Test")).toBe("Test");
+  });
+});
+
+describe("planFileImports root package precedence", () => {
+  const bare = new Map([["Test", 1]]);
+  const known = new Set(["Test", "app.Test", "lib.Test", "w.Test"]);
+  it("an explicit import wins over the root package", () => {
+    const plan = planFileImports(input({ known: new Set(["Test", "lib.Test"]), bare, imports: [{ path: "lib.Test", wildcard: false }] }));
+    expect(plan.bindingOfBare.get("Test")).toBe("lib.Test");
+  });
+  it("a same-package class wins over the root package", () => {
+    expect(planFileImports(input({ known, bare })).bindingOfBare.get("Test")).toBe("app.Test");
+  });
+  it("a wildcard import wins over the root package", () => {
+    const plan = planFileImports(input({ known: new Set(["Test", "w.Test"]), bare, imports: [{ path: "w", wildcard: true }] }));
+    expect(plan.bindingOfBare.get("Test")).toBe("w.Test");
+  });
+  it("an explicit import wins over same package, wildcard and root package together", () => {
+    const plan = planFileImports(input({ known, bare, imports: [{ path: "w", wildcard: true }, { path: "lib.Test", wildcard: false }] }));
+    expect(plan.bindingOfBare.get("Test")).toBe("lib.Test");
+  });
+  it("a root-package name resolves from a nested package only when nothing else matches", () => {
+    const plan = planFileImports(input({ selfQualified: "a.b.C", declared: new Set(["C"]), known: new Set(["Test", "a.b.C"]), bare }));
+    expect(plan.bindingOfBare.get("Test")).toBe("Test");
+  });
+  it("a nested-package file with a same-named class in its own package takes that one", () => {
+    const plan = planFileImports(input({ selfQualified: "a.b.C", declared: new Set(["C"]), known: new Set(["Test", "a.b.Test", "a.b.C"]), bare }));
+    expect(plan.bindingOfBare.get("Test")).toBe("a.b.Test");
+  });
+  it("leaves the name unbound when no level has the class", () => {
+    const plan = planFileImports(input({ known: new Set(["lib.Test"]), bare }));
+    expect(plan.bindingOfBare.has("Test")).toBe(false);
+  });
+});

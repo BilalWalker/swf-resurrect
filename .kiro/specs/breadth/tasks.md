@@ -825,7 +825,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
 
 - [ ] 29. Checkpoint 18 follow-ups
   - Commit area: `Test`, `Translate` or `Convert` per sub-task (each commit names its area). The user accepted Checkpoint 18 with these changes. They run before Task 19. One commit per sub-task, not one commit for the task. Each commit message has a blank second line (check with `git log -1 --format=%B` before moving on). Verification V1 (V2 where a sub-task changes `template/`). Sub-task 29.3 amends the `design.md` lines it names (the Strokes measurement table); this is the one exception to the rule that no task edits those files, and the commit message lists the lines.
-  - [-] 29.1 Suite time
+  - [x] 29.1 Suite time
     - Find why `test/e2e/omittedClass.e2e.test.ts` hung (300 s timeout in the Checkpoint 18 suite run) and report the cause; do not raise the timeout. Then bring the full suite back under about 150 s (it is now about 485 s; it was about 100 s before Tasks 15 to 17 added e2e files that each run the pipeline per sample). Run the pipeline once per sample and share the output across the e2e files that need it (for example a vitest `globalSetup`, or a shared cached run keyed by sample under `.work/`). No test is weakened or removed: every assertion stays.
     - Verification: the full suite `npm test -- --run` green once; report the duration in the commit message.
     - Test: the existing e2e files are the evidence; add a unit test for the shared-run helper (same sample gives one pipeline run; a changed input gives a new one).
@@ -833,7 +833,7 @@ Robustness group (Tasks 20 to 27). Added after Checkpoint 9 on the user's decisi
     - Open item (machine freeze, not resolved): in a full-suite run at peak load (16 JVMs, about 48 node processes and about 40 headless Chromium processes at once) Chromium launch, page loads and process exit froze machine-wide for 2 to 5 minutes. CPU stayed at 0 to 6 %, about 5 GB of memory was free and JVMs still started; Chromium processes that were killed did not exit until the freeze released, so a `launched.stop()` in the afterAll hook of `render.e2e` timed out at 30 s. The OS-level cause is unknown. Capping Chromium-using pipeline runs at 3 at once (`PIPELINE_SLOTS` in `test/support/slots.ts`, npm install 1) is a workaround, not a diagnosis; no timeout was raised.
     - Measured (2026-11-15, after every in-process Chromium launch takes a `pipeline` slot and `launchChromium.e2e` runs alone after the other files through `scripts/runTests.ts`): `npm test -- --run` green cold in 174.9 s (`.work/shared-runs` and `.work/slots` deleted; 1222 tests in 154 files in 159.5 s, then 2 tests in `launchChromium.e2e` in 8.9 s) and warm in 102.3 s (92.1 s and 8.2 s). Cold is over 150 s because `pipeline.e2e` (153.9 s) is the critical path; accepted.
 
-  - [ ] 29.2 `static_text`: class `Test` is never translated
+  - [-] 29.2 `static_text`: class `Test` is never translated
     - The class `Test` is referenced only from a frame script (`new Test(this)` in `MainTimeline` frame 1) and is never translated. Diagnose why. If the fix is in the translation closure (classes reachable from frame scripts), fix it with tests and measure `static_text` again (Overall_Match and Trace_Score); raise the floors per the Ratchet_Rule. If the fix is larger than that, STOP and report.
     - Test: a unit row in the translate closure tests (a class referenced only from a frame script is in the closure) and the `static_text` floor tests.
     - _Requirements: 10.6, 20.3, 3.6, 3.7, 2.5_

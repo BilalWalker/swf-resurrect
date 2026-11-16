@@ -2,7 +2,8 @@
 //
 // `planFileImports` decides, for every name a file refers to, which known class it
 // is and under which binding it is imported. Scoping order for a bare name that the
-// file does not declare: explicit import, same package, wildcard import, Shim name.
+// file does not declare: explicit import, same package, wildcard import, root package
+// (from a named package only), Shim name.
 // Two different classes at the winning level are an ambiguity: neither is bound and
 // one Diagnostic names them. Dotted chains and `forced` targets (inherited statics,
 // design 18.5) are bound under the simple name unless it is taken, then under an alias
@@ -98,7 +99,10 @@ export function planFileImports(input: ImportPlanInput): ImportPlan {
       const qn = join(imp.path, name);
       if (usable(qn)) wild.add(qn);
     }
-    return [...wild].sort(cmp);
+    if (wild.size > 0) return [...wild].sort(cmp);
+    // A class of the root package needs no import in AS3, from any package.
+    if (selfPkg !== '' && usable(name)) return [name];
+    return [];
   };
 
   // 1. Bare names, in code-unit order so the result does not depend on map order.

@@ -9,13 +9,15 @@ const simple = (q: string) => q.slice(q.lastIndexOf(".") + 1);
 const pkg = (q: string) => (q.includes(".") ? q.slice(0, q.lastIndexOf(".")) : "");
 const join = (p: string, s: string) => (p === "" ? s : `${p}.${s}`);
 
-/** Independent statement of the scoping order: explicit import, same package, wildcard. */
+/** Independent statement of the scoping order: explicit import, same package, wildcard, root package. */
 function expectedCandidates(i: ImportPlanInput, name: string): string[] {
   const ok = (q: string) => i.known.has(q) && q !== i.selfQualified;
   const explicit = [...new Set(i.imports.filter((d) => !d.wildcard && simple(d.path) === name && ok(d.path)).map((d) => d.path))];
   if (explicit.length > 0) return explicit.sort();
   if (ok(join(pkg(i.selfQualified), name))) return [join(pkg(i.selfQualified), name)];
-  return [...new Set(i.imports.filter((d) => d.wildcard && ok(join(d.path, name))).map((d) => join(d.path, name)))].sort();
+  const wild = [...new Set(i.imports.filter((d) => d.wildcard && ok(join(d.path, name))).map((d) => join(d.path, name)))].sort();
+  if (wild.length > 0) return wild;
+  return pkg(i.selfQualified) !== "" && ok(name) ? [name] : [];
 }
 
 describe("Property 22: The import plan binds every reference once and reports ambiguity", () => {
