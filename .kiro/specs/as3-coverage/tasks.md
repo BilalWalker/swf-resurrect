@@ -191,23 +191,23 @@ Rules that apply to every task:
     - Tests: `test/unit/stageNodes.test.ts` (create) on the FakeBackend: a child added to the Stage appears above the root and disappears on removal; existing sample floors unchanged (V2).
     - _Requirements: 7.4_
 
-- [ ] 10. Runtime: tick phases, broadcast order and hit test over Stage children (D6)
+- [x] 10. Runtime: tick phases, broadcast order and hit test over Stage children (D6)
   - Commit area: `Runtime`. Verification V2 (this is the task that can move an existing floor). Read the design "Player tick" diagram, the Stage tree section (Tops, Phases, Broadcast, Guard, Hit test) and the findings F4, Open_Items O3 and O11. Registration order was read in the Ruffle_Source (`core/src/avm2.rs` `register_broadcast_listener`, `broadcast_event`; `core/src/frame_lifecycle.rs`; `core/src/display_object/stage.rs`); say so in the commit body and add the rule to `flash-behaviour.md`.
-  - [-] 10.1 Add `runtime/broadcast.ts` and generalise the step to tops
+  - [x] 10.1 Add `runtime/broadcast.ts` and generalise the step to tops
     - `tops = [root, ...stage._children.slice(1)]` snapshotted per frame step. `Sprite._step` becomes `stepTops(tops)` in `shim/internal.ts` (`_step()` stays as `stepTops([this])`). Phases: A advance (post-order per top), B broadcast `enterFrame`, C flush adds and broadcast `frameConstructed`, D frame scripts (root top first), E broadcast `exitFrame`; timers run after the frame loop. `EventDispatcher.addEventListener` registers an object in an ordered list for those three types on first registration; delivery walks the list, skips objects with no listener and prunes them; only `DisplayObject` instances and the Stage take part. `ENTER_FRAME` is dispatched to the Stage once per tick.
     - Tests: `test/unit/broadcast.test.ts` (create). **Property 7: Broadcast events follow registration order**, in `test/property/broadcastOrder.property.test.ts` (create): for any generated tree under the root and the Stage with listeners registered in a random order, each of the three events is delivered once per frame step to each registered listener, in the order of first registration.
     - **Validates: Requirements 7.5, 7.8, 7.9**
 
-  - [~] 10.2 Hit-test Stage children
+  - [x] 10.2 Hit-test Stage children
     - One hit view per top; tops are tried from the highest index down, root last. `resolveHitTarget` takes a `rootClip` argument so that only the root clip is never a target; a Stage child can be a target. Follow the rule in `.kiro/steering/flash-behaviour.md`.
     - Tests: `test/unit/hitTestStage.test.ts` (create). **Property 8: Hit target over Stage children**, in `test/property/hitTargetStage.property.test.ts` (create): for any set of hits across the root subtree and Stage children, the target is the topmost interactive object, a Stage child can be the target, the root clip never is, and the Stage is the target when nothing else qualifies.
     - **Validates: Requirements 7.6**
 
-  - [~] 10.3 Guard the existing floors
+  - [x] 10.3 Guard the existing floors
     - Run `test/unit/clickgotoReplay.test.ts`, `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score tests. State the Overall_Match and Trace_Score of every existing sample before and after in the commit body (Requirement 7.11). If registration order lowers any of them, keep post-order for objects under the root and apply registration order among the Stage and Stage children only (Requirement 7.10), and name the fallback in the commit body and at Checkpoint 1. Never lower a floor.
     - _Requirements: 7.10, 7.11_
 
-- [~] 11. Checkpoint 1: Block A done
+- [-] 11. Checkpoint 1: Block A done
   - STOP. Follow the Checkpoint procedure of the rules. Block A shares: Requirements 2 to 8, 12 (errors and `getTimer`), 28 (both sample admissions), 37 and the Stage tasks.
   - Run the full suite `npm test -- --run`. Hand the review to the `fidelity-reviewer` agent and commit its report as `.kiro/specs/as3-coverage/reviews/checkpoint-1.md`. Act on its findings in a new commit before reporting.
   - The report also states: the Overall_Match and Trace_Score of every committed sample before and after Block A (existing samples must be unchanged, Requirement 7.11), whether the registration-order fallback of Task 10.3 was needed, the result of the `spacer` page-load check of Task 5.4 (or its skip), the Chromium key-code measurement of Task 8.4 and the iframe focus check of Task 8.3, the Open_Items touched (O3, O4, O7, O10 with the `publicHost` duration if it failed), and the Credits_Line against the Block A share of about 130.

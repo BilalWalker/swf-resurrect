@@ -381,6 +381,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794763625152
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794764730474
       }
     ],
     "10.2 Hit-test Stage children": [
@@ -388,6 +393,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755211669
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794764730669
       }
     ],
     "10.3 Guard the existing floors": [
@@ -395,6 +405,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755211905
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794764730784
       }
     ],
     "11. Checkpoint 1: Block A done": [
@@ -402,6 +417,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755212240
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794764730978
       }
     ],
     "12.1 Change the member lookup order in `memberTables.ts`": [
@@ -934,6 +954,13 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794763625014
+      }
+    ],
+    "10. Runtime: tick phases, broadcast order and hit test over Stage children (D6)": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794764730866
       }
     ]
   }
