@@ -146,3 +146,17 @@ say which you did. The spec that holds the evidence is named with each item.
   strict equality for non-string keys). `Dictionary.set` returns the value, so an assignment used as an
   expression keeps its value. The index syntax on a typed receiver is rewritten by the translator
   (`src/translate/rewrite.ts`); `for (k in d)` and `for each` over a Dictionary are not handled.
+
+## Graphics
+- **A fill still open at the end of the commands is drawn, and `drawPath` with only a line style stays an
+  open stroke.** Flash fills at render time, so `beginFill` without `endFill` still shows the shape; a path
+  drawn with `lineStyle` and no `beginFill` is not closed. Evidence: neither read in Ruffle nor measured
+  against Flash (the local `.work/ruffle-src` copy was empty at task 15); it follows as3-coverage
+  Requirements 14.5 and 14.6 and design D11. Open_Item (task 30): read Ruffle `core/src/drawing.rs` at the
+  commit above (pending fill closed in the render pass). Code: `template/runtime/graphicsPlan.ts`.
+- **Line thickness scales with the object (default `LineScaleMode.NORMAL`); graphics draw below the
+  object's children.** Evidence for Flash: neither read nor measured (Requirement 14.7, 14.8; Open_Item for
+  task 30). What was measured is our runtime only: `test/e2e/graphics.e2e.test.ts` (headless Chromium,
+  PixiBackend) shows a 4 pixel line in a sprite scaled by 2 covering 8 rows and a timeline child drawn over
+  the parent's circle. Lines use round caps and joins (Flash default, not read); `lineStyle` arguments after
+  `color` are ignored (Named_Limit `lineStyle-args`).

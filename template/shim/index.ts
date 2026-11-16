@@ -14,3 +14,4 @@ export { getDefinitionByName, getQualifiedClassName, getTimer, registerDefinitio
 export { ArgumentError, IllegalOperationError } from './errors';
 export { defineInterface, declareImplements } from './interfaces';
 export type { AS3InterfaceToken } from './interfaces';
+export { Graphics, GraphicsPathWinding } from './Graphics';

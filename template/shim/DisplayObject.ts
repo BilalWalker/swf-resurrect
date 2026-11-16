@@ -1,3 +1,4 @@
+import type { Graphics } from './Graphics';
 import { EventDispatcher, type Event } from './events';
 import { classNameOf, getPointerPosition, globalToLocal, registerClassName } from './internal';
 import type { DisplayObjectContainer } from './Sprite';
@@ -21,6 +22,8 @@ export class DisplayObject extends EventDispatcher {
 
   /** Set by the Player on the root clip only. A clip is on the stage when its parent chain ends at such a root. */
   _isStageRoot = false;
+  /** The Graphics of a Sprite or Shape, created on first use of graphics; the runtime reads it. */
+  _gfx: Graphics | null = null;
   private _alpha = 1;
 
   get alpha(): number {

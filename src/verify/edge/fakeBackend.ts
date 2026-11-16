@@ -1,5 +1,6 @@
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../../../template/runtime/backend';
 import type { ColorTransform8 } from '../../../template/runtime/scene';
+import type { GfxDraw } from '../../../template/runtime/graphicsPlan';
 import { assertShapeDrawn, DRAWN_FILLS, type DrawnFills, type ShapeJson } from '../../../template/runtime/shapeJson';
 
 export interface FakeNode {
@@ -16,6 +17,8 @@ export interface FakeNode {
   colorOffset: ColorTransform8 | null;
   /** The node last given to setMask on this node; null when none or removed. */
   mask: FakeNode | null;
+  /** The ops last given to setGraphics; null when none or cleared. */
+  graphics: readonly GfxDraw[] | null;
   destroyed: boolean;
 }
 
@@ -90,6 +93,9 @@ export class FakeBackend implements RenderBackend {
     (node as FakeNode).colorMultiplier = [r, g, b, a];
   }
 
+  setGraphics(node: NodeHandle, ops: readonly GfxDraw[] | null): void {
+    (node as FakeNode).graphics = ops === null ? null : ops.map((o) => structuredClone(o));
+  }
   destroyNode(node: NodeHandle): void {
     markDestroyed(node as FakeNode);
   }
@@ -122,6 +128,7 @@ export class FakeBackend implements RenderBackend {
       colorMultiplier: null,
       colorOffset: null,
       mask: null,
+      graphics: null,
       destroyed: false,
     };
     this.nodes.push(node);

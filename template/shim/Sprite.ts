@@ -2,6 +2,7 @@ import { DisplayObject } from './DisplayObject';
 import type { DisplayListEntry } from '../runtime/scene';
 import { addChildTo, announceAdded, announceRemoved, getChildAtOf, getChildByNameOf, removeChildFrom } from './containerOps';
 import { Event } from './events';
+import { Graphics } from './Graphics';
 import {
   attachChild,
   defaultInstanceName,
@@ -61,6 +62,9 @@ export class Sprite extends DisplayObjectContainer {
   /** Stored only: there is no cursor. */
   buttonMode = false;
   useHandCursor = true;
+  get graphics(): Graphics {
+    return (this._gfx ??= new Graphics());
+  }
   /** The context this instance was built from; null for a Sprite made by plain script. */
   readonly _ctx: ConstructionContext | null;
   /** False until frame 1 has been built or rendered; later renders announce `added` / `removed`. */

@@ -248,36 +248,36 @@ Rules that apply to every task:
     - Tests: `test/unit/translationReport.test.ts` (extend) with Fixture_Classes per construct word.
     - _Requirements: 11.1, 11.2, 11.5, 11.6_
 
-- [ ] 14. Shim and Translate: `Dictionary` with identity keys (D10)
+- [x] 14. Shim and Translate: `Dictionary` with identity keys (D10)
   - Commit area: `Shim` (Translate named). Verification V2. Read the design row D10 and Requirement 13. A JS `Proxy` cannot work (`d[fn]` stringifies `fn` before any trap), so the translator rewrites typed receivers.
-  - [-] 14.1 Add the Shim `Dictionary`
+  - [x] 14.1 Add the Shim `Dictionary`
     - A class over `Map`: identity for objects and functions, value for strings and numbers; the `weakKeys` constructor argument is ignored and recorded as a Named_Limit in `ADDED_APIS.md`. Regenerate and stage the member table.
     - Tests: `test/unit/dictionary.test.ts` (create): two different function keys are two entries; string and number keys by value.
     - _Requirements: 13.1, 13.3, 13.4_
 
-  - [~] 14.2 Rewrite index syntax on a typed receiver
+  - [x] 14.2 Rewrite index syntax on a typed receiver
     - When the receiver's declared type is `Dictionary` (a field from the member table, a parameter or a local), `d[k]`, `d[k] = v`, `k in d` and `delete d[k]` become `get`, `set`, `has` and `delete` calls. When the type cannot be decided the index syntax is left and the site is named in the Translation_Report.
     - Tests: `test/unit/dictionaryRewrite.test.ts` (create) with Fixture_Classes for field, parameter, local and the undecidable case.
     - _Requirements: 11.4, 13.2, 13.6_
 
-  - [~] 14.3 Write property test for the identity model
+  - [x] 14.3 Write property test for the identity model
     - **Property 14: Dictionary agrees with an identity model**
     - In `test/property/dictionaryModel.property.test.ts` (create), model-based: over sequences of set, get, has and delete with keys from functions, objects, strings and numbers, `Dictionary` agrees with a list of pairs compared by `Object.is`.
     - **Validates: Requirements 13.1, 13.2, 13.3, 13.5, 13.6**
 
-- [ ] 15. Shim and Runtime: `Graphics` on `Sprite` and `Shape` (D11)
+- [x] 15. Shim and Runtime: `Graphics` on `Sprite` and `Shape` (D11)
   - Commit area: `Shim` (Runtime named). Verification V2. Read the design section "Graphics" and Requirement 14.
-  - [~] 15.1 Record primitives in the Shim `Graphics`
+  - [x] 15.1 Record primitives in the Shim `Graphics`
     - `Sprite.graphics` and `Shape.graphics` return one `Graphics` that records `lineStyle(thickness, color)`, `beginFill(color)`, `endFill()`, `drawCircle`, `moveTo`, `lineTo`, `clear()` and expands `drawPath(commands, data, winding)` into `moveTo`/`lineTo` at record time (command 1 and 2, two values each). An unknown command skips its data and calls `namedLimit('drawPath-command')` once per project; extra `lineStyle` arguments are ignored with `namedLimit('lineStyle-args')`. Export `GraphicsPathWinding`. A `version` counter increments on each call. Regenerate and stage the member table; list additions and limits in `ADDED_APIS.md`.
     - Tests: `test/unit/graphicsShim.test.ts` (create): each call records; `drawPath` expansion and the unknown command; `clear()` discards.
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.9, 14.12_
 
-  - [~] 15.2 Add `runtime/graphicsPlan.ts` and the backend hooks
+  - [x] 15.2 Add `runtime/graphicsPlan.ts` and the backend hooks
     - Pure plan from the primitive list to `GfxDraw` operations (`circle`, `polyline`, fill, stroke), applying a pending fill at the end of the list (Requirement 14.6) and keeping a stroke-only `drawPath` open (14.5). `RenderBackend.setGraphics(node, ops | null)`: the FakeBackend stores the ops; the Pixi backend keeps a lazily created `Graphics` at index 0 of the container node and offsets child indices by one, so graphics draw below children, and strokes live in local space so they scale with the object. `NodeRegistry` compares `version` per node each `syncAll` and pushes only changed graphics. Add `graphicsPlan.ts` to the purity list.
     - Tests: `test/unit/graphicsPlan.test.ts` (create); `test/unit/pixiBackend.test.ts` or the existing backend e2e (extend): one Chromium check that graphics draw below a child and that a scaled sprite scales its line thickness.
     - _Requirements: 14.5, 14.6, 14.7, 14.8, 14.10, 14.13_
 
-  - [~] 15.3 Write property test for the plan replay
+  - [x] 15.3 Write property test for the plan replay
     - **Property 15: Graphics plan replays what was issued**
     - In `test/property/graphicsPlan.property.test.ts` (create): for any sequence of `lineStyle`, `beginFill`, `endFill`, `drawCircle`, `moveTo`, `lineTo`, `drawPath` and `clear`, the draw operations on the FakeBackend equal the plan computed from the issued calls, `drawPath` consumes two values per command and unknown commands are skipped.
     - **Validates: Requirements 14.1, 14.3, 14.9, 14.11**

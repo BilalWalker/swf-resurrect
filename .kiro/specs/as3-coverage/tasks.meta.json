@@ -11,6 +11,10 @@
     "14.3 Write property test for the identity model": {
       "status": "passed",
       "lastRunTimestamp": 1794806746299
+    },
+    "15.3 Write property test for the plan replay": {
+      "status": "passed",
+      "lastRunTimestamp": 1794807755977
     }
   },
   "executionHistory": {
@@ -490,6 +494,11 @@
         "executionId": "0a7e1e7b-0f75-4a70-8b5b-78c8271bae41",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794806408807
+      },
+      {
+        "executionId": "0a7e1e7b-0f75-4a70-8b5b-78c8271bae41",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794807525166
       }
     ],
     "14.2 Rewrite index syntax on a typed receiver": [
@@ -497,6 +506,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755213980
+      },
+      {
+        "executionId": "0a7e1e7b-0f75-4a70-8b5b-78c8271bae41",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794807525523
       }
     ],
     "14.3 Write property test for the identity model": [
@@ -504,6 +518,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755214189
+      },
+      {
+        "executionId": "0a7e1e7b-0f75-4a70-8b5b-78c8271bae41",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794807525826
       }
     ],
     "15.1 Record primitives in the Shim `Graphics`": [
@@ -511,6 +530,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755214416
+      },
+      {
+        "executionId": "0a7e1e7b-0f75-4a70-8b5b-78c8271bae41",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794807526298
       }
     ],
     "15.2 Add `runtime/graphicsPlan.ts` and the backend hooks": [
@@ -980,6 +1004,13 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794764730866
+      }
+    ],
+    "14. Shim and Translate: `Dictionary` with identity keys (D10)": [
+      {
+        "executionId": "0a7e1e7b-0f75-4a70-8b5b-78c8271bae41",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794807526058
       }
     ]
   }

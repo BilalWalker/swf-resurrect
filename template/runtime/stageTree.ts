@@ -4,6 +4,7 @@ import type { DisplayObjectContainer } from '../shim/Sprite';
 import { isStage, type Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
 import type { HitNode } from './hitTest';
+import { planGraphics } from './graphicsPlan';
 import type { Matrix6 } from './scene';
 
 /** Leaf display object for a shape symbol. Carries its bounds for hit testing. */
@@ -54,6 +55,8 @@ interface NodeRecord {
   rotationDeg: number;
   alpha: number;
   visible: boolean;
+  /** The Graphics and its version last pushed; version -1 when nothing was pushed. */
+  gfxVersion: number;
 }
 
 /** Maps display objects to backend nodes and remembers what was last pushed to each. */
@@ -70,6 +73,7 @@ export class NodeRegistry {
       rotationDeg: obj.rotation,
       alpha: 1,
       visible: true,
+      gfxVersion: -1,
     });
   }
 
@@ -117,6 +121,12 @@ export class NodeRegistry {
     if (r.alpha !== obj.alpha) {
       r.alpha = obj.alpha;
       backend.setAlpha(r.node, r.alpha);
+    }
+    // Requirement 14.13: only graphics whose version changed are planned and pushed.
+    const gfx = obj._gfx;
+    if (gfx !== null && gfx.version !== r.gfxVersion) {
+      r.gfxVersion = gfx.version;
+      backend.setGraphics(r.node, gfx._prims.length === 0 ? null : planGraphics(gfx._prims));
     }
     if (r.visible !== obj.visible) {
       r.visible = obj.visible;

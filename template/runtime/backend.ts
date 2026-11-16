@@ -1,4 +1,5 @@
 import type { ColorTransform8 } from './scene';
+import type { GfxDraw } from './graphicsPlan';
 import type { ShapeJson } from './shapeJson';
 
 /** Opaque handle to a backend display node. */
@@ -43,6 +44,11 @@ export interface RenderBackend {
    * the alpha add term already stripped (colourMatrix.ts, stripAlphaAdd).
    */
   setColorOffset(node: NodeHandle, ct: Readonly<ColorTransform8> | null): void;
+  /**
+   * Draws code-made graphics (Graphics plan) in the node: below the node's children, in the node's local space so a
+   * stroke scales with the node. null clears them. Child indices of addChildAt are unaffected by it.
+   */
+  setGraphics(node: NodeHandle, ops: readonly GfxDraw[] | null): void;
   destroyNode(node: NodeHandle): void;
   /** On-page error text. */
   showError(message: string): void;

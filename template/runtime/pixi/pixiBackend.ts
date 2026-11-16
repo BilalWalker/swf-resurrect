@@ -1,6 +1,7 @@
 import { ColorMatrixFilter, Container, FillGradient, FillPattern, Graphics, ImageSource, Matrix, Texture, type FillInput } from 'pixi.js';
 import type { NodeHandle, RenderBackend, ShapeBounds } from '../backend';
 import { colourMatrix } from '../colourMatrix';
+import type { GfxDraw } from '../graphicsPlan';
 import type { ColorTransform8 } from '../scene';
 import { GRADIENT_HALF_EXTENT, GRADIENT_TEXTURE_SIZE } from '../gradientMatrix';
 import { assertShapeDrawn, DRAWN_FILLS, ShapeJsonError, type DrawnFills, type PathCmd, type ShapeFill, type ShapeJson, type ShapePath } from '../shapeJson';
@@ -210,6 +211,30 @@ function drawShape(shape: ShapeJson, textures: BitmapTextures): Graphics {
   return g;
 }
 /**
+ * Draws the plan of code-made graphics. Flash defaults: round caps and joins. The path is traced again for the stroke
+ * so a fill never changes the stroke. Strokes are in local space, so a scaled container scales the line (Requirement
+ * 14.8; Pixi `pixelLine` is off by default).
+ */
+function drawGfx(g: Graphics, ops: readonly GfxDraw[]): void {
+  for (const op of ops) {
+    const trace = (): void => {
+      if (op.kind === 'circle') {
+        g.circle(op.x, op.y, op.r);
+        return;
+      }
+      op.points.forEach(([x, y], i) => (i === 0 ? g.moveTo(x, y) : g.lineTo(x, y)));
+    };
+    if (op.fill !== null) {
+      trace();
+      g.fill({ color: op.fill });
+    }
+    if (op.stroke !== null) {
+      trace();
+      g.stroke({ width: op.stroke.width, color: op.stroke.color, cap: 'round', join: 'round' });
+    }
+  }
+}
+/**
  * PixiJS 8.22 implementation of RenderBackend. The only file importing pixi.js.
  * Stage creation and pointer wiring belong to the boot code; this class owns
  * the display nodes only.
@@ -217,6 +242,8 @@ function drawShape(shape: ShapeJson, textures: BitmapTextures): Graphics {
 export class PixiBackend implements RenderBackend {
   private readonly templates = new Map<number, { graphics: Graphics }>();
   private readonly state = new WeakMap<Container, NodeState>();
+  /** The code-made Graphics of a node; it is child 0 of that node once it exists. */
+  private readonly gfx = new WeakMap<Container, Graphics>();
   private readonly errorHost: HTMLElement | undefined;
   private readonly caps: DrawnFills;
   private errorElement: HTMLElement | null = null;
@@ -270,7 +297,9 @@ export class PixiBackend implements RenderBackend {
   }
 
   addChildAt(parent: NodeHandle, child: NodeHandle, index: number): void {
-    (parent as Container).addChildAt(child as Container, index);
+    const p = parent as Container;
+    // The node's own Graphics holds child index 0, so a child index counts from 1 once it exists.
+    p.addChildAt(child as Container, index + (this.gfx.has(p) ? 1 : 0));
   }
 
   removeChild(parent: NodeHandle, child: NodeHandle): void {
@@ -331,8 +360,21 @@ export class PixiBackend implements RenderBackend {
     c.filters = [filter];
   }
 
+  setGraphics(node: NodeHandle, ops: readonly GfxDraw[] | null): void {
+    const c = node as Container;
+    let g = this.gfx.get(c);
+    if (g === undefined) {
+      if (ops === null) return;
+      g = new Graphics();
+      this.gfx.set(c, g);
+      c.addChildAt(g, 0);
+    }
+    g.clear();
+    if (ops !== null) drawGfx(g, ops);
+  }
   destroyNode(node: NodeHandle): void {
-    // Releases the subtree. The shared GraphicsContext belongs to the template.
+    // Releases the subtree. The shared GraphicsContext belongs to the template; a code-made one is destroyed here.
+    this.destroyGfx(node as Container);
     (node as Container).destroy({ children: true, context: false });
   }
 
@@ -349,6 +391,15 @@ export class PixiBackend implements RenderBackend {
     this.errorElement.textContent = message;
   }
 
+  private destroyGfx(c: Container): void {
+    const g = this.gfx.get(c);
+    if (g !== undefined) {
+      this.gfx.delete(c);
+      c.removeChild(g);
+      g.destroy({ context: true });
+    }
+    for (const k of [...c.children]) this.destroyGfx(k as Container);
+  }
   private track(c: Container): Container {
     this.state.set(c, { alpha: 1, colorAlpha: 1 });
     return c;

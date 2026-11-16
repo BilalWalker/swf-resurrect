@@ -1,8 +1,11 @@
 import { DisplayObject } from './DisplayObject';
+import { Graphics } from './Graphics';
 import { defaultInstanceName, defaultNamesAreSuppressed, registerClassName, takeInstanceNumber } from './internal';
 
 export class Shape extends DisplayObject {
-  readonly graphics: object = {};
+  get graphics(): Graphics {
+    return (this._gfx ??= new Graphics());
+  }
 
   constructor() {
     super();
