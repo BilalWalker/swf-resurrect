@@ -16,3 +16,15 @@ export function setCaughtErrorSink(sink: ErrorSink | null): void {
 export function reportCaughtError(e: CaughtError): void {
   errorSink(e);
 }
+
+const namedLimits = new Map<string, string>();
+/** Records a run-time Named_Limit once per id (first detail kept). The Replay and Play_Tests read them with 	akeNamedLimits. */
+export function namedLimit(id: string, detail = ''): void {
+  if (!namedLimits.has(id)) namedLimits.set(id, detail);
+}
+/** Returns the Named_Limits recorded since the last call, and clears them. */
+export function takeNamedLimits(): { id: string; detail: string }[] {
+  const out = [...namedLimits].map(([id, detail]) => ({ id, detail }));
+  namedLimits.clear();
+  return out;
+}

@@ -125,21 +125,21 @@ Rules that apply to every task:
     - Skip with the fetch message when the `spacer` SWF is absent (Requirement 28.7). Otherwise run `npm run pipeline -- .work/samples/spacer/test.swf .work/as3-spacer/out --force` and load the built page in headless Chromium (use the `playwright` MCP or `test/support`). Record in the commit body whether `Class extends value undefined` is gone and the new first error if any. This is the one test of this block that names `spacer` (Requirement 37.11); the check is `test/e2e/spacerLoad.e2e.test.ts` (create), it asserts `window.__swfResurrect.ready === true` or, when it is false, that `error` is a string, and is skipped when the SWF is absent. If the page still fails for a cause outside Block A, record the cause for Block C and keep the test asserting only that the failure is reported with its reason.
     - _Requirements: 37.1, 37.11, 27.7_
 
-- [ ] 6. Shim: error classes, `getQualifiedClassName` and `getTimer`
+- [x] 6. Shim: error classes, `getQualifiedClassName` and `getTimer`
   - Commit area: `Shim` (Runtime for the clock read). Verification V2. Read Requirement 12 and the design Data Models. These are needed by Task 9 (`ArgumentError`) and by Task 19 (`Signal`).
-  - [-] 6.1 Add error classes and `getQualifiedClassName`
+  - [x] 6.1 Add error classes and `getQualifiedClassName`
     - Export `ArgumentError` and `IllegalOperationError` as subclasses of `Error` whose `name` equals the class name, and `getQualifiedClassName(value)` returning the registered class name of an instance and of a class object from the registry, never `constructor.name`; an unregistered class returns the JavaScript function name. Add the three names to `ADDED_APIS.md`; regenerate and stage the member table.
     - Tests: `test/unit/errorsShim.test.ts` (create). **Property 12: Qualified class names come from the registry**, in `test/property/qualifiedName.property.test.ts` (create): for any registered class name, an instance and the class return the registered name; an unregistered class returns the function name.
     - **Validates: Requirements 12.1, 12.2, 12.3**
 
-  - [~] 6.2 Add `getTimer()` on the Player clock
+  - [x] 6.2 Add `getTimer()` on the Player clock
     - Export `getTimer()` returning `floor(clock.now() - startTime)` with the start time read when the Player is constructed; never `Date.now()`. Read from the Player clock through a shim-internal accessor so the Shim does not import the runtime.
     - Tests: `test/unit/getTimer.test.ts` (create): a manual clock advanced by 1000 ms grows `getTimer()` by 1000. **Property 13: getTimer sums the clock**, in `test/property/getTimer.property.test.ts` (create): for any sequence of advances `getTimer()` is non-decreasing and equals the truncated sum.
     - **Validates: Requirements 12.4, 12.5, 12.6**
 
 - [ ] 7. Shim: `KeyboardEvent`, `Keyboard` and five-argument `addEventListener` (D3, D5)
   - Commit area: `Shim`. Verification V2. Read Requirements 4 and 6, the design rows D3 and D5, and `.kiro/steering/flash-behaviour.md`. The equal-priority order was read in Ruffle `core/src/avm2/events.rs` (design D5); say so in the commit body and add it to `flash-behaviour.md`.
-  - [~] 7.1 Add `KeyboardEvent` and `Keyboard`
+  - [-] 7.1 Add `KeyboardEvent` and `Keyboard`
     - `KeyboardEvent` extends the Shim `Event` with `KEY_DOWN` `"keyDown"`, `KEY_UP` `"keyUp"` and a numeric `keyCode`. `Keyboard` exports `UP` 38, `DOWN` 40, `LEFT` 37, `RIGHT` 39, `ENTER` 13, `ESCAPE` 27, `SPACE` 32; the design records that the values come from the `flash.ui.Keyboard` documentation (Requirement 4.6). The Translator resolves `KeyboardEvent` to the Shim class and never the DOM global (the Shim import shadows it). Regenerate and stage the member table; list both in `ADDED_APIS.md` with the line that needs them.
     - Tests: `test/unit/keyboardShim.test.ts` (create): constants; `test/unit/shimNames.test.ts` (extend) and a translation example with a Fixture_Class using `KeyboardEvent.KEY_DOWN` that imports the Shim class.
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_

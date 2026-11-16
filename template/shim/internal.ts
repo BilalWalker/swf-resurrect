@@ -169,7 +169,7 @@ export function detachChild(parent: DisplayObjectContainer, child: DisplayObject
 // The class-name registration lives in classNames.ts (Stage.ts needs it and internal.ts imports Stage.ts).
 export { classNameOf, registerClassName } from './classNames';
 // The Caught_Error sink lives in errorSink.ts (events.ts needs it and must not import this file).
-export { reportCaughtError, setCaughtErrorSink } from './errorSink';
+export { namedLimit, reportCaughtError, setCaughtErrorSink, takeNamedLimits } from './errorSink';
 let pointerX = 0;
 let pointerY = 0;
 

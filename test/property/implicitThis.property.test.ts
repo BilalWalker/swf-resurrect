@@ -17,8 +17,10 @@ function chainMembers(base: string): Array<{ name: string; owner: string }> {
   const out: Array<{ name: string; owner: string }> = [];
   const seen = new Set<string>();
   const taken = new Set<string>();
-  for (let cur: string | null = base; cur !== null && !seen.has(cur); cur = SHIM_MEMBER_TABLE[cur]!.extends) {
+  for (let cur: string | null = base; cur !== null && !seen.has(cur); cur = SHIM_MEMBER_TABLE[cur]?.extends ?? null) {
     seen.add(cur);
+    // ArgumentError and IllegalOperationError extend the host Error, which has no table entry.
+    if (SHIM_MEMBER_TABLE[cur] === undefined) break;
     for (const m of SHIM_MEMBER_TABLE[cur]!.members) {
       if (taken.has(m.name)) continue;
       taken.add(m.name);

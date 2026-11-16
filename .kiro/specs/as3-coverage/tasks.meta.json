@@ -3,6 +3,10 @@
     "3.3 Write property test for type-position imports": {
       "status": "passed",
       "lastRunTimestamp": 1794756146583
+    },
+    "7.2 Extend `addEventListener` and `removeEventListener`": {
+      "status": "passed",
+      "lastRunTimestamp": 1794761736886
     }
   },
   "executionHistory": {
@@ -233,6 +237,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794759613543
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794760175954
       }
     ],
     "6.2 Add `getTimer()` on the Player clock": [
@@ -240,6 +249,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755208976
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794760176217
       }
     ],
     "7.1 Add `KeyboardEvent` and `Keyboard`": [
@@ -247,6 +261,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755209170
+      },
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794760176777
       }
     ],
     "7.2 Extend `addEventListener` and `removeEventListener`": [
@@ -849,6 +868,13 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794759603254
+      }
+    ],
+    "6. Shim: error classes, `getQualifiedClassName` and `getTimer`": [
+      {
+        "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794760176527
       }
     ]
   }

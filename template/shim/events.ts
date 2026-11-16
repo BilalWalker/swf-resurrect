@@ -1,5 +1,5 @@
 import { listenerSite, messageOf } from '../runtime/errorReport';
-import { reportCaughtError } from './errorSink';
+import { namedLimit, reportCaughtError } from './errorSink';
 
 export type Listener = (e: Event) => void;
 
@@ -61,24 +61,58 @@ export class MouseEvent extends Event {
   static readonly MOUSE_MOVE = 'mouseMove';
 }
 
-export class EventDispatcher {
-  private readonly listeners = new Map<string, Listener[]>();
+/** Key events bubble by default, as in Flash (Requirement 4.1). `keyCode` is a Flash key code (see `Keyboard`). */
+export class KeyboardEvent extends Event {
+  static readonly KEY_DOWN = 'keyDown';
+  static readonly KEY_UP = 'keyUp';
 
-  /** Registers once per (type, listener); registration order is preserved. */
-  addEventListener(type: string, listener: Listener): void {
-    const list = this.listeners.get(type);
-    if (list === undefined) {
-      this.listeners.set(type, [listener]);
-    } else if (!list.includes(listener)) {
-      list.push(listener);
-    }
+  keyCode: number;
+
+  constructor(type: string, bubbles = true, cancelable = false, keyCode = 0) {
+    super(type, bubbles, cancelable);
+    this.keyCode = keyCode;
   }
 
+  override clone(): Event {
+    return new KeyboardEvent(this.type, this.bubbles, this.cancelable, this.keyCode);
+  }
+}
+
+interface Registration {
+  readonly listener: Listener;
+  readonly priority: number;
+}
+
+export class EventDispatcher {
+  /** Per type, sorted by descending priority and, inside one priority, by insertion order (Ruffle DispatchList). */
+  private readonly listeners = new Map<string, Registration[]>();
+
+  /**
+   * Registers once per (type, listener) at any priority: a listener already present is ignored, as in Ruffle
+   * `events.rs` `add_event_listener`. `useCapture` and `useWeakReference` are ignored (Named_Limits).
+   */
+  addEventListener(type: string, listener: Listener, useCapture = false, priority = 0, useWeakReference = false): void {
+    if (useCapture) namedLimit('useCapture-ignored', type);
+    if (useWeakReference) namedLimit('useWeakReference-ignored', type);
+    const entry: Registration = { listener, priority: Math.trunc(priority) };
+    const list = this.listeners.get(type);
+    if (list === undefined) {
+      this.listeners.set(type, [entry]);
+      return;
+    }
+    if (list.some((r) => r.listener === listener)) return;
+    // Insert after the last entry whose priority is >= the new one. A new array keeps earlier snapshots intact.
+    let at = list.length;
+    while (at > 0 && list[at - 1]!.priority < entry.priority) at--;
+    const next = list.slice();
+    next.splice(at, 0, entry);
+    this.listeners.set(type, next);
+  }
   /** Takes effect from the next dispatch; a dispatch in progress works on a snapshot. */
-  removeEventListener(type: string, listener: Listener): void {
+  removeEventListener(type: string, listener: Listener, _useCapture = false): void {
     const list = this.listeners.get(type);
     if (list === undefined) return;
-    const i = list.indexOf(listener);
+    const i = list.findIndex((r) => r.listener === listener);
     if (i < 0) return;
     // Replace rather than splice so a snapshot taken earlier is never mutated.
     const next = list.slice();
@@ -91,7 +125,7 @@ export class EventDispatcher {
     return (this.listeners.get(type)?.length ?? 0) > 0;
   }
 
-  /** Calls every listener in the snapshot taken at the start, in registration order. */
+  /** Calls every listener in the snapshot taken at the start, in priority order. */
   dispatchEvent(e: Event): void {
     e.target = this;
     e.currentTarget = this;
@@ -99,7 +133,7 @@ export class EventDispatcher {
   }
   /** Internal: calls this object's listeners for the event without touching target, currentTarget or eventPhase. */
   _deliver(e: Event): void {
-    const snapshot = this.listeners.get(e.type)?.slice();
+    const snapshot = this.listeners.get(e.type)?.map((r) => r.listener);
     if (snapshot === undefined) return;
     // A throwing listener is abandoned alone (Requirement 25.2): report it and call the next one.
     for (const listener of snapshot) {

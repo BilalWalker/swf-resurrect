@@ -81,3 +81,13 @@ say which you did. The spec that holds the evidence is named with each item.
 - **`getQualifiedClassName` uses the registry name.** Unqualified (`registerClassName` strips the package),
   so a packaged class returns `Name`, not Flash's `pkg::Name`. Neither read nor measured; an unregistered
   class gives the JavaScript function name (Requirement 12.3).
+## Events
+- **Listener order follows priority; equal priorities keep insertion order; a repeat is ignored.**
+  `addEventListener(type, listener, useCapture, priority, useWeakReference)` calls listeners by
+  descending `priority` and, inside one priority, in the order added. A listener already present
+  at any priority is not added again. Read in Ruffle `core/src/avm2/events.rs` at the commit named
+  above: `DispatchList` holds a `FnvHashMap<type, BTreeMap<i32, Vec<EventHandler>>>`, dispatch
+  iterates the `BTreeMap` with `.rev()`, and `add_event_listener` returns early when the handler is
+  in any priority's `Vec`. Ruffle's handler identity includes `use_capture`; the Shim ignores
+  capture (Named_Limit `useCapture-ignored`), so identity is the function alone. (as3-coverage,
+  design D5, Requirement 6.)
