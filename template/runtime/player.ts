@@ -107,6 +107,11 @@ function targetViewOf(o: DisplayObject, cache: Map<unknown, TargetView>): Target
   return view;
 }
 
+/** The code-drawn fills of o as a non-interactive leaf under o: a hit picks o like a shape would. */
+function gfxLeafView(o: DisplayObject, cache: Map<unknown, TargetView>): TargetView {
+  return { source: o, parent: targetViewOf(o, cache), isContainer: false, mouseEnabled: true, mouseChildren: true };
+}
+
 function isIdentityColor(ct: Readonly<ColorTransform8>): boolean {
   return ct[0] === 1 && ct[1] === 1 && ct[2] === 1 && ct[3] === 1 && ct[4] === 0 && ct[5] === 0 && ct[6] === 0 && ct[7] === 0;
 }
@@ -338,7 +343,7 @@ export class Player {
     let picked: TargetView | Stage = this.stage;
     const tops = this.tops();
     for (let i = tops.length - 1; i >= 0 && picked === this.stage; i--) {
-      const hits = hitTestAll(buildHitView(tops[i]!, (o) => this.maskObjects.has(o)), x, y).map((h) => targetViewOf(h.source, cache));
+      const hits = hitTestAll(buildHitView(tops[i]!, (o) => this.maskObjects.has(o)), x, y).map((h) => (h.gfxOf !== undefined ? gfxLeafView(h.gfxOf, cache) : targetViewOf(h.source, cache)));
       picked = resolveHitTarget(hits, this.stage, this.root === tops[i] ? targetViewOf(this.root, cache) : null);
     }
     const target = picked === this.stage ? this.stage : ((picked as TargetView).source as DisplayObjectContainer);

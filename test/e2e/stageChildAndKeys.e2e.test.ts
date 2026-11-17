@@ -179,10 +179,9 @@ describe.skipIf(reason !== null)(`keys without a click and a Stage child${reason
       expect(kids).toBe(3);
       expect(boxPixel).toEqual([0, 0, 255]);
       expect(rootPixel).toEqual([255, 0, 0]);
-      // Measured: a Stage child drawn only with Sprite.graphics is not a hit target (hit testing covers shapes and TextFields,
-      // not code-drawn graphics). Open defect, reported in the task 20 commit; change both to 1 when it is fixed.
-      expect(clicks).toBe(0);
-      expect(clicksAfterRoot).toBe(0);
+      // A Stage child drawn only with Sprite.graphics is a hit target on its fills; the root click leaves the count at 1.
+      expect(clicks).toBe(1);
+      expect(clicksAfterRoot).toBe(1);
       expect(keys).toEqual(['keyDown:65', 'keyUp:65', 'keyDown:37', 'keyUp:37']);
     },
     TIMEOUT_MS,

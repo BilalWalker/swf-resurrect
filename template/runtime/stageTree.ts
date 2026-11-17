@@ -4,7 +4,8 @@ import { TextField } from '../shim/TextField';
 import type { DisplayObjectContainer } from '../shim/Sprite';
 import { isStage, type Stage } from '../shim/Stage';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
-import type { HitNode } from './hitTest';
+import type { HitArea, HitNode } from './hitTest';
+import { namedLimit } from '../shim/errorSink';
 import { planGraphics } from './graphicsPlan';
 import type { Matrix6 } from './scene';
 
@@ -164,6 +165,8 @@ export function describeTarget(obj: DisplayObject | Stage): string {
 /** Snapshot of a display subtree in the shape hitTest expects. */
 export interface HitView extends HitNode {
   source: DisplayObject;
+  /** Set on the synthetic leaf that carries the code-drawn fills of this object: a non-interactive leaf of its owner. */
+  gfxOf?: DisplayObject;
   children: HitView[];
 }
 
@@ -183,8 +186,28 @@ export function buildHitView(obj: DisplayObject, isMask: (o: DisplayObject) => b
     visible: obj.visible,
     children: kids.map((k) => buildHitView(k, isMask)),
   };
+  const areas = graphicsAreas(obj);
+  // Graphics draw below the children, so the leaf goes first (topmost-last order).
+  if (areas.length > 0) view.children.unshift({ source: obj, gfxOf: obj, x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0, visible: true, children: [], areas });
   if (obj instanceof ShapeObject) return { ...view, bounds: obj.bounds };
   // A TextField is hit over its whole box, empty or not (Ruffle: the box is the hit area).
   if (obj instanceof TextField) return { ...view, bounds: { x: 0, y: 0, width: obj.width, height: obj.height } };
   return view;
+}
+
+/**
+ * Hit areas of the fills drawn with graphics (circles and polygons with a fill). Strokes are not hit-tested: a
+ * stroke-only draw is not a hit area and raises Named_Limit graphics-stroke-not-hit (Flash hits the stroke area).
+ */
+function graphicsAreas(obj: DisplayObject): HitArea[] {
+  const gfx = obj._gfx;
+  if (gfx === null || gfx._prims.length === 0) return [];
+  const areas: HitArea[] = [];
+  for (const d of planGraphics(gfx._prims)) {
+    if (d.fill === null) {
+      if (d.stroke !== null) namedLimit('graphics-stroke-not-hit', 'a stroke drawn with graphics is not a hit area; only fills are hit-tested');
+    } else if (d.kind === 'circle') areas.push({ kind: 'circle', x: d.x, y: d.y, r: d.r });
+    else areas.push({ kind: 'polygon', points: d.points });
+  }
+  return areas;
 }

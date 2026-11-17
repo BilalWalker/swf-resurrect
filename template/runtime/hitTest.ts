@@ -13,6 +13,28 @@ export interface HitNode {
   readonly children?: readonly HitNode[];
   /** Present on shapes only, in shape-origin coordinates. */
   readonly bounds?: ShapeBounds;
+  /** Filled areas of code-drawn graphics, in local coordinates (circles and polygons). Hit like bounds. */
+  readonly areas?: readonly HitArea[];
+}
+
+export type HitArea = { kind: 'circle'; x: number; y: number; r: number } | { kind: 'polygon'; points: readonly (readonly [number, number])[] };
+
+function inArea(a: HitArea, px: number, py: number): boolean {
+  if (a.kind === 'circle') return (px - a.x) ** 2 + (py - a.y) ** 2 <= a.r * a.r;
+  let inside = false;
+  const pts = a.points;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i]!;
+    const [xj, yj] = pts[j]!;
+    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function inBody(node: HitNode, lx: number, ly: number): boolean {
+  const b = node.bounds;
+  if (b && lx >= b.x && lx <= b.x + b.width && ly >= b.y && ly <= b.y + b.height) return true;
+  return node.areas !== undefined && node.areas.some((a) => inArea(a, lx, ly));
 }
 
 /**
@@ -44,11 +66,7 @@ function hit(node: HitNode, px: number, py: number): HitNode | null {
     }
   }
 
-  const b = node.bounds;
-  if (b && lx >= b.x && lx <= b.x + b.width && ly >= b.y && ly <= b.y + b.height) {
-    return node;
-  }
-  return null;
+  return inBody(node, lx, ly) ? node : null;
 }
 
 /**
@@ -75,8 +93,7 @@ function collect(node: HitNode, px: number, py: number, out: HitNode[]): void {
   if (children) {
     for (let i = children.length - 1; i >= 0; i--) collect(children[i]!, lx, ly, out);
   }
-  const b = node.bounds;
-  if (b && lx >= b.x && lx <= b.x + b.width && ly >= b.y && ly <= b.y + b.height) out.push(node);
+  if (inBody(node, lx, ly)) out.push(node);
 }
 
 /** Minimal view of a display object for the Hit_Target rule. `parent` is the Stage_Object (or null) for the root. */
