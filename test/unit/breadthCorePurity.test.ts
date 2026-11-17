@@ -32,6 +32,7 @@ const CORE_FILES = [
   "template/runtime/graphicsPlan.ts", // as3-coverage 15.2
   "template/runtime/timers.ts", // as3-coverage 25.2
   "template/runtime/affine.ts", // as3-coverage 26.2
+  "template/runtime/overlap.ts", // as3-coverage 26.3
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];
