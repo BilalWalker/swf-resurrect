@@ -6,7 +6,7 @@
 //
 // Cache key inputs (a changed input gives a new key, and the old directory of that sample is removed):
 //   - the sample bytes: every file under the sample's directory (and any extra `inputDirs`, e.g. a reference dir);
-//   - `src/` and `template/` (all file contents), `package.json` and `package-lock.json`;
+//   - `src/`, `template/` and `handwritten/` (all file contents; an override changes the run), `package.json` and `package-lock.json`;
 //   - the FFDec jar, by a SHA-256 of its bytes (computed once per worker; size and mtime are not used);
 //   - the pipeline options: the full argument list, `--verify --force` plus the caller's `extraArgs`;
 //   - the Chromium build (the path of Playwright's executable, which carries its revision) and the node version.
@@ -71,7 +71,7 @@ function commonInputs(): string {
     const jar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
     const jarHash = existsSync(jar) ? createHash('sha256').update(readFileSync(jar)).digest('hex') : 'jar-absent';
     commonKey = hashPaths(
-      [resolve(repoRoot, 'src'), resolve(repoRoot, 'template'), resolve(repoRoot, 'package-lock.json'), resolve(repoRoot, 'package.json')],
+      [resolve(repoRoot, 'src'), resolve(repoRoot, 'template'), resolve(repoRoot, 'handwritten'), resolve(repoRoot, 'package-lock.json'), resolve(repoRoot, 'package.json')],
       [jarHash, chromiumPath, process.version],
     );
   }
