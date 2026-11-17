@@ -78,3 +78,24 @@ describe("DisplayObject.getBounds", () => {
     expect(tuple(s.getBounds())).toEqual([0, 0, 10, 10]);
   });
 });
+
+describe("container width and height (as3-coverage task 31)", () => {
+  it("a Sprite measures its content in its parent's space: own scale and rotation included, 0 when empty", () => {
+    const clip = new Sprite();
+    expect([clip.width, clip.height]).toEqual([0, 0]);
+    const s = shape(-5, -10, 50, 30);
+    s.x = 10;
+    clip.addChild(s);
+    expect([clip.width, clip.height]).toEqual([50, 30]);
+    clip.scaleX = 2;
+    expect([clip.width, clip.height]).toEqual([100, 30]);
+    clip.scaleX = 1;
+    clip.rotation = 90;
+    expect([Math.round(clip.width * 1e6) / 1e6, Math.round(clip.height * 1e6) / 1e6]).toEqual([30, 50]);
+  });
+  it("a shape keeps its intrinsic width times its scale", () => {
+    const s = shape(0, 0, 10, 20);
+    s.scaleX = 3;
+    expect([s.width, s.height]).toEqual([30, 20]);
+  });
+});

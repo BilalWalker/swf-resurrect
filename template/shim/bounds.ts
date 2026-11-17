@@ -28,6 +28,15 @@ function contribution(child: DisplayObject): Box | null {
   return inner === null ? null : transformBox(transformMatrix(child), inner);
 }
 
+/**
+ * Size of the content of a container in its parent's space (the box of its transformed content box): AS3 `width` and
+ * `height` of a Sprite or MovieClip. Empty content gives 0 x 0.
+ */
+export function containerSize(obj: DisplayObject): { width: number; height: number } {
+  const b = contribution(obj);
+  return b === null ? { width: 0, height: 0 } : { width: b.width, height: b.height };
+}
+
 /** The matrix from `obj` to the Stage_Object's space: the transforms of the parent chain, the object's own first. */
 export function concatenatedAffine(obj: DisplayObject | Stage | null): Affine {
   let m: Affine = IDENTITY;
