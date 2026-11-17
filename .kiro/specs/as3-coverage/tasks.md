@@ -382,7 +382,7 @@ Rules that apply to every task:
 
 - [ ] 21. Verify: `entity_game` scores and Named_Limits (Requirements 26, 27, 33)
   - Commit area: `Verify`. Verification V1. Read Requirements 27 and 33.1 and 33.2 and the design finding F9: the Reference_Frame of `entity_game` is blank because the SWF has one root frame and draws by code.
-  - [~] 21.1 Measure Overall_Match and set the floor
+  - [-] 21.1 Measure Overall_Match and set the floor
     - Run `npm run pipeline -- samples/entity_game/test.swf <outdir> --force --verify`. Record the Overall_Match on at least one frame (Requirement 27.1; the SWF has one frame, so one frame is what exists: state this) and set the Score_Floor equal to the measured value rounded down to two decimals in `test/e2e/overallMatch.e2e.test.ts` (extend with `entity_game`). Add the `entity_game` entry to the residual-causes handling: any region below 100 is attributed to a Named_Limit, a fixed defect or an Open_Item (Requirement 27.6). Record the Open_Item O6 (code-drawn shapes are not compared) in the Fidelity_Report as a named limit.
     - _Requirements: 27.1, 27.4, 27.5, 27.6, 27.8_
 

@@ -31,6 +31,8 @@ export interface ReplayRunnerResult {
   releaseOutside: ReleaseOutsideNote[];
   /** Caught_Errors in order of occurrence (Requirement 25.7); absent in an old result file: empty. */
   caughtErrors?: Array<{ tick: number; site: string; message: string }>;
+  /** Named_Limits the Shim raised during this run (once per id); absent in an old result file: empty. */
+  namedLimits?: Array<{ id: string; detail: string }>;
 }
 
 async function main(): Promise<void> {
@@ -50,6 +52,7 @@ async function main(): Promise<void> {
   const caughtErrors: NonNullable<ReplayRunnerResult['caughtErrors']> = [];
   let downIndex: number | null = null;
   let setTraceSink: ((fn: ((...args: unknown[]) => void) | null) => void) | null = null;
+  let takeLimits: (() => NonNullable<ReplayRunnerResult['namedLimits']>) | null = null;
 
   try {
     const [playerMod, clockMod, loaderMod, traceMod, internalMod, classesMod, treeMod, eventsMod] = await Promise.all([
@@ -63,6 +66,10 @@ async function main(): Promise<void> {
       load('shim/events.ts'),
     ]);
     setTraceSink = traceMod.setTraceSink;
+    // One child process per Replay, but clear the sink anyway so nothing raised while importing is attributed to this run.
+    const take = internalMod.takeNamedLimits as () => NonNullable<ReplayRunnerResult['namedLimits']>;
+    takeLimits = take;
+    take();
 
     const readText = (rel: string): string => readFileSync(resolve(projectDir, rel), 'utf8');
 
@@ -136,7 +143,8 @@ async function main(): Promise<void> {
   } finally {
     setTraceSink?.(null);
   }
-  const result: ReplayRunnerResult = { lines, ticksRun, error, releaseOutside, caughtErrors };
+  const namedLimits = takeLimits === null ? [] : takeLimits();
+  const result: ReplayRunnerResult = { lines, ticksRun, error, releaseOutside, caughtErrors, namedLimits };
   writeFileSync(resultPath, JSON.stringify(result), 'utf8');
 }
 

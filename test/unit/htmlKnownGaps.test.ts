@@ -9,7 +9,7 @@ function baseReport(behaviour: FidelityReport['behaviour']): FidelityReport {
     tools: { ffdec: '1', playwright: '2', pngjs: '3' },
     tolerance: { background: '#ffffff', strict: 8, edgeMax: 128, edgeContrast: 48, neighbourhood: '3x3' },
     visual: { overallMatch: null, comparedFrames: 0, notComparedFrames: 0, frames: [], knownVisualLimits: [] },
-    behaviour,
+    behaviour: { namedLimits: [], ...(behaviour as object) } as unknown as FidelityReport['behaviour'],
     problems: [],
     translation: { typeCheck: 'ran', classes: [] },
   } as unknown as FidelityReport;
@@ -25,6 +25,14 @@ describe('html type check options (Requirement 3.8)', () => {
   });
 });
 
+describe('html named limits', () => {
+  it('lists each Named_Limit id and detail, escaped, and says none when empty', () => {
+    const base = { status: 'not-compared', reason: 'no-reference-trace', knownBehaviourGaps: [] };
+    const some = renderFidelityHtml(baseReport({ ...base, namedLimits: [{ id: 'a<b', detail: 'x&y' }] } as never));
+    expect(some).toContain('<h3>Named limits raised while running</h3>\n<ul>\n<li>a&lt;b: x&amp;y</li>\n</ul>');
+    expect(renderFidelityHtml(baseReport(base as never))).toContain('<h3>Named limits raised while running</h3>\n<p>none raised');
+  });
+});
 describe('html known behaviour gaps', () => {
   it('prints none for an empty list when not compared', () => {
     const html = renderFidelityHtml(

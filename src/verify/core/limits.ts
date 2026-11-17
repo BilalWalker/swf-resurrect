@@ -18,6 +18,7 @@ export interface VisualLimit {
     | 'text-metrics'
     | 'stroke-style'
     | 'blend-mode'
+    | 'code-drawn-shapes'
     | 'residual-difference';
   id?: number;
   message: string;

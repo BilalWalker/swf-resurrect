@@ -1,6 +1,6 @@
 // Verify_Stage (verify design: "Verify_Stage sequence", sections 9 and 11).
 // Every failure of FFDec, the browser or the Replay is a recorded Problem; only a failed write throws.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import type { SceneJson } from '../../../template/runtime/scene';
@@ -10,6 +10,7 @@ import { KNOWN_BEHAVIOUR_GAPS } from '../core/constants';
 import { selectFrames } from '../core/frameSample';
 import { buildInputNotes, formatInputNotes } from '../core/inputNotes';
 import { knownVisualLimits } from '../core/limits';
+import type { VisualLimit } from '../core/limits';
 import { clusterDiffRegions, regionTable } from '../core/regions';
 import { attributeRegions, residualLimits, validateResidualRegister } from '../core/residual';
 import type { Attribution, ResidualRegister } from '../core/residual';
@@ -241,6 +242,7 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
     limits: [
       ...knownVisualLimits(req.scene, req.unsupported, { allComparedFramesExact: allComparedFramesExact([...outcomes.values()]) }),
       ...residualLimits(attributions),
+      ...(await codeDrawnLimits(req.projectDir)),
     ],
     residual: {
       regions: attributions.length,
@@ -266,6 +268,39 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
     jsonPath,
     htmlPath,
   };
+}
+
+/**
+ * Scripts that draw with Sprite.graphics paint shapes the FFDec Reference_Frame does not contain (as3-coverage Open_Item O6),
+ * so Overall_Match cannot see them: a score of 100 is not evidence that the drawing is right. Found by scanning the translated sources.
+ */
+async function codeDrawnLimits(projectDir: string): Promise<VisualLimit[]> {
+  const found = await anySourceMatches(join(resolve(projectDir), 'src'), /\.graphics\b/);
+  return found
+    ? [
+        {
+          kind: 'code-drawn-shapes',
+          message:
+            'Shapes drawn by script (graphics.*) are not in the FFDec Reference_Frame, so Overall_Match does not compare them; a score of 100 here says nothing about the drawing.',
+        },
+      ]
+    : [];
+}
+
+async function anySourceMatches(dir: string, re: RegExp): Promise<boolean> {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return false;
+  }
+  for (const en of entries) {
+    const full = join(dir, en.name);
+    if (en.isDirectory()) {
+      if (await anySourceMatches(full, re)) return true;
+    } else if (en.name.endsWith('.ts') && re.test(await readFile(full, 'utf8').catch(() => ''))) return true;
+  }
+  return false;
 }
 
 const MAX_REGION_ROWS = 200;
@@ -371,12 +406,14 @@ async function runBehaviour(req: VerifyRequest, deps: VerifyDeps, problems: Prob
   if (decision.problem !== null) problems.push(decision.problem);
   const caught = result.caughtErrors ?? [];
   problems.push(...runtimeErrorProblems(caught));
-  if (decision.status === 'not-compared') return { status: 'not-compared', reason: decision.reason };
+  const namedLimits = result.namedLimits ?? [];
+  if (decision.status === 'not-compared') return { status: 'not-compared', reason: decision.reason, namedLimits };
   // release-outside is never a problem (decided F17); it lives in the notes only.
   const inputNotes = buildInputNotes(plan.problems, result.releaseOutside);
   const comparison = decision.comparison;
   return {
     status: 'compared',
+    namedLimits,
     comparison,
     replay: { ticks: plan.tickCount, inputGroups, clicks: plan.pressReleasePairs,
       pointerEvents: plan.pointers.filter((p) => p.tick < plan.tickCount).length,

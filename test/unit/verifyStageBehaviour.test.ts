@@ -20,6 +20,7 @@ interface Stub {
   childFailure?: boolean;
   reject?: boolean;
   caughtErrors?: Array<{ tick: number; site: string; message: string }>;
+  namedLimits?: Array<{ id: string; detail: string }>;
 }
 
 interface Files {
@@ -49,6 +50,7 @@ async function run(trace: string | null, stub: Stub, files: Files = {}): Promise
         releaseOutside: [],
         childFailure: stub.childFailure ?? false,
         caughtErrors: stub.caughtErrors,
+        namedLimits: stub.namedLimits,
       } as never;
     },
   };
@@ -200,4 +202,22 @@ describe('verifyStage behaviour decision', () => {
       expect(r.behaviour).toMatchObject({ status: 'not-compared', reason: 'empty-reference-trace' });
       expect(r.problems.filter((p) => p.kind === 'replay-error')).toHaveLength(1);
     });
-  });});
+  });  it('lists the Replay Named_Limits by id, deduplicated, in compared and not-compared behaviour', async () => {
+    const limits = [
+      { id: 'stage-scaleMode', detail: 'b' },
+      { id: 'device-font-metrics', detail: 'a' },
+      { id: 'stage-scaleMode', detail: 'again' },
+    ];
+    const expected = [{ id: 'device-font-metrics', detail: 'a' }, { id: 'stage-scaleMode', detail: 'b' }];
+    const compared = await run(FIVE, { lines: ['a', 'b', 'c', 'd', 'e'], ticksRun: 3, namedLimits: limits });
+    expect(compared.behaviour.status).toBe('compared');
+    expect(compared.behaviour.namedLimits).toEqual(expected);
+    const empty = await run('', { lines: [], ticksRun: 3, namedLimits: limits });
+    expect(empty.behaviour).toMatchObject({ status: 'not-compared', reason: 'empty-reference-trace' });
+    expect(empty.behaviour.namedLimits).toEqual(expected);
+  });
+  it('reports an empty list when no Replay ran', async () => {
+    const r = await run(null, {});
+    expect(r.behaviour.namedLimits).toEqual([]);
+  });
+});

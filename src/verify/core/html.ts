@@ -224,6 +224,12 @@ function behaviourSection(r: FidelityReport): string {
     list('Missing lines', b.missing);
     list('Extra lines', b.extra);
   }
+  parts.push('<h3>Named limits raised while running</h3>');
+  if (b.namedLimits.length === 0) {
+    parts.push('<p>none raised in the Replay (none ran, or none were raised)</p>');
+  } else {
+    parts.push(`<ul>\n${b.namedLimits.map((l) => `<li>${e(l.id)}: ${e(l.detail)}</li>`).join('\n')}\n</ul>`);
+  }
   parts.push('<h3>Known behaviour gaps</h3>');
   if (b.knownBehaviourGaps.length === 0) {
     parts.push('<p>none</p>');

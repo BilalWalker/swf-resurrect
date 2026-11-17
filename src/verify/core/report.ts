@@ -50,13 +50,23 @@ export type FrameOutcome =
   | { frame: number; status: 'compared'; matchPercent: number; differingPixels: number; totalPixels: number; regions?: RegionTable }
   | { frame: number; status: 'not-compared'; reason: 'reference-unavailable' | 'size-mismatch' | 'render-failed' };
 
+/** A run-time Named_Limit raised while the Replay ran (shim 
+amedLimit(id, detail)). */
+export interface NamedLimitEntry {
+  id: string;
+  detail: string;
+}
+
 export type BehaviourInput =
   | {
       status: 'not-compared';
       reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate' | 'empty-reference-trace';
+      /** Raised during the Replay when one ran; absent or empty otherwise. */
+      namedLimits?: readonly NamedLimitEntry[];
     }
   | {
       status: 'compared';
+      namedLimits?: readonly NamedLimitEntry[];
       comparison: Extract<TraceComparison, { kind: 'compared' }>;
       replay: { ticks: number; inputGroups: number; clicks: number; pointerEvents: number; ticksRun: number; inputNotes: InputNote[]; inputSource: ReplayInputSource; caughtErrors?: CaughtErrorsSummary };
     };
@@ -109,10 +119,13 @@ export type BehaviourReport =
   | {
       status: 'not-compared';
       reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate' | 'empty-reference-trace';
+      namedLimits: NamedLimitEntry[];
       knownBehaviourGaps: string[];
     }
   | {
       status: 'compared';
+      /** Named_Limits the Replay raised, by id; empty when no Replay ran. Not a list of every limit of the runtime. */
+      namedLimits: NamedLimitEntry[];
       referenceLineCount: number;
       capturedLineCount: number;
       matched: number;
@@ -192,13 +205,20 @@ function cloneRegions(t: RegionTable): RegionTable {
   };
 }
 
+function cleanNamedLimits(list: readonly NamedLimitEntry[] | undefined): NamedLimitEntry[] {
+  const byId = new Map<string, string>();
+  for (const l of list ?? []) if (!byId.has(l.id)) byId.set(l.id, sanitizeDetail(l.detail));
+  return [...byId].map(([id, detail]) => ({ id, detail })).sort((a, b) => cmpStr(a.id, b.id));
+}
+
 function buildBehaviour(b: BehaviourInput, gaps: string[]): BehaviourReport {
   if (b.status === 'not-compared') {
-    return { status: 'not-compared', reason: b.reason, knownBehaviourGaps: gaps };
+    return { status: 'not-compared', reason: b.reason, namedLimits: cleanNamedLimits(b.namedLimits), knownBehaviourGaps: gaps };
   }
   const c = b.comparison;
   return {
     status: 'compared',
+    namedLimits: cleanNamedLimits(b.namedLimits),
     referenceLineCount: c.referenceLineCount,
     capturedLineCount: c.capturedLineCount,
     matched: c.matched,

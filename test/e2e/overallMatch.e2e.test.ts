@@ -30,6 +30,11 @@ const OVERALL_MATCH_FLOOR_CLICK_BLOCK = 95.75;
 const OVERALL_MATCH_FLOOR_3_JOYSTICK = 98.86;
 /** Measured in task 17.5 (10 ticks, all 6 differing regions attributed to stroke scaling; was 99.93 at Checkpoint 27). Never lower. */
 const OVERALL_MATCH_FLOOR_SLIDER_COMPONENT = 99.93;
+/**
+ * Measured in task 21.1 (1 frame, 0 differing pixels). The SWF has one root frame and the game draws by code, so the FFDec reference
+ * frame is blank and this 100 cannot see code-drawn shapes: the report names that as known limit code-drawn-shapes. Never lower.
+ */
+const OVERALL_MATCH_FLOOR_ENTITY_GAME = 100;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -70,6 +75,7 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
     ['click_block', OVERALL_MATCH_FLOOR_CLICK_BLOCK],
     ['3_joystick', OVERALL_MATCH_FLOOR_3_JOYSTICK],
     ['slider_component', OVERALL_MATCH_FLOOR_SLIDER_COMPONENT],
+    ['entity_game', OVERALL_MATCH_FLOOR_ENTITY_GAME],
   ];
   it.each(cases)(
     '%s keeps Overall_Match at or above its floor',
@@ -80,6 +86,12 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
       expect(report.visual.status).toBe('compared');
       expect(report.visual.frames.every((f) => f.status === 'compared')).toBe(true);
       expect(report.visual.overallMatch).toBeGreaterThanOrEqual(floor);
+      if (sample === 'entity_game') {
+        // One frame exists (frameCount 1), and the 100 does not cover code-drawn shapes: the report must say so.
+        expect(report.visual.frames).toHaveLength(1);
+        const limits = (report as unknown as { visual: { knownVisualLimits: Array<{ kind: string }> } }).visual.knownVisualLimits;
+        expect(limits.map((l) => l.kind)).toContain('code-drawn-shapes');
+      }
       if (sample === 'acid-color-2') {
         // Exact_Render: frame 1 has zero differing pixels under the unchanged Verify_Tolerance.
         const frame1 = report.visual.frames.find((f) => f.frame === 1);

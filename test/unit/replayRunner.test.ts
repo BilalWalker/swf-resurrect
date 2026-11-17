@@ -18,6 +18,7 @@ export class MainTimeline extends MovieClip {
   private onFrame = (e: Event): void => {
     if (this.hooked || this.stage === null) return;
     this.hooked = true;
+    this.stage.scaleMode = 'noScale';
     this.stage.addEventListener(KeyboardEvent.KEY_DOWN, (k: KeyboardEvent): void => { trace('down ' + k.keyCode); });
     this.stage.addEventListener(KeyboardEvent.KEY_UP, (k: KeyboardEvent): void => { trace('up ' + k.keyCode); });
   };
@@ -51,6 +52,10 @@ describe('Replay runner key entries', () => {
     expect(plan.keys.map((k) => [k.tick, k.kind, k.keyCode])).toEqual([[3, 'down', 65], [3, 'down', 38], [4, 'up', 38], [4, 'up', 65]]);
   });
 
+  it('returns the Named_Limits the run raised, and only those', () => {
+    // Stage.scaleMode raises stage-scaleMode; a TextField would raise device-font-metrics, and the clickgoto fixture has none.
+    expect(result.namedLimits?.map((l) => l.id)).toEqual(['stage-scaleMode']);
+  });
   it('delivers each key to a Stage listener at its tick, in order', () => {
     expect(result.error).toBeNull();
     expect(result.lines.filter((l) => /^(down|up) /.test(l.text))).toEqual([
