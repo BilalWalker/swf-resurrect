@@ -384,6 +384,7 @@ function mapName(name: string): string {
     case 'Boolean':
       return 'boolean';
     case 'Object':
+    case 'Class':
       return 'any';
     case 'Array':
       return 'any[]';
@@ -946,6 +947,12 @@ class ExprRewriter {
       if (first === 'Vector') {
         throw new ExprError(`"${word} Vector" cannot be translated to instanceof`);
       }
+    }
+    if (word === 'is' && rhs.next === i + 2 && this.locals.has(this.toks[i + 1].text)) {
+      // The class is a value held in a variable: JS instanceof is false for primitives, so the shim decides.
+      const from = this.operandStart(i, lo);
+      if (from >= i) throw new ExprError(`"${word} ${this.toks[i + 1].text}" without an operand`);
+      return { text: '', next: rhs.next, wrap: { from, before: 'isInstanceOf(', after: `, ${this.toks[i + 1].text})` } };
     }
     const kw = word === 'as' ? 'as' : 'instanceof';
     let text = rhs.text;

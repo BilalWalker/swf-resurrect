@@ -1,4 +1,4 @@
-// Public Flash API surface. The internal module is deliberately not exported here.
+﻿// Public Flash API surface. The internal module is deliberately not exported here.
 export { Event, EventDispatcher, KeyboardEvent, MouseEvent } from './events';
 export { Keyboard } from './Keyboard';
 export type { Listener } from './events';
@@ -13,8 +13,9 @@ export { MovieClip } from './MovieClip';
 export { Dictionary } from './Dictionary';
 export { Shape } from './Shape';
 export { trace, setTraceSink } from './trace';
-export { getDefinitionByName, getQualifiedClassName, getTimer, registerDefinitions } from './utils';
+export { getDefinitionByName, getQualifiedClassName, getTimer, isInstanceOf, registerDefinitions } from './utils';
 export { ArgumentError, IllegalOperationError } from './errors';
 export { defineInterface, declareImplements } from './interfaces';
 export type { AS3InterfaceToken } from './interfaces';
 export { Graphics, GraphicsPathWinding } from './Graphics';
+

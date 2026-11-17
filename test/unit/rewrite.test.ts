@@ -194,6 +194,12 @@ describe('rewrite: Vector conversion, type tests and delete', () => {
     expect(unsupported(body('      var a:* = Vector.<int>(p, q);'))).toHaveLength(1);
   });
 
+  it('translates `x is cls` with cls a local to isInstanceOf, and the type Class to any', () => {
+    const out = body('      var cls:Class = k;\n      var a:Boolean = x is cls;');
+    expect(out.text).toContain('var cls: any = k;');
+    expect(out.text).toContain('var a: boolean = isInstanceOf(x, cls);');
+  });
+
   it('translates is Array to Array.isArray and is Class to typeof', () => {
     const out = body('      var a:Boolean = x is Array;\n      var b:Boolean = o.k is Class;\n      if (p && h(q) is Array) { g(); }\n      var c:Boolean = !(x is Array);');
     expect(out.text).toContain('var a: boolean = Array.isArray(x);');

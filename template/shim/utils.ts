@@ -34,3 +34,15 @@ export function setTimeSource(now: () => number): void {
 export function getTimer(): number {
   return timeSource === null ? 0 : Math.floor(timeSource() - timeStart);
 }
+
+/**
+ * `value is cls` where `cls` is a Class held in a variable. JS `instanceof` is false for primitives, so Number, String
+ * and Boolean compare by typeof; Object and `*` accept any value that is not null or undefined.
+ */
+export function isInstanceOf(value: unknown, cls: unknown): boolean {
+  if (cls === Number) return typeof value === 'number';
+  if (cls === String) return typeof value === 'string';
+  if (cls === Boolean) return typeof value === 'boolean';
+  if (cls === Object) return value !== null && value !== undefined;
+  return typeof cls === 'function' && value instanceof cls;
+}

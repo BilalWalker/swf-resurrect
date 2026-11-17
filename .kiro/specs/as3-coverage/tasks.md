@@ -1,4 +1,4 @@
-# Implementation Plan: as3-coverage
+﻿# Implementation Plan: as3-coverage
 
 ## Overview
 
@@ -344,19 +344,19 @@ Rules that apply to every task:
     - Tests: `test/e2e/traceScore.e2e.test.ts` (extend) or a report unit test with the `entity_game` shared run.
     - _Requirements: 26.2, 26.3_
 
-- [ ] 19. Translate and Pipeline: the translated `Signal` (D9)
+- [x] 19. Translate and Pipeline: the translated `Signal` (D9)
   - Commit area: `Translate` (Pipeline named for 19.3). Verification V1. Read the design row D9 and Requirement 18. `Signal`, `SignalBinding` and `SignalBindingList` are translated from the decompiled source (`swf_class_source` on `.work/games/entity/test.swf` or the committed SWF); no Hand_Written_Class replaces them unless 19.3 runs. The sample names in this task's checks are allowed because the checks are sample runs, not rule tests.
-  - [~] 19.1 Translate and type-check the three classes
+  - [x] 19.1 Translate and type-check the three classes
     - Run the pipeline on `samples/entity_game/test.swf` and confirm `org.osflash.signals.Signal`, `SignalBinding` and `SignalBindingList` are in the registry and have no type error from the gate. Fix missing general rules in the Translator (never a class-named rule). Record the Translation_Report entries.
     - Tests: `test/e2e/entityTranslate.e2e.test.ts` (create): the three classes are registered, no `untranslated-class`, no failed class at load.
     - _Requirements: 18.1_
 
-  - [~] 19.2 Check the behaviour of the translated `Signal`
+  - [x] 19.2 Check the behaviour of the translated `Signal`
     - Unit tests that load the emitted `Signal` module in Node (the pipeline output of 19.1, shared run cache): a listener added twice keeps one binding (18.2); `dispatch` with arguments that do not match `valueClasses` throws `ArgumentError` (18.3); listeners are called in the order of the decompiled `SignalBindingList`, confirmed by reading that source (18.4). Record the confirmed order in the commit body.
     - Tests: `test/e2e/entitySignal.e2e.test.ts` (create).
     - _Requirements: 18.2, 18.3, 18.4_
 
-  - [~] 19.3 Fallback, only if 19.1 or 19.2 fails
+  - [x] 19.3 Fallback, only if 19.1 or 19.2 fails
     - If the translator route cannot make the `Signal` classes load and pass the checks of 19.2, write `handwritten/entity_game/org/osflash/signals/Signal.ts`, add the entry to `handwritten/SET.json` with a reason, rely on the packaged-override fix of Task 17.2, and add **Signal model property** (Requirement 18.7) in `test/property/signalModel.property.test.ts` (create): over sequences of `add`, `addOnce`, `remove` and `dispatch` over a pool of listeners the emitted `Signal` agrees with a list model with prepend on add. If 19.1 and 19.2 pass, this sub-task does nothing: mark it done with the note "not needed" in the commit body, and add no property test.
     - _Requirements: 18.5, 18.6, 18.7_
 

@@ -349,6 +349,23 @@ export function translateCore(source: string, options: TranslateOptions): Transl
       out = emitOnce(imports);
     }
   }
+  // The rewriter emits `isInstanceOf(` for `x is cls` with cls in a local (a Shim call it adds itself).
+  if (out.text.indexOf('isInstanceOf(') >= 0 && !shimUsed.includes('isInstanceOf') && options.shimNames.has('isInstanceOf')) {
+    shimUsed.push('isInstanceOf');
+    if (cutActive.size > 0) {
+      const typed = new Map<string, 'drop' | 'type'>();
+      const remaining = identifiersOf(out.text);
+      for (const q of cutActive) {
+        const binding = plan.imports.find((p) => p.target === q)?.binding as string;
+        typed.set(q, remaining.has(binding) ? 'type' : 'drop');
+      }
+      const reg = out.text.indexOf("getDefinitionByName('") >= 0;
+      imports = createImportLines(plan, selfPath, reg ? [...shimUsed, 'getDefinitionByName'] : shimUsed, typed);
+    } else {
+      imports = createImportLines(plan, selfPath, shimUsed);
+    }
+    out = emitOnce(imports);
+  }
   const classUses = rewriter.classUses?.() ?? [];
   const byTarget = new Map<string, boolean>();
   for (const u of classUses) byTarget.set(u.target, (byTarget.get(u.target) ?? true) && u.cuttable);

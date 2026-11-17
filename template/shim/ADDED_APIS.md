@@ -88,3 +88,4 @@ Note: `gotoAndStop` / `gotoAndPlay` called outside the frame step (a click handl
 | Named_Limit `filter-not-drawn:<Class>` | A non-empty `filters` list: the filters are stored and not drawn. Fixture line in `test/unit/filters.test.ts` |
 | `MouseEvent.MOUSE_WHEEL` (`"mouseWheel"`), `MouseEvent.delta` (default 0) | A game that registers for the wheel type-checks (as3-coverage task 16.4, Requirement 17.1). Fixture line in `test/unit/mouseEventShim.test.ts` |
 | Named_Limit `mouse-wheel-not-dispatched` | `addEventListener(MouseEvent.MOUSE_WHEEL, ...)`: the Player does not dispatch the wheel, the listener is never called (Requirement 17.2). Fixture line in `test/unit/mouseEventShim.test.ts` |
+| `isInstanceOf(value, cls)` (exported from the shim) | The translated `Signal.dispatch` of `entity_game` tests `value is cls` with `cls` in a local; JS `instanceof` is false for `5` and `Number`. Fixture line in `test/e2e/entitySignal.e2e.test.ts` |
