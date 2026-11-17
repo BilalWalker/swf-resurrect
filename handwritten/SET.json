@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "sample": "spacer",
+    "className": "KeyObject",
+    "reason": "extends flash.utils.Proxy; the Shim has no Proxy and a stub would ignore flash_proxy overrides without saying so",
+    "licence": "GPL-3.0"
+  },
+  {
+    "sample": "spacer",
+    "className": "PhysicEngine",
+    "reason": "pixel collision through BitmapData.draw, ColorTransform and BlendMode.DIFFERENCE is replaced by the runtime helper pixelsOverlap (approximation, Named_Limit collision-coverage-mask)",
+    "licence": "GPL-3.0"
+  }
+]

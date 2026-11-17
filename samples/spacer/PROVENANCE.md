@@ -25,7 +25,7 @@ Verified on 2026-11-15 with the GitHub API.
 Licence: GPL-3.0. GitHub reports the repository licence as GPL-3.0, and the upstream file `LICENSE` at commit `52ebaf94760818808f811ac6a3a8e82e416ed086` is the GNU General Public License version 3 (29 June 2007). That file is copied unmodified to `samples/LICENSES/GPL-3.0.txt` (git blob `9cecc1d4669ee8af2ca727a5d8cde10cd8b2d7cc`, identical upstream and here).
 The upstream `LICENSE` has no project copyright line. Its only copyright line is the licence's own header, `Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>`, and the unfilled template lines at the end. The checked source file `src/Main.as` has no copyright header either. Zabuzard is named as the author because the repository belongs to that account.
 ## Why the SWF is not committed
-The SWF is GPL-3.0 while the rest of the Repository is MIT. It is fetched into `.work/` on request. The only files of `spacer` planned for the Repository under GPL-3.0 are the hand-written classes in `handwritten/spacer/` (not yet created).
+The SWF is GPL-3.0 while the rest of the Repository is MIT. It is fetched into `.work/` on request. The only files of `spacer` planned for the Repository under GPL-3.0 are the hand-written classes in `handwritten/spacer/` (`KeyObject.ts` and `PhysicEngine.ts`, with `handwritten/spacer/LICENSE` and a header in each file naming the upstream commit above). The repository README states the exception.
 ## Embedded fonts
 - Not yet inspected. This note is updated with the font list, or the sentence "no embedded fonts", when the SWF is first converted.
 ## Reference behaviour (`reference/`)

@@ -477,17 +477,17 @@ Rules that apply to every task:
     - Extend `test/unit/shimNames.test.ts`: `Proxy` is not an export of `template/shim/index.ts`.
     - _Requirements: 20.5_
 
-- [ ] 28. Handwritten `spacer` files: gated on the licence decision (D15, D16)
+- [x] 28. Handwritten `spacer` files: gated on the licence decision (D15, D16)
   - Commit area: `Samples` (Pipeline named). Verification V1. This task is gated by the owner decision O1 (Requirement 28.13): until the owner decides the licence, nothing under `handwritten/spacer/` is staged or committed, and `handwritten/SET.json` gets no `spacer` entry.
-  - [~] 28.1 Write the two files locally, uncommitted
+  - [x] 28.1 Write the two files locally, uncommitted
     - Read the decompiled `KeyObject` and `PhysicEngine` with `swf_class_source` on `.work/games/spacer/test.swf`. Write `handwritten/spacer/KeyObject.ts` (about 45 lines, no `Proxy`; reason: `extends flash.utils.Proxy`, the Shim has no `Proxy`, and a stub would ignore `flash_proxy` overrides without saying so; the only override, `getProperty`, is dead code in `spacer`) and `handwritten/spacer/PhysicEngine.ts` (the AS3 class with `areaOfCollision`, lines 174 to 214, replaced by one call to `pixelsOverlap(a, b)`; reason: the Flash route needs `BitmapData.draw`, blend modes and colour transforms, which are out of scope). Do not stage them. Do not add them to `handwritten/SET.json` yet.
     - _Requirements: 20.4, 23.1, 23.2, 33.9_
 
-  - [~] 28.2 STOP and ask the owner for the licence decision (O1)
+  - [x] 28.2 STOP and ask the owner for the licence decision (O1)
     - STOP. Report that the two files are adapted from GPL-3.0 source in an MIT repository (`LICENSE` is MIT) and ask the owner to choose: commit them under GPL-3.0 with a `handwritten/spacer/LICENSE` and a header (recommended in the design) and state it in `PROVENANCE.md` and About, or keep them uncommitted and skip the `spacer` Play_Test when `handwritten/spacer/` is absent. Do not continue to 28.3 until the answer is given. Until then the Translation_Report and Fidelity_Report claim no licence for them (Requirement 33.10).
     - _Requirements: 28.13, 33.10_
 
-  - [~] 28.3 Commit the files and the set entries, if the owner approves
+  - [x] 28.3 Commit the files and the set entries, if the owner approves
     - If the owner approves: add `handwritten/spacer/LICENSE` and the header as decided, add both entries with reasons to `handwritten/SET.json`, update `samples/spacer/PROVENANCE.md` and the Fidelity_Report text for the decided licence, and run `test/unit/handwrittenSet.test.ts` (every `.ts` listed, every entry has a file) and the report tests. If the owner declines, leave the files uncommitted and untracked, add nothing to `SET.json`, and record in the commit body of Task 31 that the `spacer` Play_Test skips with the message that `handwritten/spacer/` is absent (Requirement 25.6, 28.13). In both cases the Translation_Report names each Hand_Written_Class used with its reason and the translated class replaced (Requirement 33.3, 33.4).
     - _Requirements: 28.13, 33.3, 33.4, 33.8, 33.9, 33.10_
 

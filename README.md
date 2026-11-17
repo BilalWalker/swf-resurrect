@@ -124,7 +124,7 @@ The engine was built spec-first in Kiro. Everything Kiro worked from is in the r
 
 ## Licences
 
-- This project: MIT, see [LICENSE](LICENSE).
+- This project: MIT, see [LICENSE](LICENSE), except `handwritten/spacer/`, which is GPL-3.0 because it adapts code from Spacer.
 - JPEXS Free Flash Decompiler (FFDec): GPL-3.0. It is called as a separate program, never
   linked or copied, and is not part of this repository. The container image downloads the
   official release unmodified into its own directory; see [THIRD_PARTY.md](THIRD_PARTY.md).
