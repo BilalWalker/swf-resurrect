@@ -1,5 +1,10 @@
 {
-  "pbtResults": {},
+  "pbtResults": {
+    "8.3 Write the property test of the run": {
+      "status": "passed",
+      "lastRunTimestamp": 1794853507837
+    }
+  },
   "executionHistory": {
     "1.1 Add `src/outcome/outcome.ts`, `exitCode.ts`, `reasons.ts` and `gaps.ts`": [
       {
@@ -204,6 +209,37 @@
         "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794852899452
+      }
+    ],
+    "8.1 Failure_Log, Reference_Id and `ffdec-<Reference_Id>.log`": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853092000
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853321790
+      }
+    ],
+    "8.2 Exit-2 cases and the unwritable directory": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853321952
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853423237
+      }
+    ],
+    "8.3 Write the property test of the run": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853423716
       }
     ]
   }

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runPipeline } from "../../src/pipeline/pipeline";
@@ -10,7 +10,9 @@ export interface PipelineRun {
   out: string;
   err: string;
   outcomeText: string;
-  outcome: { outcome: string; reasonCode: string | null; reason: string };
+  outcome: { outcome: string; reasonCode: string | null; reason: string; facts?: unknown; referenceId?: string | null };
+  /** Text of every *.log the run wrote into the output directory, by file name. */
+  logs: Record<string, string>;
 }
 
 export async function runWithFakes(bytes: Uint8Array, stages: PipelineStages): Promise<PipelineRun> {
@@ -25,7 +27,11 @@ export async function runWithFakes(bytes: Uint8Array, stages: PipelineStages): P
     let err = "";
     const exit = await runPipeline(args, stages, { out: (s: string) => void (out += s), err: (s: string) => void (err += s) });
     const outcomeText = await readFile(join(tmp, "out", "outcome.json"), "utf8").catch(() => "");
-    return { exit, out, err, outcomeText, outcome: outcomeText === "" ? { outcome: "", reasonCode: null, reason: "" } : JSON.parse(outcomeText) };
+    const logs: Record<string, string> = {};
+    for (const n of await readdir(join(tmp, "out")).catch(() => [] as string[])) {
+      if (n.endsWith(".log")) logs[n] = await readFile(join(tmp, "out", n), "utf8");
+    }
+    return { exit, out, err, outcomeText, logs, outcome: outcomeText === "" ? { outcome: "", reasonCode: null, reason: "" } : JSON.parse(outcomeText) };
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }

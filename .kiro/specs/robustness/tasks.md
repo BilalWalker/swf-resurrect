@@ -137,19 +137,19 @@ Rules that apply to every task:
     - **Property 3: Error classification keeps FFDec and our own errors apart** (an `FfdecExitError` at Unpack gives `refused damaged` with none of its stderr text in the Outcome_File, the Outcome_Line or the reason; every other error gives `failed internal-error`; no `failed` Outcome has the reason code `damaged`) in `test/property/outcome.property.test.ts` (extend), and **Property 10: A cut SWF is never converted** (any cut length 0 to length minus 1 of a generated and of a committed SWF with stage fakes: `refused`, `not-swf` below 8 bytes and `damaged` otherwise) in `test/property/facts.property.test.ts` (extend).
     - **Validates: Requirements 4.5, 5.1, 5.2, 5.3, 5.4, 5.10, 5.12, 5.13**
 
-- [ ] 8. Pipeline: Failure_Log, Reference_Id, FFDec log and the exit-2 cases
+- [x] 8. Pipeline: Failure_Log, Reference_Id, FFDec log and the exit-2 cases
   - Commit area: `Pipeline`. Verification V1. Read the design D-A6, D-A9 and finding F11.
-  - [ ] 8.1 Failure_Log, Reference_Id and `ffdec-<Reference_Id>.log`
+  - [x] 8.1 Failure_Log, Reference_Id and `ffdec-<Reference_Id>.log`
     - A caught internal error writes the stack to `failure-<Reference_Id>.log` and prints `error [pipeline]: internal error, reference <id>`; no stack on standard output or standard error. `Reference_Id` is the first 8 hex digits of `sha256(inputSha256 + "\n" + stage + "\n" + errorName + "\n" + errorMessage)` (D-A6). An `FFDEC_EXIT` at Unpack writes the FFDec message to `ffdec-<Reference_Id>.log` (error name `FfdecExitError`) and nothing of it enters the Outcome_File, the Outcome_Line or the reason.
     - Tests: `test/unit/pipelineFailure.test.ts` (create): the same failure gives the same Reference_Id, a different stage gives a different one; the stack appears only in the Failure_Log; the FFDec text appears only in the FFDec log; an own `TypeError` at Unpack is `failed` and writes a Failure_Log, not an FFDec log.
     - _Requirements: 5.5, 5.7, 5.12, 5.13_
 
-  - [ ] 8.2 Exit-2 cases and the unwritable directory
+  - [x] 8.2 Exit-2 cases and the unwritable directory
     - The two Emit refusals (`OUTPUT_DIR_NOT_EMPTY`, `UNSAFE_FORCE_TARGET`) leave `REFUSAL_CODES` handling and return 2 with one `error [pipeline]:` line and no Outcome_File (D-A9, finding F11); usage and path errors stay outside the Outcome set. If the Outcome_File cannot be written the Outcome_Line is still printed and the exit code is the Outcome's.
     - Tests: `test/unit/pipelineCli.test.ts` (extend): the exit-2 cases write no Outcome_File and print one line; the unwritable-directory case still prints the Outcome_Line last.
     - _Requirements: 1.9, 5.8_
 
-  - [ ] 8.3 Write the property test of the run
+  - [x] 8.3 Write the property test of the run
     - **Property 2: A fault at any stage still ends in one valid Outcome** (a stage fake throws any error class including non-Error values at any stage, with generated facts: exit code in the table, `outcome.json` parses, `facts` present when the Facts_Reader ran, the Outcome_Line is the last line, stack text only in the Failure_Log), in `test/property/outcome.property.test.ts` (extend). The stage list includes `recover` as a stage name (the stage itself arrives in Task 18).
     - **Validates: Requirements 1.6, 1.7, 1.8, 2.5, 3.6, 5.5, 5.7**
 

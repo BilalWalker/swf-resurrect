@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { EXIT_CODES, exitCodeFor } from "../../src/outcome/exitCode";
@@ -160,7 +161,7 @@ describe("outcome properties", () => {
         const texts = [parsed.reason, ...parsed.gaps.flatMap((g) => g.examples)];
         for (const t of texts) {
           expect(t).not.toMatch(/[A-Za-z]:[\\/]/);
-          expect(t).not.toMatch(/\\\\\S/);
+          expect(t).not.toMatch(/\\\\[^\s"'<>|*?)]/); // `|` cannot start a UNC name
           expect(t).not.toMatch(/\/home\//);
           expect(t).not.toMatch(/\bat\s+\S+\s*\(/);
         }
@@ -225,8 +226,69 @@ describe("outcome properties", () => {
     );
   });
 
-  // Feature: robustness, Property 14: Determinism of the Outcome_File
-  // **Validates: Requirements 11.7**
+  // Feature: robustness, Property 2: A fault at any stage still ends in one valid Outcome
+  // **Validates: Requirements 1.6, 1.7, 1.8, 2.5, 3.6, 5.5, 5.7**
+  it("Property 2: a fault at any stage still ends in one valid Outcome", async () => {
+    const STAGES = ["unpack", "convert", "translate", "emit", "typeCheck", "recover"] as const;
+    const faultArb: fc.Arbitrary<unknown> = fc.oneof(
+      internalErrArb,
+      fc.stringMatching(/^[a-z]{4,12}$/).map((s) => new RangeError(`ZQX${s}QXZ`)),
+      fc.constant(Object.create(null)),
+    );
+    const factsArb = fc.record({
+      version: fc.integer({ min: 9, max: 40 }),
+      width: fc.integer({ min: 50, max: 1500 }),
+      height: fc.integer({ min: 50, max: 1500 }),
+      frameRate: fc.integer({ min: 1, max: 60 }),
+    });
+    const fakes = (at: (typeof STAGES)[number], fault: unknown): PipelineStages => {
+      const maybe = (name: (typeof STAGES)[number]): void => {
+        if (name === at) throw fault;
+      };
+      const stages = {
+        unpack: async () => (maybe("unpack"), {}),
+        convert: async () => (maybe("convert"), { scene: { symbols: {} }, unsupported: [], stats: { svgWritten: 0, morphSkipped: 0, placementsDropped: 0 } }),
+        translate: async () => (maybe("translate"), { classes: [], skippedScripts: [] }),
+        emit: async (_a: unknown, o: { outputDir: string }) => {
+          maybe("emit");
+          await mkdir(o.outputDir, { recursive: true });
+          return { outputDir: o.outputDir, files: [], omissions: [], loose: [], classPaths: [], gate: null };
+        },
+        typeCheck: async () => (maybe("typeCheck"), { errors: [] }),
+        // The recover stage arrives in Task 18; until the pipeline calls it this entry is ignored.
+        recover: async () => maybe("recover"),
+      };
+      return stages as unknown as PipelineStages;
+    };
+    await fc.assert(
+      fc.asyncProperty(fc.constantFrom(...STAGES), faultArb, factsArb, async (at, fault, spec) => {
+        const r = await runWithFakes(buildSwf(spec), fakes(at, fault));
+        expect(Object.values(EXIT_CODES)).toContain(r.exit);
+        const parsed = parseOutcome(r.outcomeText);
+        expect(parsed.facts).not.toBeNull();
+        expect(r.exit).toBe(exitCodeFor(parsed.outcome));
+        const lines = r.out.trimEnd().split("\n");
+        expect(lines.at(-1)).toMatch(/^Outcome: /);
+        expect(lines.filter((l) => l.startsWith("Outcome: "))).toHaveLength(1);
+        if (at !== "recover") {
+          expect(parsed.outcome).toBe("failed");
+          expect(parsed.reasonCode).toBe("internal-error");
+          const logs = Object.entries(r.logs).filter(([n]) => n.startsWith("failure-"));
+          expect(logs).toHaveLength(1);
+          expect(logs[0][0]).toBe(`failure-${parsed.referenceId}.log`);
+          // Stack text and the thrown message appear only in the Failure_Log.
+          for (const text of [r.out, r.err, r.outcomeText]) {
+            expect(text).not.toMatch(/\n\s+at \S+/);
+            expect(text).not.toContain("ZQX");
+          }
+        } else {
+          expect(parsed.outcome).toBe("converted");
+        }
+      }),
+      { ...fcConfig, numRuns: 30 },
+    );
+  });
+  // Feature: robustness, Property 14: Determinism of the Outcome_File  // **Validates: Requirements 11.7**
   it("Property 14: two decisions and writes give equal bytes once durationMs is dropped", async () => {
     const dropDuration = (text: string): string => {
       const o = JSON.parse(text);

@@ -145,10 +145,10 @@ describe('runPipeline', () => {
     });
     expect(await runPipeline(args(), stages, io)).toBe(1);
     expect(calls).toEqual(['unpack', 'convert']);
-    expect(err).toContain('error [convert]: boom');
+    expect(err).toMatch(/^error \[pipeline\]: internal error, reference [0-9a-f]{8}\n/);
     expect(out).not.toContain('Done:');
-    expect(out.trimEnd().split('\n').at(-1)).toBe('Outcome: failed internal-error an internal error stopped the run');
-    expect(await readdir(outDir)).toEqual(['outcome.json']); // convert never completed: no list written
+    expect(out.trimEnd().split('\n').at(-1)).toMatch(/^Outcome: failed internal-error an internal error stopped the run \(reference [0-9a-f]{8}\)$/);
+    expect((await readdir(outDir)).filter((n) => !n.startsWith('failure-'))).toEqual(['outcome.json']); // convert never completed: no list written
   });
 
   it('names the stage for plain errors from unpack', async () => {
@@ -158,7 +158,7 @@ describe('runPipeline', () => {
       },
     });
     expect(await runPipeline(args(), stages, io)).toBe(1);
-    expect(err).toBe('error [unpack]: no java\n');
+    expect(err).toMatch(/^error \[pipeline\]: internal error, reference [0-9a-f]{8}\n$/);
   });
 
   it('writes the list after an emit failure that is not a refusal', async () => {
@@ -168,7 +168,7 @@ describe('runPipeline', () => {
       },
     });
     expect(await runPipeline(args(), stages, io)).toBe(1);
-    expect(err).toContain('error [emit]: disk full');
+    expect(err).toMatch(/error \[pipeline\]: internal error, reference [0-9a-f]{8}/);
     const text = await readFile(join(outDir, 'unsupported-features.json'), 'utf8');
     expect(text).toContain('untranslated-class');
   });
@@ -222,7 +222,7 @@ describe('runPipeline', () => {
       },
     });
     expect(await runPipeline(args(), stages, io)).toBe(1);
-    expect(err).toContain('error [emit]:');
+    expect(err).toMatch(/error \[pipeline\]: internal error, reference [0-9a-f]{8}/);
     const text = await readFile(join(outDir, 'unsupported-features.json'), 'utf8');
     expect(text).toContain('"text"');
   });

@@ -3,6 +3,7 @@
 import { constants, existsSync } from 'node:fs';
 import { access, mkdir, mkdtemp, open, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { inflateSync } from 'node:zlib';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
@@ -17,6 +18,8 @@ import { summariseGaps } from '../outcome/gaps';
 import { decideOutcome } from '../outcome/outcome';
 import type { ClassifiedFailure, Facts, Outcome, OutcomeLimits, OutcomeNumbers, OutcomeRecord, ReasonCode, StageName, StageRecord } from '../outcome/outcome';
 import { writeOutcomeFile } from '../outcome/outcomeFile';
+import { reasonSentence } from '../outcome/reasons';
+import { failedReason, referenceIdFromDigest, referenceIdInput } from '../outcome/referenceId';
 import { childNamesByClass } from '../translate/planTranslate';
 import type { TranslateArtifact } from '../translate/planTranslate';
 import { buildReport, classStatus, serialiseReport, untranslatedCodeEntries } from '../translate/report';
@@ -175,6 +178,37 @@ function messageOf(err: unknown): string {
 
 function isRefusal(err: unknown): boolean {
   return err instanceof PipelineError && REFUSAL_CODES.has(err.code);
+}
+
+/** Hash of the input file at the edge; an unreadable file gives an empty string, so the id is still derived. */
+async function inputSha256(swfPath: string): Promise<string> {
+  try {
+    return createHash('sha256').update(await readFile(swfPath)).digest('hex');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Derives the Reference_Id (D-A6) and writes the log of a caught error into the output directory: the stack to
+ * `failure-<id>.log`, or for an FFDec exit at Unpack the FFDec text to `ffdec-<id>.log` (error name FfdecExitError).
+ * Never throws; a log that cannot be written is skipped.
+ */
+async function writeFailureLogs(err: unknown, stage: string, ffdecExit: boolean, swfPath: string, outputDir: string): Promise<string> {
+  const name = ffdecExit ? 'FfdecExitError' : err instanceof Error ? err.name : 'NonError';
+  const message = messageOf(err);
+  const digest = createHash('sha256').update(referenceIdInput(await inputSha256(swfPath), stage, name, message)).digest('hex');
+  const id = referenceIdFromDigest(digest);
+  const text = ffdecExit
+    ? `${message}\n`
+    : `${err instanceof Error && err.stack !== undefined ? err.stack : `${name}: ${message}`}\n`;
+  try {
+    await mkdir(outputDir, { recursive: true });
+    await writeFile(join(outputDir, `${ffdecExit ? 'ffdec' : 'failure'}-${id}.log`), text, 'utf8');
+  } catch {
+    // The Outcome_Line still carries the id.
+  }
+  return id;
 }
 
 async function nearestExistingAncestor(path: string): Promise<string | null> {
@@ -336,6 +370,8 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let handwritten: HandwrittenReportEntry[] = [];
   const overridden = new Set(args.handwrittenClasses);
   let facts: Facts | null = null;
+  let classified: ClassifiedFailure | null = null;
+  let referenceId: string | null = null;
 
   try {
     // Facts stage: no FFDec process starts for a refused input.
@@ -455,8 +491,24 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       io.err(`error [pipeline]: ${messageOf(err)}\n`);
     } else {
       exitCode = 1;
-      io.err(`error [${reported}]: ${messageOf(err)}\n`);
-      if (!(err instanceof FactsRefusedError)) endStage(stage, 'error');
+      if (err instanceof FactsRefusedError) {
+        io.err(`error [${reported}]: ${messageOf(err)}\n`);
+      } else {
+        endStage(stage, 'error');
+        classified = classifyError(failure, reported);
+        const isFfdecExit = classified.kind === 'refused' && classified.reasonCode === 'damaged' && (err as { code?: unknown } | null)?.code === 'FFDEC_EXIT';
+        if (classified.kind === 'internal' || isFfdecExit) {
+          const id = await writeFailureLogs(failure, reported, isFfdecExit, resolve(args.swfPath), outputDir);
+          if (classified.kind === 'internal') {
+            referenceId = id;
+            io.err(`error [pipeline]: internal error, reference ${id}\n`);
+          } else {
+            io.err(`error [${reported}]: ${reasonSentence('damaged')}\n`);
+          }
+        } else {
+          io.err(`error [${reported}]: ${messageOf(err)}\n`);
+        }
+      }
     }
   }
 
@@ -495,13 +547,14 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   if (failure !== null && isRefusal(failure)) return 2;
 
   // One decision per run (D-A1).
-  let classified: ClassifiedFailure | null = null;
-  if (failure !== null) {
-    classified = failure instanceof FactsRefusedError
-      ? { kind: 'refused', reasonCode: failure.reasonCode }
-      : classifyError(failure, failure instanceof PipelineError ? failure.stage : stage);
-  } else if (writeFailed) {
+  if (failure instanceof FactsRefusedError) {
+    classified = { kind: 'refused', reasonCode: failure.reasonCode };
+  } else if (failure === null && writeFailed) {
     classified = { kind: 'internal', reasonCode: 'internal-error', stage: 'pipeline' };
+    referenceId = await writeFailureLogs(new Error('cannot write output files'), 'pipeline', false, resolve(args.swfPath), outputDir);
+  }
+  if (classified !== null && classified.kind === 'internal' && referenceId !== null) {
+    classified = { ...classified, reason: failedReason(classified.reason ?? reasonSentence('internal-error'), referenceId) };
   }
   const ranToGate = failure === null && finalReport !== null && gate !== null;
   const gaps = ranToGate ? summariseGaps(unsupported, { typeErrors: numbersOf(finalReport, 0).typeErrors }) : [];
@@ -528,7 +581,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     stages: stageRecords,
     obfuscated: null,
     recovery: null,
-    referenceId: null, // Task 8.1 derives the Reference_Id of a failed run
+    referenceId: decision.outcome === 'failed' ? referenceId : null,
   };
   await mkdir(outputDir, { recursive: true }).catch(() => undefined);
   await writeOutcomeFile(
