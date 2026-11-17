@@ -9,6 +9,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { describe, expect, it } from 'vitest';
+import { describeIfSpacer, spacerSwfPath } from '../support/fetchedSpacer';
 import { sharedPipelineRun } from '../support/sharedPipelineRun';
 
 /** Measured in task 17.3 (3 frames, 0 differing pixels each). Never lower. */
@@ -35,6 +36,11 @@ const OVERALL_MATCH_FLOOR_SLIDER_COMPONENT = 99.93;
  * frame is blank and this 100 cannot see code-drawn shapes: the report names that as known limit code-drawn-shapes. Never lower.
  */
 const OVERALL_MATCH_FLOOR_ENTITY_GAME = 100;
+/**
+ * Measured in task 29.3 on the fetched spacer SWF (root frames 1 and 2, the first frame of each scene; 560000 pixels each, 0 differing
+ * pixels, so there is no region to attribute). The report still lists the text limits: no text is visible in these two frames. Never lower.
+ */
+const OVERALL_MATCH_FLOOR_SPACER = 100;
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const ffdecJar = resolve(repoRoot, 'tools/ffdec/ffdec-cli.jar');
 
@@ -97,6 +103,26 @@ describe.skipIf(reason !== null)(`overall visual match floor${reason === null ? 
         const frame1 = report.visual.frames.find((f) => f.frame === 1);
         expect(frame1?.differingPixels).toBe(0);
       }
+    },
+    TIMEOUT_MS,
+  );
+});
+
+// The spacer SWF is fetched (GPL-3.0, never committed): the suite is skipped with the fetch message when it is absent.
+describeIfSpacer('spacer overall visual match floor', () => {
+  if (reason !== null) {
+    it.skip(`needs the verify toolchain (${reason})`, () => undefined);
+    return;
+  }
+  it(
+    'keeps Overall_Match at or above its floor on the first frame of each scene',
+    async () => {
+      const { outDir, code } = await sharedPipelineRun('spacer', spacerSwfPath());
+      expect([0, 1]).toContain(code); // type errors are reported, not fatal
+      const report = JSON.parse(await readFile(join(outDir, 'fidelity-report.json'), 'utf8')) as VisualReport;
+      expect(report.visual.status).toBe('compared');
+      expect(report.visual.frames.map((f) => [f.frame, f.status])).toEqual([[1, 'compared'], [2, 'compared']]);
+      expect(report.visual.overallMatch).toBeGreaterThanOrEqual(OVERALL_MATCH_FLOOR_SPACER);
     },
     TIMEOUT_MS,
   );
