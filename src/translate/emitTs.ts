@@ -602,9 +602,9 @@ class Emitter {
     const from = this.lines.length;
     this.node(it.node, d, null, '');
     for (let i = from; i < this.lines.length; i++) {
-      for (const h of it.hoists) this.lines[i] = replaceThisField(this.lines[i], h.decl.name, `__super_${h.decl.name}`);
+      for (const h of it.hoists) this.lines[i] = replaceThisField(this.lines[i], this.emitName(false, h.decl.name), `__super_${h.decl.name}`);
     }
-    for (const h of it.hoists) this.push(d, `this.${h.decl.name} = __super_${h.decl.name};`);
+    for (const h of it.hoists) this.push(d, `this.${this.emitName(false, h.decl.name)} = __super_${h.decl.name};`);
   }
 
   private modifiers(mods: readonly string[], isConst: boolean): string {

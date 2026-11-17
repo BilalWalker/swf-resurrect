@@ -42,6 +42,16 @@ describe("private members are per class (colliding names along an extends chain)
     expect(c.read2()).toBe(30 + 31);
   });
 
+  it("renames a private field that is read in the arguments of super(...)", () => {
+    const { texts, classes } = translateAndRun([
+      { className: "B0", source: "package {\n  public class B0 {\n    private var form:int = 1;\n    public var seen:int;\n    public function B0(f:int) { seen = f; }\n    public function baseForm():int { return form; }\n  }\n}\n" },
+      { className: "B1", source: "package {\n  public class B1 extends B0 {\n    private var form:int = 7;\n    public function B1() { super(form); }\n    public function ownForm():int { return form; }\n  }\n}\n" },
+    ]);
+    expect(texts.get("B1")).toContain("this.form$B1 = __super_form;");
+    const o = new classes.B1();
+    expect([o.seen, o.baseForm(), o.ownForm()]).toEqual([7, 1, 7]);
+  });
+
   it("keeps names unchanged when nothing collides", () => {
     const { texts } = translateAndRun([chainSource(0, ["a"], null), chainSource(1, ["b"], "C0")].map((s, i) =>
       i === 1 ? { ...s, source: s.source.replace("private function pm()", "private function qm()").replace("pm();", "qm();") } : s));
