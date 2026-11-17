@@ -37,6 +37,7 @@ const CORE_FILES = [
   "src/outcome/exitCode.ts", // robustness 1.1
   "src/outcome/reasons.ts", // robustness 1.1
   "src/outcome/gaps.ts", // robustness 1.1
+  "src/outcome/outcomeFile.ts", // robustness 2.1 (fs injected, no node:*)
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

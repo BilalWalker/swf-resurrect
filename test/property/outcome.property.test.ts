@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import { EXIT_CODES, exitCodeFor } from "../../src/outcome/exitCode";
 import { COUNTED_GAP_KINDS, NAMED_LIMIT_KINDS, summariseGaps } from "../../src/outcome/gaps";
 import { decideOutcome, type OutcomeCode, type RunRecord } from "../../src/outcome/outcome";
+import { parseOutcome, serialiseOutcome, scrubRecord, OutcomeFileError, writeOutcomeFile } from "../../src/outcome/outcomeFile";
 import { fcConfig } from "./config";
-import { gapEntriesArb, genRunRecord, runRecordArb } from "./gen/genRunRecord";
+import { gapEntriesArb, genRunRecord, outcomeRecordArb, runRecordArb, toOutcomeRecord } from "./gen/genRunRecord";
 
 const CODES: OutcomeCode[] = ["converted", "converted-with-gaps", "refused", "failed"];
 const PROJECT: OutcomeCode[] = ["converted", "converted-with-gaps"];
@@ -103,6 +104,91 @@ describe("outcome properties", () => {
         const ob = decideOutcome(b);
         if (oa.outcome === ob.outcome) expect(oa.exitCode).toBe(ob.exitCode);
         expect(decideOutcome(a)).toEqual(oa);
+      }),
+      fcConfig,
+    );
+  });
+
+  // Feature: robustness, Property 4: Outcome_File round trip and canonical bytes
+  // **Validates: Requirements 2.1, 2.2, 2.7, 2.9, 2.10**
+  it("Property 4: the Outcome_File round-trips and has canonical bytes", () => {
+    fc.assert(
+      fc.property(outcomeRecordArb, (rec) => {
+        const text = serialiseOutcome(rec);
+        expect(parseOutcome(text)).toEqual(JSON.parse(JSON.stringify(scrubRecord(rec))));
+        expect(serialiseOutcome(parseOutcome(text))).toBe(text);
+        expect(serialiseOutcome(structuredClone(rec))).toBe(text);
+        expect(text.endsWith("}\n")).toBe(true);
+        expect(text.endsWith("\n\n")).toBe(false);
+      }),
+      fcConfig,
+    );
+  });
+
+  it("Property 4: a formatVersion other than 1 is rejected with the version named", () => {
+    fc.assert(
+      fc.property(outcomeRecordArb, fc.integer({ min: 2, max: 999 }), (rec, v) => {
+        const text = serialiseOutcome({ ...rec, formatVersion: v as unknown as 1 });
+        expect(() => parseOutcome(text)).toThrow(OutcomeFileError);
+        expect(() => parseOutcome(text)).toThrow(String(v));
+      }),
+      fcConfig,
+    );
+  });
+
+  it("Property 4: path-like and stack-like text does not reach the written file", () => {
+    const dirty = fc.constantFrom(
+      "C:\\Users\\me\\x.as failed",
+      "failed in /home/me/x.as",
+      "boom at Foo.bar (file.js:1:2)",
+      "\\\\server\\share\\a.as broke",
+    );
+    fc.assert(
+      fc.property(outcomeRecordArb, dirty, (rec, d) => {
+        const dirtyRec = {
+          ...rec,
+          reason: d,
+          gaps: rec.gaps.map((g) => ({ ...g, examples: [d, ...g.examples] })),
+        };
+        const text = serialiseOutcome(dirtyRec);
+        const parsed = parseOutcome(text);
+        const texts = [parsed.reason, ...parsed.gaps.flatMap((g) => g.examples)];
+        for (const t of texts) {
+          expect(t).not.toMatch(/[A-Za-z]:[\\/]/);
+          expect(t).not.toMatch(/\\\\\S/);
+          expect(t).not.toMatch(/\/home\//);
+          expect(t).not.toMatch(/\bat\s+\S+\s*\(/);
+        }
+      }),
+      fcConfig,
+    );
+  });
+
+  // Feature: robustness, Property 14: Determinism of the Outcome_File
+  // **Validates: Requirements 11.7**
+  it("Property 14: two decisions and writes give equal bytes once durationMs is dropped", async () => {
+    const dropDuration = (text: string): string => {
+      const o = JSON.parse(text);
+      for (const s of o.stages) delete s.durationMs;
+      return JSON.stringify(o);
+    };
+    const writeOnce = async (rec: RunRecord): Promise<string> => {
+      const files = new Map<string, string>();
+      const fs = {
+        writeFile: (p: string, t: string) => void files.set(p, t),
+        rename: (a: string, b: string) => void files.set(b, files.get(a)!),
+      };
+      const r = await writeOutcomeFile("out", toOutcomeRecord(rec, "abcdef01"), fs, 1);
+      expect(r.written).toBe(true);
+      return files.get(r.path!)!;
+    };
+    await fc.assert(
+      fc.asyncProperty(runRecordArb, fc.array(fc.integer({ min: 0, max: 600_000 }), { maxLength: 7 }), async (rec, ds) => {
+        const rec2: RunRecord = { ...rec, stages: rec.stages.map((s, i) => ({ ...s, durationMs: ds[i] ?? s.durationMs + 1 })) };
+        const a = await writeOnce(rec);
+        const b = await writeOnce(rec2);
+        expect(dropDuration(a)).toBe(dropDuration(b));
+        expect(await writeOnce(rec)).toBe(a);
       }),
       fcConfig,
     );

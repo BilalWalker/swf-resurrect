@@ -10,6 +10,7 @@ Status: unpack, convert, translate, emit, verify and the pipeline CLI exist. The
 .kiro/settings/   mcp.json (swf-inspector, playwright)
 .kiro/specs/      Specs: vertical-slice, translate (verify, ui, hosting to come)
 docs/brief.md     Project brief and source of truth for scope
+docs/outcome.md   The four outcomes, Reason_Codes, exit codes and Outcome_File fields, with one JSON example each (checked by test/unit/outcomeDocs.test.ts)
 samples/          SWFs, each with PROVENANCE.md
 src/unpack/       FFDec wrapper
 src/convert/      FFDec output -> Scene_JSON, assets, unsupported list
@@ -22,6 +23,8 @@ src/verify/       core/ (pure: pixel diff, trace compare, residual register, rep
                   (FFDec Reference_Frames, Chromium render, replay, verifyStage)
 src/samples/      Fetched-sample core (static_text)
 scripts/          runTests.ts (`npm test`), gen-shim-members.ts, fetch-static-text.ts
+src/outcome/      Outcome types and decideOutcome, exit-code table, reason sentences and scrub, gap kinds,
+                  Outcome_File writer and parser (outcomeFile.ts; fs is injected, no node:* import)
 src/pipeline/     Stage wiring, CLI (npm run pipeline), report writing
 mcp/              MCP servers for Kiro: swf-inspector (npm run mcp:swf-inspector)
 scripts/hooks/    Scripts run by the hooks in .kiro/hooks/ (plain Node, no tsx)
@@ -47,7 +50,8 @@ Planned shim additions: Sound.
 
 ### Inspection hook and ?play=1 (Play_Tests, as3-coverage Requirement 25)
 - Player.inspect() (	emplate/runtime/inspect.ts) is read-only: 	ick, ind(className), stageChildren() giving { className, name, x, y, rotation, visible, frame, label, children }, and 	imers() (empty until the Shim has a Timer). Every value is a plain copy; there is no setter.
-- With ?play=1, main.ts uses a ManualClock, runs no equestAnimationFrame loop and installs window.__swfPlay = { step(n), key(type, code), click(x, y), render(), inspect(), errors() }; step advances rameIntervalMs per update and renders every 60 steps inside the loop, not after each call; render() draws once and a test calls it before a screenshot or pixel read.
+- With ?play=1, main.ts uses a ManualClock, runs no 
+equestAnimationFrame loop and installs window.__swfPlay = { step(n), key(type, code), click(x, y), render(), inspect(), errors() }; step advances rameIntervalMs per update and renders every 60 steps inside the loop, not after each call; render() draws once and a test calls it before a screenshot or pixel read.
 - 	est/support/playDriver.ts (PlayDriver: Node and Chromium) and 	est/support/playScenarios.ts (one scenario per game) feed 	est/e2e/entityPlay.node.test.ts and entityPlay.chromium.test.ts.
 
 ## Rules

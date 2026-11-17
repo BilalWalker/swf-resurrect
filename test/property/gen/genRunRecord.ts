@@ -1,10 +1,12 @@
 import fc from "fast-check";
 import { COUNTED_GAP_KINDS, NAMED_LIMIT_KINDS, summariseGaps, type GapEntry } from "../../../src/outcome/gaps";
+import { decideOutcome } from "../../../src/outcome/outcome";
 import type {
   ClassifiedFailure,
   Facts,
   OutcomeLimits,
   OutcomeNumbers,
+  OutcomeRecord,
   ReasonCode,
   RecoveryRecord,
   RunRecord,
@@ -153,3 +155,26 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
 }
 
 export const runRecordArb: fc.Arbitrary<RunRecord> = genRunRecord();
+
+/** An Outcome_File record built the way the pipeline does: the decision plus the run record. */
+export function toOutcomeRecord(rec: RunRecord, referenceId: string | null = null): OutcomeRecord {
+  const o = decideOutcome(rec);
+  return {
+    formatVersion: 1,
+    outcome: o.outcome,
+    reasonCode: o.reasonCode,
+    reason: o.reason,
+    facts: rec.facts,
+    numbers: rec.numbers,
+    gaps: rec.gaps,
+    limits: rec.limits,
+    stages: rec.stages,
+    obfuscated: null,
+    recovery: rec.recovery,
+    referenceId: o.outcome === "failed" ? referenceId : null,
+  };
+}
+
+export const outcomeRecordArb: fc.Arbitrary<OutcomeRecord> = fc
+  .tuple(runRecordArb, fc.stringMatching(/^[0-9a-f]{8}$/))
+  .map(([r, id]) => toOutcomeRecord(r, id));

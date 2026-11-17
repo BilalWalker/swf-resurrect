@@ -68,16 +68,16 @@ Rules that apply to every task:
 
 - [ ] 2. Outcome_File: writer, parser, atomic write and `docs/outcome.md`
   - Commit area: `Pipeline` (Docs and Steering named). Verification V1. Read the design D-A8, D-A10, "Data Models" (the `docs/outcome.md` paragraph) and Properties 4 and 14. `outcomeFile.ts` is the edge file of `src/outcome/`; the serialiser and parser are pure functions in it, the write function takes an injected `fs`.
-  - [ ] 2.1 Add `src/outcome/outcomeFile.ts`
+  - [x] 2.1 Add `src/outcome/outcomeFile.ts`
     - Canonical JSON through the existing `src/pipeline/canonicalJson.ts`; `formatVersion` 1; the parser rejects any other version with a message that names the version and accepts `numbers: null`; write to `outcome.json.tmp-<pid>` in the output directory then rename (D-A8); when the directory is not writable the function returns a flag and the caller still prints the Outcome_Line. `stages[].durationMs` is the only time-dependent field (D-A10). The record carries the `obfuscated` and `recovery` objects (null until Block B fills them).
     - Tests: `test/unit/outcomeFile.test.ts` (create): unknown `formatVersion` rejected with the version in the message; a partial write is never visible (rename called after the write); an unwritable directory returns the flag; no absolute path, stack or environment variable appears in a written file (scrub applied to reason, gap examples and stage names).
     - _Requirements: 2.1, 2.7, 2.9, 2.11, 5.8_
 
-  - [ ] 2.2 Write the property tests of the file format
+  - [x] 2.2 Write the property tests of the file format
     - **Property 4: Outcome_File round trip and canonical bytes**, **Property 14: Determinism of the Outcome_File** (two decisions and writes give equal bytes once `stages[].durationMs` is dropped), in `test/property/outcome.property.test.ts` (extend).
     - **Validates: Requirements 2.1, 2.2, 2.7, 2.9, 2.10, 11.7**
 
-  - [ ] 2.3 Add `docs/outcome.md` and its example test
+  - [-] 2.3 Add `docs/outcome.md` and its example test
     - The four outcomes, the Reason_Codes with one sentence each, the exit-code table, the Outcome_File fields, one JSON example per outcome, a note that `abcClassCount` is the number of exported `.as` files and differs by one from `swf_summary` on `redball4` (Open_Item O14), a note that `numbers` is null for a refusal before Translate, and the note of Requirement 6.3: the default run limit of 300 s exceeds the 180 s per-job kill of `web/server/options.ts`, which the web owner must align. `test/unit/outcomeDocs.test.ts` (create) extracts each fenced JSON example and compares it with the writer's output for the same record. Update `.kiro/steering/structure.md` (the `src/outcome/` directory and `docs/outcome.md`) in the same commit.
     - _Requirements: 2.8, 6.3, 7.3, 10.1, 10.2, 10.4_
 
