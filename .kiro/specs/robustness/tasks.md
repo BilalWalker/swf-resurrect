@@ -50,19 +50,19 @@ Rules that apply to every task:
 
 ### Block A: the contract (about 70 credits; stop and report above 93)
 
-- [ ] 1. Outcome core: types, exit codes, reasons, gaps, `decideOutcome`
+- [x] 1. Outcome core: types, exit codes, reasons, gaps, `decideOutcome`
   - Commit area: `Pipeline`. Verification V1. Block A starts here: note the Credits_Line at the start and restate the Block A share of about 70 credits. Read the design sections "Decisions at a glance", "Block A: the contract" (D-A1 to D-A11, "Outcome record"), "Data Models" and Properties 1, 5, 6 and 7. New directory `src/outcome/` is pure (except `outcomeFile.ts` in Task 2) and is added to the purity list.
-  - [ ] 1.1 Add `src/outcome/outcome.ts`, `exitCode.ts`, `reasons.ts` and `gaps.ts`
+  - [x] 1.1 Add `src/outcome/outcome.ts`, `exitCode.ts`, `reasons.ts` and `gaps.ts`
     - Types `OutcomeCode`, `ReasonCode`, `Facts`, `OutcomeRecord`, `GapKind`, `RecoveryRecord` as in the design. `exitCode.ts` holds the one constant table (converted 0, converted-with-gaps 0, failed 1, usage 2, refused 3) read by tests and documentation. `reasons.ts` holds the sentence templates and `scrub()` (cuts drive and root paths, `at ` stack lines, environment variable names and FFDec stderr text, truncates to 200 characters) and builds the `converted-with-gaps` sentence (N of M classes translated, E type errors, the two highest gap kinds). `gaps.ts` counts the gap kinds of D-A3 (`untranslated-class`, `class-omitted`, `untranslated-code`, `unbound-instance`, `unrecoverable-class`, `type-error`, `dropped-placement`, `flash-api-gap`), never counts `text-metrics`, `filter`, `stroke-style`, `mask`, `morph-shape`, and keeps at most 5 examples. `numbers` is `null` for a refusal before Translate.
     - Tests: `test/unit/outcomeReasons.test.ts` (create): scrub removes a Windows path, a POSIX path, a stack frame, an environment variable name and FFDec stderr text; the 200-character cut; the sentence template, including the recovery prefix and the rule that the gap part is dropped first when the sentence is too long. `test/unit/gaps.test.ts` (create): each counted kind, each non-counted kind, the 5-example cap.
     - _Requirements: 2.2, 2.3, 2.4, 2.7, 4.2, 4.7, 7.2, 16.4_
 
-  - [ ] 1.2 Add `decideOutcome(record)` in `src/outcome/outcome.ts`
+  - [x] 1.2 Add `decideOutcome(record)` in `src/outcome/outcome.ts`
     - Pure and total. Order: a classified failure (refusal or internal) decides first; else `refused nothing-translated` if and only if candidates M > 0 and translated N = 0 (after recovery); else `converted-with-gaps` if any Gap or type error; else `converted`. `reasonCode` is null if and only if the Outcome is one of the two project outcomes. `converted-with-gaps` exits 0 and there is no percentage threshold (U2; Requirements 4.11, 7.6).
     - Tests: `test/unit/decideOutcome.test.ts` (create): the four outcomes by example; both Requirement 4.12 cases with a Translation_Report fake: M = 0 (timeline-only) is `converted`, exit 0, never `refused`, and M greater than 0 with N = 0 is `refused` `nothing-translated`, exit 3; 3 of 48 translated is `converted-with-gaps`; a damaged input is never `converted`.
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 4.1, 4.3, 4.5, 4.9, 4.11, 4.12_
 
-  - [ ] 1.3 Write the property tests of the outcome core
+  - [x] 1.3 Write the property tests of the outcome core
     - **Property 1: One Outcome, decided by the numbers**, **Property 5: Gap summary matches the entries**, **Property 6: Reason sentence is bounded and complete**, **Property 7: Exit code is a function of the outcome**, in `test/property/outcome.property.test.ts` (create). Generators in `test/property/gen/genRunRecord.ts` (create): facts or none, stage list, report numbers with N of M, gap list, type error count, optional classified failure.
     - **Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5, 2.3, 2.4, 4.1, 4.2, 4.3, 4.7, 4.9, 4.11, 4.12, 7.1, 7.2, 7.5, 16.4**
 
