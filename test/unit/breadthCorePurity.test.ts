@@ -30,6 +30,7 @@ const CORE_FILES = [
   "src/samples/fetchedSample.ts", // 17.7
   "template/runtime/keyMap.ts", // as3-coverage 8.1
   "template/runtime/graphicsPlan.ts", // as3-coverage 15.2
+  "template/runtime/timers.ts", // as3-coverage 25.2
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

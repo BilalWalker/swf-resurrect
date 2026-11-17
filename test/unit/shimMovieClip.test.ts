@@ -1,4 +1,4 @@
-﻿import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DisplayListEntry, SpriteSymbol } from '../../template/runtime/scene';
 import { ScriptQueue } from '../../template/runtime/scriptQueue';
 import { DisplayObject } from '../../template/shim/DisplayObject';
@@ -303,7 +303,7 @@ describe('construction context', () => {
 describe('shim public surface', () => {
   it('does not export the internal API', () => {
     expect(Object.keys(publicShim).sort()).toEqual(
-      ['ArgumentError', 'Dictionary', 'DisplayObject', 'DisplayObjectContainer', 'Event', 'EventDispatcher', 'GlowFilter', 'Graphics', 'GraphicsPathWinding', 'IllegalOperationError', 'InteractiveObject', 'Keyboard', 'KeyboardEvent', 'MouseEvent', 'MovieClip', 'Shape', 'Sprite', 'Stage', 'StageScaleMode', 'TextField', 'declareImplements', 'defineInterface', 'getDefinitionByName', 'getQualifiedClassName', 'getTimer', 'isInstanceOf', 'registerDefinitions', 'setTraceSink', 'trace'],
+      ['ArgumentError', 'Dictionary', 'DisplayObject', 'DisplayObjectContainer', 'Event', 'EventDispatcher', 'GlowFilter', 'Graphics', 'GraphicsPathWinding', 'IllegalOperationError', 'InteractiveObject', 'Keyboard', 'KeyboardEvent', 'MouseEvent', 'MovieClip', 'Shape', 'Sprite', 'Stage', 'StageScaleMode', 'TextField', 'Timer', 'TimerEvent', 'declareImplements', 'defineInterface', 'getDefinitionByName', 'getQualifiedClassName', 'getTimer', 'isInstanceOf', 'registerDefinitions', 'setTraceSink', 'trace'],
     );
   });
 });

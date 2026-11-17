@@ -35,6 +35,7 @@ import { computeClipLayout } from './clipLayout';
 import { hasOffsets, stripAlphaAdd } from './colourMatrix';
 import { constructorSite, messageOf, type ErrorSink } from './errorReport';
 import { inspectStage, type Inspection } from './inspect';
+import { bindTimerClock, runDueTimers } from './timers';
 import { hitTestAll, resolveHitTarget, type TargetNode } from './hitTest';
 import type { ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
 import { ScriptQueue } from './scriptQueue';
@@ -175,6 +176,7 @@ export class Player {
       this.stage.frameRate = options.scene.stage.frameRate;
       this.lastNow = this.clock.now();
       setTimeSource(() => this.clock.now());
+      bindTimerClock(() => this.clock.now());
 
       const rootSymbol = this.scene.symbols[String(this.scene.rootSymbolId)];
       if (rootSymbol === undefined || rootSymbol.type !== 'sprite') {
@@ -266,6 +268,8 @@ export class Player {
       this.accumulator %= this.frameIntervalMs;
     }
     if (this.accumulator < 0) this.accumulator = 0;
+    // Timers fire after the frame steps of the tick (Requirement 22.8), outside the busy guard like input handlers.
+    runDueTimers();
     this.syncAll();
   }
 

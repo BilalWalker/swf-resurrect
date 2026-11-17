@@ -7,7 +7,7 @@
  *   find(className)   every display object under the Stage_Object (root and Stage children) of that class name, in
  *                     display-list order, as a `Snapshot` (children are not expanded: `children` is []).
  *   stageChildren()   the Stage_Object's children as a tree of `Snapshot`
- *   timers()          `{ delay, running, currentCount }` per Timer; the Shim has no Timer class yet, so [].
+ *   timers()          `{ delay, running, currentCount }` per Timer; in creation order, for the Timers of this Player.
  *
  * `className` is the registered class name (D34), or the JavaScript class name for an unregistered class.
  * `frame` and `label` are 0 and '' for an object that is not a MovieClip.
@@ -16,6 +16,7 @@ import { classNameOf } from '../shim/classNames';
 import type { DisplayObject } from '../shim/DisplayObject';
 import { MovieClip } from '../shim/MovieClip';
 import type { Stage } from '../shim/Stage';
+import { _liveTimers } from '../shim/Timer';
 
 export interface Snapshot {
   className: string;
@@ -73,6 +74,6 @@ export function inspectStage(stage: Stage, tick: number): Inspection {
       return out;
     },
     stageChildren: () => tops().map((t) => snapshot(t, true)),
-    timers: () => [],
+    timers: () => _liveTimers().map((t) => ({ delay: t.delay, running: t.running, currentCount: t.currentCount })),
   };
 }

@@ -428,19 +428,19 @@ Rules that apply to every task:
     - Tests: `test/unit/currentLabel.test.ts` (create) with generated timelines. **Property 19: currentLabel is the nearest label**, in `test/property/currentLabel.property.test.ts` (create). **Property 20: Scene goto and scene round trip** (the goto half), in `test/property/sceneGoto.property.test.ts` (create): in-range `gotoAndStop(frame, scene)` lands on `firstFrame + frame - 1`; a number without a scene is relative to the current scene; an unknown scene throws `ArgumentError`.
     - **Validates: Requirements 21.1 to 21.5, 21.8, 21.9, 21.10, 21.12**
 
-- [ ] 25. Shim and Runtime: `Timer`, `TimerEvent` and the Player clock (D18)
+- [x] 25. Shim and Runtime: `Timer`, `TimerEvent` and the Player clock (D18)
   - Commit area: `Shim` (Runtime named). Verification V2. Read the design section "Timer" (the table of Ruffle behaviours and the state model). Read in the Ruffle_Source: `core/src/timer.rs`, `core/src/avm2/globals/flash/utils/Timer.as`, `core/src/player.rs`; add the rules to `flash-behaviour.md`.
-  - [~] 25.1 Add the Shim `Timer` and `TimerEvent`
+  - [x] 25.1 Add the Shim `Timer` and `TimerEvent`
     - `Timer(delay, repeatCount = 0)` with `start()`, `stop()`, `reset()`, `delay`, `repeatCount`, `currentCount`, `running`; `TimerEvent.TIMER` `"timer"` and `TIMER_COMPLETE` `"timerComplete"`. A bad delay (negative, not a number, infinite) throws `RangeError`. A delay below 10 ms is scheduled at 10 ms and reads back unchanged. `start()` schedules a full interval; `start()` when `currentCount >= repeatCount > 0` fires once and then completes; `running` is already false when `TIMER_COMPLETE` is dispatched. Regenerate and stage the member table.
     - Tests: `test/unit/timer.test.ts` (create): each rule above, at frame rates 30 and 60 on the manual clock.
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5, 22.6, 22.9, 22.11, 22.13_
 
-  - [~] 25.2 Fire timers from the Player clock
+  - [x] 25.2 Fire timers from the Player clock
     - `runtime/timers.ts`: due timers fire after the frame steps of a tick, at `clock.now()`, only when the due time is strictly less than the current time, at most 10 firings per update; a timer keeps firing when its owner is off the display list. Add the file to the purity list if pure.
     - Tests: `test/unit/timerPlayer.test.ts` (create): firing after the frame update, off-list owner, the cap of 10.
     - _Requirements: 22.7, 22.8, 22.10_
 
-  - [~] 25.3 Write property test for the timer model
+  - [x] 25.3 Write property test for the timer model
     - **Property 21: Timer agrees with the model**
     - In `test/property/timerModel.property.test.ts` (create), model-based with `TimerModel` `{ running, count, repeat, interval, due, now }`: for any sequence of `start`, `stop`, `reset` and clock advances at frame rates 30 and 60, `running`, `currentCount` and the counts of `TIMER` and `TIMER_COMPLETE` events equal those of the model, including the 10 ms floor and the cap.
     - **Validates: Requirements 22.1, 22.3, 22.4, 22.5, 22.6, 22.8, 22.10, 22.12, 22.13**

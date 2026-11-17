@@ -19,3 +19,4 @@ export { defineInterface, declareImplements } from './interfaces';
 export type { AS3InterfaceToken } from './interfaces';
 export { Graphics, GraphicsPathWinding } from './Graphics';
 
+export { Timer, TimerEvent } from './Timer';

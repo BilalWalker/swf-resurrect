@@ -176,3 +176,18 @@ say which you did. The spec that holds the evidence is named with each item.
 - **Scene_JSON ormatVersion 3 carries scenes on the root** (`DefineSceneAndFrameLabelDataTag`: `sceneOffsets`
   0-based, `sceneNames`; FFDec 26.4.0, seen in the spacer dump). The reader accepts 2 and 3; version 2 reads as one
   scene `Scene 1` at frame 1. The writer always writes 3.
+
+## Timer
+- **Timers fire from the Player clock, after the frame steps of `Player.update`, at `clock.now()`.** Rules read
+  in Ruffle earlier (design "Timer"), not re-read here (`.work/ruffle-src` was empty at task 25): an interval
+  below 10 ms is scheduled at 10 ms (`MIN_INTERVAL`) and `delay` reads back unchanged; a timer fires only when
+  `tick_time < cur_time` strictly and its next due time is the old one plus the interval; one update fires at
+  most 10 times (`MAX_TICKS`, counted over all timers; the model has one timer); `update_timers` runs after the
+  frame loop; `start()` on a timer whose `currentCount >= repeatCount > 0` fires once and then completes;
+  `TIMER_COMPLETE` is dispatched after `running` is false; `new Timer` with a negative or non-finite delay
+  throws `RangeError` (error 2066). Files named in the design: `core/src/timer.rs`,
+  `core/src/avm2/globals/flash/utils/Timer.as`, `core/src/player.rs`.
+- **Not read, chosen by us (not verified):** setting `delay` on a running Timer restarts the interval and keeps
+  `currentCount`; lowering `repeatCount` to at most `currentCount` stops a running Timer without an event; a
+  `TIMER` listener that stops the Timer suppresses `TIMER_COMPLETE` for that tick; timers tie-break by
+  creation order. Code: `template/runtime/timers.ts`, `template/shim/Timer.ts`.
