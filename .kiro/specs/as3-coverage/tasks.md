@@ -445,24 +445,24 @@ Rules that apply to every task:
     - In `test/property/timerModel.property.test.ts` (create), model-based with `TimerModel` `{ running, count, repeat, interval, due, now }`: for any sequence of `start`, `stop`, `reset` and clock advances at frame rates 30 and 60, `running`, `currentCount` and the counts of `TIMER` and `TIMER_COMPLETE` events equal those of the model, including the 10 ms floor and the cap.
     - **Validates: Requirements 22.1, 22.3, 22.4, 22.5, 22.6, 22.8, 22.10, 22.12, 22.13**
 
-- [ ] 26. Shim and Runtime: `Rectangle`, `getBounds` and `pixelsOverlap` (D16, D19, D20)
+- [x] 26. Shim and Runtime: `Rectangle`, `getBounds` and `pixelsOverlap` (D16, D19, D20)
   - Commit area: `Shim` (Runtime named). Verification V2. Read the design section "Collision helper". `getBounds` of an empty clip returns the zero rectangle (Ruffle `get_dobj_bounds` returns `Rectangle::ZERO` for invalid bounds, read in `core/src/avm2/globals/flash/display/display_object.rs`); a target space other than the object is the AABB of the transformed AABB. The Shim does not get `Matrix`, `hitTestObject`, `transform.concatenatedMatrix`, `BitmapData`, `ColorTransform` or `BlendMode` (Requirement 23.10).
   - [x] 26.1 Add `Rectangle`
     - `x`, `y`, `width`, `height`, `left`, `top`, `right`, `bottom`, `intersection(rect)`, `offset(dx, dy)`, `intersects(rect)`. Non-overlapping rectangles give the rectangle at (0, 0) with width 0 and height 0. Setting `x` keeps `width`; setting `left` changes `width` so `right` stays. Regenerate and stage the member table.
     - Tests: `test/unit/rectangle.test.ts` (create). **Property 23: Rectangle algebra**, in `test/property/rectangle.property.test.ts` (create): `intersection` is commutative, lies inside both operands when non-empty, has an area at most the smaller operand's and is the zero rectangle when disjoint; `offset(dx, dy)` then `offset(-dx, -dy)` restores the rectangle.
     - **Validates: Requirements 23.5, 23.6, 23.7, 23.8, 23.9**
 
-  - [~] 26.2 Add `contentBounds` and `DisplayObject.getBounds(targetSpace)`
+  - [x] 26.2 Add `contentBounds` and `DisplayObject.getBounds(targetSpace)`
     - One internal `contentBounds(obj, space)` behind `getBounds`, `pixelsOverlap` and Block D. Empty content returns the Ruffle value (the zero rectangle) and the case is recorded; `LoadedScene` keeps the parsed `ShapeJson` per symbol and `ShapeObject` exposes it. List `getBounds` in `ADDED_APIS.md`.
     - Tests: `test/unit/getBounds.test.ts` (create): an empty clip, a shape, a rotated clip, a target space other than self.
     - _Requirements: 23.10, 23.11_
 
-  - [~] 26.3 Add `runtime/overlap.ts` (`pixelsOverlap`)
+  - [x] 26.3 Add `runtime/overlap.ts` (`pixelsOverlap`)
     - `pixelsOverlap(a, b)` samples pixel centres in the intersection of the two stage-space `contentBounds` and returns true on the first centre inside both shapes (contours flattened and transformed by the concatenated transform, with the fill rule of the path); it ignores the `visible` flag of the two objects (Ruffle `core/src/bitmap/operations.rs` and `core/src/display_object.rs` `render_base`, design Open_Item O5). It depends on no Flash type. Record the Named_Limit `collision-coverage-mask` (coverage-mask method; antialiased edge pixels are not counted). Add the file to the purity list.
     - Tests: `test/unit/overlap.test.ts` (create). **Property 22: pixelsOverlap is symmetric and bounded**, in `test/property/overlap.property.test.ts` (create) with generated shapes: symmetric, false when the stage-space bounds are disjoint, true when a pixel centre lies inside both.
     - **Validates: Requirements 23.2, 23.3, 23.4**
 
-  - [~] 26.4 Check the hitbox symbols of `spacer`
+  - [x] 26.4 Check the hitbox symbols of `spacer`
     - Skip when the SWF is absent. Check the `spacer` hitbox symbols (`mc_FlyHitbox` and the others the decompiled `PhysicEngine` uses) for invisible children and for fills with partial alpha (Open_Items O5 and O8, Requirement 23.12); read the Ruffle_Source for whether invisible children are skipped when drawing a source, or record the Open_Item. Put the result in the commit body; Task 30 collects it.
     - _Requirements: 23.12_
 
@@ -491,21 +491,21 @@ Rules that apply to every task:
     - If the owner approves: add `handwritten/spacer/LICENSE` and the header as decided, add both entries with reasons to `handwritten/SET.json`, update `samples/spacer/PROVENANCE.md` and the Fidelity_Report text for the decided licence, and run `test/unit/handwrittenSet.test.ts` (every `.ts` listed, every entry has a file) and the report tests. If the owner declines, leave the files uncommitted and untracked, add nothing to `SET.json`, and record in the commit body of Task 31 that the `spacer` Play_Test skips with the message that `handwritten/spacer/` is absent (Requirement 25.6, 28.13). In both cases the Translation_Report names each Hand_Written_Class used with its reason and the translated class replaced (Requirement 33.3, 33.4).
     - _Requirements: 28.13, 33.3, 33.4, 33.8, 33.9, 33.10_
 
-- [ ] 29. Verify: `spacer` end to end, the timeout and the floors (Requirement 27)
+- [x] 29. Verify: `spacer` end to end, the timeout and the floors (Requirement 27)
   - Commit area: `Verify`. Verification V1. Skip every step with the fetch message when the `spacer` SWF is absent (Requirement 28.7). Read the design findings F1, F2 and F9 and Requirement 27.7: the `spacer` render timeout was a page-load failure (`Class extends value undefined`), fixed by Task 5; do not raise a timeout.
-  - [~] 29.1 Run the full pipeline on `spacer` and fix the load path
+  - [x] 29.1 Run the full pipeline on `spacer` and fix the load path
     - Run `npm run pipeline -- .work/samples/spacer/test.swf .work/as3-spacer/out --force --verify` (with `handwritten/spacer/` present locally or committed per Task 28). Confirm `window.__swfResurrect.ready` is true and name the first remaining error otherwise; fix general causes (never a class-named rule). Use the `swf-inspector` `fidelity_summary` tool on the output directory.
     - _Requirements: 27.7, 37.1_
 
-  - [~] 29.2 Explain and record the render timeout
+  - [x] 29.2 Explain and record the render timeout
     - Find the cause of the previous render timeout for frames 1 and 2 (design finding F1: the import cycle), record it in the commit body and in the design's evidence index through Task 30, and make sure no timeout was raised (`git diff` shows none). If a different cause remains, find and fix it and record it.
     - _Requirements: 27.7, 36.2_
 
-  - [~] 29.3 Measure Overall_Match and set the floor
+  - [x] 29.3 Measure Overall_Match and set the floor
     - Measure Overall_Match on at least two frames, one of each scene (root frames 1 and 2, Requirement 27.3). Set the Score_Floor for `spacer` equal to the measured value rounded down to two decimals in `test/e2e/overallMatch.e2e.test.ts` (extend; the test skips when the SWF is absent). Attribute every differing region to a Named_Limit, a fixed defect or an Open_Item (Requirement 27.6); list the Named_Limits "static text not drawn" and "rotated width and height not measured" in the Fidelity_Report of `spacer` while Block D is not done (Requirement 32.4). When FFDec cannot render a Reference_Frame, name the frame and the reason (Requirement 27.2). Do not commit generated Reference_Frames or Diff_Images, and do not commit the `spacer` SWF or output.
     - _Requirements: 27.1, 27.2, 27.3, 27.4, 27.5, 27.6, 27.8, 32.4_
 
-  - [~] 29.4 Try Ruffle on `spacer` and write the input script
+  - [x] 29.4 Try Ruffle on `spacer` and write the input script
     - Add the `spacer` script (Enter, each movement key, shoot, pause) to `test/support/playScript.ts` and a unit test that `samples/spacer/reference/input.json` equals the builder output (our own script, committed; no GPL output). Try Ruffle headlessly on `spacer` once and record whether it ran. `spacer` writes no `trace()` output (F8): the Trace_Score stays `not-compared` with `empty-reference-trace`; the reference trace is not committed (Requirement 26.5 is moot, record the reason in the commit body).
     - _Requirements: 26.1, 26.3, 26.4, 26.5, 26.6_
 

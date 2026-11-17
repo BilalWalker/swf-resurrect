@@ -29,4 +29,7 @@ The SWF is GPL-3.0 while the rest of the Repository is MIT. It is fetched into `
 ## Embedded fonts
 - Not yet inspected. This note is updated with the font list, or the sentence "no embedded fonts", when the SWF is first converted.
 ## Reference behaviour (`reference/`)
-`reference/test.toml` is our own file (`num_frames = 2`, the frame count FFDec reports for the SWF). The game calls no `trace()`, so there is no `output.txt`.
+`reference/test.toml` is our own file (`num_frames = 300`, the tick count of our own Input_Script; the SWF has 2 frames). The game calls no `trace()`, so there is no `output.txt`.
+
+
+`reference/input.json` is the spacer Input_Script, written by `test/support/playScript.ts` (`spacerScript`): Enter to start, arrows and WASD to move, left mouse button to shoot, Escape to pause. Both files are our own. No Ruffle output of the GPL-3.0 SWF is committed (no `output.txt`; the game calls no `trace()`).

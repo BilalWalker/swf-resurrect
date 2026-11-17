@@ -42,7 +42,42 @@ export function entityGameScript(): PlayScript {
   ]);
 }
 
-const SCRIPTS: Record<string, () => PlayScript> = { entity_game: entityGameScript };
+/**
+ * spacer: Enter starts the level (Utils.KEY_LEVEL_START 13), arrows and WASD move (37..40, 65 68 87 83), the left
+ * mouse button shoots (Player.animateShooting reads LevelScene.isMousePressed), Escape pauses (Utils.KEY_PAUSE 27).
+ * Keys read from the decompiled Utils.as, Player.as and LevelScene.as. Our own script; no Ruffle output is committed.
+ */
+export function spacerScript(): PlayScript {
+  const aim = [600, 300] as [number, number];
+  return scriptFromTicks(300, [
+    [5, { type: 'KeyDown', key: 'Enter' }],
+    [8, { type: 'KeyUp', key: 'Enter' }],
+    [60, { type: 'KeyDown', key: 'ArrowRight' }],
+    [90, { type: 'KeyUp', key: 'ArrowRight' }],
+    [90, { type: 'KeyDown', key: 'ArrowDown' }],
+    [110, { type: 'KeyUp', key: 'ArrowDown' }],
+    [110, { type: 'KeyDown', key: 'ArrowLeft' }],
+    [140, { type: 'KeyUp', key: 'ArrowLeft' }],
+    [140, { type: 'KeyDown', key: 'ArrowUp' }],
+    [160, { type: 'KeyUp', key: 'ArrowUp' }],
+    [162, { type: 'KeyDown', key: { Char: 'w' } }],
+    [166, { type: 'KeyUp', key: { Char: 'w' } }],
+    [166, { type: 'KeyDown', key: { Char: 'd' } }],
+    [170, { type: 'KeyUp', key: { Char: 'd' } }],
+    [170, { type: 'KeyDown', key: { Char: 's' } }],
+    [174, { type: 'KeyUp', key: { Char: 's' } }],
+    [174, { type: 'KeyDown', key: { Char: 'a' } }],
+    [178, { type: 'KeyUp', key: { Char: 'a' } }],
+    [180, { type: 'MouseMove', pos: aim }],
+    [182, { type: 'MouseDown', pos: aim, btn: 'Left' }],
+    [220, { type: 'MouseUp', pos: aim, btn: 'Left' }],
+    [230, { type: 'KeyDown', key: 'Escape' }],
+    [233, { type: 'KeyUp', key: 'Escape' }],
+    [260, { type: 'KeyDown', key: 'Escape' }],
+    [263, { type: 'KeyUp', key: 'Escape' }],
+  ]);
+}
+const SCRIPTS: Record<string, () => PlayScript> = { entity_game: entityGameScript, spacer: spacerScript };
 
 export function playScript(game: string): PlayScript {
   const make = SCRIPTS[game];
