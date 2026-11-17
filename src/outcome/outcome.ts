@@ -61,12 +61,22 @@ export interface RecoveryRecord {
   unrecoverableClasses: number;
 }
 
+/**
+ * Amended at Task 12.3. Registered classes are clean, loose or kept with untranslated code; the rest are omitted:
+ * cleanClasses + looseClasses + untranslatedCodeClasses + (candidates that are omitted) = candidateClasses, and
+ * translatedClasses = cleanClasses + looseClasses + untranslatedCodeClasses.
+ */
 export interface OutcomeNumbers {
   candidateClasses: number;
+  /** Registered by Emit (so emitted and parsed): clean, loose or kept with untranslated code. Never an omitted class. */
   translatedClasses: number;
   cleanClasses: number;
   looseClasses: number;
+  /** Registered classes whose status is unsupported and that are not loose: kept, with untranslated code in them. */
+  untranslatedCodeClasses: number;
+  /** Every candidate whose report status is unsupported, registered or omitted. Overlaps the other fields; not part of the sum above. */
   unsupportedClasses: number;
+  /** Every omission of the report, including a linked class that has no candidate (missing-source), so it can exceed candidateClasses. */
   omittedClasses: number;
   typeErrors: number;
   droppedPlacements: number;
@@ -187,6 +197,7 @@ export function decideOutcome(record: RunRecord): Outcome {
       translated: n.translatedClasses,
       candidates: n.candidateClasses,
       typeErrors: n.typeErrors,
+      untranslatedCode: n.untranslatedCodeClasses,
       gaps: record.gaps,
       recovery: rec && rec.attempted && rec.skipped === null && !rec.fallback
         ? { recovered: rec.recoveredClasses, candidates: rec.candidateClasses }

@@ -15,6 +15,7 @@ import type { HandwrittenEntry } from './handwrittenSet';
 import { resolveLimits } from './limits';
 import { runPipeline } from './pipeline';
 import type { PipelineArgs, PipelineStages } from './pipeline';
+import { installSignalHandlers } from './signals';
 
 export interface CliOptions {
   swfPath: string;
@@ -208,7 +209,13 @@ export async function main(argv: readonly string[]): Promise<number> {
   };
   if (o.workDir !== undefined) args.workDir = o.workDir;
   if (o.verify === true) args.verify = o.verifyFrames === undefined ? {} : { frames: o.verifyFrames };
-  return runPipeline(args, realStages, io);
+  const signals = installSignalHandlers(process);
+  args.onGuard = signals.onGuard;
+  try {
+    return await runPipeline(args, realStages, io);
+  } finally {
+    signals.dispose();
+  }
 }
 
 const invokedAsScript = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);

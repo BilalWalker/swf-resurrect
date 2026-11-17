@@ -47,6 +47,21 @@ describe("convertedWithGapsReason", () => {
       "1 of 1 classes translated, 2 type errors",
     );
   });
+  it("names the untranslated-code count when it is above 0", () => {
+    expect(convertedWithGapsReason({ translated: 1, candidates: 1, typeErrors: 0, untranslatedCode: 1, gaps: [] })).toBe(
+      "1 of 1 classes translated (1 with untranslated code), 0 type errors",
+    );
+  });
+  it("keeps the untranslated-code count when the gap part is dropped", () => {
+    const long = "k".repeat(170) as unknown as GapSummary["kind"];
+    const s = convertedWithGapsReason({
+      translated: 5, candidates: 6, typeErrors: 2, untranslatedCode: 3,
+      gaps: [{ kind: long, count: 2, examples: [] }],
+    });
+    expect(s.length).toBeLessThanOrEqual(200);
+    expect(s).not.toContain("most gaps");
+    expect(s).toContain("(3 with untranslated code)");
+  });
   it("prefixes a recovered run", () => {
     const s = convertedWithGapsReason({
       translated: 15, candidates: 44, typeErrors: 3, gaps, recovery: { recovered: 17, candidates: 44 },

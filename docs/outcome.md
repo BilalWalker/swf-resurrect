@@ -61,6 +61,7 @@ The code is in `src/outcome/` (`outcome.ts`, `outcomeFile.ts`, `exitCode.ts`, `r
 Notes:
 
 - `numbers` is `null` for a refusal before Translate ran, so a reader must not assume the counts exist.
+- Class counts (amended at Task 12.3): a class counts as translated when Emit registered it (not omitted, so its file parses) and it is clean, loose or kept with untranslated code. `cleanClasses + looseClasses + untranslatedCodeClasses` plus the omitted candidates equals `candidateClasses` (`omittedClasses` also counts an omitted linked class that is not a candidate, so it can be larger), and `translatedClasses` is the first three. `untranslatedCodeClasses` is registered classes with report status `unsupported` that are not loose. `unsupportedClasses` is every candidate with report status `unsupported`, registered or omitted; it overlaps the other fields and is not part of the sum.
 - `facts.abcClassCount` is the number of exported `.as` files. It can differ by one from the class count of
   `swf_summary` (seen on `redball4`; Open_Item O14).
 - The default run limit is 300 s. The web server kills a job after 180 s (`web/server/options.ts`), which is
@@ -135,7 +136,8 @@ writer's output.
     "omittedClasses": 0,
     "translatedClasses": 6,
     "typeErrors": 0,
-    "unsupportedClasses": 0
+    "unsupportedClasses": 0,
+    "untranslatedCodeClasses": 0
   },
   "obfuscated": null,
   "outcome": "converted",
@@ -229,18 +231,19 @@ writer's output.
   },
   "numbers": {
     "candidateClasses": 6,
-    "cleanClasses": 4,
+    "cleanClasses": 3,
     "droppedPlacements": 0,
     "looseClasses": 1,
     "namedLimits": 1,
-    "omittedClasses": 0,
+    "omittedClasses": 1,
     "translatedClasses": 5,
     "typeErrors": 2,
-    "unsupportedClasses": 1
+    "unsupportedClasses": 1,
+    "untranslatedCodeClasses": 1
   },
   "obfuscated": null,
   "outcome": "converted-with-gaps",
-  "reason": "5 of 6 classes translated, 2 type errors; most gaps: type-error (2), untranslated-class (1)",
+  "reason": "5 of 6 classes translated (1 with untranslated code), 2 type errors; most gaps: type-error (2), untranslated-class (1)",
   "reasonCode": null,
   "recovery": null,
   "referenceId": null,

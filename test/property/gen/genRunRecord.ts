@@ -131,13 +131,15 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
         typeErrors = 1;
       }
       const translated = zeroTranslated ? 0 : Math.max(opts.project ? 1 : 0, Math.min(candidates, Math.round(candidates * translatedFrac)));
+      const untranslatedCode = translated >= 2 && candidates % 2 === 0 ? 1 : 0;
       const numbers: OutcomeNumbers = {
         candidateClasses: candidates,
         translatedClasses: translated,
-        cleanClasses: translated,
+        cleanClasses: translated - untranslatedCode,
         looseClasses: 0,
-        unsupportedClasses: candidates - translated,
-        omittedClasses: 0,
+        untranslatedCodeClasses: untranslatedCode,
+        unsupportedClasses: untranslatedCode,
+        omittedClasses: candidates - translated,
         typeErrors,
         droppedPlacements: dropped,
         namedLimits: 0,

@@ -186,18 +186,18 @@ Rules that apply to every task:
     - **Property 13: Cleanup removes only what the run wrote**, in `test/property/limits.property.test.ts` (extend): for any pre-existing set and any set written by the run, the plan is a subset of `written \ preExisting`, contains none of the protected files, and leaves every pre-existing file.
     - **Validates: Requirements 4.6, 6.7, 9.2, 9.3**
 
-- [ ] 12. Pipeline and Test: signals, hostile fixtures and the sample Outcomes
+- [x] 12. Pipeline and Test: signals, hostile fixtures and the sample Outcomes
   - Commit area: `Pipeline` (Test named). Verification V1. Read the design D-A7, "Error Handling" and Requirement 8.
-  - [ ] 12.1 Handle `SIGINT` and `SIGBREAK`
+  - [x] 12.1 Handle `SIGINT` and `SIGBREAK`
     - `main` installs handlers that call `guard.abort('signal')`, kill the registered children, write a `failed` Outcome_File with the reason `run stopped by signal`, and exit 1. On Windows `SIGTERM` is not deliverable to a handler, so a kill by the web server is not catchable (Open_Item O5; read the Node documentation page before this task and record the result in the commit body). No supervisor process (U9).
     - Tests: `test/e2e/signal.e2e.test.ts` (create): spawn the real CLI on a stage fake that sleeps, send `SIGINT` (Windows: `SIGBREAK` where `SIGINT` cannot be sent to a child), check exit 1, an Outcome_File with the reason, and that no child process remains.
     - _Requirements: 6.6, 7.4_
 
-  - [ ] 12.2 Add the Hostile_Fixture matrix
+  - [x] 12.2 Add the Hostile_Fixture matrix
     - `test/e2e/hostileFixtures.e2e.test.ts` (create), using `test/support/hostileSwf.ts`: an empty file, a text file, a valid signature and no body, a cut file, a damaged compressed stream (one byte changed in a `CWS` stream), an AS1/AS2 file (the fake spawner must not be called), an AS3 `FileAttributes` with no `DoABC` tag, a file above a lowered size limit, `encrypted` with a fake FFDec result (Open_Item O3: no real encrypted file was measured and no FFDec signal is known), `time-limit` with the fake clock, a fake FFDec that exits with an error at Unpack (`refused damaged`, FFDec text only in `ffdec-<Reference_Id>.log`, exit 3), a fake of our own `TypeError` at Unpack (`failed`, exit 1, never `damaged`), a timeline-only SWF with 0 Candidate_Classes (`converted`, exit 0, never `refused`), and a SWF with at least 1 Candidate_Class and 0 translated (`refused nothing-translated`, exit 3). Each row asserts Outcome, reason code, exit code, the Outcome_Line as the last line, and that no FFDec process started for the Facts refusals. The measurements of Requirement 8.4 (AS1/AS2, encrypted or packed, over the size limit, very long conversion) are written into the commit body, and any that needs an unavailable file is named as an Open_Item.
     - _Requirements: 3.4, 3.5, 4.5, 4.12, 5.1, 5.2, 5.3, 5.9, 5.12, 5.13, 6.4, 6.5, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7_
 
-  - [ ] 12.3 Check the committed samples and the local files
+  - [x] 12.3 Check the committed samples and the local files
     - `test/e2e/sampleOutcomes.e2e.test.ts` (create): over the Shared_Run_Cache runs, each committed sample ends `converted` or `converted-with-gaps` and its `outcome.json` parses (Requirement 4.10). `test/e2e/localFiles.e2e.test.ts` (create): for each of `empty.swf`, `text.swf`, `truncated.swf` and `redball4.swf` that is present under `.work/judge-test/`, run the CLI and record Outcome, reason code and exit code (`truncated.swf` must be `refused damaged`, Requirement 5.11); every case skips with a message when its file is absent; the test writes only under `.work/` and quotes no class name. `redball4.swf` gets the numbers only. Check that no `.work` or fixture path is tracked (`git status`).
     - _Requirements: 4.10, 5.11, 8.6, 11.9, 23.4_
 

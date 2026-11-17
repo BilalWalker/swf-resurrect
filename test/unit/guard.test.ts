@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { createGuard, TimeLimitError } from '../../src/pipeline/guard';
+import { createGuard, RunAbortedError, TimeLimitError } from '../../src/pipeline/guard';
 import { defaultLimits, stageAllowanceS } from '../../src/pipeline/limits';
 import { classifyError } from '../../src/outcome/classifyError';
 import { decideOutcome } from '../../src/outcome/outcome';
@@ -129,5 +129,28 @@ describe('runPipeline with the guard', () => {
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+describe('RunGuard.abort', () => {
+  it('rejects the running stage with RunAbortedError, kills children and classifies as failed', async () => {
+    const { guard, killAll } = setup();
+    const p = guard.runStage('unpack', () => new Promise<never>(() => undefined));
+    await Promise.resolve();
+    await guard.abort('signal');
+    const err = await p.then(() => null, (e: unknown) => e);
+    expect(err).toBeInstanceOf(RunAbortedError);
+    expect(killAll).toHaveBeenCalled();
+    expect(guard.records).toEqual([{ name: 'unpack', result: 'error', durationMs: 0 }]);
+    expect(classifyError(err, 'unpack')).toMatchObject({ kind: 'internal', reason: 'run stopped by signal' });
+  });
+
+  it('rejects every later stage at once and tolerates a second abort', async () => {
+    const { guard } = setup();
+    await guard.abort('signal');
+    await guard.abort('signal');
+    const fn = vi.fn(async () => 1);
+    await expect(guard.runStage('convert', fn)).rejects.toBeInstanceOf(RunAbortedError);
+    expect(fn).not.toHaveBeenCalled();
   });
 });

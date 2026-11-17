@@ -88,6 +88,8 @@ describe("outcome properties", () => {
         expect(o.reason).toContain(String(n.translatedClasses));
         expect(o.reason).toContain(String(n.candidateClasses));
         expect(o.reason).toContain(String(n.typeErrors));
+        if (n.untranslatedCodeClasses > 0) expect(o.reason).toContain(`(${n.untranslatedCodeClasses} with untranslated code)`);
+        else expect(o.reason).not.toContain("untranslated code");
         const r = rec.recovery;
         if (r && r.attempted && r.skipped === null && !r.fallback) {
           expect(o.reason.startsWith("obfuscated: names renamed")).toBe(true);

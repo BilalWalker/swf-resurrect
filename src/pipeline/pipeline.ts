@@ -30,8 +30,8 @@ import { PipelineError } from './errors';
 import { killAll } from './processTree';
 import { planCleanup } from './cleanup';
 import type { CleanupPlan } from './cleanup';
-import { createGuard } from './guard';
-import type { Clock } from './guard';
+import { createGuard, RunAbortedError } from './guard';
+import type { Clock, RunGuard } from './guard';
 import { defaultLimits } from './limits';
 import { realClock } from './realClock';
 import type { PipelineStage } from './errors';
@@ -43,26 +43,33 @@ import type { UnsupportedFeatureEntry } from './unsupported';
 export type { VerifyRequest, VerifySummary };
 
 /**
- * Counts of the Translation_Report (D-A3). A translated class is a kept class that is clean or loose by status, a
- * Loose_Class (registered, translated, gate errors in its own file) or an applied override. An omitted class is never
- * translated, so a run whose candidates are all omitted has translatedClasses 0 and is refused `nothing-translated`.
+ * Counts of the Translation_Report (D-A3). Amended at Task 12.3, owner decision: a Candidate_Class is translated when
+ * Emit registered it (not omitted, so its emitted file parses) and it is clean, loose, an applied override, or kept
+ * with untranslated code (status `unsupported`, not loose). An omitted class (missing-source, syntax-error,
+ * bundler-parse or any other omission) never counts, so a run whose candidates are all omitted has translatedClasses 0
+ * and is refused `nothing-translated`.
+ *
+ * clean + loose + untranslatedCode + (omitted candidates) = candidates; omittedClasses also counts an omitted linked class
+ * that is no candidate; translatedClasses = clean + loose + untranslatedCode.
  */
 export function numbersOf(report: TranslationReport, droppedPlacements: number): OutcomeNumbers {
   const kept = report.classes.filter((c) => !c.omitted);
-  const translated = kept.filter((c) => c.status === 'clean' || c.status === 'loose' || c.loose);
+  const untranslatedCode = kept.filter((c) => c.status === 'unsupported' && !c.loose);
+  const cleanClasses = kept.filter((c) => c.status === 'clean' && !c.loose).length;
+  const looseClasses = kept.filter((c) => c.status === 'loose' || c.loose).length;
   return {
     candidateClasses: report.classes.length,
-    translatedClasses: translated.length,
-    cleanClasses: kept.filter((c) => c.status === 'clean' && !c.loose).length,
-    looseClasses: kept.filter((c) => c.status === 'loose' || c.loose).length,
-    unsupportedClasses: kept.filter((c) => c.status === 'unsupported' && !c.loose).length,
+    translatedClasses: cleanClasses + looseClasses + untranslatedCode.length,
+    cleanClasses,
+    looseClasses,
+    untranslatedCodeClasses: untranslatedCode.length,
+    unsupportedClasses: report.classes.filter((c) => c.status === 'unsupported').length,
     omittedClasses: report.omittedClasses.length,
     typeErrors: report.classes.reduce((n, c) => n + c.typeErrors.length, 0) + report.otherErrors.length,
     droppedPlacements,
     namedLimits: 0,
   };
 }
-
 /** A refusal found by the Facts stage; no FFDec process has started. */
 class FactsRefusedError extends Error {
   constructor(readonly reasonCode: ReasonCode) {
@@ -158,6 +165,8 @@ export interface PipelineArgs {
   limits?: OutcomeLimits;
   /** Clock of the run guard; absent means the real clock. Tests pass a fake. */
   clock?: Clock;
+  /** Called once with the run guard as soon as it exists, so a signal handler can call `guard.abort`. */
+  onGuard?: (guard: RunGuard) => void;
 }
 
 /** Error codes of the Emitter refusals that must leave the output directory untouched (Req 5.8, 5.10). */
@@ -373,6 +382,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let failure: unknown = null;
   // The run starts here: the wait for a PIPELINE_SLOTS slot is test-side and never reaches this clock.
   const guard = createGuard({ clock: args.clock ?? realClock, limits: runLimits, killAll });
+  args.onGuard?.(guard);
   const stageRecords: StageRecord[] = guard.records;
   let translated: TranslateArtifact | null = null;
   let gate: GateResult | null = null;
@@ -511,7 +521,10 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       } else {
         classified = classifyError(failure, reported);
         const isFfdecExit = classified.kind === 'refused' && classified.reasonCode === 'damaged' && (err as { code?: unknown } | null)?.code === 'FFDEC_EXIT';
-        if (classified.kind === 'internal' || isFfdecExit) {
+        if (err instanceof RunAbortedError) {
+          // A stop by signal is not a defect: no failure log and no Reference_Id.
+          io.err('error [pipeline]: run stopped by signal\n');
+        } else if (classified.kind === 'internal' || isFfdecExit) {
           const id = await writeFailureLogs(failure, reported, isFfdecExit, resolve(args.swfPath), outputDir);
           if (classified.kind === 'internal') {
             referenceId = id;

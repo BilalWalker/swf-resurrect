@@ -114,7 +114,7 @@ describe('Outcome numbers (task 7.2)', () => {
     const o = await outcome();
     expect(report.classes.map((c: { status: string }) => c.status).sort()).toEqual(['clean', 'unsupported']);
     expect(o.numbers).toMatchObject({
-      candidateClasses: 2, translatedClasses: 1, cleanClasses: 1, looseClasses: 0, unsupportedClasses: 1, typeErrors: 1,
+      candidateClasses: 2, translatedClasses: 2, cleanClasses: 1, looseClasses: 0, untranslatedCodeClasses: 1, unsupportedClasses: 1, typeErrors: 1,
     });
     expect(o.outcome).toBe('converted-with-gaps');
   });

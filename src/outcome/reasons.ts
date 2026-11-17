@@ -69,6 +69,8 @@ export interface GapsSentenceInput {
   translated: number;
   candidates: number;
   typeErrors: number;
+  /** Registered classes kept with untranslated code; named in the sentence when > 0. */
+  untranslatedCode?: number;
   gaps: GapSummary[];
   /** Present for a recovered run. */
   recovery?: { recovered: number; candidates: number } | null;
@@ -90,7 +92,9 @@ export function convertedWithGapsReason(input: GapsSentenceInput): string {
   const prefix = input.recovery
     ? `obfuscated: names renamed, ${input.recovery.recovered} of ${input.recovery.candidates} classes recovered; `
     : "";
-  const base = `${input.translated} of ${input.candidates} classes translated, ${input.typeErrors} type errors`;
+  const untranslated = input.untranslatedCode ?? 0;
+  const withCode = untranslated > 0 ? ` (${untranslated} with untranslated code)` : "";
+  const base = `${input.translated} of ${input.candidates} classes translated${withCode}, ${input.typeErrors} type errors`;
   const top = topGaps(input.gaps);
   const gapPart = top.length > 0 ? `; most gaps: ${top.map((g) => `${g.kind} (${g.count})`).join(", ")}` : "";
   const full = prefix + base + gapPart;

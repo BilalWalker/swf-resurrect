@@ -5,6 +5,7 @@
  */
 import type { ClassifiedFailure } from "./outcome";
 
+const RUN_STOPPED = "run stopped by signal";
 const MISSING_COMPONENT = "a required component is missing";
 
 function codeOf(err: unknown): string | null {
@@ -33,6 +34,9 @@ export function classifyError(err: unknown, stage: string): ClassifiedFailure {
         ...(typeof e.limit === "string" ? { limit: e.limit } : {}),
       };
     }
+    case "RUN_ABORTED":
+      // Thrown by RunGuard.abort after SIGINT or SIGBREAK: a failed run with its own reason, not a refusal.
+      return { kind: "internal", reasonCode: "internal-error", reason: RUN_STOPPED, stage };
     case "FFDEC_TIMEOUT":
       return { kind: "refused", reasonCode: "time-limit", stage };
     case "FFDEC_EXIT":

@@ -16,7 +16,7 @@ This design makes every run of `npm run pipeline` end in one honest Outcome, rec
 |---|---|---|
 | Where the Outcome is decided | One pure function `decideOutcome` over a `RunRecord`; `runPipeline` only collects the record and calls it once | Testable without Java; one place enforces "no fake success" |
 | Numbers in the Outcome | Read from the Translation_Report and the Unsupported list after the type-check gate; dropped placements from a new `stats.placementsDropped` | The `[translate]` console line is computed before the gate and disagrees with the report (redball4: 3/18/35 against 3/12/41) |
-| What "translated" means | A Candidate_Class whose report status is `clean` or `loose` and which is not omitted; an applied override counts | Matches the brief's counts (3 and 15) |
+| What "translated" means | A Candidate_Class that Emit registered (not omitted, so its emitted file parses) and that is clean, loose, an applied override, or kept with untranslated code (status `unsupported`, not loose). An omitted class never counts. (Amended at Task 12.3, owner decision: kept-with-untranslated-code classes now count; `numbers.untranslatedCodeClasses` holds them apart from clean, loose and omitted.) | Matches the brief's counts (3 and 15) |
 | Facts without FFDec | Own header and tag-length walk (`src/facts/`), about 150 lines, no tag decoding except the DoABC payload for the ABC_Name_Scan | Needs only tag codes, lengths and the ABC constant pool; FFDec stays the only parser of tag content |
 | Obfuscation detection | ABC_Name_Scan: walk the constant pool of the `DoABC` or `DoABC2` bytes (strings, namespaces, namespace sets, multinames) and count multiname names that are not legal identifiers. Before the first FFDec call, in pure code | Requirement 14.1. Measured 0.2 s for the whole 10 MB file including inflate and start-up of Node |
 | Recovery order | If obfuscated: rename (`typeNumber`), then deobfuscate (`max`), both on a copy, then Unpack once on the recovered copy. Never Unpack the original first | Requirement 16.1. No double Unpack |
@@ -196,7 +196,7 @@ interface OutcomeRecord {
   facts: Facts | null;                                  // null only if the Facts_Reader did not run
   numbers: {
     candidateClasses: number; translatedClasses: number; cleanClasses: number;
-    looseClasses: number; unsupportedClasses: number; omittedClasses: number;
+    looseClasses: number; untranslatedCodeClasses: number; unsupportedClasses: number; omittedClasses: number;
     typeErrors: number; droppedPlacements: number; namedLimits: number;
   } | null;                                             // null before Translate ran
   gaps: Array<{ kind: GapKind; count: number; examples: string[] }>;  // examples at most 5
