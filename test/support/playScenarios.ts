@@ -55,6 +55,7 @@ export async function playEntityGame(d: PlayDriver): Promise<PlayOutcome> {
   // 2. Holding a direction key moves and turns the ship. The ship is the sprite that starts at the stage centre.
   const shipIndex = before.findIndex((s) => s.x === 400 && s.y === 300);
   check(shipIndex >= 0, 'no sprite starts at the stage centre (the ship)', { positions: before.map((s) => [s.x, s.y]) });
+  const shipName = before[shipIndex]!.name;
   const shipBefore = sprites(await tree())[shipIndex]!;
   await d.key('keyDown', KEY.left);
   await d.key('keyDown', KEY.up);
@@ -78,7 +79,7 @@ export async function playEntityGame(d: PlayDriver): Promise<PlayOutcome> {
     let prev = sprites(await tree());
     const ship = prev[shipIndex]!;
     await d.key('keyDown', KEY.space);
-    let bullet: { x: number; y: number; vx: number; vy: number; born: number } | null = null;
+    let bullet: { x: number; y: number; vx: number; vy: number; born: number; name: string } | null = null;
     let last = prev;
     for (let i = 0; i < 3 && bullet === null; i++) {
       await d.step(1);
@@ -88,7 +89,7 @@ export async function playEntityGame(d: PlayDriver): Promise<PlayOutcome> {
       if (born !== undefined) {
         // Gun.fire: thrust(10) at the ship's angle, so the bullet's velocity is known from the ship's rotation.
         const angle = ((last[shipIndex] ?? ship).rotation * Math.PI) / 180;
-        bullet = { x: born.x, y: born.y, vx: Math.sin(-angle) * 10, vy: Math.cos(-angle) * 10, born: played };
+        bullet = { x: born.x, y: born.y, vx: Math.sin(-angle) * 10, vy: Math.cos(-angle) * 10, born: played, name: born.name };
       }
       else prev = last;
     }
@@ -104,7 +105,7 @@ export async function playEntityGame(d: PlayDriver): Promise<PlayOutcome> {
       const px = bullet.x + bullet.vx;
       const py = bullet.y + bullet.vy;
       const tol = 8;
-      const found = now.find((s) => wrapDist(s.x, s.y, px, py) <= tol);
+      const found = now.find((s) => s.name === bullet.name) ?? now.find((s) => wrapDist(s.x, s.y, px, py) <= tol && !before.some((o) => o.name === s.name));
       if (found !== undefined) {
         bullet.vx = found.x - bullet.x;
         bullet.vy = found.y - bullet.y;
@@ -118,9 +119,29 @@ export async function playEntityGame(d: PlayDriver): Promise<PlayOutcome> {
         // Sprites near the bullet: it and the rock it met (before); the rock or its two halves (now).
         const removed = before.filter(nearGone).length;
         const added = now.filter(nearGone).length;
-        firstHit = { tick: played, bullet: gone, removed, added, age };
-      }
-      before = now;
+        // Identity evidence, read through the inspection hook (sprite names are stable, bullets and rocks included):
+        // the bullet's own sprite name is gone, and the rock it met, the nearest sprite of `before` that is neither the
+        // bullet nor the ship, was destroyed (its name is gone) or split (it keeps its name, a sprite with a new name
+        // appears on it). A rock that was not hit keeps its name and gets no new neighbour, so a bullet lost by the
+        // follower, or one whose collision test never fires, is not counted as a hit.
+        const names = new Set(before.map((s) => s.name));
+        const rock = before
+          .filter((s) => s.name !== bullet.name && s.name !== shipName)
+          .sort((a, b) => wrapDist(a.x, a.y, gone.x, gone.y) - wrapDist(b.x, b.y, gone.x, gone.y))[0];
+        const bulletGone = !now.some((s) => s.name === bullet.name);
+        const later: Snapshot[] = [];
+        for (let k = 0; k < 2; k++) {
+          await d.step(1);
+          played++;
+          later.push(...sprites(await tree()));
+        }
+        const rockDestroyed = rock !== undefined && !now.some((s) => s.name === rock.name) && !later.some((s) => s.name === rock.name);
+        const rockSplit = rock !== undefined && [...now, ...later].some((s) => !names.has(s.name) && wrapDist(s.x, s.y, rock.x, rock.y) <= 40);
+        if (bulletGone && rock !== undefined && wrapDist(rock.x, rock.y, gone.x, gone.y) <= 45 && (rockDestroyed || rockSplit)) {
+          firstHit = { tick: played, bullet: gone, removed, added, age };
+        }
+        break;
+      }      before = now;
     }
     await d.step(5); // let the bullet expire
     played += 5;
@@ -139,6 +160,10 @@ export async function playEntityGame(d: PlayDriver): Promise<PlayOutcome> {
   const end = await d.inspect();
   check(end.tick >= STEPS_30_SECONDS - 5, 'fewer steps than 30 seconds were played', { tick: end.tick });
   return { firstHit: hit, bulletsSeen, endState: `tick ${end.tick}, ${sprites(end.stageChildren()).length} sprites` };
+}
+
+function wrapStep(d: number, size: number): number {
+  return Math.abs(d) > size / 2 ? d - Math.sign(d) * size : d;
 }
 
 function wrapDist(ax: number, ay: number, bx: number, by: number): number {
