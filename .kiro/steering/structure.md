@@ -47,7 +47,7 @@ Planned shim additions: Sound.
 
 ### Inspection hook and ?play=1 (Play_Tests, as3-coverage Requirement 25)
 - Player.inspect() (	emplate/runtime/inspect.ts) is read-only: 	ick, ind(className), stageChildren() giving { className, name, x, y, rotation, visible, frame, label, children }, and 	imers() (empty until the Shim has a Timer). Every value is a plain copy; there is no setter.
-- With ?play=1, main.ts uses a ManualClock, runs no equestAnimationFrame loop and installs window.__swfPlay = { step(n), key(type, code), click(x, y), inspect(), errors() }; step advances rameIntervalMs per update and renders every 60 steps.
+- With ?play=1, main.ts uses a ManualClock, runs no equestAnimationFrame loop and installs window.__swfPlay = { step(n), key(type, code), click(x, y), render(), inspect(), errors() }; step advances rameIntervalMs per update and renders every 60 steps inside the loop, not after each call; render() draws once and a test calls it before a screenshot or pixel read.
 - 	est/support/playDriver.ts (PlayDriver: Node and Chromium) and 	est/support/playScenarios.ts (one scenario per game) feed 	est/e2e/entityPlay.node.test.ts and entityPlay.chromium.test.ts.
 
 ## Rules

@@ -17,6 +17,8 @@ declare global {
     /** Present only with ?play=1 (Play_Tests). */
     __swfPlay?: {
       step(n: number): void;
+      /** Draws the stage once. step() renders only every 60 steps; call this before a screenshot or pixel read. */
+      render(): void;
       key(type: 'keyDown' | 'keyUp', code: number): void;
       click(x: number, y: number): void;
       /** One pointer event at a stage point: a held button needs `down` and `up` apart. */
@@ -140,8 +142,8 @@ async function boot(): Promise<void> {
           player.update();
           if (++steps % 60 === 0) app.render();
         }
-        app.render();
       },
+      render: (): void => app.render(),
       key: (type: 'keyDown' | 'keyUp', code: number): void => player.dispatchKey(type === 'keyDown' ? KeyboardEvent.KEY_DOWN : KeyboardEvent.KEY_UP, code),
       click: (x: number, y: number): void => player.dispatchClick(x, y),
       mouse: (type: 'move' | 'down' | 'up', x: number, y: number): void => {

@@ -12,6 +12,8 @@ import { FakeBackend } from './fakeBackend';
 export interface PlayDriver {
   /** Runs n frame steps of 1000 / frameRate ms each. */
   step(n: number): Promise<void>;
+  /** Draws the page once (Chromium); a no-op in the Node layer. Call before a screenshot: step() renders only every 60 steps. */
+  render(): Promise<void>;
   key(type: 'keyDown' | 'keyUp', code: number): Promise<void>;
   /** A pointer press and release at a stage point. */
   click(x: number, y: number): Promise<void>;
@@ -67,6 +69,7 @@ export async function nodeDriver(projectDir: string): Promise<PlayDriver> {
         player.update();
       }
     },
+    async render() {},
     async key(type, code) {
       player.dispatchKey(type === 'keyDown' ? KeyboardEvent.KEY_DOWN : KeyboardEvent.KEY_UP, code);
     },
@@ -95,6 +98,7 @@ export async function nodeDriver(projectDir: string): Promise<PlayDriver> {
 export function chromiumDriver(page: Page): PlayDriver {
   return {
     step: (n) => page.evaluate((k) => (window as any).__swfPlay.step(k), n),
+    render: () => page.evaluate(() => (window as any).__swfPlay.render()),
     key: (type, code) => page.evaluate(([t, c]) => (window as any).__swfPlay.key(t as 'keyDown' | 'keyUp', c as number), [type, code] as const),
     click: (x, y) => page.evaluate(([a, b]) => (window as any).__swfPlay.click(a, b), [x, y] as const),
     mouse: (type, x, y) => page.evaluate(([t, a, b]) => (window as any).__swfPlay.mouse(t, a, b), [type, x, y] as const),

@@ -99,10 +99,12 @@ describeIfSpacer('spacer Play_Test (Chromium layer)', () => {
 
           // The scenario through window.__swfPlay.
           const a = await open();
-          const outcome = await playSpacer(chromiumDriver(a.page), flyLabels);
+          const playA = chromiumDriver(a.page);
+          const outcome = await playSpacer(playA, flyLabels);
           expect(outcome.death.goneTick).toBeGreaterThan(outcome.death.hitTick);
           expect(outcome.namedLimits.filter((id) => !SPACER_EXPECTED_NAMED_LIMITS.includes(id))).toEqual([]);
           expect(a.pageErrors).toEqual([]);
+          await playA.render();
           await a.page.screenshot({ path: join(fileURLToPath(new URL('../../.work/', import.meta.url)), 'spacer-play.png') });
           await a.page.close();
 
@@ -118,12 +120,14 @@ describeIfSpacer('spacer Play_Test (Chromium layer)', () => {
           console.log(`spacer Block A: keys with no prior click start the level: ${started.length > 0}`);
           expect(started.length).toBeGreaterThan(0);
           const p0 = started[0]!;
+          await play.render();
           const before = PNG.sync.read(await b.page.screenshot());
           await b.page.keyboard.down('ArrowRight');
           await play.step(30);
           await b.page.keyboard.up('ArrowRight');
           await play.step(5);
           const p1 = (await play.inspect()).find('Player')[0]!;
+          await play.render();
           const after = PNG.sync.read(await b.page.screenshot());
           expect(p1.x).toBeGreaterThan(p0.x + 50);
           const atOld = changedIn(before, after, Math.round(p0.x), Math.round(p0.y), 20);

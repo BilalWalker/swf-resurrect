@@ -78,9 +78,11 @@ describe.skipIf(reason !== null)(`entity_game Play_Test (Chromium layer)${reason
           });
           await page.goto(`${ORIGIN}/index.html?play=1`);
           await page.waitForFunction(() => (window as any).__swfPlay !== undefined, undefined, { timeout: 60_000 });
-          const outcome = await playEntityGame(chromiumDriver(page));
+          const driver = chromiumDriver(page);
+          const outcome = await playEntityGame(driver);
           expect(outcome.firstHit).not.toBeNull();
           expect(pageErrors).toEqual([]);
+          await driver.render();
           await page.screenshot({ path: join(repoRoot, '.work', 'entity-play.png') });
           await context.close();
         } finally {
