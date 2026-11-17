@@ -544,16 +544,16 @@ Rules that apply to every task:
 
 - [ ] 33. Convert: static edit text is drawn as shapes (D12)
   - Commit area: `Convert`. Verification V2 if anything under `template/` changes, else V1. Start only after Checkpoint 3 is accepted and the budget decision says Block D runs (Requirement 32.1). Block D starts here: restate the Block D share of about 60 credits. Skip every `spacer`-specific step when the SWF is absent. Read the design row D12 and finding F7: Convert treats a `DefineEditTextTag` with `wasStatic="true"` and `readOnly="true"` like `DefineTextTag`; there is no `texts` field in Scene_JSON, no device font and no new runtime concept.
-  - [~] 33.1 Measure Overall_Match before Block D
+  - [ ] 33.1 Measure Overall_Match before Block D
     - Before any other Block D change, measure Overall_Match of `spacer` on the frames of Requirement 27.3 with the same tolerance and Reference_Frames, and record the value and the differing regions in the commit body and in the Checkpoint 4 report (Requirement 31.1).
     - _Requirements: 31.1_
 
-  - [~] 33.2 Export and convert static edit text
+  - [x] 33.2 Export and convert static edit text
     - A placed symbol that contains a Static_Text_Tag has its FFDec text SVG exported, converted with `svgToShapeJson(..., 'text')` (which resolves `<use>` glyph references) and emitted as a shape symbol. A `DropShadowFilter` on a placement is recorded as a Named_Limit (stored, not drawn) and listed by the Fidelity_Report when a differing region lies inside the placement's bounds. The Translator adds no `TextField` binding. A SWF with no Static_Text_Tag produces the same Scene_JSON symbols as before.
     - Tests: `test/unit/convertStaticEditText.test.ts` (create) with a generated dump and SVG; an existing-sample regression (same symbols as before).
     - _Requirements: 29.1, 29.2, 29.3, 29.4, 29.5, 29.6, 29.7, 29.9_
 
-  - [~] 33.3 Write property test for the shape bounds
+  - [x] 33.3 Write property test for the shape bounds
     - In `test/property/staticTextBounds.property.test.ts` (create): for generated Static_Text_Tags with generated SVG glyph sets, the emitted shape symbol's bounds equal the bounds of the tag's SVG (Requirement 29.8; this property has no number in the design's list).
     - **Validates: Requirements 29.8**
 

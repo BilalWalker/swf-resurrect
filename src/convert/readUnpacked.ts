@@ -74,7 +74,7 @@ export async function readUnpacked(unpacked: UnpackResult): Promise<TagsModel> {
   shapeAssets.sort((a, b) => a.id - b.id);
 
   // Static text: texts/<id>.svg per staticTextIds entry. A missing, empty or invalid file is a Named_Limit (10.4).
-  // The empty-group SVGs FFDec writes for DefineEditTextTag are never looked up (F7).
+  // Static edit texts (wasStatic and readOnly) are in staticTextIds too (D12, F7); other edit texts are never looked up.
   const textAssets: ShapeAssetModel[] = [];
   const unsupported: UnsupportedObservation[] = [...structure.unsupported];
   for (const id of [...new Set(structure.staticTextIds)].sort((a, b) => a - b)) {

@@ -593,6 +593,11 @@ export function parseStructure(xmlText: string): {
       const id = attrNum(attrs, FFDEC_XML.morph.idAttr);
       if (id !== undefined) out.morphShapeIds.push(id);
       ctx.unsupported.push(id !== undefined ? { kind: 'morph-shape', tagName: kind, characterId: id } : { kind: 'morph-shape', tagName: kind });
+    } else if (kind === 'DefineEditTextTag' && attrBool(attrs, 'wasStatic') && attrBool(attrs, 'readOnly')) {
+      // Static edit text (as3-coverage D12, F7): FFDec exports its glyph SVG like DefineTextTag.
+      const id = attrNum(attrs, FFDEC_XML.staticText.idAttr);
+      if (id !== undefined) out.staticTextIds.push(id);
+      else ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
     } else if (kind in FFDEC_XML.unsupportedKinds) {
       const k = FFDEC_XML.unsupportedKinds[kind as keyof typeof FFDEC_XML.unsupportedKinds] as UnsupportedKind;
       const idAttr =
