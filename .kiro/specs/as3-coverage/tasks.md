@@ -533,7 +533,7 @@ Rules that apply to every task:
     - `test/e2e/spacerPlay.chromium.test.ts` (create): `chromium` slot, Shared_Run_Cache, `?play=1`, same scenario and assertions, no page error, no failed class at load. Take a screenshot with the `playwright` MCP and look at it.
     - _Requirements: 25.2, 25.3, 25.5, 25.7_
 
-- [~] 32. Checkpoint 3: `spacer` plays
+- [x] 32. Checkpoint 3: `spacer` plays
   - STOP. Follow the Checkpoint procedure of the rules. Block C shares: Requirements 19 to 23, 25 (spacer), 26 (spacer), 27 (spacer), 36.6.
   - Run the full suite `npm test -- --run`. The `spacer` Play_Test must pass and the game must be playable (Requirement 34.7); if `handwritten/spacer/` is absent by the owner's decision, report the skip and that the acceptance of the game is Requirements 25 and 27 as far as they can run. Hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/as3-coverage/reviews/checkpoint-3.md`, and act on its findings in a new commit before reporting.
   - The report also states: whether Ruffle ran `spacer` headlessly (Requirement 26.4), the cause of the render timeout, each "not verified" item as measured, read or Open_Item (Requirement 36.6), the owner decision on O1 and O2, and the Credits_Line against the Block C share of about 200.
