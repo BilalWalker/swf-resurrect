@@ -66,7 +66,7 @@ Rules that apply to every task:
     - **Property 1: One Outcome, decided by the numbers**, **Property 5: Gap summary matches the entries**, **Property 6: Reason sentence is bounded and complete**, **Property 7: Exit code is a function of the outcome**, in `test/property/outcome.property.test.ts` (create). Generators in `test/property/gen/genRunRecord.ts` (create): facts or none, stage list, report numbers with N of M, gap list, type error count, optional classified failure.
     - **Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5, 2.3, 2.4, 4.1, 4.2, 4.3, 4.7, 4.9, 4.11, 4.12, 7.1, 7.2, 7.5, 16.4**
 
-- [ ] 2. Outcome_File: writer, parser, atomic write and `docs/outcome.md`
+- [x] 2. Outcome_File: writer, parser, atomic write and `docs/outcome.md`
   - Commit area: `Pipeline` (Docs and Steering named). Verification V1. Read the design D-A8, D-A10, "Data Models" (the `docs/outcome.md` paragraph) and Properties 4 and 14. `outcomeFile.ts` is the edge file of `src/outcome/`; the serialiser and parser are pure functions in it, the write function takes an injected `fs`.
   - [x] 2.1 Add `src/outcome/outcomeFile.ts`
     - Canonical JSON through the existing `src/pipeline/canonicalJson.ts`; `formatVersion` 1; the parser rejects any other version with a message that names the version and accepts `numbers: null`; write to `outcome.json.tmp-<pid>` in the output directory then rename (D-A8); when the directory is not writable the function returns a flag and the caller still prints the Outcome_Line. `stages[].durationMs` is the only time-dependent field (D-A10). The record carries the `obfuscated` and `recovery` objects (null until Block B fills them).
@@ -77,19 +77,19 @@ Rules that apply to every task:
     - **Property 4: Outcome_File round trip and canonical bytes**, **Property 14: Determinism of the Outcome_File** (two decisions and writes give equal bytes once `stages[].durationMs` is dropped), in `test/property/outcome.property.test.ts` (extend).
     - **Validates: Requirements 2.1, 2.2, 2.7, 2.9, 2.10, 11.7**
 
-  - [-] 2.3 Add `docs/outcome.md` and its example test
+  - [x] 2.3 Add `docs/outcome.md` and its example test
     - The four outcomes, the Reason_Codes with one sentence each, the exit-code table, the Outcome_File fields, one JSON example per outcome, a note that `abcClassCount` is the number of exported `.as` files and differs by one from `swf_summary` on `redball4` (Open_Item O14), a note that `numbers` is null for a refusal before Translate, and the note of Requirement 6.3: the default run limit of 300 s exceeds the 180 s per-job kill of `web/server/options.ts`, which the web owner must align. `test/unit/outcomeDocs.test.ts` (create) extracts each fenced JSON example and compares it with the writer's output for the same record. Update `.kiro/steering/structure.md` (the `src/outcome/` directory and `docs/outcome.md`) in the same commit.
     - _Requirements: 2.8, 6.3, 7.3, 10.1, 10.2, 10.4_
 
 - [ ] 3. Facts: the pure Facts_Reader and the hostile SWF byte builder
   - Commit area: `Pipeline` (Test named). Verification V1. Read the design section "Facts_Reader" (the layout and the six-step table) and Properties 8, 9 and 10 (10 is proven in Task 7.3). New directory `src/facts/` is pure and added to the purity list. The zlib decode is passed in as a function so that `readFacts` itself imports no `node:*` module; the edge caller supplies `inflateSync` with `maxOutputLength`.
-  - [ ] 3.1 Add `src/facts/swfBody.ts` and `src/facts/readFacts.ts`
+  - [x] 3.1 Add `src/facts/swfBody.ts` and `src/facts/readFacts.ts`
     - `readFacts(bytes, limits, inflate): FactsResult` as in the design table: signature check (`not-swf`), declared length above 128 MiB (`too-large`), `CWS` inflate (`Z_BUF_ERROR` or short result is `damaged`), decoded length plus 8 against the declared length (`damaged`), RECT, frame rate (8.8 fixed point), frame count, tag walk by length, an `End` tag required (`damaged`), `scriptVersion` from tag codes 72 and 82 (as3) and 12 and 59 (as1-2). `as1-2` is refused `actionscript-1-2`. Unknown tag codes are walked and ignored. The result keeps the decoded `body` and the byte ranges of tags 72 and 82, so the ABC_Name_Scan (Task 17) does not decode twice. `facts.source` lists which facts came from the header and which from FFDec; `abcClassCount` is null here and filled in Task 7.2. `ZWS` returns header-only facts (stage, rate, frame count and `scriptVersion` are null or `unknown`; U7, no LZMA decoder).
     - Add `test/support/hostileSwf.ts` (create): a byte builder for headers, RECT, tags, `End`, optional zlib, cut and byte-flip helpers. It builds files without FFDec and from byte strings; a helper that cuts a committed sample reads it from `samples/` (Requirement 5.9).
     - Tests: `test/unit/readFacts.test.ts` (create): one example per step of the design table, tag codes 12, 69, 72 and 82, a `FileAttributes` AS3 flag with no `DoABC` tag (timeline-only, converts), a `ZWS` header, the `CWS` length mismatch, the 128 MiB cap.
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 5.1, 5.2, 5.3, 8.1_
 
-  - [ ] 3.2 Write the property tests of the Facts_Reader
+  - [-] 3.2 Write the property tests of the Facts_Reader
     - **Property 8: Facts round trip over generated headers** and **Property 9: Arbitrary bytes never throw**, in `test/property/facts.property.test.ts` (create). Generators in `test/property/gen/genSwfHeader.ts` (create): signature in `FWS`, `CWS`; version 1 to 50; stage rectangle; frame rate; frame count; a valid tag list ending in `End`.
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.5, 3.8, 3.9**
 
