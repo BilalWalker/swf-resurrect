@@ -160,3 +160,19 @@ say which you did. The spec that holds the evidence is named with each item.
   PixiBackend) shows a 4 pixel line in a sprite scaled by 2 covering 8 rows and a timeline child drawn over
   the parent's circle. Lines use round caps and joins (Flash default, not read); `lineStyle` arguments after
   `color` are ignored (Named_Limit `lineStyle-args`).
+
+## Scenes and labels
+- **currentLabel is the nearest label at or before currentFrame, not the label of the exact frame.** Null before
+  the first label. Neither read in Ruffle nor measured (`.work/ruffle-src` was empty at task 24, and no cheap
+  Playwright measurement against the installed web player was made): it follows as3-coverage Requirement 21.1 and
+  design D17 (`get_current_label` / `current_label()`), which cite Ruffle `movie_clip.rs` from an earlier
+  reading. Not verified. Code: `template/shim/timelineLookup.ts` `nearestLabel`.
+- **currentFrame is scene-relative; 	otalFrames is not.** `frame - firstFrame + 1` of the scene that holds the
+  frame. Neither read nor measured here; not verified. One scene at frame 1 gives the old value.
+- **gotoAndStop(frame, scene) / gotoAndPlay: a number is added to the start of the named scene, or of the
+  current scene when none is named; a label is global; an unknown scene throws ArgumentError** (also when
+  `frame` is a label). Neither read nor measured here; not verified (Open_Item for task 30).
+  Code: `timelineLookup.ts` `resolveGotoTarget`. An out-of-range number still warns and leaves the clip alone.
+- **Scene_JSON ormatVersion 3 carries scenes on the root** (`DefineSceneAndFrameLabelDataTag`: `sceneOffsets`
+  0-based, `sceneNames`; FFDec 26.4.0, seen in the spacer dump). The reader accepts 2 and 3; version 2 reads as one
+  scene `Scene 1` at frame 1. The writer always writes 3.

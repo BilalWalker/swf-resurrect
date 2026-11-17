@@ -18,7 +18,7 @@ function scene(): SceneJson {
     },
     rootSymbolId: 0,
     stage: { width: 100, height: 50, backgroundColor: '#ffffff', frameRate: 24 },
-    formatVersion: 2,
+    formatVersion: 3,
   };
 }
 
@@ -29,7 +29,7 @@ describe('serialiseScene', () => {
     expect(text).not.toContain('-0');
     expect(text.indexOf('"10"')).toBeLessThan(text.indexOf('"2"'));
     expect(text.indexOf('"formatVersion"')).toBeLessThan(text.indexOf('"stage"'));
-    expect(text).toContain('\n  "formatVersion": 2,');
+    expect(text).toContain('\n  "formatVersion": 3,');
     expect(text).not.toContain('\r');
   });
 

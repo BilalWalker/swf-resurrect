@@ -26,10 +26,19 @@ export interface SpriteSymbol {
   frameCount: number; // equals frames.length
   frames: DisplayListEntry[][]; // frames[i] is frame i + 1
   labels: Array<{ name: string; frame: number }>; // frame is 1-based
+  /** Root only, formatVersion 3. 1-based first frames, strictly ascending. Absent in a version 2 file; parseScene fills one scene at frame 1. */
+  scenes?: SceneEntry[];
 }
+export interface SceneEntry {
+  name: string;
+  firstFrame: number; // 1-based
+}
+/** The name of the default scene of a timeline without scenes: one scene at frame 1. */
+export const DEFAULT_SCENE_NAME = 'Scene 1';
 
 export interface SceneJson {
-  formatVersion: 2;
+  /** 3 is written. 2 is read: it has no scenes, so the root reads as one scene at frame 1. */
+  formatVersion: 2 | 3;
   stage: { width: number; height: number; backgroundColor: string; frameRate: number };
   rootSymbolId: number;
   symbols: Record<string, ShapeSymbol | SpriteSymbol>;
@@ -73,7 +82,7 @@ function checkNumberTuple(v: unknown, length: number, path: string): void {
 
 export function validateScene(scene: unknown): asserts scene is SceneJson {
   if (!isRecord(scene)) fail('scene', 'must be an object');
-  if (scene.formatVersion !== 2) fail('formatVersion', 'must be 2');
+  if (scene.formatVersion !== 2 && scene.formatVersion !== 3) fail('formatVersion', 'must be 2 or 3');
 
   const stage = scene.stage;
   if (!isRecord(stage)) fail('stage', 'must be an object');
@@ -145,6 +154,21 @@ export function validateScene(scene: unknown): asserts scene is SceneJson {
         if (typeof label.name !== 'string') fail(`${lp}.name`, 'must be a string');
         checkInt(label.frame, `${lp}.frame`, 1, frameCount);
       });
+      if (sym.scenes !== undefined) {
+        if (Number(key) !== rootId) fail(`${sp}.scenes`, 'is allowed on the root symbol only');
+        if (scene.formatVersion !== 3) fail(`${sp}.scenes`, 'needs formatVersion 3');
+        const scenes = sym.scenes;
+        if (!Array.isArray(scenes) || scenes.length === 0) fail(`${sp}.scenes`, 'must be a non-empty array');
+        let prev = 0;
+        scenes.forEach((sc: unknown, si: number) => {
+          const cp = `${sp}.scenes[${si}]`;
+          if (!isRecord(sc)) fail(cp, 'must be an object');
+          if (typeof sc.name !== 'string') fail(`${cp}.name`, 'must be a string');
+          const first = checkInt(sc.firstFrame, `${cp}.firstFrame`, 1, frameCount);
+          if (first <= prev) fail(`${cp}.firstFrame`, 'must be strictly ascending');
+          prev = first;
+        });
+      }
     } else {
       fail(`${sp}.type`, 'must be "shape" or "sprite"');
     }
@@ -166,5 +190,7 @@ export function parseScene(text: string): SceneJson {
     throw new SceneParseError(`scene is not valid JSON: ${e instanceof Error ? e.message : String(e)}`);
   }
   validateScene(value);
+  const root = value.symbols[String(value.rootSymbolId)] as SpriteSymbol;
+  if (root.scenes === undefined) root.scenes = [{ name: DEFAULT_SCENE_NAME, firstFrame: 1 }];
   return value;
 }

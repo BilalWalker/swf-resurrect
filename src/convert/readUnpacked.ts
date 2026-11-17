@@ -110,6 +110,7 @@ export async function readUnpacked(unpacked: UnpackResult): Promise<TagsModel> {
     morphShapeIds: structure.morphShapeIds,
     staticTextIds: structure.staticTextIds,
     bitmapIds: structure.bitmapIds,
+    scenes: structure.scenes,
     shapeAssets,
     textAssets,
     symbolClasses,

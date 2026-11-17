@@ -104,6 +104,11 @@ export const genScene: fc.Arbitrary<SceneJson> = fc
       }),
       symbols: fc.tuple(...parts).map((ps) => Object.fromEntries(ps)),
     }).map(
-      ({ stage, symbols }): SceneJson => ({ formatVersion: 2, stage, rootSymbolId: 0, symbols }),
+      ({ stage, symbols }): SceneJson => {
+        // formatVersion 3: the root carries its scenes (one scene at frame 1 here).
+        const root = symbols['0'] as SpriteSymbol;
+        root.scenes = [{ name: 'Scene 1', firstFrame: 1 }];
+        return { formatVersion: 3, stage, rootSymbolId: 0, symbols };
+      },
     );
   });

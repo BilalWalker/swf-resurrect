@@ -411,19 +411,19 @@ Rules that apply to every task:
     - In `test/property/superArgs.property.test.ts` (create): for any field initialiser kind a class whose constructor passes that field to `super(...)` constructs without `ReferenceError`, and the argument the base received is strictly equal to the field afterwards.
     - **Validates: Requirements 19.1, 19.2, 19.5**
 
-- [ ] 24. Convert and Shim: scenes and `currentLabel` (D17)
+- [x] 24. Convert and Shim: scenes and `currentLabel` (D17)
   - Commit area: `Convert` (Shim and Runtime named). Verification V2. Read the design section "Scenes" and Requirement 21. Scene_JSON becomes `formatVersion` 3 (the reader accepts 2 and 3); goldens are regenerated and the commit records each one and why. `currentLabel` returns the nearest label, `gotoAndStop` is scene-relative as read in Ruffle `core/src/avm2/globals/flash/display/movie_clip.rs`; say so in the commit body and in `flash-behaviour.md`.
-  - [~] 24.1 Write scenes in Convert
+  - [x] 24.1 Write scenes in Convert
     - Read `DefineSceneAndFrameLabelDataTag` (`sceneOffsets` 0-based, `sceneNames`) into `SpriteSymbol.scenes?: Array<{ name, firstFrame }>` on the root, 1-based; write one scene at frame 1 when the tag is absent; the writer writes `formatVersion` 3 and documents it. Use `FFDEC_XML` names as observed in the dump; if a name is `UNVERIFIED`, STOP and ask.
     - Tests: `test/unit/convertScenes.test.ts` (create) on a dump excerpt with offsets 0 and 1; a SWF without the tag gives one scene.
     - _Requirements: 21.6, 21.7_
 
-  - [~] 24.2 Read versions 2 and 3 and test the round trip
+  - [x] 24.2 Read versions 2 and 3 and test the round trip
     - The reader accepts versions 2 and 3; a version 2 file reads as one scene at frame 1. Regenerate the goldens.
     - Tests: **Property 20: Scene goto and scene round trip** (the round-trip half), in `test/property/sceneRoundTrip.property.test.ts` (create): for any scene list, writing to Scene_JSON and reading back gives an equal list; a version 2 file reads as one scene at frame 1.
     - **Validates: Requirements 21.6, 21.7, 21.11**
 
-  - [~] 24.3 Add `currentLabel`, scene-relative `currentFrame` and scene `goto`
+  - [x] 24.3 Add `currentLabel`, scene-relative `currentFrame` and scene `goto`
     - `MovieClip.currentLabel` returns the nearest label at or before `currentFrame`, else null (Ruffle `get_current_label`). `currentFrame` is scene-relative (`frame - firstFrame + 1`); a single scene at frame 1 gives the old value. `gotoAndStop(frame, scene?)` and `gotoAndPlay(frame, scene?)`: a number is added to the start of the named scene or of the current scene when none is named; a label is global; an unknown scene throws `ArgumentError`. Regenerate and stage the member table so a bare `currentLabel` resolves to `this.currentLabel`.
     - Tests: `test/unit/currentLabel.test.ts` (create) with generated timelines. **Property 19: currentLabel is the nearest label**, in `test/property/currentLabel.property.test.ts` (create). **Property 20: Scene goto and scene round trip** (the goto half), in `test/property/sceneGoto.property.test.ts` (create): in-range `gotoAndStop(frame, scene)` lands on `firstFrame + frame - 1`; a number without a scene is relative to the current scene; an unknown scene throws `ArgumentError`.
     - **Validates: Requirements 21.1 to 21.5, 21.8, 21.9, 21.10, 21.12**

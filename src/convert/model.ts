@@ -12,6 +12,8 @@ export interface TagsModel {
   morphShapeIds: number[]; // character ids of morph shape definition tags
   staticTextIds: number[]; // character ids of DefineText / DefineText2 tags
   bitmapIds: number[]; // character ids of DefineBits* tags
+  /** DefineSceneAndFrameLabelData scenes, firstFrame 1-based. Absent or empty: one scene at frame 1. */
+  scenes?: Array<{ name: string; firstFrame: number }>;
   shapeAssets: ShapeAssetModel[]; // one per file found under shapes/
   textAssets: ShapeAssetModel[]; // one per static text id whose texts/<id>.svg is present and valid
   symbolClasses: SymbolClassEntry[]; // from symbols.csv

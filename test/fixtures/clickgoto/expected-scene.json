@@ -1,5 +1,5 @@
 {
-  "formatVersion": 2,
+  "formatVersion": 3,
   "rootSymbolId": 0,
   "stage": {
     "backgroundColor": "#ffffff",
@@ -158,6 +158,12 @@
         ]
       ],
       "labels": [],
+      "scenes": [
+        {
+          "firstFrame": 1,
+          "name": "Scene 1"
+        }
+      ],
       "type": "sprite"
     },
     "1": {

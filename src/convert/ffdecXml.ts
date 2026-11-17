@@ -170,6 +170,10 @@ export const FFDEC_XML = {
      * (empty in the sample). Whether labels appear there instead of FrameLabelTag is UNVERIFIED.
      */
     sceneAndLabelData: 'DefineSceneAndFrameLabelDataTag',
+    /** Verified on FFDec 26.4.0 (spacer dump, lines 12-23): child list of <item>0-based frame index</item>. */
+    sceneOffsets: 'sceneOffsets',
+    /** Verified on FFDec 26.4.0 (spacer dump, lines 12-23): child list of <item>scene name</item>, same order as the offsets. */
+    sceneNames: 'sceneNames',
   },
 
   place: {
@@ -523,6 +527,8 @@ export function parseStructure(xmlText: string): {
   morphShapeIds: number[];
   staticTextIds: number[];
   bitmapIds: number[];
+  /** From DefineSceneAndFrameLabelData; empty when the tag is absent. firstFrame is 1-based. */
+  scenes: Array<{ name: string; firstFrame: number }>;
   unsupported: UnsupportedObservation[];
 } {
   const parser = new XMLParser({
@@ -543,6 +549,7 @@ export function parseStructure(xmlText: string): {
     morphShapeIds: [] as number[],
     staticTextIds: [] as number[],
     bitmapIds: [] as number[],
+    scenes: [] as Array<{ name: string; firstFrame: number }>,
     unsupported: ctx.unsupported,
   };
   if (!swf) return out;
@@ -603,6 +610,8 @@ export function parseStructure(xmlText: string): {
       const id = attrNum(attrs, FFDEC_XML.bitmap.idAttr);
       if (id !== undefined) out.bitmapIds.push(id);
       else ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+    } else if (kind === FFDEC_XML.timeline.sceneAndLabelData) {
+      out.scenes = readScenes(item);
     } else if (IGNORED_DEFINE_TAGS.has(kind) || kind.startsWith(FFDEC_XML.fontTagPrefix)) {
       // known, nothing to read
     } else if (kind.startsWith('Define')) {
@@ -615,6 +624,28 @@ export function parseStructure(xmlText: string): {
   return out;
 }
 
+function itemTexts(item: PNode, listName: string): string[] {
+  const list = childrenOf(item, FFDEC_XML.item.element).find((n) => nameOf(n) === listName);
+  if (!list) return [];
+  const out: string[] = [];
+  for (const it of childrenOf(list, listName)) {
+    if (nameOf(it) !== FFDEC_XML.item.element) continue;
+    const t = childrenOf(it, FFDEC_XML.item.element).find((n) => '#text' in n);
+    out.push(t ? String(t['#text']) : '');
+  }
+  return out;
+}
+/** Scenes of a DefineSceneAndFrameLabelData item: 0-based offsets become 1-based first frames, sorted ascending. */
+function readScenes(item: PNode): Array<{ name: string; firstFrame: number }> {
+  const offsets = itemTexts(item, FFDEC_XML.timeline.sceneOffsets);
+  const names = itemTexts(item, FFDEC_XML.timeline.sceneNames);
+  const scenes: Array<{ name: string; firstFrame: number }> = [];
+  offsets.forEach((o, i) => {
+    const n = Number(o);
+    if (o.trim() !== '' && Number.isInteger(n) && n >= 0) scenes.push({ name: names[i] ?? '', firstFrame: n + 1 });
+  });
+  return scenes.sort((a, b) => a.firstFrame - b.firstFrame);
+}
 function collectOps(items: PNode[], ctx: ParseCtx): TimelineOp[] {
   const ops: TimelineOp[] = [];
   for (const item of items) {

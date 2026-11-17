@@ -2,6 +2,7 @@ import type { DisplayListEntry } from '../runtime/scene';
 import type { DisplayObject } from './DisplayObject';
 import { registerClassName, type ClipScripts } from './internal';
 import { Sprite } from './Sprite';
+import { nearestLabel, ONE_SCENE, resolveGotoTarget, sceneRelativeFrame } from './timelineLookup';
 
 function sameNumbers(a: readonly number[], b: readonly number[]): boolean {
   if (a.length !== b.length) return false;
@@ -28,16 +29,21 @@ export class MovieClip extends Sprite {
     this.isPlaying = false;
   }
 
-  gotoAndPlay(frame: number | string): void {
-    if (this.goto(frame)) this.isPlaying = true;
+  gotoAndPlay(frame: number | string, scene?: string): void {
+    if (this.goto(frame, scene)) this.isPlaying = true;
   }
 
-  gotoAndStop(frame: number | string): void {
-    if (this.goto(frame)) this.isPlaying = false;
+  gotoAndStop(frame: number | string, scene?: string): void {
+    if (this.goto(frame, scene)) this.isPlaying = false;
   }
 
+  /** Scene-relative (`frame - firstFrame + 1` of the scene that holds the frame); one scene at frame 1 gives the frame. */
   get currentFrame(): number {
-    return this.frame;
+    return sceneRelativeFrame(this.scenes(), this.frame);
+  }
+  /** The nearest label at or before the current frame, else null (Ruffle `get_current_label`). */
+  get currentLabel(): string | null {
+    return nearestLabel(this._ctx?.symbol.labels ?? [], this.frame);
   }
 
   get totalFrames(): number {
@@ -165,8 +171,8 @@ export class MovieClip extends Sprite {
   // ---- private ----
 
   /** Validates, moves to the frame and renders. Returns false (state unchanged, one warning) if invalid. */
-  private goto(frame: number | string): boolean {
-    const target = this.resolveFrame(frame);
+  private goto(frame: number | string, scene?: string): boolean {
+    const target = resolveGotoTarget(frame, scene, this.scenes(), this._ctx?.symbol.labels ?? [], this.frame, this.totalFrames);
     if (target === null) {
       console.warn(`MovieClip: invalid frame or label: ${String(frame)}`);
       return false;
@@ -188,14 +194,8 @@ export class MovieClip extends Sprite {
     return true;
   }
 
-  private resolveFrame(frame: number | string): number | null {
-    if (typeof frame === 'string') {
-      return this._ctx?.symbol.labels.find((l) => l.name === frame)?.frame ?? null;
-    }
-    if (typeof frame === 'number' && Number.isInteger(frame) && frame >= 1 && frame <= this.totalFrames) {
-      return frame;
-    }
-    return null;
+  private scenes(): ReadonlyArray<{ name: string; firstFrame: number }> {
+    return this._ctx?.symbol.scenes ?? ONE_SCENE;
   }
 }
 

@@ -1,6 +1,6 @@
 // PURE: TagsModel -> ConvertResult (design, "Converter pure part").
 // No fs, child_process, clock, randomness or locale-dependent calls.
-import { validateScene } from '../../template/runtime/scene';
+import { DEFAULT_SCENE_NAME, validateScene } from '../../template/runtime/scene';
 import type { DisplayListEntry, SceneJson, ShapeSymbol, SpriteSymbol } from '../../template/runtime/scene';
 import { printShapeJson } from '../../template/runtime/shapeJson';
 import { sortUnsupported } from '../pipeline/unsupported';
@@ -114,6 +114,22 @@ function sortedUnique(ids: readonly number[]): number[] {
   return [...new Set(ids)].sort((a, b) => a - b);
 }
 
+/** Root scenes: the SWF's list within the frame count, else one scene at frame 1. */
+function rootScenes(
+  scenes: TagsModel['scenes'],
+  frameCount: number,
+  warnings: string[],
+): Array<{ name: string; firstFrame: number }> {
+  const kept: Array<{ name: string; firstFrame: number }> = [];
+  for (const s of scenes ?? []) {
+    if (s.firstFrame > frameCount || (kept.length > 0 && s.firstFrame <= kept[kept.length - 1].firstFrame)) {
+      warnings.push(`scene "${s.name}" at frame ${s.firstFrame} is outside the ${frameCount} frames or repeats a frame; ignored`);
+      continue;
+    }
+    kept.push({ name: s.name, firstFrame: s.firstFrame });
+  }
+  return kept.length > 0 ? kept : [{ name: DEFAULT_SCENE_NAME, firstFrame: 1 }];
+}
 export function convertModel(model: TagsModel): ConvertResult {
   validateModel(model);
   const warnings: string[] = [];
@@ -288,6 +304,7 @@ export function convertModel(model: TagsModel): ConvertResult {
     };
     const className = classById.get(id);
     if (className !== undefined) sprite.className = className;
+    if (id === 0) sprite.scenes = rootScenes(model.scenes, r.frames.length, warnings);
     symbols[String(id)] = sprite;
 
     // Reference check (Requirement 4.7) and edges for the cycle check.
@@ -366,7 +383,7 @@ export function convertModel(model: TagsModel): ConvertResult {
   }
 
   const scene: SceneJson = {
-    formatVersion: 2,
+    formatVersion: 3,
     stage: {
       width: model.header.widthPx,
       height: model.header.heightPx,
