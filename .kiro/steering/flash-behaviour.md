@@ -221,7 +221,10 @@ say which you did. The spec that holds the evidence is named with each item.
 - **`width` / `height` of a Sprite or MovieClip are the box of its transformed content box in the parent space.** Own
   scale and rotation included, 0 for empty content; graphics and text boxes not counted. Neither read in Ruffle nor
   measured against Flash: AS3 documentation behaviour, chosen so `spacer`'s border clamp works. Setting them on a
-  container is ignored (not implemented).
+  content-sized object (container or shape) calls `setContentSize` (`template/shim/bounds.ts`, commit d454386): it solves
+  for the scale of the same axis so the getter returns the request. The scale is unchanged for empty content, a 90 or 180
+  degree rotation where the axis term is 0, a request below the other axis' contribution, or a non-finite request.
+  Neither read in Ruffle nor measured against Flash (O24).
 - **`inspect()` `label` is the label on the exact absolute frame; `frame` is scene-relative.** Ours, not Flash's.
 
 ## Evidence register (as3-coverage task 30)
@@ -259,7 +262,8 @@ above; nothing was missing.
 | Even-odd against non-zero fill; self-intersecting polygons | ours-only | O20 |
 | Open fill drawn, open stroke, line scale, graphics below children, round caps | ours-only | O21 |
 | Nearest-label `currentLabel`, scene-relative `currentFrame`, scene `goto` | neither (design D17 cites an earlier read) | O22 |
-| Container `width` and `height` from content | neither | O24 |
+| Container width and height from content; setters via `setContentSize` (scale solved per axis, unchanged in the degenerate cases above) | neither | O24 |
+| Static `DefineEditText` (wasStatic and readOnly) drawn as shapes from FFDec's text SVG (Block D); HUD digits compared by eye in `.work` screenshots against Ruffle; text-metrics limit stays | measured by eye | none |
 | Removal on the last frame is not seen between ticks (Play_Test) | ours-only | O31 |
 | `inspect()` label and frame fields | neither (ours, not Flash's) | none |
 | Ruffle ran `spacer` after a click on the player; `entity_game` loaded and did not advance; Input_Script not replayed | measured | O9 |
