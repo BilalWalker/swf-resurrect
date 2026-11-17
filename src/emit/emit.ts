@@ -303,6 +303,7 @@ function describeClasses(
       className: c.className,
       path: c.path,
       extendsQualified: t?.extendsQualified ?? null,
+      ...(t?.unsupportedBase !== undefined ? { unsupportedBase: t.unsupportedBase } : {}),
       importsQualified: [...imported].sort(byCodeUnit),
       importedNames,
       ...(names === undefined ? {} : { exports: names === null ? null : [...names].sort(byCodeUnit) }),

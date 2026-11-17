@@ -447,7 +447,7 @@ Rules that apply to every task:
 
 - [ ] 26. Shim and Runtime: `Rectangle`, `getBounds` and `pixelsOverlap` (D16, D19, D20)
   - Commit area: `Shim` (Runtime named). Verification V2. Read the design section "Collision helper". `getBounds` of an empty clip returns the zero rectangle (Ruffle `get_dobj_bounds` returns `Rectangle::ZERO` for invalid bounds, read in `core/src/avm2/globals/flash/display/display_object.rs`); a target space other than the object is the AABB of the transformed AABB. The Shim does not get `Matrix`, `hitTestObject`, `transform.concatenatedMatrix`, `BitmapData`, `ColorTransform` or `BlendMode` (Requirement 23.10).
-  - [-] 26.1 Add `Rectangle`
+  - [x] 26.1 Add `Rectangle`
     - `x`, `y`, `width`, `height`, `left`, `top`, `right`, `bottom`, `intersection(rect)`, `offset(dx, dy)`, `intersects(rect)`. Non-overlapping rectangles give the rectangle at (0, 0) with width 0 and height 0. Setting `x` keeps `width`; setting `left` changes `width` so `right` stays. Regenerate and stage the member table.
     - Tests: `test/unit/rectangle.test.ts` (create). **Property 23: Rectangle algebra**, in `test/property/rectangle.property.test.ts` (create): `intersection` is commutative, lies inside both operands when non-empty, has an area at most the smaller operand's and is the zero rectangle when disjoint; `offset(dx, dy)` then `offset(-dx, -dy)` restores the rectangle.
     - **Validates: Requirements 23.5, 23.6, 23.7, 23.8, 23.9**
@@ -466,14 +466,14 @@ Rules that apply to every task:
     - Skip when the SWF is absent. Check the `spacer` hitbox symbols (`mc_FlyHitbox` and the others the decompiled `PhysicEngine` uses) for invisible children and for fills with partial alpha (Open_Items O5 and O8, Requirement 23.12); read the Ruffle_Source for whether invisible children are skipped when drawing a source, or record the Open_Item. Put the result in the commit body; Task 30 collects it.
     - _Requirements: 23.12_
 
-- [ ] 27. Translate: `flash.utils.Proxy` stays unsupported (Requirement 20)
+- [x] 27. Translate: `flash.utils.Proxy` stays unsupported (Requirement 20)
   - Commit area: `Translate`. Verification V1. Read Requirement 20 and the design row D15.
-  - [~] 27.1 Name the unsupported base class
+  - [x] 27.1 Name the unsupported base class
     - A class that extends `flash.utils.Proxy` with no Hand_Written_Class replacing it is named as unsupported and left out of the registry as for any unresolved base. The Translator never binds the name `Proxy` to the JavaScript global, and the Shim has no `Proxy` class. Where a Hand_Written_Class replaces it, the Translation_Report names the class as hand-written.
     - Tests: `test/unit/proxyBase.test.ts` (create) with a Fixture_Class that extends `flash.utils.Proxy`: reported as unsupported, not registered, `Proxy` not bound to the global; with an override present, listed as hand-written.
     - _Requirements: 20.1, 20.2, 20.3, 20.5_
 
-  - [~] 27.2 Check that the Shim has no `Proxy`
+  - [x] 27.2 Check that the Shim has no `Proxy`
     - Extend `test/unit/shimNames.test.ts`: `Proxy` is not an export of `template/shim/index.ts`.
     - _Requirements: 20.5_
 

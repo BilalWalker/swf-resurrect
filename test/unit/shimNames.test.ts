@@ -19,6 +19,11 @@ describe('SHIM_AS3_NAMES (Requirement 2.3, design D1)', () => {
     for (const name of SHIM_AS3_NAMES) expect(name in shim, name).toBe(true);
   });
 
+  it('has no Proxy export (Requirement 20.5)', () => {
+    expect(SHIM_AS3_NAMES.has('Proxy')).toBe(false);
+    expect('Proxy' in shim).toBe(false);
+    expect(extractShimExportNames(shimSources())).not.toContain('Proxy');
+  });
   it('skips export type clauses', () => {
     const names = extractShimExportNames([
       { path: 'index.ts', text: "export { A, b } from './a';\nexport type { T } from './a';\nexport { type U, C } from './c';\n" },

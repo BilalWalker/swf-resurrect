@@ -34,6 +34,8 @@ export type OmissionReason =
   /** A gate error in code that runs when the module is evaluated (Requirement 23.1 (f)); `name` is the missing name or `Type.member`. */
   | { kind: 'load-time-error'; code: number; line: number; name: string }
   | { kind: 'extends-omitted'; base: QualifiedName }
+  /** The base is lash.utils.Proxy: the Shim has no Proxy and no source file stands for it (Requirement 20.1). */
+  | { kind: 'unsupported-base'; base: string }
   | { kind: 'imports-omitted'; imported: QualifiedName };
 
 export interface ClassOmission {
@@ -57,6 +59,8 @@ export interface OmissionClass {
   /** Final emitted path. */
   path: string;
   extendsQualified: QualifiedName | null;
+  /** lash.utils.Proxy when the class extends it; absent otherwise. */
+  unsupportedBase?: string;
   /** Sorted, unique. */
   importsQualified: readonly QualifiedName[];
   /** Every binding this class imports from another emitted class; absent means not checked. */
@@ -180,6 +184,10 @@ export function decideClassOmissions(
       continue;
     }
     if (c.handwritten) continue;
+    if (c.unsupportedBase !== undefined) {
+      reasons.set(c.className, { kind: 'unsupported-base', base: c.unsupportedBase });
+      continue;
+    }
     if (!c.produced) {
       reasons.set(c.className, { kind: 'emit-failed' });
       continue;
@@ -314,6 +322,9 @@ export function omissionMessage(o: ClassOmission): string {
       break;
     case 'extends-omitted':
       why = `extends ${r.base}, which is omitted`;
+      break;
+    case 'unsupported-base':
+      why = `extends ${r.base}, an unsupported base class (the Shim has no Proxy)`;
       break;
     case 'imports-omitted':
       why = `imports ${r.imported}, which is omitted`;

@@ -31,6 +31,8 @@ export interface TranslatedClass {
   extendsName: string | null;
   /** Resolved through the import plan; null when the base has no source. */
   extendsQualified: string | null;
+  /** lash.utils.Proxy when the class extends it (Requirement 20.1); absent otherwise. */
+  unsupportedBase?: string;
   importRecords: ImportRecord[];
   /** The source declares an AS3 interface that could not be translated: nothing is emitted for it but comments. */
   as3Interface?: boolean;
@@ -137,6 +139,7 @@ export function planTranslate(
       spans: r.spans,
       extendsName: info?.extendsName ?? null,
       extendsQualified: info?.extendsQualified ?? null,
+      ...(info?.unsupportedBase !== undefined ? { unsupportedBase: info.unsupportedBase } : {}),
       importRecords: r.importRecords,
       as3Interface: as3InterfaceName(s.source) !== null && r.interfaceTranslated !== true,
       ...(r.cutSites !== undefined ? { cutSites: r.cutSites } : {}),

@@ -198,14 +198,21 @@ function resolveHeritage(name: string, plan: ImportPlan): string | null {
   return plan.bindingOfBare.get(name) ?? null;
 }
 
+const UNSUPPORTED_PROXY = 'flash.utils.Proxy';
+/** The base is flash.utils.Proxy (written bare or qualified) and no emitted class stands for the name. */
+function isProxyBase(name: string, plan: ImportPlan): boolean {
+  return (name === 'Proxy' || name === UNSUPPORTED_PROXY) && resolveHeritage(name, plan) === null;
+}
 function collectClasses(nodes: readonly Node[], out: ClassInfo[], plan: ImportPlan): void {
   for (const n of nodes) {
     if (n.kind === 'package') collectClasses(n.body, out, plan);
     else if (n.kind === 'class') {
+      const unsupported = n.extendsName !== null && isProxyBase(n.extendsName, plan);
       out.push({
         name: n.name,
         extendsName: n.extendsName,
         extendsQualified: n.extendsName === null ? null : resolveHeritage(n.extendsName, plan),
+        ...(unsupported ? { unsupportedBase: UNSUPPORTED_PROXY } : {}),
       });
     }
   }
@@ -216,7 +223,9 @@ function bindHeritage(nodes: readonly Node[], plan: ImportPlan): void {
   for (const n of nodes) {
     if (n.kind === 'package') bindHeritage(n.body, plan);
     else if (n.kind === 'class') {
-      if (n.extendsName !== null) n.extendsName = plan.bindingOfChain.get(n.extendsName) ?? n.extendsName;
+      // flash.utils.Proxy has no Shim class: the name must never resolve to the JavaScript global (Requirement 20.2).
+      if (n.extendsName !== null && isProxyBase(n.extendsName, plan)) n.extendsName = 'flash_utils_Proxy';
+      else if (n.extendsName !== null) n.extendsName = plan.bindingOfChain.get(n.extendsName) ?? n.extendsName;
       // A name with no source file (a Flash API interface such as IEventDispatcher) has no token: it stays in
       // the TypeScript clause as a type and is left out of declareImplements, always, so the output is stable.
       n.implementsTokens = n.implementsNames.filter((x) => resolveHeritage(x, plan) !== null).map((x) => plan.bindingOfChain.get(x) ?? x);

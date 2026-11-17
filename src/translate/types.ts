@@ -45,6 +45,8 @@ export interface ClassInfo {
   extendsName: string | null;
   /** Resolved through the import plan; null when the base has no source. */
   extendsQualified: string | null;
+  /** lash.utils.Proxy when the class extends it: no Shim class and no source file stand for it (Requirement 20.1). */
+  unsupportedBase?: string;
 }
 
 export interface TranslateResult {
