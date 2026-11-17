@@ -207,3 +207,19 @@ say which you did. The spec that holds the evidence is named with each item.
   `currentCount`; lowering `repeatCount` to at most `currentCount` stops a running Timer without an event; a
   `TIMER` listener that stops the Timer suppresses `TIMER_COMPLETE` for that tick; timers tie-break by
   creation order. Code: `template/runtime/timers.ts`, `template/shim/Timer.ts`.
+
+## Play_Test findings (as3-coverage task 31, spacer)
+- **A clip whose enterFrame code removes it on its last frame is never seen on that frame between ticks.** Phase A moves
+  the Fly to `destroyedComplete` (frame 51 of 51), the `enterFrame` of `Main` runs `Fly.animateDeath` (stop, `die()`)
+  and `LevelScene.removeFly` takes it off the Stage in the same tick. The last snapshot shows frame 50; the next shows
+  no Fly of that name. Measured in our runtime only (Node and Chromium Play_Tests); follows from the frame step order
+  above, not compared with Flash or Ruffle.
+- **Keys reach the emitted page with no click.** Playwright key presses on the top-level `?play=1` page start the spacer
+  level without any pointer event (the window listener of `main.ts`, canvas focused on load). Measured in headless
+  Chromium (`test/e2e/spacerPlay.chromium.test.ts`). Ruffle needed a click on the player first; that is Ruffle's
+  focus rule, not one we copy. Inside an iframe the rule above still applies.
+- **`width` / `height` of a Sprite or MovieClip are the box of its transformed content box in the parent space.** Own
+  scale and rotation included, 0 for empty content; graphics and text boxes not counted. Neither read in Ruffle nor
+  measured against Flash: AS3 documentation behaviour, chosen so `spacer`'s border clamp works. Setting them on a
+  container is ignored (not implemented).
+- **`inspect()` `label` is the label on the exact absolute frame; `frame` is scene-relative.** Ours, not Flash's.
