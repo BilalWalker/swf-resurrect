@@ -66,6 +66,22 @@ Notes:
 - The default run limit is 300 s. The web server kills a job after 180 s (`web/server/options.ts`), which is
   shorter. The web owner must align the two; this repository does not edit `web/` (Requirement 6.3).
 
+### Run_Limits
+
+`src/pipeline/limits.ts` resolves each limit as option, then environment variable, then default. A value that is
+not a positive integer (text, zero, negative, decimal) is a usage error and exits 2.
+
+| Limit | Option | Variable | Default | Reason |
+|---|---|---|---|---|
+| Input size | `--max-size <MiB>` | `SWF_RESURRECT_MAX_SIZE_MIB` | 20 MiB | Equals the upload limit of `web/server/upload.ts`, so the CLI and the web app refuse the same files. |
+| Run | `--run-limit <seconds>` | `SWF_RESURRECT_RUN_LIMIT_S` | 300 s | Five minutes for the whole run: the stage allowances above add up to 540 s, so the run limit is the tighter bound. It exceeds the web server's 180 s kill, so the server ends a job first; the web owner aligns the two. |
+| Stage base | `--stage-limit <seconds>` | `SWF_RESURRECT_STAGE_LIMIT_S` | 60 s | One unit of stage time. A stage may use the base times its weight. |
+
+Stage weights: `recover` 2, `unpack` 2, `convert` 1, `translate` 1, `emit` 1, `gate` 1, `verify` 3. With the
+default base, `recover` and `unpack` get 120 s each, `verify` 180 s and the others 60 s. Unpack and recover start
+FFDec (a Java process, slow to start and to decompile large files), and verify renders frames in a browser, so
+these three get more than the base. The limits that applied are written to `limits` in the Outcome_File.
+
 ## Examples
 
 One record per outcome, as the writer prints it. `test/unit/outcomeDocs.test.ts` compares each block with the

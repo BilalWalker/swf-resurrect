@@ -247,6 +247,49 @@
         "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794853606049
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853652415
+      }
+    ],
+    "9. Steering: correct `tech.md` Scene_JSON formatVersion (S4)": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853652556
+      }
+    ],
+    "10.1 Add `src/pipeline/limits.ts` and the CLI options": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853652760
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853800176
+      }
+    ],
+    "10.2 Add the clock, `RunGuard` and `runStage`": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853800806
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794854035176
+      }
+    ],
+    "10.3 Write the property tests of the limits, and update the steering": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794854035708
       }
     ]
   }

@@ -16,7 +16,7 @@ import { readFacts } from '../facts/readFacts';
 import { classifyError } from '../outcome/classifyError';
 import { summariseGaps } from '../outcome/gaps';
 import { decideOutcome } from '../outcome/outcome';
-import type { ClassifiedFailure, Facts, Outcome, OutcomeLimits, OutcomeNumbers, OutcomeRecord, ReasonCode, StageName, StageRecord } from '../outcome/outcome';
+import type { ClassifiedFailure, Facts, Outcome, OutcomeLimits, OutcomeNumbers, OutcomeRecord, ReasonCode, StageRecord } from '../outcome/outcome';
 import { writeOutcomeFile } from '../outcome/outcomeFile';
 import { reasonSentence } from '../outcome/reasons';
 import { failedReason, referenceIdFromDigest, referenceIdInput } from '../outcome/referenceId';
@@ -27,6 +27,11 @@ import type { TranslationProblem, TranslationReport } from '../translate/report'
 import type { GateResult } from '../translate/typeCheckGate';
 import type { VerifyRequest, VerifySummary } from '../verify/edge/verifyStage';
 import { PipelineError } from './errors';
+import { killAll } from './processTree';
+import { createGuard } from './guard';
+import type { Clock } from './guard';
+import { defaultLimits } from './limits';
+import { realClock } from './realClock';
 import type { PipelineStage } from './errors';
 import { classifyOverrides } from './handwrittenSet';
 import type { HandwrittenEntry, HandwrittenReportEntry } from './handwrittenSet';
@@ -34,14 +39,6 @@ import { serialiseUnsupported } from './unsupported';
 import type { UnsupportedFeatureEntry } from './unsupported';
 
 export type { VerifyRequest, VerifySummary };
-
-/** Stand-in limits until Task 10.1 wires the real ones (D-A4). */
-const DEFAULT_LIMITS: OutcomeLimits = {
-  maxSizeMiB: 20,
-  runLimitS: 300,
-  stageLimitS: 60,
-  stageWeights: { convert: 1, emit: 1, gate: 1, recover: 2, translate: 1, unpack: 2, verify: 3 },
-};
 
 /**
  * Counts of the Translation_Report (D-A3). A translated class is a kept class that is clean or loose by status, a
@@ -64,9 +61,6 @@ export function numbersOf(report: TranslationReport, droppedPlacements: number):
   };
 }
 
-/** Stand-in until Task 10.1 wires the size limit. */
-const MAX_INPUT_BYTES = DEFAULT_LIMITS.maxSizeMiB * 1024 * 1024;
-
 /** A refusal found by the Facts stage; no FFDec process has started. */
 class FactsRefusedError extends Error {
   constructor(readonly reasonCode: ReasonCode) {
@@ -80,10 +74,10 @@ function nodeInflate(data: Uint8Array, maxOutputLength: number): Uint8Array {
 }
 
 /** Reads the file and the Facts. A too-large file is judged from its size and 8 header bytes, never read whole. */
-async function factsStage(swfPath: string): Promise<{ facts: Facts | null; refusal: ReasonCode | null }> {
+async function factsStage(swfPath: string, maxInputBytes: number): Promise<{ facts: Facts | null; refusal: ReasonCode | null }> {
   const size = (await stat(swfPath)).size;
   let bytes: Uint8Array;
-  if (size > MAX_INPUT_BYTES) {
+  if (size > maxInputBytes) {
     const fh = await open(swfPath, 'r');
     try {
       const buf = new Uint8Array(8);
@@ -98,7 +92,7 @@ async function factsStage(swfPath: string): Promise<{ facts: Facts | null; refus
     return { facts: r.facts, refusal: r.reasonCode };
   }
   bytes = new Uint8Array(await readFile(swfPath));
-  const r = readFacts(bytes, { maxSizeBytes: MAX_INPUT_BYTES }, nodeInflate);
+  const r = readFacts(bytes, { maxSizeBytes: maxInputBytes }, nodeInflate);
   return r.ok ? { facts: r.facts, refusal: null } : { facts: r.facts, refusal: r.reasonCode };
 }
 
@@ -115,10 +109,6 @@ async function countAbcClasses(scriptsDir: unknown): Promise<number | null> {
 export function outcomeLine(o: Outcome): string {
   return `Outcome: ${o.outcome} ${o.reasonCode ?? '-'} ${o.reason}`;
 }
-
-const STAGE_NAME: Record<PipelineStage, StageName> = {
-  unpack: 'unpack', convert: 'convert', translate: 'translate', emit: 'emit', pipeline: 'gate', verify: 'verify',
-};
 
 export interface PipelineStages {
   unpack(i: UnpackInput): Promise<UnpackResult>;
@@ -162,6 +152,10 @@ export interface PipelineArgs {
   verify?: { frames?: number };
   /** Set by --reference-dir; null or absent means <swf dir>/reference when it exists. */
   referenceDir?: string | null;
+  /** Run_Limits from resolveLimits; absent means the defaults. */
+  limits?: OutcomeLimits;
+  /** Clock of the run guard; absent means the real clock. Tests pass a fake. */
+  clock?: Clock;
 }
 
 /** Error codes of the Emitter refusals that must leave the output directory untouched (Req 5.8, 5.10). */
@@ -328,6 +322,7 @@ export function verifyLines(summary: VerifySummary): string[] {
 
 /** Runs the three stages. Exit codes: 0 success, 1 stage failure, 2 usage or path error. */
 export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io: PipelineIo): Promise<number> {
+  const runLimits = args.limits ?? defaultLimits();
   const problem = await precheck(args);
   if (problem !== null) {
     io.err(`error [pipeline]: ${problem}\n`);
@@ -354,13 +349,9 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let exitCode = 0;
   let outputDir = resolve(args.outputDir);
   let failure: unknown = null;
-  const stageRecords: StageRecord[] = [];
-  let stageStart = Date.now();
-  const endStage = (name: PipelineStage, result: 'ok' | 'error'): void => {
-    const now = Date.now();
-    stageRecords.push({ name: STAGE_NAME[name], result, durationMs: now - stageStart });
-    stageStart = now;
-  };
+  // The run starts here: the wait for a PIPELINE_SLOTS slot is test-side and never reaches this clock.
+  const guard = createGuard({ clock: args.clock ?? realClock, limits: runLimits, killAll });
+  const stageRecords: StageRecord[] = guard.records;
   let translated: TranslateArtifact | null = null;
   let gate: GateResult | null = null;
   let omissions: ClassOmission[] = [];
@@ -375,29 +366,30 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
 
   try {
     // Facts stage: no FFDec process starts for a refused input.
-    const read = await factsStage(resolve(args.swfPath));
+    const read = await factsStage(resolve(args.swfPath), runLimits.maxSizeMiB * 1024 * 1024);
     facts = read.facts;
     if (read.refusal !== null) throw new FactsRefusedError(read.refusal);
-    const unpacked = await stages.unpack({
-      swfPath: resolve(args.swfPath),
-      workDir,
-      ffdecJarPath: args.ffdecJarPath,
-    });
+    const unpacked = await guard.runStage('unpack', () =>
+      stages.unpack({
+        swfPath: resolve(args.swfPath),
+        workDir,
+        ffdecJarPath: args.ffdecJarPath,
+      }),
+    );
     if (facts !== null) {
       facts.abcClassCount = await countAbcClasses((unpacked as Partial<UnpackResult>).scriptsDir);
       if (facts.abcClassCount !== null) facts.source.ffdec = ['abcClassCount'];
     }
     io.out('[unpack] ok\n');
-    endStage('unpack', 'ok');
 
     stage = 'convert';
-    artifact = await stages.convert(unpacked);
+    artifact = await guard.runStage('convert', () => stages.convert(unpacked));
     unsupported = [...artifact.unsupported, ...untranslatedClasses(artifact, overridden)];
     io.out(`[convert] ok (${artifact.stats.svgWritten} svg written, ${artifact.stats.morphSkipped} morph skipped)\n`);
-    endStage('convert', 'ok');
 
     stage = 'translate';
-    translated = await stages.translate(unpacked, artifact, childNamesByClass(artifact.scene));
+    const convertedArtifact = artifact;
+    translated = await guard.runStage('translate', () => stages.translate(unpacked, convertedArtifact, childNamesByClass(convertedArtifact.scene)));
     const available = new Set([...overridden, ...translated.classes.map((c) => c.className)]);
     unsupported = [
       ...artifact.unsupported,
@@ -409,10 +401,10 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     io.out(
       `[translate] ok (${translated.classes.length} classes before type check: ${counts.clean} clean, ${counts.loose} loose, ${counts.unsupported} unsupported)\n`,
     );
-    endStage('translate', 'ok');
 
     stage = 'emit';
-    const result = await stages.emit(artifact, {
+    const translatedClasses = translated.classes;
+    const result = await guard.runStage('emit', () => stages.emit(convertedArtifact, {
       outputDir: args.outputDir,
       force: args.force,
       swfPath: resolve(args.swfPath),
@@ -420,13 +412,12 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       homeDir: args.homeDir,
       templateDir: args.templateDir,
       handwrittenDir: args.handwrittenDir,
-      translated: translated.classes,
+      translated: translatedClasses,
       ...(stages.gate === undefined ? {} : { gate: stages.gate }),
       ...(stages.guard === undefined ? {} : { bundlerGuard: stages.guard }),
-    });
+    }));
     outputDir = result.outputDir;
     io.out('[emit] ok\n');
-    endStage('emit', 'ok');
     omissions = result.omissions;
     loose = result.loose;
     classPaths = result.classPaths;
@@ -452,13 +443,13 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
 
     stage = 'pipeline';
     // The gate Emit ran describes the project on disk; run the separate stage only when Emit had none.
-    gate = result.gate ?? (await stages.typeCheck(result.outputDir, result.files));
+    const emitted = result;
+    gate = await guard.runStage('gate', async () => emitted.gate ?? (await stages.typeCheck(emitted.outputDir, emitted.files)));
     if (gate.errors.length === 0) {
       io.out('[typecheck] ok (0 errors)\n');
     } else {
       io.err(`[typecheck] ${gate.errors.length} errors: ${errorsPerFile(gate)}\n`);
     }
-    endStage('pipeline', 'ok');
 
     if (args.verify !== undefined && stages.verify !== undefined) {
       stage = 'verify';
@@ -477,9 +468,9 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
         referenceDir: args.referenceDir == null && !existsSync(referenceDir) ? null : referenceDir,
       };
       if (args.verify.frames !== undefined) req.frames = args.verify.frames;
-      const summary = await stages.verify(req);
+      const verifyStage = stages.verify;
+      const summary = await guard.runStage('verify', () => verifyStage(req));
       for (const line of verifyLines(summary)) io.out(`${line}\n`);
-      endStage('verify', 'ok');
     }
   } catch (err) {
     // `throw null` and `throw undefined` must still count as a failure.
@@ -494,7 +485,6 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       if (err instanceof FactsRefusedError) {
         io.err(`error [${reported}]: ${messageOf(err)}\n`);
       } else {
-        endStage(stage, 'error');
         classified = classifyError(failure, reported);
         const isFfdecExit = classified.kind === 'refused' && classified.reasonCode === 'damaged' && (err as { code?: unknown } | null)?.code === 'FFDEC_EXIT';
         if (classified.kind === 'internal' || isFfdecExit) {
@@ -565,7 +555,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     failure: classified,
     numbers,
     gaps,
-    limits: DEFAULT_LIMITS,
+    limits: runLimits,
     recovery: null,
   });
 
@@ -577,7 +567,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     facts,
     numbers,
     gaps,
-    limits: DEFAULT_LIMITS,
+    limits: runLimits,
     stages: stageRecords,
     obfuscated: null,
     recovery: null,

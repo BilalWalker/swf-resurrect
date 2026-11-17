@@ -12,6 +12,7 @@ import { typeCheckProject } from '../translate/typeCheckGate';
 import { unpack } from '../unpack/unpack';
 import { listOverrideClasses, readHandwrittenSet } from './handwrittenSet';
 import type { HandwrittenEntry } from './handwrittenSet';
+import { resolveLimits } from './limits';
 import { runPipeline } from './pipeline';
 import type { PipelineArgs, PipelineStages } from './pipeline';
 
@@ -26,12 +27,15 @@ export interface CliOptions {
   verify?: true;
   verifyFrames?: number;
   referenceDir?: string;
+  maxSize?: string;
+  runLimit?: string;
+  stageLimit?: string;
 }
 
 export type ParsedArgs = { ok: true; options: CliOptions } | { ok: false; message: string; exitCode: 2 };
 
 export const USAGE =
-  'Usage: pipeline <input.swf> <output-dir> [--force] [--work-dir <dir>] [--keep-work] [--ffdec <jar>] [--handwritten <dir>] [--verify] [--verify-frames <n>] [--reference-dir <dir>]';
+  'Usage: pipeline <input.swf> <output-dir> [--force] [--work-dir <dir>] [--keep-work] [--ffdec <jar>] [--handwritten <dir>] [--verify] [--verify-frames <n>] [--reference-dir <dir>] [--max-size <MiB>] [--run-limit <seconds>] [--stage-limit <seconds>]';
 
 /** Pure: argv excludes the node binary and script path. Usage errors give exit code 2. */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
@@ -50,6 +54,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
         verify: { type: 'boolean' },
         'verify-frames': { type: 'string' },
         'reference-dir': { type: 'string' },
+        'max-size': { type: 'string' },
+        'run-limit': { type: 'string' },
+        'stage-limit': { type: 'string' },
       },
     });
   } catch (err) {
@@ -80,6 +87,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       return { ok: false, message: `--verify-frames needs a positive integer\n${USAGE}`, exitCode: 2 };
     }
   }
+  for (const [name, v] of [['--max-size', values['max-size']], ['--run-limit', values['run-limit']], ['--stage-limit', values['stage-limit']]] as const) {
+    if (v !== undefined && !/^[1-9][0-9]*$/.test(v)) {
+      return { ok: false, message: `${name} needs a positive integer\n${USAGE}`, exitCode: 2 };
+    }
+  }
   const options: CliOptions = {
     swfPath: positionals[0],
     outputDir: positionals[1],
@@ -90,6 +102,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   if (values.ffdec !== undefined) options.ffdecJarPath = values.ffdec;
   if (values.handwritten !== undefined) options.handwrittenDir = values.handwritten;
   if (values['reference-dir'] !== undefined) options.referenceDir = values['reference-dir'];
+  if (values['max-size'] !== undefined) options.maxSize = values['max-size'];
+  if (values['run-limit'] !== undefined) options.runLimit = values['run-limit'];
+  if (values['stage-limit'] !== undefined) options.stageLimit = values['stage-limit'];
   if (values.verify === true) options.verify = true;
   if (verifyFramesText !== undefined) options.verifyFrames = Number(verifyFramesText);
   return { ok: true, options };
@@ -136,6 +151,15 @@ export async function main(argv: readonly string[]): Promise<number> {
     return parsed.exitCode;
   }
   const o = parsed.options;
+  const limitOptions: { maxSize?: string; runLimit?: string; stageLimit?: string } = {};
+  if (o.maxSize !== undefined) limitOptions.maxSize = o.maxSize;
+  if (o.runLimit !== undefined) limitOptions.runLimit = o.runLimit;
+  if (o.stageLimit !== undefined) limitOptions.stageLimit = o.stageLimit;
+  const resolved = resolveLimits({ options: limitOptions, env: process.env });
+  if (!resolved.ok) {
+    io.err(`error [pipeline]: ${resolved.message}\n${USAGE}\n`);
+    return 2;
+  }
 
   let handwrittenDir: string | null;
   if (o.handwrittenDir !== undefined) {
@@ -180,6 +204,7 @@ export async function main(argv: readonly string[]): Promise<number> {
     referenceDir,
     cwd: process.cwd(),
     homeDir: homedir(),
+    limits: resolved.limits,
   };
   if (o.workDir !== undefined) args.workDir = o.workDir;
   if (o.verify === true) args.verify = o.verifyFrames === undefined ? {} : { frames: o.verifyFrames };
@@ -188,13 +213,13 @@ export async function main(argv: readonly string[]): Promise<number> {
 
 const invokedAsScript = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedAsScript) {
-  main(process.argv.slice(2)).then(
-    (code) => {
-      process.exitCode = code;
-    },
-    (err: unknown) => {
-      process.stderr.write(`error [pipeline]: ${err instanceof Error ? err.message : String(err)}\n`);
-      process.exitCode = 1;
-    },
-  );
+  // process.exit after stdout is flushed: an abandoned (timed-out) stage must not keep the event loop alive (D-A5).
+  const finish = (code: number): void => {
+    process.exitCode = code;
+    process.stdout.write('', () => process.exit(code));
+  };
+  main(process.argv.slice(2)).then(finish, (err: unknown) => {
+    process.stderr.write(`error [pipeline]: ${err instanceof Error ? err.message : String(err)}\n`);
+    finish(1);
+  });
 }

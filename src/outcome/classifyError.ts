@@ -23,6 +23,16 @@ export function classifyError(err: unknown, stage: string): ClassifiedFailure {
       return { kind: "refused", reasonCode: "not-swf", stage };
     case "NOT_AS3":
       return { kind: "refused", reasonCode: "actionscript-1-2", stage };
+    case "TIME_LIMIT": {
+      // Thrown by the run guard (task 10.2): it names the stage that hit the limit and the limit that applied.
+      const e = err as { stage?: unknown; limit?: unknown };
+      return {
+        kind: "refused",
+        reasonCode: "time-limit",
+        stage: typeof e.stage === "string" ? e.stage : stage,
+        ...(typeof e.limit === "string" ? { limit: e.limit } : {}),
+      };
+    }
     case "FFDEC_TIMEOUT":
       return { kind: "refused", reasonCode: "time-limit", stage };
     case "FFDEC_EXIT":

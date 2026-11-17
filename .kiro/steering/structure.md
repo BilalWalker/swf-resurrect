@@ -25,7 +25,10 @@ src/samples/      Fetched-sample core (static_text)
 scripts/          runTests.ts (`npm test`), gen-shim-members.ts, fetch-static-text.ts
 src/outcome/      Outcome types and decideOutcome, exit-code table, reason sentences and scrub, gap kinds,
                   Outcome_File writer and parser (outcomeFile.ts; fs is injected, no node:* import)
-src/pipeline/     Stage wiring, CLI (npm run pipeline), report writing
+src/facts/        Facts stage: reads the SWF header and tag counts before any FFDec call (readFacts, swfBody)
+src/pipeline/     Stage wiring, CLI (npm run pipeline), report writing;
+                  limits.ts (pure Run_Limits resolver), guard.ts (Clock, RunGuard, runStage; pure),
+                  realClock.ts (the real Clock), processTree.ts (child registry and tree kill)
 mcp/              MCP servers for Kiro: swf-inspector (npm run mcp:swf-inspector)
 scripts/hooks/    Scripts run by the hooks in .kiro/hooks/ (plain Node, no tsx)
 template/         Files copied into every emitted project: runtime/, shim/, src/ (shim/ includes Stage)

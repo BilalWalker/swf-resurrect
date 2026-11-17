@@ -1,61 +1,55 @@
+// Task 10.1 (robustness Requirements 6.1, 6.2, 6.3, 6.8, 6.13): Run_Limits resolver and its CLI options.
 import { describe, expect, it } from 'vitest';
-import { knownVisualLimits } from '../../src/verify/core/limits';
-import type { SceneJson } from '../../template/runtime/scene';
-import type { UnsupportedFeatureEntry } from '../../src/pipeline/unsupported';
+import { parseArgs } from '../../src/pipeline/cli';
+import { defaultLimits, resolveLimits, stageAllowanceS, STAGE_WEIGHTS } from '../../src/pipeline/limits';
 
-const scene = { formatVersion: 2, stage: { width: 1, height: 1, backgroundColor: '#ffffff', frameRate: 30 }, rootSymbolId: 0, symbols: {} } as unknown as SceneJson;
-const entry = (kind: string, id: number | undefined, message: string): UnsupportedFeatureEntry =>
-  ({ kind, message, ...(id === undefined ? {} : { id }) }) as UnsupportedFeatureEntry;
-const OPEN = { allComparedFramesExact: false };
+const resolve = (options: Parameters<typeof resolveLimits>[0]['options'], env: Record<string, string> = {}) =>
+  resolveLimits({ options, env });
 
-const sceneWith = (ct: number[]): SceneJson =>
-  ({
-    ...scene,
-    symbols: { 3: { type: 'sprite', frames: [[{ depth: 2, symbolId: 5, matrix: [1, 0, 0, 1, 0, 0], colorTransform: ct, name: '' }]] } },
-  }) as unknown as SceneJson;
-describe('knownVisualLimits colour-offset', () => {
-  it.each([
-    ['RGB offsets only', [1, 1, 1, 1, 255, 10, 0, 0]],
-  ])('records nothing for %s', (_n, ct) => {
-    expect(knownVisualLimits(sceneWith(ct), [], OPEN)).toEqual([]);
+describe('resolveLimits', () => {
+  it('uses the defaults when nothing is set', () => {
+    expect(resolve({})).toEqual({ ok: true, limits: defaultLimits() });
+    const d = defaultLimits();
+    expect([d.maxSizeMiB, d.runLimitS, d.stageLimitS]).toEqual([20, 300, 60]);
   });
-  it.each([
-    ['positive add 100, alpha multiplier 1 (exact on opaque fills, 7115 px off on alpha 128 fills)', [1, 1, 1, 1, 0, 0, 0, 100], 100],
-    ['alpha multiplier 0.5, add 64', [1, 1, 1, 0.5, 0, 0, 0, 64], 64],
-    ['alpha multiplier 0, add 255', [1, 1, 1, 0, 0, 0, 0, 255], 255],
-    ['negative alpha add', [1, 1, 1, 1, 0, 0, 0, -20], -20],
-  ])('records a colour-offset limit for %s', (_n, ct, n) => {
-    const out = knownVisualLimits(sceneWith(ct), [], OPEN);
-    expect(out).toHaveLength(1);
-    expect(out[0]?.kind).toBe('colour-offset');
-    expect(out[0]?.id).toBe(3);
-    expect(out[0]?.message).toContain(`approximated: alpha add term (alphaAddTerm ${n}) is not drawn exactly`);
+
+  it('option beats variable beats default', () => {
+    const env = { SWF_RESURRECT_MAX_SIZE_MIB: '5', SWF_RESURRECT_RUN_LIMIT_S: '100', SWF_RESURRECT_STAGE_LIMIT_S: '10' };
+    const r = resolve({ maxSize: '7' }, env);
+    expect(r).toMatchObject({ ok: true, limits: { maxSizeMiB: 7, runLimitS: 100, stageLimitS: 10 } });
+  });
+
+  it.each(['1.5', 'abc', '', '-3', '1e3', ' 4'])('rejects the non-integer value %j', (v) => {
+    expect(resolve({ runLimit: v }).ok).toBe(false);
+    expect(resolve({}, { SWF_RESURRECT_STAGE_LIMIT_S: v }).ok).toBe(false);
+  });
+
+  it('rejects zero from an option and from a variable', () => {
+    const a = resolve({ maxSize: '0' });
+    expect(a.ok).toBe(false);
+    if (!a.ok) expect(a.message).toContain('--max-size');
+    const b = resolve({}, { SWF_RESURRECT_MAX_SIZE_MIB: '0' });
+    expect(b.ok).toBe(false);
+    if (!b.ok) expect(b.message).toContain('SWF_RESURRECT_MAX_SIZE_MIB');
+  });
+
+  it('has the weight table, and recover gets 120 s by default', () => {
+    expect(STAGE_WEIGHTS).toEqual({ recover: 2, unpack: 2, convert: 1, translate: 1, emit: 1, gate: 1, verify: 3 });
+    expect(defaultLimits().stageWeights).toEqual(STAGE_WEIGHTS);
+    expect(stageAllowanceS(defaultLimits(), 'recover')).toBe(120);
+    expect(stageAllowanceS(defaultLimits(), 'verify')).toBe(180);
   });
 });
-describe('knownVisualLimits kinds', () => {
-  it.each(['gradient-fill', 'gradient-spread', 'gradient-focal', 'bitmap-fill', 'bitmap-smoothing', 'text-metrics', 'stroke-style', 'blend-mode'])(
-    'keeps %s with id and message',
-    (kind) => {
-      expect(knownVisualLimits(scene, [entry(kind, 7, 'msg')], OPEN)).toEqual([{ kind, id: 7, message: 'msg' }]);
-    },
-  );
-  it.each(['text', 'button', 'filter', 'mask', 'video', 'morph-shape'])('maps %s to unsupported-feature', (kind) => {
-    expect(knownVisualLimits(scene, [entry(kind, undefined, 'm')], OPEN)).toEqual([{ kind: 'unsupported-feature', message: 'm' }]);
+
+describe('CLI limit options', () => {
+  it('parses the three options as text', () => {
+    const r = parseArgs(['a.swf', 'out', '--max-size', '8', '--run-limit', '90', '--stage-limit', '20']);
+    expect(r).toMatchObject({ ok: true, options: { maxSize: '8', runLimit: '90', stageLimit: '20' } });
   });
-  it('ignores kinds that are not visually relevant', () => {
-    expect(knownVisualLimits(scene, [entry('class-omitted', 1, 'm'), entry('sound', 2, 'm')], OPEN)).toEqual([]);
-  });
-  it('omits text-metrics only when all compared frames are exact', () => {
-    const u = [entry('text-metrics', 1, 'a'), entry('bitmap-fill', 2, 'b')];
-    expect(knownVisualLimits(scene, u, { allComparedFramesExact: true }).map((l) => l.kind)).toEqual(['bitmap-fill']);
-    expect(knownVisualLimits(scene, u, OPEN).map((l) => l.kind)).toEqual(['bitmap-fill', 'text-metrics']);
-  });
-  it('orders by kind, id, message and removes duplicates', () => {
-    const u = [entry('stroke-style', 2, 'b'), entry('stroke-style', 2, 'b'), entry('stroke-style', 1, 'z'), entry('blend-mode', 9, 'a')];
-    expect(knownVisualLimits(scene, u, OPEN)).toEqual([
-      { kind: 'blend-mode', id: 9, message: 'a' },
-      { kind: 'stroke-style', id: 1, message: 'z' },
-      { kind: 'stroke-style', id: 2, message: 'b' },
-    ]);
+
+  it.each([['--max-size', '0'], ['--run-limit', 'x'], ['--stage-limit', '2.5']])('%s %s is a usage error (exit 2)', (name, v) => {
+    const r = parseArgs(['a.swf', 'out', name, v]);
+    expect(r).toMatchObject({ ok: false, exitCode: 2 });
+    if (!r.ok) expect(r.message).toContain(name);
   });
 });

@@ -16,6 +16,19 @@ Status: unpack, convert, translate, emit and verify are built; UI and hosting ar
 
 Outputs next to the project: `unsupported-features.json` and `translation-report.json`. Type errors are reported, not fatal.
 
+### Run_Limits, Outcome_File and exit codes
+- Three limits, each set by an option, else a variable, else the default (`src/pipeline/limits.ts`). A value that is not a positive integer is a usage error (exit 2).
+
+  | Option | Variable | Default |
+  |---|---|---|
+  | `--max-size <MiB>` | `SWF_RESURRECT_MAX_SIZE_MIB` | 20 |
+  | `--run-limit <seconds>` | `SWF_RESURRECT_RUN_LIMIT_S` | 300 |
+  | `--stage-limit <seconds>` | `SWF_RESURRECT_STAGE_LIMIT_S` | 60 |
+
+  A stage's allowance is the stage limit times its weight: recover 2, unpack 2, convert 1, translate 1, emit 1, gate 1, verify 3. The guard (`src/pipeline/guard.ts`) abandons a stage that passes its allowance or the run limit, kills the registered child processes (`processTree.ts`) and ends the run `refused time-limit`. A blocked synchronous stage still cannot be interrupted (Open_Item O1).
+- Every run writes `outcome.json` (the Outcome_File) in the output directory and prints one Outcome_Line (for example `Outcome: refused time-limit ...` or `Outcome: converted-with-gaps - 19 of 27 classes translated, ...`). Fields, reason codes and examples are in `docs/outcome.md`.
+- Exit codes: 0 `converted` or `converted-with-gaps`, 1 `failed`, 2 usage or path error, 3 `refused`.
+
 ## Conventions
 - Transpiler is deterministic: same input gives same output. Syntax rewrite in code first (`package`/`import` to ES modules, `int`/`uint`/`Number` to `number`, `Vector.<T>` to `T[]`, `for each` to `for...of`, `is`/`as`), LLM second.
 - The type-check gate runs on translated code (no `npm install`, no child process). Planned: feed errors back to the LLM for a bounded number of retries; flag leftovers in the report.
@@ -34,7 +47,7 @@ npm test -- --run           # scripts/runTests.ts: main vitest run, then launchC
 npm run gen:shim-members    # regenerate src/translate/shimMembers.generated.ts from template/shim/
 npm run fetch:static-text   # fetch the static_text sample into .work/ (never committed)
 npm run fetch:spacer [-- <path>]   # download the spacer release SWF (GPL-3.0) into .work/, or copy a local file; SHA-256 checked, exit 1 mismatch, 2 download failed, 3 unreadable path
-npm run pipeline -- <in.swf> <outdir> [--force] [--verify] [--verify-frames <n>] [--reference-dir <dir>]   # tsx src/pipeline/cli.ts
+npm run pipeline -- <in.swf> <outdir> [--force] [--verify] [--verify-frames <n>] [--reference-dir <dir>] [--max-size <MiB>] [--run-limit <s>] [--stage-limit <s>]   # tsx src/pipeline/cli.ts
 ```
 Inside an emitted project (`out/<sample>`): `npm install`, `npm run dev` (run manually, do not block on it), `npm run build`, `npm run typecheck`.
 
