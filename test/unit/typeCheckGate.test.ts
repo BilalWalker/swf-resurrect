@@ -47,6 +47,26 @@ describe('typeCheckProject', () => {
     expect(errors[0].code).toBe(2322);
   });
 
+  it('accepts a read of an undeclared property of a MovieClip (dynamic class) and keeps declared member types', () => {
+    const files = project();
+    files.set(
+      'src/LeftButton.ts',
+      `import { MovieClip } from '../shim';
+export class LeftButton extends MovieClip {
+  public go(): number {
+    const child: MovieClip = this.getChildAt(0) as MovieClip;
+    child.undeclaredInner.visible = false;
+    return child.currentFrame;
+  }
+}
+`,
+    );
+    expect(typeCheckProject({ files, repoRoot }).errors).toEqual([]);
+    files.set('src/LeftButton.ts', files.get('src/LeftButton.ts')!.replace('return child.currentFrame', "return 'x' + child.currentFrame"));
+    const { errors } = typeCheckProject({ files, repoRoot });
+    expect(errors.map((e) => e.code)).toEqual([2322]);
+  });
+
   it('attributes an injected error in runtime code to runtime/player.ts', () => {
     const files = project();
     files.set('runtime/player.ts', files.get('runtime/player.ts')! + '\nexport const bad: number = "s";\n');

@@ -356,6 +356,10 @@ class Scanner {
     if (this.isP(i, '*')) i++;
     const nameTok = this.toks[i];
     if (nameTok === undefined) throw this.fail.at(this.lastLine(), `class ${cls.name}: unbalanced braces`);
+    if (nameTok.k === 'p' && nameTok.t === '[' && this.toks[i + 1]?.k === 'id' && this.isP(i + 2, ':')) {
+      // Index signature `[key: string]: T;` declares no named member (the dynamic class rule).
+      return this.skipPropertyEnd(this.skipBalanced(i));
+    }
     if (nameTok.k === 'p') {
       throw this.fail.at(nameTok.line, nameTok.t === '[' ? 'computed member names are not understood' : `unexpected "${nameTok.t}" in class body`);
     }

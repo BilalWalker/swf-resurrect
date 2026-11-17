@@ -12,7 +12,7 @@ const names = (t: ReturnType<typeof extractShimMembers>, cls: string) => t[cls]!
 describe("extractShimMembers on the current Shim", () => {
   const table = extractShimMembers(readShim());
   it("lists the exported classes and their chains", () => {
-    expect(Object.keys(table)).toEqual(["ArgumentError", "Dictionary", "DisplayObject", "DisplayObjectContainer", "Event", "EventDispatcher", "GlowFilter", "Graphics", "IllegalOperationError", "InteractiveObject", "Keyboard", "KeyboardEvent", "MouseEvent", "MovieClip", "Shape", "Sprite", "Stage", "StageScaleMode", "TextField", "Timer", "TimerEvent"]);
+    expect(Object.keys(table)).toEqual(["ArgumentError", "Dictionary", "DisplayObject", "DisplayObjectContainer", "Event", "EventDispatcher", "GlowFilter", "Graphics", "IllegalOperationError", "InteractiveObject", "Keyboard", "KeyboardEvent", "MouseEvent", "MovieClip", "Rectangle", "Shape", "Sprite", "Stage", "StageScaleMode", "TextField", "Timer", "TimerEvent"]);
     expect(table.MovieClip!.extends).toBe("Sprite");
     expect(table.EventDispatcher!.extends).toBeNull();
   });
@@ -30,6 +30,13 @@ describe("extractShimMembers on the current Shim", () => {
     expect(names(table, "MovieClip")).not.toContain("goto");
     expect(names(table, "Event")).not.toContain("ENTER_FRAME");
     for (const c of Object.values(table)) for (const m of c.members) expect(m.name.startsWith("_")).toBe(false);
+  });
+  it("skips an index signature and lists no member for it", () => {
+    const t = extractShimMembers([
+      { path: "index.ts", text: "export { D } from './D';" },
+      { path: "D.ts", text: "export class D {\n  [key: string]: any;\n  foo(): void {}\n}\n" },
+    ]);
+    expect(names(t, "D")).toEqual(["foo"]);
   });
   it("round-trips through the generated text", () => {
     expect(parseShimMembersTs(renderShimMembersTs(table))).toEqual(table);

@@ -11,6 +11,13 @@ function sameNumbers(a: readonly number[], b: readonly number[]): boolean {
 }
 
 export class MovieClip extends Sprite {
+  /**
+   * MovieClip is a dynamic class in AS3: reading or writing an undeclared property is legal (for example
+   * a named child of a timeline child that the class does not declare). `any` keeps every declared member type.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+
   /** Frame scripts keyed by 1-based frame number (addFrameScript converts its 0-based index). */
   readonly frameScripts = new Map<number, () => void>();
 
