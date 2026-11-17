@@ -320,7 +320,7 @@ interface HandwrittenEntry { sample: string; className: string; reason: string }
 interface NamedLimitHit { id: string; detail: string }                                       // Player.namedLimits(), merged into fidelity report behaviour.namedLimits
 ```
 
-Named_Limits found while running (`drawPath-command`, `lineStyle-args`, `filter-not-drawn:*`, `wheel-not-dispatched`, `useCapture-ignored`, `scaleMode-no-effect`) go through one sink, `namedLimit(id, detail)` (shim internal). The Replay and Play_Tests return what the sink collected; the Fidelity_Report lists it. Limits known without running (skew, collision method, device font for `TextField`) come from the scene and the translation facts.
+Named_Limits found while running (`drawPath-command`, `lineStyle-args`, `filter-not-drawn:*`, `mouse-wheel-not-dispatched`, `useCapture-ignored`, `scaleMode-no-effect`) go through one sink, `namedLimit(id, detail)` (shim internal). The Replay and Play_Tests return what the sink collected; the Fidelity_Report lists it. Limits known without running (skew, collision method, device font for `TextField`) come from the scene and the translation facts.
 
 ## Correctness Properties
 

@@ -391,7 +391,7 @@ Rules that apply to every task:
     - Tests: `test/unit/report.test.ts` (extend) with a sink fixture; `test/e2e/entityReport.e2e.test.ts` (create): the `entity_game` report lists what the Play_Test run raised.
     - _Requirements: 33.1, 33.2_
 
-- [-] 22. Checkpoint 2: `entity_game` plays
+- [x] 22. Checkpoint 2: `entity_game` plays
   - STOP. Follow the Checkpoint procedure of the rules. Block B shares: Requirements 9 to 11, 13 to 18, 24 to 26 (entity part), 27 (entity part), 33.
   - Run the full suite `npm test -- --run`. The `entity_game` Play_Test must pass in both layers (Requirement 34.6) and the game must be playable. Hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/as3-coverage/reviews/checkpoint-2.md`, and act on its findings in a new commit before reporting.
   - The report also states: whether Ruffle ran `entity_game` headlessly (Requirement 26.4) and the Trace_Score reason `empty-reference-trace`, whether the `Signal` fallback was used, whether the `Game.stage` rule (Open_Item O4) was confirmed by the Play_Test, and the Credits_Line against the Block B share of about 170.
@@ -401,7 +401,7 @@ Rules that apply to every task:
 
 - [ ] 23. Translate: `this.field` in `super(...)` arguments (D14)
   - Commit area: `Translate`. Verification V1. Block C starts here: restate the Block C share of about 200 credits. Read the design row D14 and Requirement 19. The rule is general; no test names a sample.
-  - [~] 23.1 Hoist initialised fields used in `super(...)`
+  - [-] 23.1 Hoist initialised fields used in `super(...)`
     - When an AS3 constructor reads `this.<field>` or a bare instance field name in the arguments of `super(...)` and the field has an initialiser, evaluate the initialiser into a local before `super(...)`, pass the local, and assign the field from the same local after `super(...)` returns. A field with no initialiser passes the default value of its type and records a Named_Limit when the body assigns it before use. Each rewritten site is named in the Translation_Report.
     - Tests: `test/unit/superArgs.test.ts` (create) with Fixture_Classes: initialised field, no-initialiser field, a field assigned in the body before use, a bare field name.
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.6_
