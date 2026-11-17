@@ -99,25 +99,26 @@ export function chromiumDriver(page: Page): PlayDriver {
     click: (x, y) => page.evaluate(([a, b]) => (window as any).__swfPlay.click(a, b), [x, y] as const),
     mouse: (type, x, y) => page.evaluate(([t, a, b]) => (window as any).__swfPlay.mouse(t, a, b), [type, x, y] as const),
     inspect: async () => {
-      // The hook's methods are functions, so the page evaluates them and returns the plain parts.
-      const data = await page.evaluate(() => {
+      // The hook's methods are functions, so the page evaluates them and returns the plain parts. `find(name)` is the
+      // pre-order walk of the Stage tops with `children` emptied (template/runtime/inspect.ts), so it is derived here from
+      // the one tree the page returns instead of one page-side walk per class name (Checkpoint 3 suite time).
+      const data = (await page.evaluate(() => {
         const i = (window as any).__swfPlay.inspect();
-        const names = new Set<string>();
-        const walk = (list: Array<{ className: string; children: any[] }>): void => {
-          for (const s of list) {
-            names.add(s.className);
-            walk(s.children);
-          }
-        };
-        const tree = i.stageChildren();
-        walk(tree);
-        const found: Record<string, unknown[]> = {};
-        for (const n of names) found[n] = i.find(n);
-        return { tick: i.tick, tree, found, timers: i.timers() };
-      });
+        return { tick: i.tick, tree: i.stageChildren(), timers: i.timers() };
+      })) as { tick: number; tree: ReturnType<Inspection['stageChildren']>; timers: ReturnType<Inspection['timers']> };
+      const found = new Map<string, ReturnType<Inspection['find']>>();
+      const walk = (list: ReturnType<Inspection['stageChildren']>): void => {
+        for (const s of list) {
+          const at = found.get(s.className) ?? [];
+          at.push({ ...s, children: [] });
+          found.set(s.className, at);
+          walk(s.children);
+        }
+      };
+      walk(data.tree);
       return {
         tick: data.tick,
-        find: (name: string) => (data.found[name] ?? []) as ReturnType<Inspection['find']>,
+        find: (name: string) => found.get(name) ?? [],
         stageChildren: () => data.tree,
         timers: () => data.timers,
       };
