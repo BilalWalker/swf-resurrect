@@ -263,6 +263,24 @@ describe('emit', () => {
     expect(await readdir(root)).not.toContain('made');
   });
 
+  it('journals every file through onWrite, including the one whose write throws (third file)', async () => {
+    const out = join(root, 'journal-out');
+    const journal: string[] = [];
+    let calls = 0;
+    const opts = {
+      ...(await options(out)),
+      onWrite: (p: string) => void journal.push(p),
+      writeFile: async (p: string, c: string) => {
+        calls += 1;
+        if (calls === 3) throw new Error('disk full');
+        await writeFile(p, c, 'utf8');
+      },
+    };
+    await expect(emit(await artifact(), opts)).rejects.toBeInstanceOf(EmitWriteError);
+    expect(journal).toHaveLength(3);
+    expect(journal.every((p) => !p.includes('\\') && !p.startsWith('/'))).toBe(true);
+  });
+
   it('keeps a pre-existing output directory and its parents when cleaning up', async () => {
     const out = join(root, 'out');
     await mkdir(out, { recursive: true });

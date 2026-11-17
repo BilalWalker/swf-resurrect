@@ -291,6 +291,25 @@
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794854035708
       }
+    ],
+    "11.1 Add `src/pipeline/cleanup.ts` and the Emit `onWrite` callback": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794854203306
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794854379154
+      }
+    ],
+    "11.2 Write the property test of the cleanup plan": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794854379660
+      }
     ]
   }
 }

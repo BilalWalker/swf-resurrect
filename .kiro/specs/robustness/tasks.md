@@ -175,14 +175,14 @@ Rules that apply to every task:
     - **Property 11: Limit resolution** and **Property 12: Time limit if and only if a duration exceeds its allowance** (fake clock, generated durations over all seven stages including `recover`, stage limit, weights and run limit: `refused time-limit` if and only if a stage duration exceeds its weighted allowance or the sum exceeds the run limit; the reason names the stage and the limit), in `test/property/limits.property.test.ts` (create). Update `.kiro/steering/tech.md` (the three options, the three variables, the Outcome_File) and `structure.md` (`src/facts/`, `src/pipeline/guard.ts`, `src/pipeline/processTree.ts`) in this commit.
     - **Validates: Requirements 6.1, 6.5, 6.8, 6.10, 6.12, 6.13, 10.4**
 
-- [ ] 11. Pipeline and Emit: cleanup plan and the Emit write journal
+- [x] 11. Pipeline and Emit: cleanup plan and the Emit write journal
   - Commit area: `Pipeline` (Emit named). Verification V1. Read the design "Cleanup plan", D-A5 and Open_Item O6 (Emit was not read in the design: read `src/emit/emit.ts` first). `src/pipeline/cleanup.ts` is pure and added to the purity list.
-  - [ ] 11.1 Add `src/pipeline/cleanup.ts` and the Emit `onWrite` callback
+  - [x] 11.1 Add `src/pipeline/cleanup.ts` and the Emit `onWrite` callback
     - `planCleanup({ preExisting, writtenByRun, keep })` returns `writtenByRun \ preExisting` minus the Outcome_File, the reports, the Failure_Log and `ffdec-<Reference_Id>.log`. `preExisting` is the listing of the output directory taken after the precheck and before the first write. Emit gets an optional `onWrite(path)` callback so the pipeline keeps a journal when Emit throws part-way. On `refused` and `failed` the work directory (which holds the recovery copy) is removed unless `--keep-work` or `--work-dir` was given (Requirement 9.1). An output directory refused before the run (the two Emit refusals, exit 2) is left untouched.
     - Tests: `test/unit/cleanup.test.ts` (create): a foreign file stays; the Outcome_File, reports and logs stay; the journal covers an Emit that throws on the third file; `--keep-work` keeps the work directory.
     - _Requirements: 4.6, 6.7, 9.1, 9.2, 9.3, 9.4, 9.5_
 
-  - [ ] 11.2 Write the property test of the cleanup plan
+  - [x] 11.2 Write the property test of the cleanup plan
     - **Property 13: Cleanup removes only what the run wrote**, in `test/property/limits.property.test.ts` (extend): for any pre-existing set and any set written by the run, the plan is a subset of `written \ preExisting`, contains none of the protected files, and leaves every pre-existing file.
     - **Validates: Requirements 4.6, 6.7, 9.2, 9.3**
 

@@ -1,7 +1,7 @@
 // Pipeline glue: unpack -> convert -> translate -> emit -> typeCheck, exit codes, progress output and the
 // unsupported-features file. Stages and output are injected so tests need no Java.
 import { constants, existsSync } from 'node:fs';
-import { access, mkdir, mkdtemp, open, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, open, readFile, readdir, rename, rm, rmdir, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { inflateSync } from 'node:zlib';
@@ -28,6 +28,8 @@ import type { GateResult } from '../translate/typeCheckGate';
 import type { VerifyRequest, VerifySummary } from '../verify/edge/verifyStage';
 import { PipelineError } from './errors';
 import { killAll } from './processTree';
+import { planCleanup } from './cleanup';
+import type { CleanupPlan } from './cleanup';
 import { createGuard } from './guard';
 import type { Clock } from './guard';
 import { defaultLimits } from './limits';
@@ -205,6 +207,21 @@ async function writeFailureLogs(err: unknown, stage: string, ffdecExit: boolean,
   return id;
 }
 
+/** Files and directories under dir as posix paths relative to dir; empty when dir does not exist or cannot be read. */
+async function listOutputDir(dir: string): Promise<string[]> {
+  try {
+    return (await readdir(dir, { recursive: true })).map((p) => p.split('\\').join('/'));
+  } catch {
+    return [];
+  }
+}
+
+/** Deletes the planned files, then the directories the run created that are now empty (rmdir never removes content). */
+async function removePlanned(dir: string, plan: CleanupPlan): Promise<void> {
+  for (const f of plan.files) await rm(join(dir, ...f.split('/')), { force: true }).catch(() => undefined);
+  for (const d of plan.directories) await rmdir(join(dir, ...d.split('/'))).catch(() => undefined);
+}
+
 async function nearestExistingAncestor(path: string): Promise<string | null> {
   let current = resolve(path);
   for (;;) {
@@ -329,6 +346,11 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     return 2;
   }
 
+  // Listing of the output directory after the precheck and before the first write (cleanup plan input).
+  const preExisting = await listOutputDir(resolve(args.outputDir));
+  const journal: string[] = []; // every path Emit reports through onWrite, kept even when Emit throws
+  let emittedFiles: readonly string[] = [];
+
   const ownsWorkDir = args.workDir === undefined;
   let workDir: string;
   try {
@@ -413,10 +435,12 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       templateDir: args.templateDir,
       handwrittenDir: args.handwrittenDir,
       translated: translatedClasses,
+      onWrite: (p: string) => { journal.push(p); },
       ...(stages.gate === undefined ? {} : { gate: stages.gate }),
       ...(stages.guard === undefined ? {} : { bundlerGuard: stages.guard }),
     }));
     outputDir = result.outputDir;
+    emittedFiles = result.files;
     io.out('[emit] ok\n');
     omissions = result.omissions;
     loose = result.loose;
@@ -573,6 +597,13 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     recovery: null,
     referenceId: decision.outcome === 'failed' ? referenceId : null,
   };
+  if (decision.outcome === 'refused' || decision.outcome === 'failed') {
+    // Requirement 9: remove only what this run wrote. The Emit refusals returned above and never reach here.
+    await removePlanned(
+      outputDir,
+      planCleanup({ preExisting, writtenByRun: [...journal, ...emittedFiles], keep: [] }),
+    );
+  }
   await mkdir(outputDir, { recursive: true }).catch(() => undefined);
   await writeOutcomeFile(
     outputDir,

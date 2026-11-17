@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { classifyError } from '../../src/outcome/classifyError';
 import { decideOutcome } from '../../src/outcome/outcome';
 import type { OutcomeLimits, StageName } from '../../src/outcome/outcome';
+import { planCleanup, PROTECTED_FILES } from '../../src/pipeline/cleanup';
 import { createGuard, TimeLimitError } from '../../src/pipeline/guard';
 import {
   defaultLimits,
@@ -133,6 +134,39 @@ describe('Property 12: Time limit if and only if a duration exceeds its allowanc
           expect(guard.limits).toEqual(limits);
         },
       ),
+      fcConfig,
+    );
+  });
+});
+
+// Feature: robustness, Property 13: Cleanup removes only what the run wrote
+// **Validates: Requirements 4.6, 6.7, 9.2, 9.3**
+const segment = fc.constantFrom('src', 'assets', 'a.ts', 'b.png', 'index.html', 'x');
+const projectPath = fc.array(segment, { minLength: 1, maxLength: 3 }).map((s) => s.join('/'));
+const protectedPath = fc.oneof(
+  fc.constantFrom(...PROTECTED_FILES),
+  fc.stringMatching(/^[0-9a-f]{8}$/).chain((id) => fc.constantFrom(`failure-${id}.log`, `ffdec-${id}.log`)),
+);
+const anyPath = fc.oneof({ weight: 4, arbitrary: projectPath }, { weight: 1, arbitrary: protectedPath });
+const isLog = (p: string) => /^(failure|ffdec)-[0-9a-f]{8}\.log$/.test(p);
+describe('Property 13: Cleanup removes only what the run wrote', () => {
+  it('plans a subset of written minus pre-existing, with no protected file and no pre-existing file', () => {
+    fc.assert(
+      fc.property(fc.array(anyPath, { maxLength: 15 }), fc.array(anyPath, { maxLength: 15 }), (preExisting, written) => {
+        const plan = planCleanup({ preExisting, writtenByRun: written, keep: [] });
+        const pre = new Set(preExisting);
+        const wrote = new Set(written);
+        for (const f of plan.files) {
+          expect(wrote.has(f)).toBe(true);
+          expect(pre.has(f)).toBe(false);
+          expect(PROTECTED_FILES.includes(f) || isLog(f)).toBe(false);
+        }
+        for (const d of plan.directories) expect(pre.has(d)).toBe(false);
+        // Every written, non-protected, non-pre-existing file is planned.
+        for (const w of wrote) {
+          if (!pre.has(w) && !PROTECTED_FILES.includes(w) && !isLog(w)) expect(plan.files).toContain(w);
+        }
+      }),
       fcConfig,
     );
   });

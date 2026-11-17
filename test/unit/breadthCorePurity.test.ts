@@ -41,6 +41,7 @@ const CORE_FILES = [
   "src/outcome/outcomeFile.ts", // robustness 2.1 (fs injected, no node:*)
   "src/pipeline/limits.ts", // robustness 10.1
   "src/pipeline/guard.ts", // robustness 10.2 (clock and kill passed in)
+  "src/pipeline/cleanup.ts", // robustness 11.1
   "src/facts/swfBody.ts", // robustness 3.1
   "src/facts/readFacts.ts", // robustness 3.1 (inflate passed in)
 ];

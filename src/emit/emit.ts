@@ -35,6 +35,11 @@ export interface EmitOptions {
   gate?: (files: ReadonlyMap<string, string>) => GateResult;
   /** Bundler_Guard over the planned class files (design 21.4). It rejects when Vite cannot run; Emit then falls back to the Requirement 23 rules. */
   bundlerGuard?: (files: ReadonlyMap<string, string>) => Promise<ReadonlyMap<string, BundlerCheckData>>;
+  /**
+   * Write journal (robustness O6). Called with the posix path relative to the output directory just before each file is
+   * written, so the caller knows every file a run may have created even when Emit throws part-way.
+   */
+  onWrite?: (path: string) => void;
 }
 
 export interface EmitResult {
@@ -239,6 +244,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
       if (top !== null) createdTops.push(top);
       await mkdir(dirname(target), { recursive: true });
       writtenFiles.push(target); // before the write: a failed write may leave a partial file
+      options.onWrite?.(file.path);
       await write(target, file.content);
     }
     // Bitmap bytes are copied as they are (never through a string): assets/images/<bitmapId>.<ext>.
@@ -250,6 +256,7 @@ export async function emit(artifact: ConvertedArtifact, options: EmitOptions): P
       if (top !== null) createdTops.push(top);
       await mkdir(dirname(target), { recursive: true });
       writtenFiles.push(target);
+      options.onWrite?.(rel);
       await writeFile(target, await readFile(path));
       imageFiles.push(rel);
     }
