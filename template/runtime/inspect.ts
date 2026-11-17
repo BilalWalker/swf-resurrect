@@ -54,7 +54,8 @@ function snapshot(o: DisplayObject, deep: boolean): Snapshot {
     rotation: o.rotation,
     visible: o.visible,
     frame: mc === null ? 0 : mc.currentFrame,
-    label: mc === null ? '' : ((mc.currentLabels.find((l) => l.frame === mc.currentFrame)?.name ?? '')),
+    // The label placed on this exact frame. Labels carry absolute frames, so a multi-scene clip compares the absolute one.
+    label: mc === null ? '' : ((mc.currentLabels.find((l) => l.frame === mc._absoluteFrame)?.name ?? '')),
     children: kids.map((c) => snapshot(c, true)),
   };
 }

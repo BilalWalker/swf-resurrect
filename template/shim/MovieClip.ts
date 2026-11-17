@@ -83,6 +83,11 @@ export class MovieClip extends Sprite {
 
   // ---- internal API (called through shim/internal.ts) ----
 
+  /** The absolute 1-based frame (labels are stored by absolute frame; `currentFrame` is scene-relative). */
+  get _absoluteFrame(): number {
+    return this.frame;
+  }
+
   /** True while the clip advances on each tick. */
   get _playing(): boolean {
     return this.isPlaying;
