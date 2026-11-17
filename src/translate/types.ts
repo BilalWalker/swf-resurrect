@@ -1,7 +1,7 @@
 /** Type-only definitions shared by the pure Transpiler files. No runtime code. */
 import type { MemberTables } from './memberTables';
 
-export type DiagnosticKind = 'unsupported-construct' | 'loose-type' | 'class-omitted' | 'unresolved-identifier' | 'child-field-initialiser';
+export type DiagnosticKind = 'unsupported-construct' | 'loose-type' | 'class-omitted' | 'unresolved-identifier' | 'child-field-initialiser' | 'super-argument-field';
 
 /** `line` is 1-based. */
 export interface Diagnostic {

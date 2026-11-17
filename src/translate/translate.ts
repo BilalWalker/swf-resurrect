@@ -7,7 +7,7 @@
 
 import { canonicalClassPath } from '../convert/qualifiedName';
 import { emitTs, escapeComment } from './emitTs';
-import type { BodyItem, EmitHooks } from './emitTs';
+import type { BodyItem, EmitHooks, SuperHoist } from './emitTs';
 import { planFileImports } from './importPlan';
 import type { ImportPlanInput } from './importPlan';
 import { buildMemberTables, orderByDeclaration } from './memberTables';
@@ -33,6 +33,47 @@ function isSuperCall(tokens: readonly Token[], node: Node): boolean {
   return b !== undefined && b.kind === 'punct' && b.text === '(';
 }
 
+/** True when a token run holds `name` as an assignment target (`name =` or `this.name =`, not `==`). */
+function assignsName(tokens: readonly Token[], nodes: readonly Node[], name: string): boolean {
+  for (const n of nodes) {
+    for (let i = n.range.from; i < n.range.to; i++) {
+      const t = tokens[i];
+      if (t.kind !== 'id' || t.text !== name) continue;
+      let j = i + 1;
+      while (j < n.range.to && tokens[j].kind === 'comment') j++;
+      const nx = tokens[j];
+      if (nx !== undefined && j < n.range.to && nx.kind === 'punct' && nx.text === '=') return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Instance fields of `cls` that the arguments of the `super(...)` statement read as `this.f` or as a bare `f`
+ * (design D14). A constructor parameter of the same name shadows a bare read.
+ */
+function superArgumentFields(tokens: readonly Token[], cls: ClassNode, ctor: MethodNode, superNode: Node): SuperHoist[] {
+  const fields = new Map<string, SuperHoist['decl']>();
+  for (const m of cls.body.nodes) {
+    if (m.kind !== 'field' || m.modifiers.indexOf('static') >= 0) continue;
+    for (const dc of m.decl.declarators) fields.set(dc.name, dc);
+  }
+  if (fields.size === 0 || superNode.kind !== 'statement' || superNode.expr === null) return [];
+  const params = new Set(ctor.params.map((p) => p.name));
+  const sig: Token[] = [];
+  for (let i = superNode.expr.from; i < superNode.expr.to; i++) if (tokens[i].kind !== 'comment') sig.push(tokens[i]);
+  const found: string[] = [];
+  for (let i = 2; i < sig.length; i++) {
+    const t = sig[i];
+    if (t.kind !== 'id' || !fields.has(t.text) || found.includes(t.text)) continue;
+    const prev = sig[i - 1];
+    const viaThis = prev.kind === 'punct' && prev.text === '.' && sig[i - 2].kind === 'id' && sig[i - 2].text === 'this';
+    const bare = !(prev.kind === 'punct' && prev.text === '.') && !params.has(t.text);
+    if (viaThis || bare) found.push(t.text);
+  }
+  const rest = ctor.body.nodes.filter((n) => n !== superNode);
+  return found.map((name) => ({ decl: fields.get(name) as SuperHoist['decl'], bodyAssigns: assignsName(tokens, rest, name) }));
+}
 /** Method names a class binds in its constructor, in declaration order (Requirement 22.13). */
 export type MethodValues = ReadonlyMap<string, readonly string[]>;
 
@@ -52,11 +93,16 @@ function constructorHook(tokens: readonly Token[], values: MethodValues): NonNul
     const body = ctor.body.nodes;
     /* A class without extends cannot call super() (TS2335); an AS3 super() there is dropped. */
     const superIdx = body.findIndex((n) => isSuperCall(tokens, n));
-    if (binds.length === 0 && (extendsBase ? superIdx === 0 : superIdx < 0)) return null;
+    const hoisting = extendsBase && superIdx >= 0 && superArgumentFields(tokens, cls, ctor, body[superIdx]).length > 0;
+    if (!hoisting && binds.length === 0 && (extendsBase ? superIdx === 0 : superIdx < 0)) return null;
 
     const items: BodyItem[] = [];
     if (extendsBase) {
-      items.push(superIdx >= 0 ? { kind: 'node', node: body[superIdx] } : { kind: 'generated', text: 'super();' });
+      if (superIdx < 0) items.push({ kind: 'generated', text: 'super();' });
+      else {
+        const hoists = superArgumentFields(tokens, cls, ctor, body[superIdx]);
+        items.push(hoists.length > 0 ? { kind: 'super', node: body[superIdx], hoists } : { kind: 'node', node: body[superIdx] });
+      }
     }
     items.push(...binds);
     body.forEach((n, i) => {

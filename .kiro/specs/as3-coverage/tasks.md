@@ -1,4 +1,4 @@
-﻿# Implementation Plan: as3-coverage
+# Implementation Plan: as3-coverage
 
 ## Overview
 
@@ -399,14 +399,14 @@ Rules that apply to every task:
 
 ### Block C: `spacer` plays (about 200 credits; stop and report above 267)
 
-- [ ] 23. Translate: `this.field` in `super(...)` arguments (D14)
+- [x] 23. Translate: `this.field` in `super(...)` arguments (D14)
   - Commit area: `Translate`. Verification V1. Block C starts here: restate the Block C share of about 200 credits. Read the design row D14 and Requirement 19. The rule is general; no test names a sample.
-  - [-] 23.1 Hoist initialised fields used in `super(...)`
+  - [x] 23.1 Hoist initialised fields used in `super(...)`
     - When an AS3 constructor reads `this.<field>` or a bare instance field name in the arguments of `super(...)` and the field has an initialiser, evaluate the initialiser into a local before `super(...)`, pass the local, and assign the field from the same local after `super(...)` returns. A field with no initialiser passes the default value of its type and records a Named_Limit when the body assigns it before use. Each rewritten site is named in the Translation_Report.
     - Tests: `test/unit/superArgs.test.ts` (create) with Fixture_Classes: initialised field, no-initialiser field, a field assigned in the body before use, a bare field name.
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.6_
 
-  - [~] 23.2 Write property test for field identity
+  - [x] 23.2 Write property test for field identity
     - **Property 18: Fields passed to super are the same object**
     - In `test/property/superArgs.property.test.ts` (create): for any field initialiser kind a class whose constructor passes that field to `super(...)` constructs without `ReferenceError`, and the argument the base received is strictly equal to the field afterwards.
     - **Validates: Requirements 19.1, 19.2, 19.5**

@@ -98,8 +98,37 @@ function sliceText(s: TokenSlice): string {
   return s.source.slice(s.tokens[s.from].start, s.tokens[s.to - 1].end);
 }
 
+/** A field read in the arguments of super(...): evaluated into a local before the call, assigned after it (D14). */
+export interface SuperHoist {
+  decl: Declarator;
+  /** The constructor body assigns the field (matters for a field without initialiser). */
+  bodyAssigns: boolean;
+}
+
+function isIdentChar(c: string | undefined): boolean {
+  return c !== undefined && ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c === '_' || c === '$');
+}
+
+/** Replaces each 	his.<name> that is a whole member access by local. */
+function replaceThisField(line: string, name: string, local: string): string {
+  const pat = 'this.' + name;
+  let out = '';
+  let from = 0;
+  for (;;) {
+    const at = line.indexOf(pat, from);
+    if (at < 0) break;
+    const before = line[at - 1];
+    const after = line[at + pat.length];
+    const whole = !isIdentChar(before) && before !== '.' && !isIdentChar(after);
+    out += line.slice(from, at) + (whole ? local : pat);
+    from = at + pat.length;
+  }
+  return out + line.slice(from);
+}
+
 export type BodyItem =
   | { kind: 'node'; node: Node }
+  | { kind: 'super'; node: Node; hoists: SuperHoist[] }
   | { kind: 'generated'; text: string };
 
 export interface EmitHooks {
@@ -214,6 +243,8 @@ class Emitter {
   /** The member being emitted, for implicit-this resolution. */
   private member: MemberContext | null = null;
   private curClass: ClassNode | null = null;
+  /** Instance fields of the class being emitted whose initialiser moved into the constructor (D14). */
+  private hoisted: ReadonlySet<string> = new Set();
 
   constructor(input: EmitInput) {
     this.source = input.source;
@@ -497,6 +528,8 @@ class Emitter {
       synthAt = members.findIndex((m) => m.kind === 'method' || m.kind === 'accessor');
       if (synthAt < 0) synthAt = members.length;
     }
+    const savedHoisted = this.hoisted;
+    this.hoisted = new Set((plan ?? []).flatMap((it) => (it.kind === 'super' ? it.hoists.map((h) => h.decl.name) : [])));
     const first = this.hooks.firstInstanceMember?.(n) ?? null;
     if (first !== null) this.push(d + 1, first);
     for (let i = 0; i <= members.length; i++) {
@@ -506,6 +539,7 @@ class Emitter {
       if (m === ctor && plan !== null) this.node2(m, d + 1, n, plan);
       else this.node(m, d + 1, n, '');
     }
+    this.hoisted = savedHoisted;
     this.push(d, '}');
     this.span(n.body.closeLine, n.body.closeLine, 'structural');
   }
@@ -535,8 +569,40 @@ class Emitter {
   private bodyItems(items: BodyItem[], d: number): void {
     for (const it of items) {
       if (it.kind === 'generated') this.push(d, it.text);
+      else if (it.kind === 'super') this.superItem(it, d);
       else this.node(it.node, d, null, '');
     }
+  }
+
+  /** D14: const __super_f = <init>;, the call with 	his.f replaced by the local, then 	his.f = __super_f;. */
+  private superItem(it: Extract<BodyItem, { kind: 'super' }>, d: number): void {
+    const line = it.node.startLine;
+    for (const h of it.hoists) {
+      const dc = h.decl;
+      const t = this.type(dc.type, dc.line, 'field');
+      let init: string;
+      if (dc.init !== null) init = this.expr(dc.init);
+      else {
+        const dflt = this.rw.fieldDefault?.(dc.type === null ? null : this.slice(dc.type)) ?? null;
+        init = dflt ?? 'undefined as any';
+      }
+      this.push(d, `const __super_${dc.name}${t === '' ? '' : ': ' + t} = ${init};`);
+      this.diags.push({
+        kind: 'super-argument-field',
+        line,
+        message: dc.init !== null
+          ? `field "${dc.name}" is read in the arguments of super(...): its initialiser is evaluated before the call and the field is assigned from the same value after it`
+          : h.bodyAssigns
+            ? `field "${dc.name}" has no initialiser and is read in the arguments of super(...); the default of its type is passed, and the constructor body assigns it, so the argument may differ from the field (limit)`
+            : `field "${dc.name}" has no initialiser and is read in the arguments of super(...); the default of its type is passed`,
+      });
+    }
+    const from = this.lines.length;
+    this.node(it.node, d, null, '');
+    for (let i = from; i < this.lines.length; i++) {
+      for (const h of it.hoists) this.lines[i] = replaceThisField(this.lines[i], h.decl.name, `__super_${h.decl.name}`);
+    }
+    for (const h of it.hoists) this.push(d, `this.${h.decl.name} = __super_${h.decl.name};`);
   }
 
   private modifiers(mods: readonly string[], isConst: boolean): string {
@@ -579,6 +645,10 @@ class Emitter {
       if (dc.init === null && !n.decl.isConst && this.rw.fieldDefault !== undefined) {
         dflt = this.rw.fieldDefault(dc.type === null ? null : this.slice(dc.type));
         declare = dflt === null && !isStatic;
+      }
+      if (!isStatic && this.hoisted.has(dc.name)) {
+        this.push(d, `${mods}${this.declaratorText(dc, 'field', null, true)};`);
+        continue;
       }
       let text = this.declaratorText(dc, 'field', dflt);
       if (declare) text = 'declare ' + text;
