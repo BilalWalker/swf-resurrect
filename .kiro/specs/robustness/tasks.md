@@ -121,19 +121,19 @@ Rules that apply to every task:
     - `test/unit/processTree.test.ts` (create): the registry tracks and kills only live pids. `test/e2e/killTree.e2e.test.ts` (create): spawn a real short `node` process that sleeps and has a grandchild, through `spawnFfdec`'s own timeout path with a fake jar command; after the timeout check by `process.kill(pid, 0)` that both are gone; Windows and POSIX branches.
     - _Requirements: 6.14, 6.15, 25.5_
 
-- [ ] 7. Pipeline: Outcome wiring, classifier, Facts stage and numbers from the reports
+- [x] 7. Pipeline: Outcome wiring, classifier, Facts stage and numbers from the reports
   - Commit area: `Pipeline` (Unpack and Test named). Verification V1. Read the design "Architecture", "Run record and decision", D-A1, D-A2, D-A3, D-A9, findings F11, F16 and F17, and the existing `src/pipeline/{cli,pipeline,errors}.ts` and `src/unpack/{unpack,spawnFfdec,errors,swfSniff}.ts`. `runPipeline` keeps its signature (stages and io injected, returns the exit code). Every existing progress line stays, because `web/server/jobs.ts` reads `^Done: ` and `^error [stage]: `; no file under `web/` changes.
-  - [ ] 7.1 Add `src/outcome/classifyError.ts` and wire `decideOutcome` into `runPipeline`
+  - [x] 7.1 Add `src/outcome/classifyError.ts` and wire `decideOutcome` into `runPipeline`
     - Error to Outcome by the table of D-A2, keyed on the error `code` and the stage: `INVALID_SWF` refused `not-swf`; `NOT_AS3` refused `actionscript-1-2`; `FFDEC_TIMEOUT` refused `time-limit`; `FFDEC_EXIT` thrown by the Unpack stage refused `damaged` (reason "the file could not be read", no FFDec text; the text goes to `ffdec-<Reference_Id>.log` in Task 8.1); `JAVA_NOT_FOUND` and `FFDEC_NOT_FOUND` failed (reason says a required component is missing, no tool name); `MISSING_EXPORT`, `XML_VERSION`, `MISSING_HEADER_VALUE`, every error of our own code (`TypeError`, a bug in Translate) and every non-Error value `failed internal-error`, never `damaged`. The classifier checks the error class and the stage, never the message text. An `FFDEC_EXIT` thrown by a recovery step is not an Outcome (Task 18.2). `runPipeline` collects the `RunRecord` and calls `decideOutcome` once; it prints `Done: <dir>` only for the two project outcomes, then the Outcome_Line as the last line of standard output, then returns the exit code of the table.
     - Tests: `test/unit/classifyError.test.ts` (create): every code of the table, a non-Error thrown value, an error with an unknown code, an `FFDEC_EXIT` at Unpack against a `TypeError` at Unpack.
     - _Requirements: 1.1, 1.4, 1.5, 1.6, 2.5, 2.6, 4.4, 5.12, 5.13, 7.1_
 
-  - [ ] 7.2 Run the Facts_Reader first, take numbers from the reports, fill `abcClassCount`
+  - [x] 7.2 Run the Facts_Reader first, take numbers from the reports, fill `abcClassCount`
     - Add a `facts` stage that reads the file (size check first: above the size limit is `too-large` before any FFDec process; the limit is wired in Task 10.1, a constant stands in until then) and refuses `not-swf`, `damaged`, `actionscript-1-2` and `too-large` with no FFDec process started. After the type-check gate, `numbers` is read from the Translation_Report and the Unsupported_Feature_List and never from the `[translate]` console line (on `redball4` the line said 3/18/35 against 3/12/41 in the report); `droppedPlacements` comes from a new `stats.placementsDropped` that Convert returns (D-A3; no change to `unsupported-features.json` or any golden). `abcClassCount` is the number of `.as` files under `scripts/` after Unpack (A7).
     - Tests: `test/unit/pipelineFacts.test.ts` (create) with stage fakes: each refusal starts no FFDec fake; the Outcome numbers equal the report, not the console line; `droppedPlacements` equals the stat; `abcClassCount` equals the exported file count.
     - _Requirements: 2.3, 3.1, 3.4, 3.5, 3.6, 3.10, 4.8, 6.4_
 
-  - [ ] 7.3 Write the property tests of classification and cuts
+  - [x] 7.3 Write the property tests of classification and cuts
     - **Property 3: Error classification keeps FFDec and our own errors apart** (an `FfdecExitError` at Unpack gives `refused damaged` with none of its stderr text in the Outcome_File, the Outcome_Line or the reason; every other error gives `failed internal-error`; no `failed` Outcome has the reason code `damaged`) in `test/property/outcome.property.test.ts` (extend), and **Property 10: A cut SWF is never converted** (any cut length 0 to length minus 1 of a generated and of a committed SWF with stage fakes: `refused`, `not-swf` below 8 bytes and `damaged` otherwise) in `test/property/facts.property.test.ts` (extend).
     - **Validates: Requirements 4.5, 5.1, 5.2, 5.3, 5.4, 5.10, 5.12, 5.13**
 

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { runPipeline } from '../../src/pipeline/pipeline';
 import type { PipelineArgs, PipelineStages } from '../../src/pipeline/pipeline';
 import { gateError } from '../support/gateError';
+import { buildSwf } from '../support/hostileSwf';
 
 let tmp: string;
 let out: string;
@@ -62,7 +63,7 @@ function args(): PipelineArgs {
 
 beforeEach(async () => {
   tmp = await mkdtemp(join(tmpdir(), 'pipe-lines-'));
-  await writeFile(join(tmp, 'a.swf'), 'FWS');
+  await writeFile(join(tmp, 'a.swf'), buildSwf());
   out = '';
   err = '';
 });

@@ -1,8 +1,9 @@
 // Pipeline glue: unpack -> convert -> translate -> emit -> typeCheck, exit codes, progress output and the
 // unsupported-features file. Stages and output are injected so tests need no Java.
 import { constants, existsSync } from 'node:fs';
-import { access, mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, open, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { inflateSync } from 'node:zlib';
 import { basename, dirname, join, resolve } from 'node:path';
 import type { ConvertedArtifact } from '../convert/writeConverted';
 import { omissionMessage } from '../emit/classOmissions';
@@ -10,6 +11,12 @@ import type { BundlerCheckData, ClassOmission, LooseClass } from '../emit/classO
 import type { ClassPathEntry } from '../emit/classPaths';
 import type { EmitOptions, EmitResult } from '../emit/emit';
 import type { UnpackInput, UnpackResult } from '../unpack/unpack';
+import { readFacts } from '../facts/readFacts';
+import { classifyError } from '../outcome/classifyError';
+import { summariseGaps } from '../outcome/gaps';
+import { decideOutcome } from '../outcome/outcome';
+import type { ClassifiedFailure, Facts, Outcome, OutcomeLimits, OutcomeNumbers, OutcomeRecord, ReasonCode, StageName, StageRecord } from '../outcome/outcome';
+import { writeOutcomeFile } from '../outcome/outcomeFile';
 import { childNamesByClass } from '../translate/planTranslate';
 import type { TranslateArtifact } from '../translate/planTranslate';
 import { buildReport, classStatus, serialiseReport, untranslatedCodeEntries } from '../translate/report';
@@ -24,6 +31,91 @@ import { serialiseUnsupported } from './unsupported';
 import type { UnsupportedFeatureEntry } from './unsupported';
 
 export type { VerifyRequest, VerifySummary };
+
+/** Stand-in limits until Task 10.1 wires the real ones (D-A4). */
+const DEFAULT_LIMITS: OutcomeLimits = {
+  maxSizeMiB: 20,
+  runLimitS: 300,
+  stageLimitS: 60,
+  stageWeights: { convert: 1, emit: 1, gate: 1, recover: 2, translate: 1, unpack: 2, verify: 3 },
+};
+
+/**
+ * Counts of the Translation_Report (D-A3). A translated class is a kept class that is clean or loose by status, a
+ * Loose_Class (registered, translated, gate errors in its own file) or an applied override. An omitted class is never
+ * translated, so a run whose candidates are all omitted has translatedClasses 0 and is refused `nothing-translated`.
+ */
+export function numbersOf(report: TranslationReport, droppedPlacements: number): OutcomeNumbers {
+  const kept = report.classes.filter((c) => !c.omitted);
+  const translated = kept.filter((c) => c.status === 'clean' || c.status === 'loose' || c.loose);
+  return {
+    candidateClasses: report.classes.length,
+    translatedClasses: translated.length,
+    cleanClasses: kept.filter((c) => c.status === 'clean' && !c.loose).length,
+    looseClasses: kept.filter((c) => c.status === 'loose' || c.loose).length,
+    unsupportedClasses: kept.filter((c) => c.status === 'unsupported' && !c.loose).length,
+    omittedClasses: report.omittedClasses.length,
+    typeErrors: report.classes.reduce((n, c) => n + c.typeErrors.length, 0) + report.otherErrors.length,
+    droppedPlacements,
+    namedLimits: 0,
+  };
+}
+
+/** Stand-in until Task 10.1 wires the size limit. */
+const MAX_INPUT_BYTES = DEFAULT_LIMITS.maxSizeMiB * 1024 * 1024;
+
+/** A refusal found by the Facts stage; no FFDec process has started. */
+class FactsRefusedError extends Error {
+  constructor(readonly reasonCode: ReasonCode) {
+    super(`input refused: ${reasonCode}`);
+  }
+}
+
+/** Edge wrapper of zlib for the Facts_Reader. */
+function nodeInflate(data: Uint8Array, maxOutputLength: number): Uint8Array {
+  return new Uint8Array(inflateSync(data, { maxOutputLength: Math.max(1, maxOutputLength) }));
+}
+
+/** Reads the file and the Facts. A too-large file is judged from its size and 8 header bytes, never read whole. */
+async function factsStage(swfPath: string): Promise<{ facts: Facts | null; refusal: ReasonCode | null }> {
+  const size = (await stat(swfPath)).size;
+  let bytes: Uint8Array;
+  if (size > MAX_INPUT_BYTES) {
+    const fh = await open(swfPath, 'r');
+    try {
+      const buf = new Uint8Array(8);
+      const { bytesRead } = await fh.read(buf, 0, 8, 0);
+      bytes = buf.subarray(0, bytesRead);
+    } finally {
+      await fh.close();
+    }
+    const r = readFacts(bytes, { maxSizeBytes: bytes.length - 1 }, nodeInflate);
+    if (r.ok) return { facts: null, refusal: 'too-large' };
+    if (r.facts !== null) r.facts.sizeBytes = size;
+    return { facts: r.facts, refusal: r.reasonCode };
+  }
+  bytes = new Uint8Array(await readFile(swfPath));
+  const r = readFacts(bytes, { maxSizeBytes: MAX_INPUT_BYTES }, nodeInflate);
+  return r.ok ? { facts: r.facts, refusal: null } : { facts: r.facts, refusal: r.reasonCode };
+}
+
+/** Number of `.as` files FFDec exported under scripts/; null when the directory is unknown or unreadable. */
+async function countAbcClasses(scriptsDir: unknown): Promise<number | null> {
+  if (typeof scriptsDir !== 'string') return null;
+  try {
+    return (await readdir(scriptsDir, { recursive: true })).filter((n) => n.endsWith('.as')).length;
+  } catch {
+    return null;
+  }
+}
+/** The Outcome_Line: `Outcome: <outcome> <reasonCode or -> <reason>` (Requirement 2.5). */
+export function outcomeLine(o: Outcome): string {
+  return `Outcome: ${o.outcome} ${o.reasonCode ?? '-'} ${o.reason}`;
+}
+
+const STAGE_NAME: Record<PipelineStage, StageName> = {
+  unpack: 'unpack', convert: 'convert', translate: 'translate', emit: 'emit', pipeline: 'gate', verify: 'verify',
+};
 
 export interface PipelineStages {
   unpack(i: UnpackInput): Promise<UnpackResult>;
@@ -73,7 +165,12 @@ export interface PipelineArgs {
 const REFUSAL_CODES = new Set(['OUTPUT_DIR_NOT_EMPTY', 'UNSAFE_FORCE_TARGET']);
 
 function messageOf(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
+  if (err instanceof Error) return err.message;
+  try {
+    return String(err);
+  } catch {
+    return 'a value that cannot be printed was thrown'; // e.g. an object without a prototype
+  }
 }
 
 function isRefusal(err: unknown): boolean {
@@ -223,6 +320,13 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let exitCode = 0;
   let outputDir = resolve(args.outputDir);
   let failure: unknown = null;
+  const stageRecords: StageRecord[] = [];
+  let stageStart = Date.now();
+  const endStage = (name: PipelineStage, result: 'ok' | 'error'): void => {
+    const now = Date.now();
+    stageRecords.push({ name: STAGE_NAME[name], result, durationMs: now - stageStart });
+    stageStart = now;
+  };
   let translated: TranslateArtifact | null = null;
   let gate: GateResult | null = null;
   let omissions: ClassOmission[] = [];
@@ -231,19 +335,30 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let problems: TranslationProblem[] = [];
   let handwritten: HandwrittenReportEntry[] = [];
   const overridden = new Set(args.handwrittenClasses);
+  let facts: Facts | null = null;
 
   try {
+    // Facts stage: no FFDec process starts for a refused input.
+    const read = await factsStage(resolve(args.swfPath));
+    facts = read.facts;
+    if (read.refusal !== null) throw new FactsRefusedError(read.refusal);
     const unpacked = await stages.unpack({
       swfPath: resolve(args.swfPath),
       workDir,
       ffdecJarPath: args.ffdecJarPath,
     });
+    if (facts !== null) {
+      facts.abcClassCount = await countAbcClasses((unpacked as Partial<UnpackResult>).scriptsDir);
+      if (facts.abcClassCount !== null) facts.source.ffdec = ['abcClassCount'];
+    }
     io.out('[unpack] ok\n');
+    endStage('unpack', 'ok');
 
     stage = 'convert';
     artifact = await stages.convert(unpacked);
     unsupported = [...artifact.unsupported, ...untranslatedClasses(artifact, overridden)];
     io.out(`[convert] ok (${artifact.stats.svgWritten} svg written, ${artifact.stats.morphSkipped} morph skipped)\n`);
+    endStage('convert', 'ok');
 
     stage = 'translate';
     translated = await stages.translate(unpacked, artifact, childNamesByClass(artifact.scene));
@@ -258,6 +373,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     io.out(
       `[translate] ok (${translated.classes.length} classes before type check: ${counts.clean} clean, ${counts.loose} loose, ${counts.unsupported} unsupported)\n`,
     );
+    endStage('translate', 'ok');
 
     stage = 'emit';
     const result = await stages.emit(artifact, {
@@ -274,6 +390,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     });
     outputDir = result.outputDir;
     io.out('[emit] ok\n');
+    endStage('emit', 'ok');
     omissions = result.omissions;
     loose = result.loose;
     classPaths = result.classPaths;
@@ -305,6 +422,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     } else {
       io.err(`[typecheck] ${gate.errors.length} errors: ${errorsPerFile(gate)}\n`);
     }
+    endStage('pipeline', 'ok');
 
     if (args.verify !== undefined && stages.verify !== undefined) {
       stage = 'verify';
@@ -325,23 +443,34 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       if (args.verify.frames !== undefined) req.frames = args.verify.frames;
       const summary = await stages.verify(req);
       for (const line of verifyLines(summary)) io.out(`${line}\n`);
+      endStage('verify', 'ok');
     }
   } catch (err) {
-    failure = err;
-    exitCode = 1;
+    // `throw null` and `throw undefined` must still count as a failure.
+    failure = err ?? new Error('null or undefined was thrown');
     const reported = err instanceof PipelineError ? err.stage : stage;
-    io.err(`error [${reported}]: ${messageOf(err)}\n`);
+    if (isRefusal(err)) {
+      // D-A9: an Emit refusal is a path error, outside the Outcome set.
+      exitCode = 2;
+      io.err(`error [pipeline]: ${messageOf(err)}\n`);
+    } else {
+      exitCode = 1;
+      io.err(`error [${reported}]: ${messageOf(err)}\n`);
+      if (!(err instanceof FactsRefusedError)) endStage(stage, 'error');
+    }
   }
 
+  const finalReport =
+    artifact === null
+      ? null
+      : reportOf(translated, overridden, gate, omissions, loose, classPaths, problems, handwritten);
+
   // Unsupported list: after success, or after a failure once Convert completed (Req 9.6).
-  if (artifact !== null) {
+  let writeFailed = false;
+  if (artifact !== null && finalReport !== null) {
     const files = [
       { name: 'unsupported-features.json', label: 'unsupported features', text: serialiseUnsupported(unsupported) },
-      {
-        name: 'translation-report.json',
-        label: 'translation report',
-        text: serialiseReport(reportOf(translated, overridden, gate, omissions, loose, classPaths, problems, handwritten)),
-      },
+      { name: 'translation-report.json', label: 'translation report', text: serialiseReport(finalReport) },
     ];
     for (const f of files) {
       if (failure !== null && isRefusal(failure)) {
@@ -354,7 +483,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       } catch (err) {
         io.err(`error [pipeline]: cannot write ${f.name}: ${messageOf(err)}\n`);
         io.err(`${f.label}:\n${f.text}`);
-        if (exitCode === 0) exitCode = 1;
+        writeFailed = true;
       }
     }
   }
@@ -363,6 +492,54 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     await rm(workDir, { recursive: true, force: true }).catch(() => undefined);
   }
 
-  if (exitCode === 0) io.out(`Done: ${outputDir}\n`);
-  return exitCode;
+  if (failure !== null && isRefusal(failure)) return 2;
+
+  // One decision per run (D-A1).
+  let classified: ClassifiedFailure | null = null;
+  if (failure !== null) {
+    classified = failure instanceof FactsRefusedError
+      ? { kind: 'refused', reasonCode: failure.reasonCode }
+      : classifyError(failure, failure instanceof PipelineError ? failure.stage : stage);
+  } else if (writeFailed) {
+    classified = { kind: 'internal', reasonCode: 'internal-error', stage: 'pipeline' };
+  }
+  const ranToGate = failure === null && finalReport !== null && gate !== null;
+  const gaps = ranToGate ? summariseGaps(unsupported, { typeErrors: numbersOf(finalReport, 0).typeErrors }) : [];
+  const numbers = ranToGate ? numbersOf(finalReport, artifact?.stats.placementsDropped ?? 0) : null;
+  const decision = decideOutcome({
+    facts,
+    stages: stageRecords,
+    failure: classified,
+    numbers,
+    gaps,
+    limits: DEFAULT_LIMITS,
+    recovery: null,
+  });
+
+  const record: OutcomeRecord = {
+    formatVersion: 1,
+    outcome: decision.outcome,
+    reasonCode: decision.reasonCode,
+    reason: decision.reason,
+    facts,
+    numbers,
+    gaps,
+    limits: DEFAULT_LIMITS,
+    stages: stageRecords,
+    obfuscated: null,
+    recovery: null,
+    referenceId: null, // Task 8.1 derives the Reference_Id of a failed run
+  };
+  await mkdir(outputDir, { recursive: true }).catch(() => undefined);
+  await writeOutcomeFile(
+    outputDir,
+    record,
+    { writeFile: (p, text) => writeFile(p, text, 'utf8'), rename, remove: (p) => rm(p, { force: true }) },
+    process.pid,
+  );
+
+  const isProject = decision.outcome === 'converted' || decision.outcome === 'converted-with-gaps';
+  if (isProject) io.out(`Done: ${outputDir}\n`);
+  io.out(`${outcomeLine(decision)}\n`);
+  return decision.exitCode;
 }

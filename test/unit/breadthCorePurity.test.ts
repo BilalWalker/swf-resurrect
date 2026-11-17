@@ -37,6 +37,7 @@ const CORE_FILES = [
   "src/outcome/exitCode.ts", // robustness 1.1
   "src/outcome/reasons.ts", // robustness 1.1
   "src/outcome/gaps.ts", // robustness 1.1
+  "src/outcome/classifyError.ts", // robustness 7.1
   "src/outcome/outcomeFile.ts", // robustness 2.1 (fs injected, no node:*)
   "src/facts/swfBody.ts", // robustness 3.1
   "src/facts/readFacts.ts", // robustness 3.1 (inflate passed in)

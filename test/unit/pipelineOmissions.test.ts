@@ -10,6 +10,7 @@ import type { BundlerCheckData } from '../../src/emit/classOmissions';
 import { emit } from '../../src/emit/emit';
 import { buildClassesTs } from '../../src/emit/planEmit';
 import { runPipeline } from '../../src/pipeline/pipeline';
+import { buildSwf } from '../support/hostileSwf';
 import type { PipelineArgs, PipelineStages } from '../../src/pipeline/pipeline';
 import type { TranslatedClass } from '../../src/translate/planTranslate';
 import { typeCheckProject } from '../../src/translate/typeCheckGate';
@@ -79,7 +80,7 @@ beforeEach(async () => {
   await mkdir(join(tmp, 'tpl', 'src'), { recursive: true });
   await writeFile(join(tmp, 'tpl', 'src', 'main.ts'), 'export {};\n');
   await writeFile(join(tmp, 'tpl', 'tsconfig.json'), await readFile(join(REPO_ROOT, 'template', 'tsconfig.json'), 'utf8'));
-  await writeFile(join(tmp, 'a.swf'), 'FWS');
+  await writeFile(join(tmp, 'a.swf'), buildSwf());
   await writeFile(join(tmp, '1.shape.json'), '{"formatVersion":1,"paths":[]}\n');
 });
 afterEach(async () => {

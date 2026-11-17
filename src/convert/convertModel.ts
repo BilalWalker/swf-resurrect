@@ -28,7 +28,7 @@ export interface ConvertResult {
   imageFiles: ImageFile[]; // sorted by bitmap id
   unsupported: UnsupportedFeatureEntry[]; // sorted, total order
   warnings: string[]; // sorted
-  stats: { svgWritten: number; morphSkipped: number; declaredShapes: number };
+  stats: { svgWritten: number; morphSkipped: number; declaredShapes: number; placementsDropped?: number };
 }
 
 /** Character kinds whose placements are dropped (Requirement 3.8). */
@@ -253,7 +253,9 @@ export function convertModel(model: TagsModel): ConvertResult {
     timelines.push([id, spriteById.get(id) as TimelineModel]);
   }
   const edges = new Map<number, number[]>();
+  let placementsDropped = 0;
   const recordDropped = (d: DroppedPlacement): void => {
+    if (d.kind !== 'mask') placementsDropped++;
     const id = d.spriteId;
     const where = `${d.kind} at depth ${d.depth} in ${id === 0 ? 'root timeline' : `sprite ${id}`}, frame ${d.frame}`;
     unsupported.push({
@@ -403,6 +405,6 @@ export function convertModel(model: TagsModel): ConvertResult {
     imageFiles,
     unsupported: sortUnsupported(unsupported),
     warnings: [...warnings].sort(cmpStr),
-    stats: { svgWritten: shapeFiles.length, morphSkipped: morphIds.length, declaredShapes: shapeIds.length + morphIds.length },
+    stats: { svgWritten: shapeFiles.length, morphSkipped: morphIds.length, declaredShapes: shapeIds.length + morphIds.length, placementsDropped },
   };
 }

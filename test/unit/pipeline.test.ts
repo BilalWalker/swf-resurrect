@@ -11,6 +11,7 @@ import { InvalidSwfError } from '../../src/unpack/errors';
 import type { ClassOmission, LooseClass } from '../../src/emit/classOmissions';
 import type { GateResult } from '../../src/translate/typeCheckGate';
 import { gateError } from '../support/gateError';
+import { buildSwf } from '../support/hostileSwf';
 
 class FakeConvertFailure extends PipelineError {
   readonly stage = 'convert' as const;
@@ -93,7 +94,7 @@ function args(over: Partial<PipelineArgs> = {}): PipelineArgs {
 beforeEach(async () => {
   tmp = await mkdtemp(join(tmpdir(), 'pipe-test-'));
   swf = join(tmp, 'a.swf');
-  await writeFile(swf, 'FWS');
+  await writeFile(swf, buildSwf());
   outDir = join(tmp, 'out');
   calls = [];
   workDirs = [];
@@ -115,9 +116,14 @@ describe('runPipeline', () => {
   it('runs stages in order, prints progress and Done, exits 0', async () => {
     expect(await runPipeline(args(), makeStages(), io)).toBe(0);
     expect(calls).toEqual(['unpack', 'convert', 'translate', 'emit', 'typeCheck']);
-    expect(out).toBe(
-      `[unpack] ok\n[convert] ok (4 svg written, 1 morph skipped)\n[translate] ok (0 classes before type check: 0 clean, 0 loose, 0 unsupported)\n[emit] ok\n[typecheck] ok (0 errors)\nDone: ${outDir}\n`,
+    const lines = out.split('\n');
+    expect(lines.slice(0, 6).join('\n')).toBe(
+      `[unpack] ok\n[convert] ok (4 svg written, 1 morph skipped)\n[translate] ok (0 classes before type check: 0 clean, 0 loose, 0 unsupported)\n[emit] ok\n[typecheck] ok (0 errors)\nDone: ${outDir}`,
     );
+    // The Outcome_Line is the last line and nothing follows it.
+    expect(lines).toHaveLength(8);
+    expect(lines[6]).toMatch(/^Outcome: converted-with-gaps - /);
+    expect(lines[7]).toBe('');
   });
 
   it('writes unsupported-features.json with untranslated-class entries', async () => {
@@ -141,7 +147,8 @@ describe('runPipeline', () => {
     expect(calls).toEqual(['unpack', 'convert']);
     expect(err).toContain('error [convert]: boom');
     expect(out).not.toContain('Done:');
-    expect(await exists(outDir)).toBe(false); // convert never completed: no list written
+    expect(out.trimEnd().split('\n').at(-1)).toBe('Outcome: failed internal-error an internal error stopped the run');
+    expect(await readdir(outDir)).toEqual(['outcome.json']); // convert never completed: no list written
   });
 
   it('names the stage for plain errors from unpack', async () => {
@@ -174,9 +181,10 @@ describe('runPipeline', () => {
         throw new OutputDirNotEmptyError(outDir);
       },
     });
-    expect(await runPipeline(args(), stages, io)).toBe(1);
+    expect(await runPipeline(args(), stages, io)).toBe(2);
     expect(await readdir(outDir)).toEqual(['keep.txt']);
-    expect(err).toContain('error [emit]:');
+    expect(err).toContain('error [pipeline]:');
+    expect(out).not.toContain('Outcome:');
     expect(err).toContain('"untranslated-class"');
   });
 
@@ -188,9 +196,10 @@ describe('runPipeline', () => {
         throw new OutputDirNotEmptyError(outDir);
       },
     });
-    expect(await runPipeline(args(), stages, io)).toBe(1);
+    expect(await runPipeline(args(), stages, io)).toBe(2);
     expect(await readdir(outDir)).toEqual(['keep.txt']);
-    expect(err).toContain('error [emit]:');
+    expect(err).toContain('error [pipeline]:');
+    expect(out).not.toContain('Outcome:');
     expect(err).toContain('"text"');
   });
 
@@ -200,7 +209,7 @@ describe('runPipeline', () => {
         throw new UnsafeForceTargetError(outDir, 'home-directory');
       },
     });
-    expect(await runPipeline(args({ force: true }), stages, io)).toBe(1);
+    expect(await runPipeline(args({ force: true }), stages, io)).toBe(2);
     expect(await exists(outDir)).toBe(false);
     expect(err).toContain('home-directory');
     expect(err).toContain('"untranslated-class"');
@@ -225,9 +234,10 @@ describe('runPipeline', () => {
         throw new InvalidSwfError(swf);
       },
     });
-    expect(await runPipeline(args(), stages, io)).toBe(1);
+    expect(await runPipeline(args(), stages, io)).toBe(3);
     expect(calls).toEqual(['unpack']);
-    expect(await exists(outDir)).toBe(false);
+    expect(await readdir(outDir)).toEqual(['outcome.json']);
+    expect(out.trimEnd().split('\n').at(-1)).toBe('Outcome: refused not-swf the file is not a SWF');
   });
 
   it('passes --force through to the emit stage', async () => {
@@ -320,11 +330,11 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
     return { className, fileName: `${className}.ts`, text: '', diagnostics: [], spans: [], extendsName: null, extendsQualified: null, importRecords: [] };
   }
 
-  async function run(stages: PipelineStages): Promise<{
+  async function run(stages: PipelineStages, expectedExit = 0): Promise<{
     unsupported: Array<{ kind: string; tag?: string; id?: number; message: string }>;
     report: any;
   }> {
-    expect(await runPipeline(args(), stages, io)).toBe(0);
+    expect(await runPipeline(args(), stages, io)).toBe(expectedExit);
     const unsupported = JSON.parse(await readFile(join(outDir, 'unsupported-features.json'), 'utf8')).entries;
     const report = JSON.parse(await readFile(join(outDir, 'translation-report.json'), 'utf8'));
     return { unsupported, report };
@@ -340,6 +350,7 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
           return { outputDir: o.outputDir, files: [], omissions: [broken], loose: [], classPaths: [], gate: { errors: [] } };
         },
       }),
+      3, // every candidate class is omitted: refused nothing-translated
     );
     const entries = unsupported.filter((e) => e.kind === 'class-omitted');
     expect(entries).toHaveLength(1);
@@ -392,6 +403,7 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
           return { outputDir: o.outputDir, files: [], omissions: [broken], loose: [], classPaths: [], gate: written };
         },
       }),
+      3, // every candidate class is omitted: refused nothing-translated
     );
     expect(report.otherErrors).toEqual([]);
     expect(report.omittedClasses.map((c: ClassOmission) => c.className)).toEqual(['pkg.Broken']);
@@ -406,7 +418,8 @@ describe('runPipeline: omitted classes (spec task 4.5)', () => {
     const { report } = await run(
       makeStages({
         async translate() {
-          return { classes: [translatedClass('Main')] } as never;
+          // a second, clean class keeps the run from being refused nothing-translated (Main has a type error)
+          return { classes: [translatedClass('Main'), translatedClass('Other')] } as never;
         },
         async emit(_a, o) {
           const classPaths = [{ className: 'Main', originalPath: 'src/Main.ts', path: 'src/Main.class.ts' }];

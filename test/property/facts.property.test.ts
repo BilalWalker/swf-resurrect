@@ -1,7 +1,10 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { readFacts } from "../../src/facts/readFacts";
 import { buildSwf, cut, flipByte, nodeInflate } from "../support/hostileSwf";
+import { forbiddenStages, runWithFakes } from "../support/propPipeline";
 import { fcConfig } from "./config";
 import { genSwfHeader } from "./gen/genSwfHeader";
 
@@ -57,6 +60,46 @@ describe("Facts_Reader properties", () => {
         }
       }),
       fcConfig,
+    );
+  });
+});
+
+describe("Property 10: a cut SWF is never converted", () => {
+  // Feature: robustness, Property 10: A cut SWF is never converted
+  // **Validates: Requirements 5.10, 5.12, 5.13**
+  const small = { ...fcConfig, numRuns: 25 };
+  const check = async (full: Uint8Array, len: number) => {
+    const calls: string[] = [];
+    const r = await runWithFakes(cut(full, len), forbiddenStages((n) => calls.push(n)));
+    expect(calls).toEqual([]);
+    expect(r.outcome.outcome).toBe("refused");
+    expect(r.outcome.reasonCode).toBe(len < 8 ? "not-swf" : "damaged");
+    expect(r.exit).toBe(3);
+    expect(r.out).not.toContain("Done:");
+  };
+
+  it("generated SWFs, every cut length", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        genSwfHeader.filter((g) => g.expectedScript !== "as1-2").chain((g) => {
+          const bytes = buildSwf(g.spec);
+          return fc.tuple(fc.constant(bytes), fc.integer({ min: 0, max: bytes.length - 1 }));
+        }),
+        async ([bytes, len]) => check(bytes, len),
+      ),
+      small,
+    );
+  });
+
+  it("committed samples, any cut length", async () => {
+    const dirs = ["clickgoto", "entity_game", "gradients"];
+    await fc.assert(
+      fc.asyncProperty(fc.constantFrom(...dirs), fc.double({ min: 0, max: 1, noNaN: true }), fc.boolean(), async (dir, f, header) => {
+        const full = new Uint8Array(readFileSync(join("samples", dir, "test.swf")));
+        const len = header ? Math.floor(f * 12) : Math.min(full.length - 1, Math.floor(f * full.length));
+        await check(full, Math.min(len, full.length - 1));
+      }),
+      small,
     );
   });
 });

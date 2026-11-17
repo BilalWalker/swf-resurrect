@@ -174,6 +174,37 @@
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794851993123
       }
+    ],
+    "7.1 Add `src/outcome/classifyError.ts` and wire `decideOutcome` into `runPipeline`": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794852164205
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794852450566
+      }
+    ],
+    "7.2 Run the Facts_Reader first, take numbers from the reports, fill `abcClassCount`": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794852450854
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794852899287
+      }
+    ],
+    "7.3 Write the property tests of classification and cuts": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794852899452
+      }
     ]
   }
 }

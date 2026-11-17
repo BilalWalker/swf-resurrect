@@ -4,6 +4,11 @@ import { EXIT_CODES, exitCodeFor } from "../../src/outcome/exitCode";
 import { COUNTED_GAP_KINDS, NAMED_LIMIT_KINDS, summariseGaps } from "../../src/outcome/gaps";
 import { decideOutcome, type OutcomeCode, type RunRecord } from "../../src/outcome/outcome";
 import { parseOutcome, serialiseOutcome, scrubRecord, OutcomeFileError, writeOutcomeFile } from "../../src/outcome/outcomeFile";
+import { classifyError } from "../../src/outcome/classifyError";
+import type { PipelineStages } from "../../src/pipeline/pipeline";
+import { FfdecExitError } from "../../src/unpack/errors";
+import { buildSwf } from "../support/hostileSwf";
+import { runWithFakes } from "../support/propPipeline";
 import { fcConfig } from "./config";
 import { gapEntriesArb, genRunRecord, outcomeRecordArb, runRecordArb, toOutcomeRecord } from "./gen/genRunRecord";
 
@@ -161,6 +166,62 @@ describe("outcome properties", () => {
         }
       }),
       fcConfig,
+    );
+  });
+
+  // Feature: robustness, Property 3: Error classification keeps FFDec and our own errors apart
+  // **Validates: Requirements 4.5, 5.1, 5.2, 5.3, 5.4**
+  const secretArb = fc.stringMatching(/^[a-z]{4,12}$/).map((s) => `ZQX${s}QXZ`);
+  const internalErrArb: fc.Arbitrary<unknown> = fc.oneof(
+    fc.string().map((m) => new Error(m)),
+    fc.string().map((m) => new TypeError(m)),
+    fc.string(),
+    fc.integer(),
+    fc.constant(undefined),
+    fc.constant(null),
+    fc.record({ message: fc.string() }),
+    fc.constantFrom("MISSING_EXPORT", "XML_VERSION", "MISSING_HEADER_VALUE", "X").map((code) => Object.assign(new Error("e"), { code })),
+  );
+
+  it("Property 3: classifyError gives damaged only for an FFDec exit at Unpack", () => {
+    fc.assert(
+      fc.property(secretArb, fc.integer({ min: 1, max: 255 }), internalErrArb, fc.constantFrom("convert", "translate", "emit", "pipeline", "verify"), (secret, code, other, later) => {
+        const exit = classifyError(new FfdecExitError(code, secret), "unpack");
+        expect(exit).toMatchObject({ kind: "refused", reasonCode: "damaged" });
+        expect(JSON.stringify(exit)).not.toContain(secret);
+        expect(classifyError(new FfdecExitError(code, secret), later)).toMatchObject({ kind: "internal", reasonCode: "internal-error" });
+        const o = classifyError(other, "unpack");
+        expect(o).toMatchObject({ kind: "internal", reasonCode: "internal-error" });
+        expect(o.reasonCode).not.toBe("damaged");
+      }),
+      fcConfig,
+    );
+  });
+
+  it("Property 3: a run whose Unpack throws ends refused damaged or failed internal-error, with no stderr text", async () => {
+    const small = { ...fcConfig, numRuns: 25 };
+    const unpackThrows = (e: unknown): PipelineStages =>
+      ({ unpack: async () => { throw e; }, convert: async () => { throw new Error("no"); }, translate: async () => { throw new Error("no"); }, emit: async () => { throw new Error("no"); }, typeCheck: async () => { throw new Error("no"); } }) as unknown as PipelineStages;
+    await fc.assert(
+      fc.asyncProperty(secretArb, fc.integer({ min: 1, max: 255 }), async (secret, code) => {
+        const r = await runWithFakes(buildSwf(), unpackThrows(new FfdecExitError(code, secret)));
+        expect(r.outcome).toMatchObject({ outcome: "refused", reasonCode: "damaged" });
+        expect(r.exit).toBe(3);
+        expect(r.outcomeText).not.toContain(secret);
+        expect(r.outcome.reason).not.toContain(secret);
+        expect(r.out).not.toContain(secret);
+        expect(r.out.trimEnd().split("\n").at(-1)).toMatch(/^Outcome: refused damaged /);
+      }),
+      small,
+    );
+    await fc.assert(
+      fc.asyncProperty(internalErrArb, async (e) => {
+        const r = await runWithFakes(buildSwf(), unpackThrows(e));
+        expect(r.outcome).toMatchObject({ outcome: "failed", reasonCode: "internal-error" });
+        expect(r.exit).toBe(1);
+        expect(r.out.trimEnd().split("\n").at(-1)).toMatch(/^Outcome: failed internal-error /);
+      }),
+      small,
     );
   });
 
