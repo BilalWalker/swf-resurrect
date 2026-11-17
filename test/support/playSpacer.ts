@@ -24,6 +24,10 @@ export const SPACER_EXPECTED_NAMED_LIMITS: string[] = [
 /** Utils.as: LEFT_BORDER 15, RIGHT_BORDER 15, TOP_BORDER 130, BOTTOM_BORDER 30; stage 800 x 700. */
 export const SCENE_BOUNDS = { left: 15, right: 785, top: 130, bottom: 670 } as const;
 
+/** Half of the Player's content box (width and height the game reads), measured at the top-left stop; the tolerance covers rotation. */
+const PLAYER_HALF_SIZE = 37.4;
+const PLAYER_HALF_SIZE_TOLERANCE = 3;
+
 const KEY_CODES: Record<string, number> = { Enter: 13, Escape: 27, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, w: 87, a: 65, s: 83, d: 68 };
 function codeOf(e: Extract<ScriptEntry, { type: 'KeyDown' | 'KeyUp' }>): number {
   const name = typeof e.key === 'string' ? e.key : e.key.Char;
@@ -48,6 +52,8 @@ export interface SpacerOutcome {
   flyPauseMoved: { frozen: boolean; movedAfter: boolean };
   namedLimits: string[];
   endState: string;
+  /** Where the player stopped at the top-left corner, relative to the borders (half its width and height inside them). */
+  cornerInset: { x: number; y: number };
 }
 
 class Failure extends Error {}
@@ -199,6 +205,11 @@ export async function playSpacer(d: PlayDriver, flyLabels: FlyLabels): Promise<S
   await r.step();
   const stopped = player()!;
   check(Math.abs(stopped.x - corner.x) < 1 && Math.abs(stopped.y - corner.y) < 1, 'the player did not stop at the border', { corner, stopped });
+  // PhysicEngine.applySceneBounds stops the registration point getWidth()/2 and getHeight()/2 inside the borders. The Player's content box
+  // (what the game reads as width and height) is about 74.8 square at this rotation, so the stop is 37.4 from each border, as measured.
+  const insetX = stopped.x - SCENE_BOUNDS.left;
+  const insetY = stopped.y - SCENE_BOUNDS.top;
+  check(Math.abs(insetX - PLAYER_HALF_SIZE) <= PLAYER_HALF_SIZE_TOLERANCE && Math.abs(insetY - PLAYER_HALF_SIZE) <= PLAYER_HALF_SIZE_TOLERANCE, 'the player did not stop half its size inside the borders', { insetX, insetY, expected: PLAYER_HALF_SIZE });
 
   // (d, e) Hunt: the first Fly appears about 10 s after the start. Aim at the nearest live Fly, hold the button, pause once, and
   // follow one Fly through its death.
@@ -301,6 +312,7 @@ export async function playSpacer(d: PlayDriver, flyLabels: FlyLabels): Promise<S
     death: { name: deathName, trace, hitTick, goneTick },
     flyPauseMoved: flyPause,
     namedLimits: (await d.namedLimits()).sort(),
+    cornerInset: { x: stopped.x - SCENE_BOUNDS.left, y: stopped.y - SCENE_BOUNDS.top },
     endState: `tick ${end.tick}, ${lastTree.length} Stage children`,
   };
 }
