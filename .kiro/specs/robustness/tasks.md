@@ -81,7 +81,7 @@ Rules that apply to every task:
     - The four outcomes, the Reason_Codes with one sentence each, the exit-code table, the Outcome_File fields, one JSON example per outcome, a note that `abcClassCount` is the number of exported `.as` files and differs by one from `swf_summary` on `redball4` (Open_Item O14), a note that `numbers` is null for a refusal before Translate, and the note of Requirement 6.3: the default run limit of 300 s exceeds the 180 s per-job kill of `web/server/options.ts`, which the web owner must align. `test/unit/outcomeDocs.test.ts` (create) extracts each fenced JSON example and compares it with the writer's output for the same record. Update `.kiro/steering/structure.md` (the `src/outcome/` directory and `docs/outcome.md`) in the same commit.
     - _Requirements: 2.8, 6.3, 7.3, 10.1, 10.2, 10.4_
 
-- [ ] 3. Facts: the pure Facts_Reader and the hostile SWF byte builder
+- [x] 3. Facts: the pure Facts_Reader and the hostile SWF byte builder
   - Commit area: `Pipeline` (Test named). Verification V1. Read the design section "Facts_Reader" (the layout and the six-step table) and Properties 8, 9 and 10 (10 is proven in Task 7.3). New directory `src/facts/` is pure and added to the purity list. The zlib decode is passed in as a function so that `readFacts` itself imports no `node:*` module; the edge caller supplies `inflateSync` with `maxOutputLength`.
   - [x] 3.1 Add `src/facts/swfBody.ts` and `src/facts/readFacts.ts`
     - `readFacts(bytes, limits, inflate): FactsResult` as in the design table: signature check (`not-swf`), declared length above 128 MiB (`too-large`), `CWS` inflate (`Z_BUF_ERROR` or short result is `damaged`), decoded length plus 8 against the declared length (`damaged`), RECT, frame rate (8.8 fixed point), frame count, tag walk by length, an `End` tag required (`damaged`), `scriptVersion` from tag codes 72 and 82 (as3) and 12 and 59 (as1-2). `as1-2` is refused `actionscript-1-2`. Unknown tag codes are walked and ignored. The result keeps the decoded `body` and the byte ranges of tags 72 and 82, so the ABC_Name_Scan (Task 17) does not decode twice. `facts.source` lists which facts came from the header and which from FFDec; `abcClassCount` is null here and filled in Task 7.2. `ZWS` returns header-only facts (stage, rate, frame count and `scriptVersion` are null or `unknown`; U7, no LZMA decoder).
@@ -89,13 +89,13 @@ Rules that apply to every task:
     - Tests: `test/unit/readFacts.test.ts` (create): one example per step of the design table, tag codes 12, 69, 72 and 82, a `FileAttributes` AS3 flag with no `DoABC` tag (timeline-only, converts), a `ZWS` header, the `CWS` length mismatch, the 128 MiB cap.
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 5.1, 5.2, 5.3, 8.1_
 
-  - [-] 3.2 Write the property tests of the Facts_Reader
+  - [x] 3.2 Write the property tests of the Facts_Reader
     - **Property 8: Facts round trip over generated headers** and **Property 9: Arbitrary bytes never throw**, in `test/property/facts.property.test.ts` (create). Generators in `test/property/gen/genSwfHeader.ts` (create): signature in `FWS`, `CWS`; version 1 to 50; stage rectangle; frame rate; frame count; a valid tag list ending in `End`.
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.5, 3.8, 3.9**
 
 - [ ] 4. Pipeline: fix the `SET.json` read-error message (S2)
   - Commit area: `Pipeline`. Verification V1. This is the first task that touches `src/pipeline/cli.ts`, so the fix is its own commit (Requirement 25.2). Read `src/pipeline/cli.ts` and the design table "Small findings fixed with the file" (S2) first.
-  - [ ] 4.1 Print the exception text and test the path
+  - [-] 4.1 Print the exception text and test the path
     - In `src/pipeline/cli.ts` the message of the `handwritten/SET.json` read error is a double-quoted string, so `${...}` prints literally. Print the exception text. The error is a usage-class error: exit 2, one `error [pipeline]: <text>` line.
     - Tests: `test/unit/pipelineCli.test.ts` (extend or create): an unreadable `SET.json` prints the exception text, contains no literal `${`, and returns 2.
     - _Requirements: 5.6, 25.2, 25.5_

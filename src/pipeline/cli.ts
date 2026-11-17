@@ -163,7 +163,7 @@ export async function main(argv: readonly string[]): Promise<number> {
   try {
     handwrittenSet = await readHandwrittenSet(join(REPO_ROOT, 'handwritten'));
   } catch (err) {
-    io.err("error [pipeline]: ${err instanceof Error ? err.message : String(err)}\n");
+    io.err(`error [pipeline]: ${err instanceof Error ? err.message : String(err)}\n`);
     return 2;
   }
 
