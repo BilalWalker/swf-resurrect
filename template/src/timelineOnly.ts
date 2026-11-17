@@ -3,6 +3,7 @@ import { ManualClock } from '../runtime/clock';
 import type { LoadedScene } from '../runtime/loader';
 import { Player } from '../runtime/player';
 import type { MovieClip } from '../shim/MovieClip';
+import { ONE_SCENE, sceneRelativeFrame } from '../shim/timelineLookup';
 import type { PixiBackend } from '../runtime/pixi/pixiBackend';
 
 export interface TimelineOnlyOutcome {
@@ -72,8 +73,11 @@ export async function runTimelineOnly(
     clock.advance(player.frameIntervalMs);
     player.update();
   }
-  if ((player.root as MovieClip).currentFrame !== frame) {
-    fail(backend, frame, `root is at frame ${(player.root as MovieClip).currentFrame}, expected ${frame}`);
+  // currentFrame is scene-relative; rame is the absolute root frame the reference was rendered at.
+  const scenes = rootSymbol !== undefined && rootSymbol.type === 'sprite' ? (rootSymbol.scenes ?? ONE_SCENE) : ONE_SCENE;
+  const expected = sceneRelativeFrame(scenes, frame);
+  if ((player.root as MovieClip).currentFrame !== expected) {
+    fail(backend, frame, `root is at frame ${(player.root as MovieClip).currentFrame}, expected ${expected} (absolute frame ${frame})`);
     return;
   }
 
