@@ -223,3 +223,48 @@ say which you did. The spec that holds the evidence is named with each item.
   measured against Flash: AS3 documentation behaviour, chosen so `spacer`'s border clamp works. Setting them on a
   container is ignored (not implemented).
 - **`inspect()` `label` is the label on the exact absolute frame; `frame` is scene-relative.** Ours, not Flash's.
+
+## Evidence register (as3-coverage task 30)
+One list of every Flash behaviour added in the spec, with its label. `read` = read in Ruffle at commit
+`4a8d396` (a note says when it was not re-read in task 30; `.work/ruffle-src` is empty and nothing is
+downloaded); `measured` = a test or run on this machine; `ours-only` = measured on our runtime, not compared with
+Flash or Ruffle; `neither` = reasoned, AS3 documentation, or chosen by us. The open ones are in the Open_Items table
+of `.kiro/specs/as3-coverage/design.md` (O-numbers below). Task 30 checked that earlier tasks had already added
+broadcast order, Timer, `currentLabel`, scene `currentFrame` and `goto`, `getBounds`, listener order and scope order
+above; nothing was missing.
+
+| Behaviour | Label | Open_Item |
+|---|---|---|
+| Listener order: descending priority, insertion order inside a priority, repeat ignored | read (`events.rs`) | none |
+| Broadcast order for `enterFrame`, `frameConstructed`, `exitFrame`; registration during delivery waits | read (`avm2.rs`, re-read); `frame_lifecycle.rs`, `stage.rs` read earlier | O12 |
+| Ten sample scores unchanged after the broadcast change | measured | O11 |
+| Shim prunes an object with no listener; Ruffle keeps the position | read | O3 |
+| Scope search order, innermost first | read (`scope.rs`) | none |
+| `this` above the class scope | neither | O4 |
+| Hit target: a Shape is never a target, root clip never | read (`mouse_pick_avm2`) | none |
+| Timer: 10 ms floor, 10 ticks per update, strict `<`, `delay` unchanged, count-zero restart, RangeError 2066 | read earlier, not re-read | O15 |
+| Timer: `delay` setter, `repeatCount` setter, stop inside listener, tie-break, MAX_TICKS over several timers | neither | O23 |
+| `getBounds` of an empty clip is the zero rectangle | read earlier, not re-read, not measured | O13 |
+| `BitmapData.draw` of an invisible source root; `pixelsOverlap` ignores `visible` | read earlier (root), not re-read | O14 |
+| `BitmapData.draw` of an invisible child | neither | O5 |
+| `pixelsOverlap` alpha and strokes | neither | O8, O27 |
+| Packaged override `a/b/Cls.ts` replaces `a.b.Cls` in Emit | measured (`test/unit/emit.test.ts`, run in task 30) | O16 |
+| Key codes for the 14 codes the games read, US layout | measured (Chromium) | O7 |
+| Key target: `Stage.focus` else Stage; bubbling; repeats; `Stage.focus` typed as a display object | neither | O25 |
+| Ruffle key format for the injector | read earlier (`automation.rs`), not re-read | O26 |
+| Keys reach the iframe only after a click; top-level page needs no click | measured (Chromium) | O32 |
+| `getTimer()` origin | neither | O17 |
+| `getQualifiedClassName` unqualified | neither | O18 |
+| `Dictionary` key semantics | neither | O19 |
+| Even-odd against non-zero fill; self-intersecting polygons | ours-only | O20 |
+| Open fill drawn, open stroke, line scale, graphics below children, round caps | ours-only | O21 |
+| Nearest-label `currentLabel`, scene-relative `currentFrame`, scene `goto` | neither (design D17 cites an earlier read) | O22 |
+| Container `width` and `height` from content | neither | O24 |
+| Removal on the last frame is not seen between ticks (Play_Test) | ours-only | O31 |
+| `inspect()` label and frame fields | neither (ours, not Flash's) | none |
+| Ruffle ran `spacer` after a click on the player; `entity_game` loaded and did not advance; Input_Script not replayed | measured | O9 |
+| Runtime Named_Limits reach reports only from the Node replay (and the `spacer` Play_Test run) | ours-only | O28 |
+| `spacer` Overall_Match 100 does not see dynamic text; Infobar digits missing in the screenshot | ours-only | O29, O30 |
+
+Measured in task 30: only the packaged override, by running `test/unit/emit.test.ts` (24 tests pass, including the
+recursive override walk and the planned replacement of `a.b.Cls`). Nothing was run against Ruffle in task 30.

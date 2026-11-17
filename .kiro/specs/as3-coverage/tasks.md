@@ -509,17 +509,17 @@ Rules that apply to every task:
     - Add the `spacer` script (Enter, each movement key, shoot, pause) to `test/support/playScript.ts` and a unit test that `samples/spacer/reference/input.json` equals the builder output (our own script, committed; no GPL output). Try Ruffle headlessly on `spacer` once and record whether it ran. `spacer` writes no `trace()` output (F8): the Trace_Score stays `not-compared` with `empty-reference-trace`; the reference trace is not committed (Requirement 26.5 is moot, record the reason in the commit body).
     - _Requirements: 26.1, 26.3, 26.4, 26.5, 26.6_
 
-- [ ] 30. Test and Docs: measure or record the "not verified" items (Requirement 36.6)
+- [x] 30. Test and Docs: measure or record the "not verified" items (Requirement 36.6)
   - Commit area: `Test` (Docs and Steering named). Verification V1. Each item below is measured by a test or read from the Ruffle_Source, or recorded as an Open_Item, by Checkpoint 3.
-  - [~] 30.1 Measure what can be measured
+  - [x] 30.1 Measure what can be measured
     - Tests: `test/unit/flashBehaviour.test.ts` (extend) or new files: Stage `enterFrame` order (registration order, covered by Task 10 and cited), `getBounds` of an empty clip (Task 26), Timer granularity (Task 25), the override of a packaged class (Task 17.2); and for `BitmapData.draw` of an invisible source, the read of the Ruffle_Source files named in Task 26.3 and the check of Task 26.4. Each test names its evidence.
     - _Requirements: 36.6, 23.11, 23.12_
 
-  - [~] 30.2 Update `flash-behaviour.md`
+  - [x] 30.2 Update `flash-behaviour.md`
     - Add each measured or read behaviour with its evidence: broadcast registration order, Timer floor and cap, nearest-label `currentLabel`, scene-relative `currentFrame` and `goto`, empty `getBounds`, equal-priority listener order, scope order. Check that earlier tasks already added theirs and fill the rest.
     - _Requirements: 36.7_
 
-  - [~] 30.3 Record the Open_Items
+  - [x] 30.3 Record the Open_Items
     - Collect the Open_Items that no test could settle (O3 pruning of broadcast listeners, O4 `this` scope convention if the Play_Test did not confirm it, O5 invisible children, O7 other keyboard layouts, O8 hitbox alpha, O9 Ruffle headless, O10 the `publicHost` flake) into the Open_Items section of `design.md` with the reason, as the one place in this plan where `design.md` is edited. State the edit in the commit body (area `Docs`).
     - _Requirements: 36.5, 36.6, 1.5_
 
