@@ -15,20 +15,25 @@ export interface PlayDriver {
   key(type: 'keyDown' | 'keyUp', code: number): Promise<void>;
   /** A pointer press and release at a stage point. */
   click(x: number, y: number): Promise<void>;
+  /** One pointer event: `down` and `up` apart hold the button, `move` sets the pointer position. */
+  mouse(type: 'move' | 'down' | 'up', x: number, y: number): Promise<void>;
   inspect(): Promise<Inspection>;
   /** Caught_Errors reported so far. */
   errors(): Promise<Array<{ site: string; message: string }>>;
+  /** Ids of the Named_Limits raised since the driver was made (each once). */
+  namedLimits(): Promise<string[]>;
 }
 
 /** Node layer: the Player of the emitted project at `projectDir`, with the Shim instance the game classes use. */
 export async function nodeDriver(projectDir: string): Promise<PlayDriver> {
   const load = (rel: string): Promise<any> => import(/* @vite-ignore */ pathToFileURL(join(projectDir, rel)).href);
-  const [playerMod, clockMod, loaderMod, classesMod, eventsMod] = await Promise.all([
+  const [playerMod, clockMod, loaderMod, classesMod, eventsMod, sinkMod] = await Promise.all([
     load('runtime/player.ts'),
     load('runtime/clock.ts'),
     load('runtime/loader.ts'),
     load('src/classes.ts'),
     load('shim/events.ts'),
+    load('shim/errorSink.ts'),
   ]);
   const readText = (rel: string): string => readFileSync(join(projectDir, rel), 'utf8');
   const backend = new FakeBackend();
@@ -54,6 +59,7 @@ export async function nodeDriver(projectDir: string): Promise<PlayDriver> {
     onCaughtError: (c: { site: string; message: string }) => void errors.push({ site: c.site, message: c.message }),
   });
   const KeyboardEvent = eventsMod.KeyboardEvent;
+  const limits = new Set<string>();
   return {
     async step(n) {
       for (let i = 0; i < n; i++) {
@@ -67,11 +73,20 @@ export async function nodeDriver(projectDir: string): Promise<PlayDriver> {
     async click(x, y) {
       player.dispatchClick(x, y);
     },
+    async mouse(type, x, y) {
+      if (type === 'move') player.dispatchMouseMove(x, y);
+      else if (type === 'down') player.dispatchMouseDown(x, y);
+      else player.dispatchMouseUp(x, y);
+    },
     async inspect() {
       return player.inspect();
     },
     async errors() {
       return errors.slice();
+    },
+    async namedLimits() {
+      for (const l of sinkMod.takeNamedLimits() as Array<{ id: string }>) limits.add(l.id);
+      return [...limits];
     },
   };
 }
@@ -82,6 +97,7 @@ export function chromiumDriver(page: Page): PlayDriver {
     step: (n) => page.evaluate((k) => (window as any).__swfPlay.step(k), n),
     key: (type, code) => page.evaluate(([t, c]) => (window as any).__swfPlay.key(t as 'keyDown' | 'keyUp', c as number), [type, code] as const),
     click: (x, y) => page.evaluate(([a, b]) => (window as any).__swfPlay.click(a, b), [x, y] as const),
+    mouse: (type, x, y) => page.evaluate(([t, a, b]) => (window as any).__swfPlay.mouse(t, a, b), [type, x, y] as const),
     inspect: async () => {
       // The hook's methods are functions, so the page evaluates them and returns the plain parts.
       const data = await page.evaluate(() => {
@@ -107,5 +123,6 @@ export function chromiumDriver(page: Page): PlayDriver {
       };
     },
     errors: () => page.evaluate(() => (window as any).__swfPlay.errors()),
+    namedLimits: () => page.evaluate(() => (window as any).__swfPlay.namedLimits()),
   };
 }

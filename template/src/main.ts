@@ -6,6 +6,7 @@ import { ManualClock } from '../runtime/clock';
 import type { Inspection } from '../runtime/inspect';
 import { Player } from '../runtime/player';
 import { KeyboardEvent } from '../shim';
+import { takeNamedLimits } from '../shim/errorSink';
 import { setTextMeasure } from '../shim/textMeasure';
 import { PixiBackend } from '../runtime/pixi/pixiBackend';
 import { classRegistry } from './classes';
@@ -18,8 +19,12 @@ declare global {
       step(n: number): void;
       key(type: 'keyDown' | 'keyUp', code: number): void;
       click(x: number, y: number): void;
+      /** One pointer event at a stage point: a held button needs `down` and `up` apart. */
+      mouse(type: 'move' | 'down' | 'up', x: number, y: number): void;
       inspect(): Inspection;
       errors(): Array<{ site: string; message: string }>;
+      /** Ids of the Named_Limits raised so far (each once). */
+      namedLimits(): string[];
     };
   }
 }
@@ -127,6 +132,7 @@ async function boot(): Promise<void> {
 
   if (play) {
     let steps = 0;
+    const limits = new Set<string>();
     window.__swfPlay = {
       step: (n: number): void => {
         for (let i = 0; i < n; i++) {
@@ -138,8 +144,17 @@ async function boot(): Promise<void> {
       },
       key: (type: 'keyDown' | 'keyUp', code: number): void => player.dispatchKey(type === 'keyDown' ? KeyboardEvent.KEY_DOWN : KeyboardEvent.KEY_UP, code),
       click: (x: number, y: number): void => player.dispatchClick(x, y),
+      mouse: (type: 'move' | 'down' | 'up', x: number, y: number): void => {
+        if (type === 'move') player.dispatchMouseMove(x, y);
+        else if (type === 'down') player.dispatchMouseDown(x, y);
+        else player.dispatchMouseUp(x, y);
+      },
       inspect: (): Inspection => player.inspect(),
       errors: (): Array<{ site: string; message: string }> => errors.slice(),
+      namedLimits: (): string[] => {
+        for (const l of takeNamedLimits()) limits.add(l.id);
+        return [...limits];
+      },
     };
     return;
   }

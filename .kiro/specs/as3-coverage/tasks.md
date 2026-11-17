@@ -523,13 +523,13 @@ Rules that apply to every task:
     - Collect the Open_Items that no test could settle (O3 pruning of broadcast listeners, O4 `this` scope convention if the Play_Test did not confirm it, O5 invisible children, O7 other keyboard layouts, O8 hitbox alpha, O9 Ruffle headless, O10 the `publicHost` flake) into the Open_Items section of `design.md` with the reason, as the one place in this plan where `design.md` is edited. State the edit in the commit body (area `Docs`).
     - _Requirements: 36.5, 36.6, 1.5_
 
-- [ ] 31. Test: the `spacer` Play_Test
+- [x] 31. Test: the `spacer` Play_Test
   - Commit area: `Test`. Verification V2. Read the design section "Play_Tests" and Requirement 25.2. The test skips with a message when `.work/samples/spacer/test.swf` or `handwritten/spacer/` is absent (Requirement 25.6, 28.13). It runs on the manual clock: 1800 steps at 60 fps (30 seconds), in both layers.
-  - [~] 31.1 Add the `spacer` scenario for the Node layer
+  - [x] 31.1 Add the `spacer` scenario for the Node layer
     - In `test/support/playScenarios.ts` add one function asserting, from observable state: Enter starts the level; each movement key moves the player and the player stays inside the scene bounds; shooting increases the number of bullet display objects; an enemy that is hit plays its death animation to its last frame and is then removed from the display list; the pause key pauses the game, `Timer` instances do not advance while paused (read through `inspect().timers()`), and resume restores their behaviour as the game's remaining-time code expects; no error during 30 seconds of play. `test/e2e/spacerPlay.node.test.ts` (create). Fix general causes in the Translator, Shim or Runtime when a state is not reached; stop and report if a block share is at risk.
     - _Requirements: 25.2, 25.3, 25.4, 25.6, 25.8_
 
-  - [~] 31.2 Run the same scenario in headless Chromium
+  - [x] 31.2 Run the same scenario in headless Chromium
     - `test/e2e/spacerPlay.chromium.test.ts` (create): `chromium` slot, Shared_Run_Cache, `?play=1`, same scenario and assertions, no page error, no failed class at load. Take a screenshot with the `playwright` MCP and look at it.
     - _Requirements: 25.2, 25.3, 25.5, 25.7_
 

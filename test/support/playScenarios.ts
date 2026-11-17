@@ -194,3 +194,6 @@ function matchSprites(prev: Snapshot[], now: Snapshot[]): { removed: Snapshot[];
   }
   return { removed, added: now.filter((_, i) => !used.has(i)) };
 }
+
+// The spacer scenario lives in its own file (it needs a tick-by-tick Input_Script runner); re-exported here with the others.
+export { flyLabelsOf, HANDWRITTEN_SPACER, playSpacer, SPACER_EXPECTED_NAMED_LIMITS, SPACER_STEPS } from './playSpacer';
