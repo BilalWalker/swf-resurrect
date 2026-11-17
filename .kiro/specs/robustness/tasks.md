@@ -93,16 +93,16 @@ Rules that apply to every task:
     - **Property 8: Facts round trip over generated headers** and **Property 9: Arbitrary bytes never throw**, in `test/property/facts.property.test.ts` (create). Generators in `test/property/gen/genSwfHeader.ts` (create): signature in `FWS`, `CWS`; version 1 to 50; stage rectangle; frame rate; frame count; a valid tag list ending in `End`.
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.5, 3.8, 3.9**
 
-- [ ] 4. Pipeline: fix the `SET.json` read-error message (S2)
+- [x] 4. Pipeline: fix the `SET.json` read-error message (S2)
   - Commit area: `Pipeline`. Verification V1. This is the first task that touches `src/pipeline/cli.ts`, so the fix is its own commit (Requirement 25.2). Read `src/pipeline/cli.ts` and the design table "Small findings fixed with the file" (S2) first.
-  - [-] 4.1 Print the exception text and test the path
+  - [x] 4.1 Print the exception text and test the path
     - In `src/pipeline/cli.ts` the message of the `handwritten/SET.json` read error is a double-quoted string, so `${...}` prints literally. Print the exception text. The error is a usage-class error: exit 2, one `error [pipeline]: <text>` line.
     - Tests: `test/unit/pipelineCli.test.ts` (extend or create): an unreadable `SET.json` prints the exception text, contains no literal `${`, and returns 2.
     - _Requirements: 5.6, 25.2, 25.5_
 
 - [ ] 5. Pipeline: label the `[translate]` console line (S3)
   - Commit area: `Pipeline`. Verification V1. First task that touches that line in `src/pipeline/pipeline.ts`; own commit (Requirement 25.3). Read the design finding F17 and S3.
-  - [ ] 5.1 Label the pre-gate count and update the tests that match the old text
+  - [-] 5.1 Label the pre-gate count and update the tests that match the old text
     - Keep the line and its prefix, and label the counts as taken before the gate: `[translate] ok (N classes before type check: ...)`. The numbers after the gate stay in the Translation_Report. The web server reads only `^Done: ` and `^error [stage]: ` lines, so no file under `web/` changes. Update the existing tests that match the old text in this commit.
     - Tests: `test/unit/pipelineLines.test.ts` (create or extend): the exact text of the line, and that the `[unpack] ok` and `[typecheck]` lines are unchanged.
     - _Requirements: 2.6, 25.3, 25.5_

@@ -116,7 +116,7 @@ describe('runPipeline', () => {
     expect(await runPipeline(args(), makeStages(), io)).toBe(0);
     expect(calls).toEqual(['unpack', 'convert', 'translate', 'emit', 'typeCheck']);
     expect(out).toBe(
-      `[unpack] ok\n[convert] ok (4 svg written, 1 morph skipped)\n[translate] ok (0 classes: 0 clean, 0 loose, 0 unsupported)\n[emit] ok\n[typecheck] ok (0 errors)\nDone: ${outDir}\n`,
+      `[unpack] ok\n[convert] ok (4 svg written, 1 morph skipped)\n[translate] ok (0 classes before type check: 0 clean, 0 loose, 0 unsupported)\n[emit] ok\n[typecheck] ok (0 errors)\nDone: ${outDir}\n`,
     );
   });
 

@@ -256,7 +256,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     const counts = { clean: 0, loose: 0, unsupported: 0 };
     for (const c of translated.classes) counts[classStatus(c.diagnostics, 0)]++;
     io.out(
-      `[translate] ok (${translated.classes.length} classes: ${counts.clean} clean, ${counts.loose} loose, ${counts.unsupported} unsupported)\n`,
+      `[translate] ok (${translated.classes.length} classes before type check: ${counts.clean} clean, ${counts.loose} loose, ${counts.unsupported} unsupported)\n`,
     );
 
     stage = 'emit';
