@@ -24,6 +24,11 @@ export interface ClassMembers {
   /** Declared type text of each field (as written), by name; absent when the field has no annotation. */
   instanceTypes: ReadonlyMap<string, string>;
   staticTypes: ReadonlyMap<string, string>;
+  /**
+   * Private instance members whose name an ancestor translated class also declares, to the name emitted for them.
+   * AS3 privates are per class; TypeScript privates clash across inheritance, so these get a distinct name.
+   */
+  privateRenames: ReadonlyMap<string, string>;
   base: BaseRef;
 }
 
@@ -79,14 +84,16 @@ function scanFile(nodes: readonly Node[], out: FileScan = { imports: [], classes
 
 function classTables(cls: ClassNode): {
   instance: Map<string, MemberKind>; statics: Map<string, MemberKind>;
-  instanceTypes: Map<string, string>; staticTypes: Map<string, string>;
+  instanceTypes: Map<string, string>; staticTypes: Map<string, string>; privates: Set<string>;
 } {
   const instance = new Map<string, MemberKind>();
   const statics = new Map<string, MemberKind>();
   const instanceTypes = new Map<string, string>();
   const staticTypes = new Map<string, string>();
+  const privates = new Set<string>();
   const add = (mods: readonly string[], name: string, kind: MemberKind): void => {
     const target = mods.includes('static') ? statics : instance;
+    if (mods.includes('private') && !mods.includes('static')) privates.add(name);
     // A getter and a setter are one accessor; a repeated name keeps its first kind.
     if (!target.has(name)) target.set(name, kind);
   };
@@ -103,7 +110,21 @@ function classTables(cls: ClassNode): {
       add(m.modifiers, m.name, 'accessor');
     }
   }
-  return { instance, statics, instanceTypes, staticTypes };
+  return { instance, statics, instanceTypes, staticTypes, privates };
+}
+
+/** True when a translated ancestor of m declares an instance member name (whatever its access). */
+function ancestorDeclares(t: MemberTables, m: ClassMembers, name: string): boolean {
+  const seen = new Set<QualifiedName>([m.qualified]);
+  let cur = m.base;
+  while (cur.kind === 'translated' && !seen.has(cur.qualified)) {
+    seen.add(cur.qualified);
+    const a = t.classes.get(cur.qualified);
+    if (a === undefined) return false;
+    if (a.instance.has(name)) return true;
+    cur = a.base;
+  }
+  return false;
 }
 
 export function buildMemberTables(files: readonly FileForTables[], shim: ShimMemberTable): MemberTables {
@@ -146,17 +167,28 @@ export function buildMemberTables(files: readonly FileForTables[], shim: ShimMem
   };
 
   const classes = new Map<QualifiedName, ClassMembers>();
+  const privateNames = new Map<QualifiedName, Set<string>>();
   for (const { file, scan } of scans) {
     const pkg = packageOf(file.qualified);
     for (const c of scan.classes) {
       const qualified = keyOf(file, c);
       if (classes.has(qualified)) continue;
-      const { instance, statics, instanceTypes, staticTypes } = classTables(c);
+      const { instance, statics, instanceTypes, staticTypes, privates } = classTables(c);
       const base: BaseRef = c.extendsName === null ? { kind: 'none' } : resolveBase(pkg, scan.imports, c.extendsName);
-      classes.set(qualified, { qualified, simpleName: c.name, instance, statics, instanceTypes, staticTypes, base });
+      classes.set(qualified, { qualified, simpleName: c.name, instance, statics, instanceTypes, staticTypes, privateRenames: new Map(), base });
+      privateNames.set(qualified, privates);
     }
   }
-  return { classes, shim };
+  const result: MemberTables = { classes, shim };
+  for (const [qualified, names] of privateNames) {
+    if (names.size === 0) continue;
+    const m = classes.get(qualified) as ClassMembers;
+    const renames = m.privateRenames as Map<string, string>;
+    for (const name of [...names].sort(cmp)) {
+      if (ancestorDeclares(result, m, name)) renames.set(name, `${name}$${m.simpleName}`);
+    }
+  }
+  return result;
 }
 
 /** Walks the translated `extends` chain from `cls` (inclusive); stops at a cycle. Returns the last class and its end. */
@@ -264,4 +296,10 @@ export function staticFieldType(t: MemberTables, cls: QualifiedName, name: strin
     return true;
   });
   return out;
+}
+
+
+/** The name emitted for an instance member of `cls`: a renamed private (see ClassMembers.privateRenames) or the name itself. */
+export function emittedMemberName(t: MemberTables, cls: QualifiedName, name: string): string {
+  return t.classes.get(cls)?.privateRenames.get(name) ?? name;
 }

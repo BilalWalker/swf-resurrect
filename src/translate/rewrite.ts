@@ -15,7 +15,7 @@ import type { ClassNode, InterfaceNode, Node, TokRange } from './scanner';
 import type { Token } from './tokenizer';
 import type { MemberContext, RewriteContext, RewriteResult, Rewriter, TokenSlice } from './emitTs';
 import { isReference, resolveIdentifier } from './implicitThis';
-import { instanceFieldType, lookupInstance, staticFieldType } from './memberTables';
+import { emittedMemberName, instanceFieldType, lookupInstance, staticFieldType } from './memberTables';
 import type { MemberKindFound, MemberTables } from './memberTables';
 import type { Diagnostic, ImportRecord } from './types';
 
@@ -582,7 +582,15 @@ class ExprRewriter {
   private step(i: number, hi: number, lo: number): Parsed {
     const t = this.toks[i];
     if (t.kind !== 'id') return this.raw(i);
-    if (i > 0 && (this.isP(i - 1, '.') || this.isP(i - 1, '::'))) return this.raw(i);
+    if (i > 0 && (this.isP(i - 1, '.') || this.isP(i - 1, '::'))) {
+      // `this.name` where name is a renamed private of the class (per-class AS3 privates, see memberTables).
+      const m = this.member;
+      if (m !== null && !m.isStatic && this.isP(i - 1, '.') && this.isId(i - 2, 'this') && !(i >= 3 && this.isP(i - 3, '.'))) {
+        const emitted = emittedMemberName(this.opts.tables, selfKey(this.opts.self, m.className), t.text);
+        if (emitted !== t.text) return { text: emitted, next: i + 1 };
+      }
+      return this.raw(i);
+    }
     const bound = this.chainBinding(i);
     if (bound !== null) return bound;
     const cutRef = this.classValue(i);
@@ -648,6 +656,10 @@ class ExprRewriter {
           }
         }
         if (isBindableMethod(r.found) && this.isValuePosition(i + 1)) this.methodValues.push(t.text);
+        if (r.found.rule === 'own-instance') {
+          const emitted = emittedMemberName(this.opts.tables, self, t.text);
+          if (emitted !== t.text) return `this.${emitted}`;
+        }
         return r.text;
     }
   }
@@ -794,7 +806,7 @@ class ExprRewriter {
       const nameTok = this.toks[i + 2];
       if (member === null || member.isStatic || !this.isP(i + 1, '.') || nameTok === undefined || nameTok.kind !== 'id') return null;
       const kind = classify(instanceFieldType(this.opts.tables, selfKey(this.opts.self, member.className), nameTok.text));
-      return kind === null ? null : { kind, name: nameTok.text, next: i + 3, text: () => `this.${nameTok.text}` };
+      return kind === null ? null : { kind, name: nameTok.text, next: i + 3, text: () => `this.${emittedMemberName(this.opts.tables, selfKey(this.opts.self, member.className), nameTok.text)}` };
     }
     if (!isReference(this.toks, i)) return null;
     if (this.locals.has(t.text)) {

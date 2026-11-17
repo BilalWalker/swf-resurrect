@@ -10,7 +10,7 @@ import { emitTs, escapeComment } from './emitTs';
 import type { BodyItem, EmitHooks, SuperHoist } from './emitTs';
 import { planFileImports } from './importPlan';
 import type { ImportPlanInput } from './importPlan';
-import { buildMemberTables, orderByDeclaration } from './memberTables';
+import { buildMemberTables, emittedMemberName, orderByDeclaration } from './memberTables';
 import { SHIM_MEMBER_TABLE } from './shimMembers.generated';
 import type { ImportPlan } from './importPlan';
 import { collectReferences, createImportLines, createRewriter } from './rewrite';
@@ -77,9 +77,11 @@ function superArgumentFields(tokens: readonly Token[], cls: ClassNode, ctor: Met
 /** Method names a class binds in its constructor, in declaration order (Requirement 22.13). */
 export type MethodValues = ReadonlyMap<string, readonly string[]>;
 
-function constructorHook(tokens: readonly Token[], values: MethodValues): NonNullable<EmitHooks['constructorBody']> {
+function constructorHook(
+  tokens: readonly Token[], values: MethodValues, emitted: (className: string, name: string) => string = (_c, n) => n,
+): NonNullable<EmitHooks['constructorBody']> {
   return (cls: ClassNode, ctor: MethodNode | null): BodyItem[] | null => {
-    const binds: BodyItem[] = (values.get(cls.name) ?? []).map((name) => ({
+    const binds: BodyItem[] = (values.get(cls.name) ?? []).map((name) => emitted(cls.name, name)).map((name) => ({
       kind: 'generated',
       text: `this.${name} = this.${name}.bind(this);`,
     }));
@@ -366,6 +368,8 @@ export function translateCore(source: string, options: TranslateOptions): Transl
   const rewriter = createRewriter(nodes, {
     shimNames: options.shimNames, plan, tables, self: options.selfQualified, cutTargets: cutActive,
   });
+  const classKey = (name: string): string =>
+    name === selfSimple ? options.selfQualified : dot < 0 ? name : `${options.selfQualified.slice(0, dot)}.${name}`;
   const emitOnce = (imports: { lines: string[] }): ReturnType<typeof emitTs> =>
     emitTs(nodes, {
       source: src,
@@ -373,10 +377,12 @@ export function translateCore(source: string, options: TranslateOptions): Transl
       rewriter,
       hooks: {
         importLines: () => imports.lines,
-        constructorBody: constructorHook(tokens, constructorBinds),
+        constructorBody: constructorHook(tokens, constructorBinds, (c, n) => emittedMemberName(tables, classKey(c), n)),
         syntheticConstructorHead: forwardingHead,
-        firstInstanceMember: (cls: ClassNode) => bindsField(cls.name, fieldBinds.get(cls.name) ?? []),
+        firstInstanceMember: (cls: ClassNode) =>
+          bindsField(cls.name, (fieldBinds.get(cls.name) ?? []).map((n) => emittedMemberName(tables, classKey(cls.name), n))),
         childFieldNames: () => options.childNames ?? null,
+        memberName: (cls: ClassNode, name: string) => emittedMemberName(tables, classKey(cls.name), name),
         interfaceQualifiedName: () => options.selfQualified,
       },
     });

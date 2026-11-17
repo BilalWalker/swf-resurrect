@@ -149,6 +149,8 @@ export interface EmitHooks {
   firstInstanceMember?(cls: ClassNode): string | null;
   /** Names of the frame-1 children of the class's linked symbol; fields so named are not initialised. */
   childFieldNames?(cls: ClassNode): ReadonlySet<string> | null;
+  /** The name emitted for an instance member of the class (a private renamed because an ancestor declares the name). */
+  memberName?(cls: ClassNode, name: string): string;
   /** Qualified_Name written into the token of an interface (design 21.5). Default: the simple name. */
   interfaceQualifiedName?(simple: string): string;
 }
@@ -647,10 +649,10 @@ class Emitter {
         declare = dflt === null && !isStatic;
       }
       if (!isStatic && this.hoisted.has(dc.name)) {
-        this.push(d, `${mods}${this.declaratorText(dc, 'field', null, true)};`);
+        this.push(d, `${mods}${this.declaratorText(dc, 'field', null, true, this.emitName(isStatic, dc.name))};`);
         continue;
       }
-      let text = this.declaratorText(dc, 'field', dflt);
+      let text = this.declaratorText(dc, 'field', dflt, false, this.emitName(isStatic, dc.name));
       if (declare) text = 'declare ' + text;
       this.push(d, `${mods}${text};`);
     }
@@ -662,9 +664,13 @@ class Emitter {
     return sig.length === 1 && sig[0].kind === 'id' && (sig[0].text === 'null' || sig[0].text === 'undefined');
   }
 
-  private declaratorText(dc: Declarator, role: TypeRole, dflt: string | null = null, dropInit = false): string {
+  private emitName(isStatic: boolean, name: string): string {
+    return isStatic || this.curClass === null ? name : (this.hooks.memberName?.(this.curClass, name) ?? name);
+  }
+
+  private declaratorText(dc: Declarator, role: TypeRole, dflt: string | null = null, dropInit = false, name = dc.name): string {
     const t = this.type(dc.type, dc.line, role);
-    let s = dc.name + (t === '' ? '' : ': ' + t);
+    let s = name + (t === '' ? '' : ': ' + t);
     if (dropInit) return s;
     if (dc.init !== null) s += ' = ' + this.expr(dc.init);
     else if (dflt !== null) s += ' = ' + dflt;
@@ -697,7 +703,7 @@ class Emitter {
       const ret = isCtor || isSetter
         ? ''
         : this.type(n.returnType, n.startLine, n.kind === 'accessor' ? 'accessor' : 'return');
-      const name = isCtor ? 'constructor' : (n.kind === 'accessor' ? n.accessor + ' ' : '') + n.name;
+      const name = isCtor ? 'constructor' : (n.kind === 'accessor' ? n.accessor + ' ' : '') + (isCtor || n.modifiers.indexOf('static') >= 0 ? n.name : this.emitName(false, n.name));
       this.blankBefore();
       this.push(d, `${this.modifiers(n.modifiers, false)}${name}(${params})${ret === '' ? '' : ': ' + ret} {`);
       this.span(n.startLine, n.body.openLine, 'translated');
