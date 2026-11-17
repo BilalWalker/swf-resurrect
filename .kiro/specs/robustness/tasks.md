@@ -155,7 +155,7 @@ Rules that apply to every task:
 
 - [ ] 9. Steering: correct `tech.md` Scene_JSON formatVersion (S4)
   - Commit area: `Steering`. Verification V1 (no code changes; run `npm run typecheck`). First task that touches `.kiro/steering/tech.md`; own commit (Requirement 25.4). Read the design finding F12 and S4.
-  - [ ] 9.1 State the formatVersion the code writes
+  - [-] 9.1 State the formatVersion the code writes
     - Replace "Scene_JSON is formatVersion 2" by the version the code writes today (3; the reader accepts 2 and 3) and note that version 4 arrives with buttons in Block C. Nothing else in `tech.md` changes in this commit. There is no machine test; the commit body names the files read (`template/runtime/scene.ts`).
     - _Requirements: 10.4, 25.4_
 

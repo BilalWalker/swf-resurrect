@@ -241,6 +241,13 @@
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794853423716
       }
+    ],
+    "9.1 State the formatVersion the code writes": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794853606049
+      }
     ]
   }
 }
