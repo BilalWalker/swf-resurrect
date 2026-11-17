@@ -5,6 +5,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { killTree, track } from '../../pipeline/processTree';
 import type { ReplayPlan } from '../core/replayPlan';
 import { sanitizeDetail } from '../core/sanitize';
 import type { ReplayRunnerResult } from './replayRunner';
@@ -42,6 +43,7 @@ export async function replay(
         stdio: ['ignore', 'ignore', 'pipe'],
         windowsHide: true,
       });
+      track(child);
       let stderr = '';
       let timedOut = false;
       child.stderr.on('data', (d: Buffer) => {
@@ -49,7 +51,8 @@ export async function replay(
       });
       const timer = setTimeout(() => {
         timedOut = true;
-        child.kill();
+        if (child.pid !== undefined) void killTree(child.pid, child);
+        else child.kill();
       }, timeoutMs);
       child.on('error', (e) => {
         clearTimeout(timer);

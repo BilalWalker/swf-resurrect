@@ -100,24 +100,24 @@ Rules that apply to every task:
     - Tests: `test/unit/pipelineCli.test.ts` (extend or create): an unreadable `SET.json` prints the exception text, contains no literal `${`, and returns 2.
     - _Requirements: 5.6, 25.2, 25.5_
 
-- [ ] 5. Pipeline: label the `[translate]` console line (S3)
+- [x] 5. Pipeline: label the `[translate]` console line (S3)
   - Commit area: `Pipeline`. Verification V1. First task that touches that line in `src/pipeline/pipeline.ts`; own commit (Requirement 25.3). Read the design finding F17 and S3.
-  - [-] 5.1 Label the pre-gate count and update the tests that match the old text
+  - [x] 5.1 Label the pre-gate count and update the tests that match the old text
     - Keep the line and its prefix, and label the counts as taken before the gate: `[translate] ok (N classes before type check: ...)`. The numbers after the gate stay in the Translation_Report. The web server reads only `^Done: ` and `^error [stage]: ` lines, so no file under `web/` changes. Update the existing tests that match the old text in this commit.
     - Tests: `test/unit/pipelineLines.test.ts` (create or extend): the exact text of the line, and that the `[unpack] ok` and `[typecheck]` lines are unchanged.
     - _Requirements: 2.6, 25.3, 25.5_
 
-- [ ] 6. Unpack and Pipeline: child registry and process-tree kill (S1)
+- [x] 6. Unpack and Pipeline: child registry and process-tree kill (S1)
   - Commit area: `Unpack` (Pipeline and Verify named). Verification V1. First task that touches `src/unpack/`; own commit (Requirement 25.1). Read the design "Limits and process tree", finding F10, S1 and Open_Item O1. `src/pipeline/processTree.ts` is new; the `taskkill` code moves from `src/verify/edge/launchChromium.ts`, which then imports it. No timeout is raised.
-  - [ ] 6.1 Add `src/pipeline/processTree.ts`
+  - [x] 6.1 Add `src/pipeline/processTree.ts`
     - `killTree(pid)`: Windows `taskkill /PID <pid> /T /F` without a shell; elsewhere `process.kill(-pid, 'SIGKILL')` for a detached child, else `child.kill('SIGKILL')`. A registry with `track(child)` and `killAll()` that kills only live pids.
     - _Requirements: 6.6, 6.15_
 
-  - [ ] 6.2 Register every child and kill the tree on a timeout
+  - [x] 6.2 Register every child and kill the tree on a timeout
     - `spawnFfdec` registers its Java process and calls `killTree` on its timeout (today `child.kill()` ends only Java). The Chromium launcher and the Replay child (`replay.ts`) register too, so a limit in Verify kills Chromium. A blocked synchronous stage cannot be interrupted (Open_Item O1, U9: no supervisor process); the commit body states this and gives the longest synchronous stretch measured on `redball4` (convert 39.9 s) when the file is present.
     - _Requirements: 6.6, 6.15, 7.7, 25.1_
 
-  - [ ] 6.3 Test the registry and the real kill path
+  - [x] 6.3 Test the registry and the real kill path
     - `test/unit/processTree.test.ts` (create): the registry tracks and kills only live pids. `test/e2e/killTree.e2e.test.ts` (create): spawn a real short `node` process that sleeps and has a grandchild, through `spawnFfdec`'s own timeout path with a fake jar command; after the timeout check by `process.kill(pid, 0)` that both are gone; Windows and POSIX branches.
     - _Requirements: 6.14, 6.15, 25.5_
 

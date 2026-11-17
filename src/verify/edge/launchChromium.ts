@@ -13,11 +13,11 @@
  * through `artifactsDir`) and the profile directory (the --user-data-dir argument Playwright put on the command
  * line). Callers must have read everything they need from the browser before calling stop().
  */
-import { spawn } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium, type Browser } from 'playwright';
+import { killTree, track } from '../../pipeline/processTree';
 
 /** How long stop() waits for a graceful close. A healthy Chromium closes in well under a second; 3 s is enough for that and short next to the 30 s a loaded one has taken. */
 export const GRACEFUL_CLOSE_MS = 3_000;
@@ -30,28 +30,6 @@ export interface LaunchedChromium {
   stop(): Promise<void>;
 }
 
-/** Kills `pid` and its descendants. Never throws. */
-async function killTree(pid: number, child: { kill(signal: NodeJS.Signals): boolean }): Promise<void> {
-  if (!Number.isInteger(pid) || pid <= 0) {
-    child.kill('SIGKILL');
-    return;
-  }
-  if (process.platform === 'win32') {
-    // No shell: the pid is passed as one argument and was checked to be an integer above.
-    await new Promise<void>((resolve) => {
-      const k = spawn('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
-      k.once('error', () => resolve());
-      k.once('close', () => resolve());
-    });
-    child.kill('SIGKILL');
-    return;
-  }
-  try {
-    process.kill(-pid, 'SIGKILL'); // Playwright starts Chromium detached, so it leads its own process group.
-  } catch {
-    child.kill('SIGKILL');
-  }
-}
 export async function launchChromium(): Promise<LaunchedChromium> {
   const artifactsDir = await mkdtemp(join(tmpdir(), 'swf-chromium-'));
   const server = await chromium.launchServer({ headless: true, artifactsDir });
@@ -62,10 +40,12 @@ export async function launchChromium(): Promise<LaunchedChromium> {
     await rm(artifactsDir, opts).catch(() => undefined);
     if (profile !== undefined) await rm(profile, opts).catch(() => undefined);
   };
+  const untrack = track(child, { detached: true });
   let browser: Browser;
   try {
     browser = await chromium.connect(server.wsEndpoint());
   } catch (err) {
+    untrack();
     child.kill('SIGKILL');
     await cleanup();
     throw err;
@@ -92,7 +72,7 @@ export async function launchChromium(): Promise<LaunchedChromium> {
       clearTimeout(timer);
       // Step 2: whatever is still running goes, with its descendants.
       if (!hasExited()) {
-        await killTree(pid, child);
+        await killTree(pid, child, { detached: true }); // Playwright starts Chromium detached.
         await exited;
       }
       await cleanup();

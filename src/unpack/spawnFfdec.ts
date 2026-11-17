@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { killTree, track } from '../pipeline/processTree';
 import { stripAnsi } from './ansi';
 import { FfdecExitError, FfdecTimeoutError, JavaNotFoundError } from './errors';
 
@@ -25,6 +26,7 @@ export type FfdecSpawner = (req: SpawnRequest) => Promise<SpawnOutput>;
 export const spawnFfdec: FfdecSpawner = (req) =>
   new Promise<SpawnOutput>((resolve, reject) => {
     const child = spawn(req.javaCommand, ['-jar', req.jarPath, ...req.args], { shell: false });
+    track(child);
     let stdout = '';
     let stderr = '';
     let settled = false;
@@ -39,7 +41,8 @@ export const spawnFfdec: FfdecSpawner = (req) =>
 
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill();
+      if (child.pid !== undefined) void killTree(child.pid, child);
+      else child.kill();
       finish(() => reject(new FfdecTimeoutError(Math.round(req.timeoutMs / 1000))));
     }, req.timeoutMs);
 

@@ -130,6 +130,49 @@
         "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794851520594
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794851647296
+      }
+    ],
+    "5. Pipeline: label the `[translate]` console line (S3)": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794851647457
+      }
+    ],
+    "6.1 Add `src/pipeline/processTree.ts`": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794851655412
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794851793511
+      }
+    ],
+    "6.2 Register every child and kill the tree on a timeout": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794851793938
+      },
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794851992743
+      }
+    ],
+    "6.3 Test the registry and the real kill path": [
+      {
+        "executionId": "60c12d2e-fcd4-4975-ae09-273922a1de8e",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794851993123
       }
     ]
   }
