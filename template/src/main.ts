@@ -54,7 +54,7 @@ async function boot(): Promise<void> {
     await runTimelineOnly(loaded, backend, only);
     return;
   }
-  const { scene, shapeBounds } = loaded;
+  const { scene, shapeBounds, shapes } = loaded;
 
   const app = new Application();
   await app.init({
@@ -78,6 +78,7 @@ async function boot(): Promise<void> {
     clock: play ? manual : { now: () => performance.now() },
     classRegistry,
     shapeBounds,
+    shapes,
     ...(play ? { onCaughtError: (e: { site: string; message: string }) => void errors.push({ site: e.site, message: e.message }) } : {}),
   });
   app.stage.addChild(player.stageNode as Parameters<typeof app.stage.addChild>[0]);

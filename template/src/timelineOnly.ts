@@ -45,7 +45,7 @@ export async function runTimelineOnly(
   backend: PixiBackend,
   frame: number,
 ): Promise<void> {
-  const { scene, shapeBounds } = loaded;
+  const { scene, shapeBounds, shapes } = loaded;
   const rootSymbol = scene.symbols[String(scene.rootSymbolId)];
   const frameCount = rootSymbol !== undefined && rootSymbol.type === 'sprite' ? rootSymbol.frameCount : 0;
   if (Number.isNaN(frame) || frame < 1 || frame > frameCount) {
@@ -67,7 +67,7 @@ export async function runTimelineOnly(
   document.body.appendChild(app.canvas);
 
   const clock = new ManualClock();
-  const player = new Player({ scene, backend, clock, classRegistry: {}, shapeBounds });
+  const player = new Player({ scene, backend, clock, classRegistry: {}, shapeBounds, shapes });
   for (let i = 1; i < frame; i++) {
     clock.advance(player.frameIntervalMs);
     player.update();

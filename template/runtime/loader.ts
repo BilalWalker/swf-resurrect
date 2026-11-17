@@ -1,6 +1,6 @@
 import type { RenderBackend, ShapeBounds } from './backend';
 import { parseScene, type SceneJson } from './scene';
-import { parseShapeJson } from './shapeJson';
+import { parseShapeJson, type ShapeJson } from './shapeJson';
 
 export const SCENE_URL = 'assets/scene.json';
 export const ASSET_BASE = 'assets/';
@@ -8,6 +8,8 @@ export const ASSET_BASE = 'assets/';
 export interface LoadedScene {
   scene: SceneJson;
   shapeBounds: Map<number, ShapeBounds>;
+  /** The parsed Shape_JSON per shape symbol (kept for getBounds and pixelsOverlap). */
+  shapes: Map<number, ShapeJson>;
 }
 
 /** Fetches text from a URL; rejects on network failure or a non-OK status. */
@@ -33,16 +35,18 @@ export async function loadScene(fetchText: FetchText, backend: RenderBackend): P
   }
 
   const shapeBounds = new Map<number, ShapeBounds>();
+  const shapes = new Map<number, ShapeJson>();
   for (const [key, sym] of Object.entries(scene.symbols)) {
     if (sym.type !== 'shape') continue;
     const id = Number(key);
     try {
       const shape = parseShapeJson(await fetchText(`${ASSET_BASE}${sym.file}`));
       shapeBounds.set(id, await backend.loadShape(id, shape, ASSET_BASE));
+      shapes.set(id, shape);
     } catch (err) {
       backend.showError(`Shape asset ${sym.file} failed to load: ${describe(err)}`);
       return null;
     }
   }
-  return { scene, shapeBounds };
+  return { scene, shapeBounds, shapes };
 }

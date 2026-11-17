@@ -2,7 +2,11 @@ import type { Graphics } from './Graphics';
 import { EventDispatcher, type Event } from './events';
 import { classNameOf, getPointerPosition, globalToLocal, registerClassName } from './internal';
 import type { DisplayObjectContainer } from './Sprite';
+import type { Box } from '../runtime/affine';
+import type { ShapeJson } from '../runtime/shapeJson';
+import { contentBounds } from './bounds';
 import { namedLimit } from './errorSink';
+import type { Rectangle } from './Rectangle';
 import { isStage, type ParentNode, type Stage } from './Stage';
 
 export class DisplayObject extends EventDispatcher {
@@ -18,6 +22,9 @@ export class DisplayObject extends EventDispatcher {
   /** Unscaled content size, set by the runtime from backend bounds. Not part of the AS3 surface. */
   _intrinsicWidth = 0;
   _intrinsicHeight = 0;
+  /** Set by the runtime on shape symbols only: the bounds and the parsed Shape_JSON (read by getBounds and pixelsOverlap). */
+  _shapeBounds: Box | null = null;
+  _shapeJson: ShapeJson | null = null;
   /** Maintained by DisplayObjectContainer only. */
   _parent: ParentNode | null = null;
 
@@ -84,6 +91,13 @@ export class DisplayObject extends EventDispatcher {
       if (isStage(p) || p._isStageRoot) return true;
     }
     return false;
+  }
+  /**
+   * The content bounds in the space of 	argetCoordinateSpace (this object when null or omitted). Empty content gives the
+   * rectangle (0, 0, 0, 0).
+   */
+  getBounds(targetCoordinateSpace: DisplayObject | Stage | null = null): Rectangle {
+    return contentBounds(this, targetCoordinateSpace);
   }
   /** Pointer x in this object's coordinate space; 0 when a scale on the parent chain is 0. */
   get mouseX(): number {

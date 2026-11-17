@@ -447,7 +447,7 @@ Rules that apply to every task:
 
 - [ ] 26. Shim and Runtime: `Rectangle`, `getBounds` and `pixelsOverlap` (D16, D19, D20)
   - Commit area: `Shim` (Runtime named). Verification V2. Read the design section "Collision helper". `getBounds` of an empty clip returns the zero rectangle (Ruffle `get_dobj_bounds` returns `Rectangle::ZERO` for invalid bounds, read in `core/src/avm2/globals/flash/display/display_object.rs`); a target space other than the object is the AABB of the transformed AABB. The Shim does not get `Matrix`, `hitTestObject`, `transform.concatenatedMatrix`, `BitmapData`, `ColorTransform` or `BlendMode` (Requirement 23.10).
-  - [~] 26.1 Add `Rectangle`
+  - [-] 26.1 Add `Rectangle`
     - `x`, `y`, `width`, `height`, `left`, `top`, `right`, `bottom`, `intersection(rect)`, `offset(dx, dy)`, `intersects(rect)`. Non-overlapping rectangles give the rectangle at (0, 0) with width 0 and height 0. Setting `x` keeps `width`; setting `left` changes `width` so `right` stays. Regenerate and stage the member table.
     - Tests: `test/unit/rectangle.test.ts` (create). **Property 23: Rectangle algebra**, in `test/property/rectangle.property.test.ts` (create): `intersection` is commutative, lies inside both operands when non-empty, has an area at most the smaller operand's and is the zero rectangle when disjoint; `offset(dx, dy)` then `offset(-dx, -dy)` restores the rectangle.
     - **Validates: Requirements 23.5, 23.6, 23.7, 23.8, 23.9**

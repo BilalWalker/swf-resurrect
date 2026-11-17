@@ -99,6 +99,7 @@ async function main(): Promise<void> {
       clock,
       classRegistry: classesMod.classRegistry,
       shapeBounds: loaded.shapeBounds,
+      shapes: loaded.shapes,
       // Recorded with the current tick; the Replay keeps ticking (Requirement 25.7).
       onCaughtError: (c: { site: string; message: string }) => {
         caughtErrors.push({ tick, site: c.site, message: c.message });

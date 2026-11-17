@@ -30,6 +30,7 @@ import { isStage, Stage, type ParentNode } from '../shim/Stage';
 import { TextField } from '../shim/TextField';
 import { resetBroadcast } from './broadcast';
 import type { NodeHandle, RenderBackend, ShapeBounds } from './backend';
+import type { ShapeJson } from './shapeJson';
 import type { Clock } from './clock';
 import { computeClipLayout } from './clipLayout';
 import { hasOffsets, stripAlphaAdd } from './colourMatrix';
@@ -48,6 +49,8 @@ export interface PlayerOptions {
   classRegistry: Record<string, new (...args: any[]) => Sprite>;
   /** Result of loading all shapes. */
   shapeBounds: ReadonlyMap<number, ShapeBounds>;
+  /** The parsed Shape_JSON per shape symbol, for getBounds and pixelsOverlap. Optional: a shape without one has bounds only. */
+  shapes?: ReadonlyMap<number, ShapeJson>;
   /** Most whole frame steps one update() may run; extra time is dropped. Default 5. */
   maxCatchUpFrames?: number;
   /** Receives each Caught_Error once (Requirement 25.5); absent: console.error. */
@@ -134,6 +137,7 @@ export class Player {
   private readonly hooks: ClipHooks;
   private readonly reportedMissing = new Set<number>();
   private readonly shapeBounds: ReadonlyMap<number, ShapeBounds>;
+  private readonly shapes: ReadonlyMap<number, ShapeJson>;
   private warnedSkew = false;
   /** Depth of frame-step, initial-build and cycle calls on the stack (design G7 guard). */
   private busyCount = 0;
@@ -159,6 +163,7 @@ export class Player {
       // Class names for toString come from the registry keys, never from constructor.name (D34).
       for (const [key, ctor] of Object.entries(options.classRegistry)) registerClassName(ctor, key);
       this.shapeBounds = options.shapeBounds;
+      this.shapes = options.shapes ?? new Map();
       this.maxCatchUp = Math.max(1, options.maxCatchUpFrames ?? DEFAULT_MAX_CATCH_UP);
       this.frameIntervalMs = 1000 / options.scene.stage.frameRate;
       this.scene = this.withoutUnrenderableEntries(options.scene);
@@ -457,7 +462,7 @@ export class Player {
     const bounds = this.shapeBounds.get(entry.symbolId);
     if (bounds === undefined) throw new Error(`Player: no bounds for shape ${entry.symbolId}`);
     // An unnamed shape takes the next Default_Instance_Name here (Requirement 28.2); a named one takes none.
-    const shape = withoutDefaultName(() => new ShapeObject(entry.symbolId, bounds));
+    const shape = withoutDefaultName(() => new ShapeObject(entry.symbolId, bounds, this.shapes.get(entry.symbolId) ?? null));
     if (entry.name === '') shape.name = defaultInstanceName(takeInstanceNumber());
     this.nodes.register(shape, this.backend.createShape(entry.symbolId));
     return shape;

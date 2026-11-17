@@ -50,6 +50,7 @@ export async function nodeDriver(projectDir: string): Promise<PlayDriver> {
     clock,
     classRegistry: classesMod.classRegistry,
     shapeBounds: loaded.shapeBounds,
+    shapes: loaded.shapes,
     onCaughtError: (c: { site: string; message: string }) => void errors.push({ site: c.site, message: c.message }),
   });
   const KeyboardEvent = eventsMod.KeyboardEvent;

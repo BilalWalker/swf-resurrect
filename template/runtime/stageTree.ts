@@ -8,14 +8,19 @@ import type { HitArea, HitNode } from './hitTest';
 import { namedLimit } from '../shim/errorSink';
 import { planGraphics } from './graphicsPlan';
 import type { Matrix6 } from './scene';
+import type { ShapeJson } from './shapeJson';
 
 /** Leaf display object for a shape symbol. Carries its bounds for hit testing. */
 export class ShapeObject extends Shape {
   constructor(
     readonly symbolId: number,
     readonly bounds: ShapeBounds,
+    /** The parsed Shape_JSON of the symbol, when the loader kept it. */
+    readonly shape: ShapeJson | null = null,
   ) {
     super();
+    this._shapeBounds = bounds;
+    this._shapeJson = shape;
     this._intrinsicWidth = bounds.width;
     this._intrinsicHeight = bounds.height;
   }
