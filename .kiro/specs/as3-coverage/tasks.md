@@ -542,9 +542,9 @@ Rules that apply to every task:
 
 ### Block D: looks right, only if budget remains (about 60 credits; stop and report above 80)
 
-- [ ] 33. Convert: static edit text is drawn as shapes (D12)
+- [x] 33. Convert: static edit text is drawn as shapes (D12)
   - Commit area: `Convert`. Verification V2 if anything under `template/` changes, else V1. Start only after Checkpoint 3 is accepted and the budget decision says Block D runs (Requirement 32.1). Block D starts here: restate the Block D share of about 60 credits. Skip every `spacer`-specific step when the SWF is absent. Read the design row D12 and finding F7: Convert treats a `DefineEditTextTag` with `wasStatic="true"` and `readOnly="true"` like `DefineTextTag`; there is no `texts` field in Scene_JSON, no device font and no new runtime concept.
-  - [ ] 33.1 Measure Overall_Match before Block D
+  - [x] 33.1 Measure Overall_Match before Block D
     - Before any other Block D change, measure Overall_Match of `spacer` on the frames of Requirement 27.3 with the same tolerance and Reference_Frames, and record the value and the differing regions in the commit body and in the Checkpoint 4 report (Requirement 31.1).
     - _Requirements: 31.1_
 
@@ -557,14 +557,14 @@ Rules that apply to every task:
     - In `test/property/staticTextBounds.property.test.ts` (create): for generated Static_Text_Tags with generated SVG glyph sets, the emitted shape symbol's bounds equal the bounds of the tag's SVG (Requirement 29.8; this property has no number in the design's list).
     - **Validates: Requirements 29.8**
 
-- [ ] 34. Shim: rotated `width` and `height` (D20)
+- [x] 34. Shim: rotated `width` and `height` (D20)
   - Commit area: `Shim` (Runtime named). Verification V2. Start only if Block D runs. Read the design row D20 and Requirement 30. `width` and `height` are the size of `contentBounds(obj, self)` after the object's own scale and rotation; setting them changes the scale so the getter returns the requested value (read the Ruffle_Source or measure at rotations of 90 and 180 degrees, or record an Open_Item).
-  - [~] 34.1 Return Rotated_Bounds from `width` and `height`
+  - [x] 34.1 Return Rotated_Bounds from `width` and `height`
     - With `rotation` 0 and no skew the getters return what they returned before. An empty display object follows Requirement 23.11. The setters change the scale as stated above. Regenerate and stage the member table if the Shim surface changes.
     - Tests: `test/unit/rotatedSize.test.ts` (create) with Fixture_Classes: rotation 0 unchanged, 90 degrees swaps, empty object.
     - _Requirements: 30.1, 30.2, 30.3, 30.4, 30.5, 30.8_
 
-  - [~] 34.2 Write property test for Rotated_Bounds
+  - [x] 34.2 Write property test for Rotated_Bounds
     - **Property 26: Rotated bounds contain the corners**
     - In `test/property/rotatedBounds.property.test.ts` (create): for any rectangle and rotation the rotated bounds contain the four rotated corners, a rotation of 90 degrees swaps `width` and `height`, and 360 degrees equals 0 within 1e-6.
     - **Validates: Requirements 30.1, 30.6, 30.7**

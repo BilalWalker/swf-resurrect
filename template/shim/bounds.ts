@@ -37,6 +37,36 @@ export function containerSize(obj: DisplayObject): { width: number; height: numb
   return b === null ? { width: 0, height: 0 } : { width: b.width, height: b.height };
 }
 
+/**
+ * Setter of `width` (axis 'w') or `height` ('h') for content-sized objects. The getter is
+ * W = |sx|*|cos|*w + |sy|*|sin|*h (H swaps the two terms) for a local content box w x h, so the setter solves for
+ * the scale of the same axis and leaves the other. Not implemented (value left unchanged): empty content, a
+ * rotation of 90 or 180 degrees where the axis term is 0 (Flash's rule there was neither read nor measured), a
+ * request that would need a negative scale, a non-finite request.
+ */
+export function setContentSize(obj: DisplayObject, axis: 'w' | 'h', v: number): void {
+  if (!Number.isFinite(v) || v < 0) return;
+  const local = localContent(obj);
+  if (local === null) return;
+  const rad = (obj.rotation * Math.PI) / 180;
+  const c = Math.abs(Math.cos(rad));
+  const s = Math.abs(Math.sin(rad));
+  const { width: w, height: h } = local;
+  if (axis === 'w') {
+    const own = c * w;
+    if (own < 1e-9) return;
+    const rest = Math.abs(obj.scaleY) * s * h;
+    if (v < rest) return;
+    obj.scaleX = Math.sign(obj.scaleX || 1) * ((v - rest) / own);
+  } else {
+    const own = c * h;
+    if (own < 1e-9) return;
+    const rest = Math.abs(obj.scaleX) * s * w;
+    if (v < rest) return;
+    obj.scaleY = Math.sign(obj.scaleY || 1) * ((v - rest) / own);
+  }
+}
+
 /** The matrix from `obj` to the Stage_Object's space: the transforms of the parent chain, the object's own first. */
 export function concatenatedAffine(obj: DisplayObject | Stage | null): Affine {
   let m: Affine = IDENTITY;

@@ -4,7 +4,7 @@ import { classNameOf, getPointerPosition, globalToLocal, registerClassName } fro
 import type { DisplayObjectContainer } from './Sprite';
 import type { Box } from '../runtime/affine';
 import type { ShapeJson } from '../runtime/shapeJson';
-import { containerSize, contentBounds } from './bounds';
+import { containerSize, contentBounds, setContentSize } from './bounds';
 import { namedLimit } from './errorSink';
 import type { Rectangle } from './Rectangle';
 import { isStage, type ParentNode, type Stage } from './Stage';
@@ -55,7 +55,7 @@ export class DisplayObject extends EventDispatcher {
 
   /** True for a Sprite or MovieClip: its size comes from its content, not from an intrinsic size. */
   private sizedByContent(): boolean {
-    return this._intrinsicWidth === 0 && this._intrinsicHeight === 0 && '_children' in this;
+    return this._shapeBounds !== null || (this._intrinsicWidth === 0 && this._intrinsicHeight === 0 && '_children' in this);
   }
 
   /** A container gives the width of its transformed content box in the parent's space (rotation included). */
@@ -64,6 +64,10 @@ export class DisplayObject extends EventDispatcher {
     return this._intrinsicWidth * Math.abs(this.scaleX);
   }
   set width(v: number) {
+    if (this.sizedByContent()) {
+      setContentSize(this, 'w', v);
+      return;
+    }
     if (this._intrinsicWidth > 0 && Number.isFinite(v)) this.scaleX = v / this._intrinsicWidth;
   }
 
@@ -72,6 +76,10 @@ export class DisplayObject extends EventDispatcher {
     return this._intrinsicHeight * Math.abs(this.scaleY);
   }
   set height(v: number) {
+    if (this.sizedByContent()) {
+      setContentSize(this, 'h', v);
+      return;
+    }
     if (this._intrinsicHeight > 0 && Number.isFinite(v)) this.scaleY = v / this._intrinsicHeight;
   }
 
