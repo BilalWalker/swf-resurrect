@@ -713,6 +713,16 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755218938
+      },
+      {
+        "executionId": "27a4f99a-0341-4091-af85-1bd106e43356",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794839852545
+      },
+      {
+        "executionId": "27a4f99a-0341-4091-af85-1bd106e43356",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794839960621
       }
     ],
     "20.4 Run the same scenario in headless Chromium": [
