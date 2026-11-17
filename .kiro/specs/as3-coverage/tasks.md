@@ -569,13 +569,13 @@ Rules that apply to every task:
     - In `test/property/rotatedBounds.property.test.ts` (create): for any rectangle and rotation the rotated bounds contain the four rotated corners, a rotation of 90 degrees swaps `width` and `height`, and 360 degrees equals 0 within 1e-6.
     - **Validates: Requirements 30.1, 30.6, 30.7**
 
-- [ ] 35. Verify: Overall_Match after Block D and the floor (Requirement 31)
+- [x] 35. Verify: Overall_Match after Block D and the floor (Requirement 31)
   - Commit area: `Verify`. Verification V1. Start only if Block D runs. Skip with the fetch message when the `spacer` SWF is absent.
-  - [~] 35.1 Measure again and raise the floor
+  - [x] 35.1 Measure again and raise the floor
     - Measure Overall_Match of `spacer` again on the same frames, the same tolerance and the same Reference_Frames. If the value is higher than the value of Task 33.1, raise the Score_Floor of `spacer` to it rounded down to two decimals in the same commit; if lower, record the cause and keep the floor of Task 29.3 (Requirement 31.4). The tolerance, Reference_Frames, `pixelDiff.ts` and every other floor stay unchanged.
     - _Requirements: 31.2, 31.3, 31.4, 31.7_
 
-  - [~] 35.2 Attribute the remaining regions
+  - [x] 35.2 Attribute the remaining regions
     - Attribute every remaining differing region to a Named_Limit, a fixed defect or an Open_Item (Requirement 31.5) and remove the Named_Limits "static text not drawn" and "rotated width and height not measured" from the `spacer` report only for what Block D now covers. State both values and the regions Block D removed in the commit body.
     - _Requirements: 31.5, 31.6_
 

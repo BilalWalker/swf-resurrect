@@ -123,6 +123,11 @@ describeIfSpacer('spacer overall visual match floor', () => {
       expect(report.visual.status).toBe('compared');
       expect(report.visual.frames.map((f) => [f.frame, f.status])).toEqual([[1, 'compared'], [2, 'compared']]);
       expect(report.visual.overallMatch).toBeGreaterThanOrEqual(OVERALL_MATCH_FLOOR_SPACER);
+      // Block D draws the static edit texts: no entry may still say text is dropped (they stay as text-metrics only).
+      const listed = JSON.parse(await readFile(join(outDir, 'unsupported-features.json'), 'utf8')) as { kind: string }[] | { entries: { kind: string }[] };
+      const kinds = (Array.isArray(listed) ? listed : listed.entries).map((u) => u.kind);
+      expect(kinds).not.toContain('text');
+      expect(kinds.filter((k) => k === 'text-metrics')).toHaveLength(13);
     },
     TIMEOUT_MS,
   );
