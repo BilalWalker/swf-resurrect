@@ -34,6 +34,7 @@ import type { Clock } from './clock';
 import { computeClipLayout } from './clipLayout';
 import { hasOffsets, stripAlphaAdd } from './colourMatrix';
 import { constructorSite, messageOf, type ErrorSink } from './errorReport';
+import { inspectStage, type Inspection } from './inspect';
 import { hitTestAll, resolveHitTarget, type TargetNode } from './hitTest';
 import type { ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
 import { ScriptQueue } from './scriptQueue';
@@ -140,6 +141,7 @@ export class Player {
   readonly stageNode!: NodeHandle;
   private lastNow: number;
   private accumulator = 0;
+  private ticks = 0;
 
   constructor(options: PlayerOptions) {
     setCaughtErrorSink(options.onCaughtError ?? null);
@@ -247,6 +249,7 @@ export class Player {
       while (this.accumulator >= this.frameIntervalMs - EPSILON_MS && steps < this.maxCatchUp) {
         this.accumulator -= this.frameIntervalMs;
         steps++;
+        this.ticks++;
         stepTops(this.tops());
         exitFrame();
       }
@@ -261,6 +264,10 @@ export class Player {
     this.syncAll();
   }
 
+  /** Read-only copies of the game state for Play_Tests (see inspect.ts). */
+  inspect(): Inspection {
+    return inspectStage(this.stage, this.ticks);
+  }
   /** Last pointer position in stage coordinates; starts at (0, 0). */
   get pointer(): { x: number; y: number } {
     return { x: this.pointerX, y: this.pointerY };

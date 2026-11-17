@@ -386,4 +386,12 @@ describe('keyboard wiring in the emitted main.ts (as3-coverage 8.3)', () => {
     expect(main).toMatch(/addEventListener\('pointerdown', \(\) => \{\s*window\.focus\(\);/);
     expect(main).toMatch(/\n  window\.focus\(\);\n/);
   });
+
+  it('the template main.ts offers the ?play=1 driver on a manual clock and no animation-frame loop in that mode', () => {
+    const main = readFileSync(resolve(__dirname, '../../template/src/main.ts'), 'utf8');
+    expect(main).toContain("get('play') === '1'");
+    expect(main).toContain('window.__swfPlay = {');
+    expect(main).toContain('clock: play ? manual');
+    expect(main.indexOf('window.__swfPlay')).toBeLessThan(main.indexOf('requestAnimationFrame(loop)'));
+  });
 });

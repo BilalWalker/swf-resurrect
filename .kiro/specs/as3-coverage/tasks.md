@@ -360,23 +360,23 @@ Rules that apply to every task:
     - If the translator route cannot make the `Signal` classes load and pass the checks of 19.2, write `handwritten/entity_game/org/osflash/signals/Signal.ts`, add the entry to `handwritten/SET.json` with a reason, rely on the packaged-override fix of Task 17.2, and add **Signal model property** (Requirement 18.7) in `test/property/signalModel.property.test.ts` (create): over sequences of `add`, `addOnce`, `remove` and `dispatch` over a pool of listeners the emitted `Signal` agrees with a list model with prepend on add. If 19.1 and 19.2 pass, this sub-task does nothing: mark it done with the note "not needed" in the commit body, and add no property test.
     - _Requirements: 18.5, 18.6, 18.7_
 
-- [ ] 20. Test and Runtime: inspection hook, `?play=1` and the `entity_game` Play_Test
+- [x] 20. Test and Runtime: inspection hook, `?play=1` and the `entity_game` Play_Test
   - Commit area: `Test` (Runtime and Emit named). Verification V2. Read the design section "Play_Tests" and Requirement 25. The Play_Test runs on the manual clock in both layers: 900 steps at 30 fps (30 seconds) for `entity_game`; wall time is used only to wait for the page to load.
-  - [~] 20.1 Add the inspection hook
+  - [x] 20.1 Add the inspection hook
     - `template/runtime/inspect.ts`: `Player.inspect()` returns plain copies (`tick`, `find(className)`, `stageChildren()` giving `{ className, name, x, y, rotation, visible, frame, label, children }`, `timers()` giving `{ delay, running, currentCount }`), with no setter. Document it in the file header and list it in `structure.md`.
     - Tests: `test/unit/inspect.test.ts` (create): the result is a copy; changing it changes no game state.
     - _Requirements: 25.4_
 
-  - [~] 20.2 Add the `?play=1` driver
+  - [x] 20.2 Add the `?play=1` driver
     - With `?play=1`, `main.ts` creates a `ManualClock`, skips the `requestAnimationFrame` loop and installs `window.__swfPlay = { step, key, inspect, errors }`; `step(n)` advances `frameIntervalMs` and updates n times and renders every 60 steps. `onCaughtError` collects into `errors`. Add `PlayDriver { step(n), key(type, code), inspect() }` with a Node implementation (Player + FakeBackend + ManualClock) and a Chromium implementation in `test/support/playDriver.ts` (create).
     - Tests: `test/unit/playDriver.test.ts` (create); `test/unit/emit.test.ts` (extend).
     - _Requirements: 25.7_
 
-  - [~] 20.3 Write the `entity_game` scenario for the Node layer
+  - [x] 20.3 Write the `entity_game` scenario for the Node layer
     - `test/support/playScenarios.ts` (create): one function over `PlayDriver` asserting, from observable state: the start click begins the game; holding a direction key changes the ship's position and rotation; the fire key increases the number of bullet display objects; a bullet that overlaps a rock destroys or splits that rock; no error during 30 seconds of play (900 steps). Failures report the state that was reached (Requirement 25.8). The Node layer test is `test/e2e/entityPlay.node.test.ts` (create). If the game does not reach a needed state, fix the general Shim, Runtime or Translator cause (never a sample-named rule) in this task or stop and report.
     - _Requirements: 25.1, 25.3, 25.4, 25.5, 25.8_
 
-  - [~] 20.4 Run the same scenario in headless Chromium
+  - [x] 20.4 Run the same scenario in headless Chromium
     - `test/e2e/entityPlay.chromium.test.ts` (create) takes a `chromium` slot (limit 3, Browser_Limit), reuses the Shared_Run_Cache output of `entity_game`, loads `?play=1`, runs the same scenario and the same assertions, and also asserts that the page reported no error and that the type-check gate reported no failed class at load (`translation-report.json`). Take one screenshot with the `playwright` MCP and look at it; the Play_Test does not score it (Open_Item O6).
     - _Requirements: 25.1, 25.3, 25.5, 25.7_
 
