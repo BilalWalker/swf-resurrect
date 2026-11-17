@@ -177,6 +177,22 @@ say which you did. The spec that holds the evidence is named with each item.
   0-based, `sceneNames`; FFDec 26.4.0, seen in the spacer dump). The reader accepts 2 and 3; version 2 reads as one
   scene `Scene 1` at frame 1. The writer always writes 3.
 
+## Bounds and collision
+- **`getBounds` of an empty clip is the zero rectangle; a target space other than the object is the box of the
+  transformed box.** Read in Ruffle `core/src/avm2/globals/flash/display/display_object.rs` (`get_dobj_bounds`
+  returns `Rectangle::ZERO` for invalid bounds) in an earlier session and recorded in the as3-coverage design. Neither
+  re-read here (`.work/ruffle-src` is empty) nor measured against the installed web player (a SWF with an empty
+  clip and a `getBounds` call needs an AS3 compiler that the repository does not have): Open_Item for task 30.
+  Code: `template/shim/bounds.ts` `contentBounds`. Graphics and text boxes are not counted (Named_Limit
+  `getBounds-content-ignored`).
+- **`pixelsOverlap` ignores `visible` of the two objects and counts a fill of any alpha.** The Flash route draws the
+  source with `ColorTransform(1,1,1,1,255,-255,-255,255)`, so the alpha offset makes every drawn fill opaque; a
+  partial-alpha fill counts. Reasoned from the `PhysicEngine.as` source, not measured. Whether `BitmapData.draw`
+  skips an invisible child of the source was neither read nor measured (Open_Item O5, task 30); no hitbox symbol of
+  `spacer` has an invisible child (26.4). Strokes are not counted (Flash counts them): the hitbox shapes of
+  `spacer` carry 1 to 2 pixel strokes, so overlaps start about one pixel later than in Flash.
+  Code: `template/runtime/overlap.ts`.
+
 ## Timer
 - **Timers fire from the Player clock, after the frame steps of `Player.update`, at `clock.now()`.** Rules read
   in Ruffle earlier (design "Timer"), not re-read here (`.work/ruffle-src` was empty at task 25): an interval
