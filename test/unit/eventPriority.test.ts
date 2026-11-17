@@ -46,7 +46,9 @@ describe('addEventListener priority (design D5, Ruffle events.rs)', () => {
     const d = new EventDispatcher();
     d.addEventListener('x', () => {}, true, 0, true);
     d.addEventListener('y', () => {}, true);
-    expect(takeNamedLimits().map((l) => l.id)).toEqual(['useCapture-ignored', 'useWeakReference-ignored']);
+    const limits = takeNamedLimits();
+    expect(limits.map((l) => l.id)).toEqual(['useCapture-ignored', 'useWeakReference-ignored']);
+    expect(limits[1].detail).toBe("addEventListener('x') useWeakReference is ignored: listeners are held strongly");
     expect(takeNamedLimits()).toEqual([]);
   });
 });

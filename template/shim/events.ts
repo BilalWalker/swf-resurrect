@@ -101,7 +101,7 @@ export class EventDispatcher {
    */
   addEventListener(type: string, listener: Listener, useCapture = false, priority = 0, useWeakReference = false): void {
     if (useCapture) namedLimit('useCapture-ignored', type);
-    if (useWeakReference) namedLimit('useWeakReference-ignored', type);
+    if (useWeakReference) namedLimit('useWeakReference-ignored', `addEventListener('${type}') useWeakReference is ignored: listeners are held strongly`);
     if (type === MouseEvent.MOUSE_WHEEL) namedLimit('mouse-wheel-not-dispatched', 'the Player does not dispatch mouseWheel; the listener is registered and never called');
     registerBroadcastListener(this, type);
     const entry: Registration = { listener, priority: Math.trunc(priority) };
