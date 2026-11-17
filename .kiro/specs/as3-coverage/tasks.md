@@ -579,7 +579,7 @@ Rules that apply to every task:
     - Attribute every remaining differing region to a Named_Limit, a fixed defect or an Open_Item (Requirement 31.5) and remove the Named_Limits "static text not drawn" and "rotated width and height not measured" from the `spacer` report only for what Block D now covers. State both values and the regions Block D removed in the commit body.
     - _Requirements: 31.5, 31.6_
 
-- [~] 36. Checkpoint 4: Block D done
+- [-] 36. Checkpoint 4: Block D done
   - STOP. This is the final Checkpoint (Requirement 32.3). It exists only if Block D ran; if Checkpoint 3 recorded the skip, mark this task as skipped with the reason and do not run it (Requirement 32.2).
   - Follow the Checkpoint procedure of the rules: run the full suite `npm test -- --run`, hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/as3-coverage/reviews/checkpoint-4.md`, act on its findings in a new commit, then stop and report. The report also gives the Overall_Match of `spacer` before (Task 33.1) and after (Task 35.1), the regions Block D removed, the Named_Limits that remain, the total credits against about 600 and the Credits_Line.
   - _Requirements: 31.6, 32.3, 34.1 to 34.5, 36.1_
