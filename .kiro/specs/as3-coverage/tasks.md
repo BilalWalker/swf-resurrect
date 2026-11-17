@@ -380,18 +380,18 @@ Rules that apply to every task:
     - `test/e2e/entityPlay.chromium.test.ts` (create) takes a `chromium` slot (limit 3, Browser_Limit), reuses the Shared_Run_Cache output of `entity_game`, loads `?play=1`, runs the same scenario and the same assertions, and also asserts that the page reported no error and that the type-check gate reported no failed class at load (`translation-report.json`). Take one screenshot with the `playwright` MCP and look at it; the Play_Test does not score it (Open_Item O6).
     - _Requirements: 25.1, 25.3, 25.5, 25.7_
 
-- [ ] 21. Verify: `entity_game` scores and Named_Limits (Requirements 26, 27, 33)
+- [x] 21. Verify: `entity_game` scores and Named_Limits (Requirements 26, 27, 33)
   - Commit area: `Verify`. Verification V1. Read Requirements 27 and 33.1 and 33.2 and the design finding F9: the Reference_Frame of `entity_game` is blank because the SWF has one root frame and draws by code.
-  - [-] 21.1 Measure Overall_Match and set the floor
+  - [x] 21.1 Measure Overall_Match and set the floor
     - Run `npm run pipeline -- samples/entity_game/test.swf <outdir> --force --verify`. Record the Overall_Match on at least one frame (Requirement 27.1; the SWF has one frame, so one frame is what exists: state this) and set the Score_Floor equal to the measured value rounded down to two decimals in `test/e2e/overallMatch.e2e.test.ts` (extend with `entity_game`). Add the `entity_game` entry to the residual-causes handling: any region below 100 is attributed to a Named_Limit, a fixed defect or an Open_Item (Requirement 27.6). Record the Open_Item O6 (code-drawn shapes are not compared) in the Fidelity_Report as a named limit.
     - _Requirements: 27.1, 27.4, 27.5, 27.6, 27.8_
 
-  - [~] 21.2 Record the Named_Limits in the reports
+  - [x] 21.2 Record the Named_Limits in the reports
     - Named_Limits raised while running (`drawPath-command`, `lineStyle-args`, `filter-not-drawn:*`, `mouse-wheel-not-dispatched`, `useCapture-ignored`, `scaleMode-no-effect`, `device-font-metrics`) flow through the sink into the Fidelity_Report `behaviour.namedLimits`; limits known without running come from the scene and translation facts. A sample below 100 lists the limits that explain it.
     - Tests: `test/unit/report.test.ts` (extend) with a sink fixture; `test/e2e/entityReport.e2e.test.ts` (create): the `entity_game` report lists what the Play_Test run raised.
     - _Requirements: 33.1, 33.2_
 
-- [~] 22. Checkpoint 2: `entity_game` plays
+- [-] 22. Checkpoint 2: `entity_game` plays
   - STOP. Follow the Checkpoint procedure of the rules. Block B shares: Requirements 9 to 11, 13 to 18, 24 to 26 (entity part), 27 (entity part), 33.
   - Run the full suite `npm test -- --run`. The `entity_game` Play_Test must pass in both layers (Requirement 34.6) and the game must be playable. Hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/as3-coverage/reviews/checkpoint-2.md`, and act on its findings in a new commit before reporting.
   - The report also states: whether Ruffle ran `entity_game` headlessly (Requirement 26.4) and the Trace_Score reason `empty-reference-trace`, whether the `Signal` fallback was used, whether the `Game.stage` rule (Open_Item O4) was confirmed by the Play_Test, and the Credits_Line against the Block B share of about 170.

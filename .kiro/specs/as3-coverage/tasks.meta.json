@@ -724,6 +724,11 @@
         "executionId": "3fa35c46-dfee-45b0-91b4-2c3683dfab99",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794814354470
+      },
+      {
+        "executionId": "3fa35c46-dfee-45b0-91b4-2c3683dfab99",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794815291203
       }
     ],
     "21.2 Record the Named_Limits in the reports": [
@@ -731,6 +736,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755219577
+      },
+      {
+        "executionId": "3fa35c46-dfee-45b0-91b4-2c3683dfab99",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794815291537
       }
     ],
     "22. Checkpoint 2: `entity_game` plays": [
@@ -738,6 +748,11 @@
         "executionId": "88752f4e-92c5-489c-9e59-8f6e4bd22d0c",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794755219817
+      },
+      {
+        "executionId": "3fa35c46-dfee-45b0-91b4-2c3683dfab99",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794815292273
       }
     ],
     "23.1 Hoist initialised fields used in `super(...)`": [
@@ -1053,6 +1068,13 @@
         "executionId": "0a7e1e7b-0f75-4a70-8b5b-78c8271bae41",
         "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
         "timestamp": 1794807526058
+      }
+    ],
+    "21. Verify: `entity_game` scores and Named_Limits (Requirements 26, 27, 33)": [
+      {
+        "executionId": "3fa35c46-dfee-45b0-91b4-2c3683dfab99",
+        "chatSessionId": "sess_28d49dfd-5fe9-4eae-88a5-c5d90a676d6e",
+        "timestamp": 1794815291832
       }
     ]
   }
