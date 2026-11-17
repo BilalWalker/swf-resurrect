@@ -72,9 +72,12 @@ function regionsTable(frame: number, t: RegionTable | undefined): string {
 function summarySection(r: FidelityReport): string {
   const b = r.behaviour;
   const rows: string[] = [];
-  rows.push(
-    `<tr><th scope="row">Overall match</th><td>${r.visual.overallMatch === null ? 'not compared' : pct(r.visual.overallMatch)}</td></tr>`,
-  );
+  const overall = r.visual.overallMatch === null ? 'not compared' : pct(r.visual.overallMatch);
+  const blank =
+    r.visual.overallMatch !== null && r.visual.knownVisualLimits.some((l) => l.kind === 'code-drawn-shapes')
+      ? `<br><strong>Overall match ${overall} compares a blank reference frame: this game draws by code, so the number says nothing about the drawing.</strong>`
+      : '';
+  rows.push(`<tr><th scope="row">Overall match</th><td>${overall}${blank}</td></tr>`);
   rows.push(`<tr><th scope="row">Compared frames</th><td>${r.visual.comparedFrames}</td></tr>`);
   rows.push(`<tr><th scope="row">Not compared frames</th><td>${r.visual.notComparedFrames}</td></tr>`);
   rows.push(

@@ -142,6 +142,16 @@ describe('html known visual limits', () => {
     expect(html).not.toContain('<b>');
   });
 });
+describe('html blank reference note', () => {
+  const sentence = 'compares a blank reference frame: this game draws by code, so the number says nothing about the drawing.';
+  it('says it next to Overall match when code-drawn-shapes is a known limit, and only then', () => {
+    const r = baseReport({ status: 'not-compared', reason: 'no-reference-trace', knownBehaviourGaps: [] } as never);
+    (r.visual as unknown as Record<string, unknown>)['overallMatch'] = 100;
+    expect(renderFidelityHtml(r)).not.toContain(sentence);
+    (r.visual as { knownVisualLimits: unknown[] }).knownVisualLimits = [{ kind: 'code-drawn-shapes', message: 'm' }];
+    expect(renderFidelityHtml(r)).toContain(`Overall match 100.00% ${sentence}`);
+  });
+});
 describe('html residual regions', () => {
   it('prints the regions table per frame and the three counts, escaped', () => {
     const report = baseReport({ status: 'not-compared', reason: 'no-reference-trace', knownBehaviourGaps: [] } as never);
