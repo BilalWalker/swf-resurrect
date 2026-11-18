@@ -1,8 +1,7 @@
-// Landing view: what the tool does, the open grave (file drop) and the tombstones (samples).
+// Landing view: what the tool does, the sarcophagus (file drop) and the tombstones (samples).
 import type { SampleInfo, SetupStatus } from '../../shared/api';
 import { api, ApiFailure } from './api';
-import { GRAVE } from './art';
-import { formatBytes, h, svg } from './dom';
+import { formatBytes, h } from './dom';
 
 export interface LandingDeps {
   openJob(id: string): void;
@@ -28,6 +27,59 @@ function setupNotice(setup: SetupStatus): HTMLElement | null {
     ...setup.problems.map((p) => h('p', {}, p)),
     h('p', { class: 'muted' }, 'Samples that were converted before still open from the cache.'),
   );
+}
+
+/** art/sarc-anim.webp: 14 frames of the lid opening (0 closed, 13 fully open), 7 per row. */
+const SARC_FRAMES = 14;
+const SARC_COLS = 7;
+const SARC_FRAME_MS = 55;
+
+/**
+ * Plays the sarcophagus in the drop zone toward the frame its state asks for, forwards or backwards:
+ * closed at rest; fully open on hover or focus, while a file is held over it, and while uploading.
+ */
+function animateSarcophagus(zone: HTMLElement): void {
+  const el = zone.querySelector<HTMLElement>('.sarc');
+  if (el === null) return;
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let frame = 0;
+  let hover = false;
+  let timer = 0;
+  const show = (): void => {
+    el.style.backgroundPosition = `${((frame % SARC_COLS) / (SARC_COLS - 1)) * 100}% ${Math.floor(frame / SARC_COLS) * 100}%`;
+  };
+  // Open all the way or closed, nothing between: a half-open frame freezes the vines in mid-snap.
+  const target = (): number =>
+    hover || zone.classList.contains('is-busy') || zone.classList.contains('is-over') ? SARC_FRAMES - 1 : 0;
+  const step = (): void => {
+    const t = target();
+    if (frame === t) {
+      window.clearInterval(timer);
+      timer = 0;
+      return;
+    }
+    frame = still ? t : frame + Math.sign(t - frame);
+    show();
+  };
+  const sync = (): void => {
+    if (timer === 0 && frame !== target()) timer = window.setInterval(step, SARC_FRAME_MS);
+  };
+  for (const [on, off] of [
+    ['mouseenter', 'mouseleave'],
+    ['focus', 'blur'],
+  ]) {
+    zone.addEventListener(on, () => {
+      hover = true;
+      sync();
+    });
+    zone.addEventListener(off, () => {
+      hover = zone.matches(':hover') || zone.matches(':focus-visible');
+      sync();
+    });
+  }
+  // is-over and is-busy are set elsewhere in this file; follow them without touching that code
+  new MutationObserver(sync).observe(zone, { attributes: true, attributeFilter: ['class'] });
+  show();
 }
 
 export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promise<void> {
@@ -59,7 +111,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       class: 'dropzone',
       'aria-describedby': 'drop-hint',
     },
-    svg(GRAVE),
+    h('span', { class: 'sarc', 'aria-hidden': 'true' }),
     h('p', { class: 'drop-title' }, 'Lay a .swf to rest here', h('br'), h('span', {}, '...and raise it')),
     h(
       'p',
@@ -67,6 +119,8 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       `Drop a file, or press Enter to choose one. ActionScript 3 only, up to ${maxMb} MB.`,
     ),
   );
+
+  animateSarcophagus(zone);
 
   let busy = false;
   const setBusy = (b: boolean): void => {

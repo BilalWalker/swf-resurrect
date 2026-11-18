@@ -74,65 +74,32 @@
   cursor: progress;
 }
 
-.grave {
-  width: min(100%, 340px);
-  height: auto;
-  overflow: visible;
+/* The sarcophagus of the drop zone: 14 frames of its lid opening, cut from a generated clip and packed
+   7 x 2 in art/sarc-anim.webp. landing.ts moves between frames by state; the rules here only add the halo. */
+.sarc {
+  position: relative;
+  width: min(100%, 440px);
+  aspect-ratio: 560 / 313;
+  background: url('/art/sarc-anim.webp') 0 0 / 700% 200% no-repeat;
 }
-
-.grave .headstone {
-  fill: var(--stone);
+.sarc::before {
+  content: '';
+  position: absolute;
+  inset: 10% 4% -6%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(126, 242, 184, 0.4), transparent 68%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
 }
-.grave .headstone-mark {
-  stroke: var(--stone-hi);
-  stroke-width: 3;
+.dropzone:hover .sarc::before,
+.dropzone:focus-visible .sarc::before {
+  opacity: 0.3;
 }
-.grave .pit-edge {
-  stroke: #2a241b;
-  stroke-width: 3;
+.dropzone.is-over .sarc::before {
+  opacity: 0.7;
 }
-.grave .mound {
-  fill: #2a231b;
-}
-.grave .soil {
-  stroke: #3b3226;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-}
-.grave .pit {
-  fill: #030406;
-}
-.grave .coffin {
-  fill: #0c0a08;
-  stroke: #3a3026;
-  stroke-width: 1.5;
-}
-.grave .glow {
-  opacity: 0.35;
-  transition: opacity 0.4s ease;
-}
-.grave .lid {
-  transform-box: fill-box;
-  transform-origin: 0% 50%;
-  transition: transform 0.55s cubic-bezier(0.3, 0.7, 0.2, 1);
-}
-.grave .lid-cross {
-  stroke: #6b5a45;
-  stroke-width: 3;
-}
-
-.dropzone:hover .grave .lid,
-.dropzone:focus-visible .grave .lid {
-  transform: translate(-6px, -3px) rotate(-4deg);
-}
-
-.dropzone.is-over .grave .lid,
-.dropzone.is-busy .grave .lid {
-  transform: translate(-58px, -30px) rotate(-24deg);
-}
-
-.dropzone.is-over .grave .glow,
-.dropzone.is-busy .grave .glow {
+.dropzone.is-busy .sarc::before {
   opacity: 1;
   animation: breathe 1.8s ease-in-out infinite alternate;
 }
@@ -328,4 +295,9 @@
     width: 100%;
     max-width: 260px;
   }
+}
+
+/* lets the sarcophagus's halo (z-index -1) sit above the drop zone's own background instead of behind it */
+.dropzone {
+  isolation: isolate;
 }
