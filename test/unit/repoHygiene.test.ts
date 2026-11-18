@@ -1,7 +1,7 @@
 // Repository hygiene (breadth sub-task 19.2). Validates: Requirements 15.4, 15.6, 15.8, 15.11, 15.13
 // Reads `git ls-files` once. Failures print paths, never matched text.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const hasGit = existsSync(".git");
@@ -79,8 +79,9 @@ describe.skipIf(!hasGit)("repository hygiene", () => {
     const offenders: string[] = [];
     for (const p of tracked) {
       if (BINARY_EXT.test(p) || /^test\/fixtures\/.*\.xml$/.test(p) || p === "package-lock.json") continue;
+      if (statSync(p).size > 1_000_000) continue; // not read at all
       const buf = readFileSync(p);
-      if (buf.length > 1_000_000 || buf.includes(0)) continue;
+      if (buf.includes(0)) continue;
       // Buffer.includes scans the bytes natively; the text is decoded only for the rare candidate.
       if (!needles.some((n) => buf.includes(n, 0, "latin1"))) continue;
       const text = buf.toString("latin1");
