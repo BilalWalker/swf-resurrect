@@ -406,23 +406,23 @@ Credits: no share is stated; each task states its credits in its commit body and
 
 - [ ] 27. Facts, Outcome and Convert: embedded SWF
   - Commit area: `Pipeline` (Facts, Outcome and Convert named). Verification V1. Read the design sections on the Facts_Reader, the gap kinds and reason sentences, and `docs/outcome.md`. Today a wrapper SWF (a document class that loads a SWF held in a `DefineBinaryDataTag`) ends `converted-with-gaps - 22 of 26 classes translated`, which hides that the real game was not converted. The local file holds one such tag of 7349081 bytes starting `CWS`. FFDec has `-export binaryData`; the signature can also be read from the dump.
-  - [~] 27.1 Detect a `DefineBinaryDataTag` with a SWF signature
+  - [x] 27.1 Detect a `DefineBinaryDataTag` with a SWF signature
     - `src/facts/embeddedSwf.ts` (create, pure): given the tag body bytes of a `DefineBinaryData` tag (the readers in `src/facts` already walk tags), report `{ characterId, offset, length, signature: 'FWS' | 'CWS' | 'ZWS' }` for each tag whose data starts with one of those three signatures and has at least the 8-byte header; count and sizes in the Facts. Add the file to the purity test list. `test/support/hostileSwf.ts` (extend): a `DefineBinaryData` helper (tag 87).
     - Tests: `test/unit/embeddedSwf.test.ts` (create): FWS, CWS, ZWS found; no signature, a 2-byte payload and a tag cut short give none, no throw.
     - _Requirements: 26.6_
 
-  - [~] 27.2 The `embedded-swf` gap kind and its reason sentence
+  - [x] 27.2 The `embedded-swf` gap kind and its reason sentence
     - Add `embedded-swf` to the gap kinds (`src/outcome/gaps.ts`), a reason sentence saying the file is a wrapper around another SWF that was not converted (`reasons.ts`, plain words, count and sizes only, no input text), the Outcome_File fields (count, total bytes, largest size), and `docs/outcome.md` with one JSON example; keep `test/unit/outcomeDocs.test.ts` passing. The Outcome of a wrapper stays `converted-with-gaps` unless 27.3 converts the inner file. Amend `requirements.md` (Requirement 26, item 3) and `design.md` (gap kind, sentence, fields) in this commit.
     - Tests: `test/unit/outcome.test.ts`, `test/unit/outcomeFile.test.ts`, `test/unit/reasons.test.ts` (extend): the kind is counted, the sentence has the numbers and no path, the file round-trips through the parser; `decideOutcome` puts it in the most-gaps summary by count.
     - _Requirements: 26.6, 26.7_
 
-  - [~] 27.3 Measure, then decide whether to convert the inner SWF
+  - [x] 27.3 Measure, then decide whether to convert the inner SWF
     - Measure on the local wrapper file, as numbers only: the time of `-export binaryData` (or reading the bytes from the dump), the time and Outcome of running the pipeline on the extracted file, and the added code. Decide: extract the inner SWF into the work directory and convert that instead when it fits the budget and is general (any signature of 27.1, the inner file goes through the same Facts, Run_Limits, recovery and cleanup as an input, nesting is limited to one level, an inner file that is itself a wrapper is a gap); otherwise keep the gap of 27.2 and say why. The decision and the measurement are recorded in `design.md` in this commit, with `requirements.md` (Requirement 26, item 3) if the behaviour changes. If extracted: the Outcome says the inner file was converted (reason sentence and Outcome_File field), the extracted file lives under `.work`-style work directory covered by the cleanup plan and counted against the Run_Limits, and the output is the inner file's project. If not extracted: no code change beyond the design text and the commit body says which limit decided.
     - Tests: if extracted, `test/unit/embeddedExtract.test.ts` (create): the generated wrapper of 27.4 yields the inner file's project, the Outcome field says so, a wrapper whose inner file is damaged ends `refused damaged`, and the time limit applies to both stages; if not, none.
     - _Requirements: 26.8_
 
-  - [~] 27.4 Tests, property and the local-file numbers
-    - `test/support/embeddedSwf.ts` (create): a generated wrapper (a tiny SWF inside a `DefineBinaryData` tag via `-xml2swf`, CWS and ZWS variants made by the hostile builder, no-signature variant). `test/unit/embeddedPipeline.test.ts` (create): the wrapper ends with the `embedded-swf` gap (or the extraction result of 27.3), CWS and ZWS variants both detected, a payload without a signature gives no gap. `test/property/facts.test.ts` (extend): `// Feature: robustness, Property 28: embedded SWF detection finds exactly the DefineBinaryData tags that start with a SWF signature`, for any generated tag list. The commit body gives, for the local wrapper file, as numbers only: Outcome, classes translated of candidates, type errors, time.
+  - [-] 27.4 Tests, property and the local-file numbers
+    - `test/support/embeddedSwf.ts` (create): a generated wrapper (a tiny SWF inside a `DefineBinaryData` tag via `-xml2swf`, CWS and ZWS variants made by the hostile builder, no-signature variant). `test/unit/embeddedPipeline.test.ts` (create): the wrapper ends with the `embedded-swf` gap only (27.3 decided not to extract the inner file), CWS and ZWS variants both detected, a payload without a signature gives no gap. `test/property/facts.test.ts` (extend): `// Feature: robustness, Property 28: embedded SWF detection finds exactly the DefineBinaryData tags that start with a SWF signature`, for any generated tag list. The commit body gives, for the local wrapper file, as numbers only: Outcome, classes translated of candidates, type errors, time.
     - _Requirements: 26.6, 26.7, 26.8_
 
 - [ ] 28. Docs: correct the run-limit note

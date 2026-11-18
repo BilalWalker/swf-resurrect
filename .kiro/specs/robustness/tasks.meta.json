@@ -891,6 +891,16 @@
         "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794983815259
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794985849756
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794985958153
       }
     ],
     "27.2 The `embedded-swf` gap kind and its reason sentence": [
@@ -898,6 +908,16 @@
         "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794983815488
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794985958447
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794986404512
       }
     ],
     "27.3 Measure, then decide whether to convert the inner SWF": [
@@ -905,6 +925,16 @@
         "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794983815776
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794986404794
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794987406740
       }
     ],
     "27.4 Tests, property and the local-file numbers": [
@@ -912,6 +942,11 @@
         "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794983816044
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794987407272
       }
     ],
     "28.1 Verify the web side and correct `docs/outcome.md`": [

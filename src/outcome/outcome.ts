@@ -25,7 +25,18 @@ export type GapKind =
   | "unrecoverable-class"
   | "type-error"
   | "dropped-placement"
-  | "flash-api-gap";
+  | "flash-api-gap"
+  | "embedded-swf";
+
+/**
+ * Embedded SWFs found by the Facts stage (D-D3b). Present in the Outcome_File only when count > 0; a file
+ * without the field is read as "none". 27.3 may add an `inner` field later; the parser ignores unknown fields.
+ */
+export interface EmbeddedSwfSummary {
+  count: number;
+  totalBytes: number;
+  largestBytes: number;
+}
 
 /** Stage names, in run order. Weights are in the limits (D-A4). */
 export type StageName = "recover" | "unpack" | "convert" | "translate" | "emit" | "gate" | "verify";
@@ -131,6 +142,8 @@ export interface OutcomeRecord {
   recovery: RecoveryRecord | null;
   /** 8 hex digits, only for failed. */
   referenceId: string | null;
+  /** Only when at least one embedded SWF was found (D-D3b); absent otherwise. */
+  embeddedSwfs?: EmbeddedSwfSummary;
 }
 
 /** A classified error, from classifyError (task 7). `internal` is a failed run, `refused` a refusal. */
@@ -153,6 +166,8 @@ export interface RunRecord {
   gaps: GapSummary[];
   limits: OutcomeLimits;
   recovery: RecoveryRecord | null;
+  /** From the Facts stage; null or absent when none were found. */
+  embeddedSwfs?: EmbeddedSwfSummary | null;
 }
 
 export interface Outcome {
@@ -197,7 +212,10 @@ export function decideOutcome(record: RunRecord): Outcome {
     n.typeErrors > 0 || n.droppedPlacements > 0 || record.gaps.some((g) => g.count > 0);
   if (hasGap) {
     const rec = record.recovery;
+    const wrapperGap = record.gaps.find((g) => g.kind === "embedded-swf" && g.count > 0);
+    const emb = record.embeddedSwfs ?? null;
     const reason = convertedWithGapsReason({
+      embedded: wrapperGap ? { count: emb?.count ?? wrapperGap.count, totalBytes: emb?.totalBytes ?? null } : null,
       translated: n.translatedClasses,
       candidates: n.candidateClasses,
       typeErrors: n.typeErrors,

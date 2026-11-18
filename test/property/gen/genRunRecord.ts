@@ -94,6 +94,15 @@ export const recoveryArb: fc.Arbitrary<RecoveryRecord> = fc.record({
   unrecoverableClasses: fc.nat({ max: 100000 }),
 });
 
+const embeddedArb = fc.option(
+  fc.record({
+    count: fc.integer({ min: 1, max: 50 }),
+    totalBytes: fc.integer({ min: 8, max: 2_000_000_000 }),
+    largestBytes: fc.integer({ min: 8, max: 2_000_000_000 }),
+  }),
+  { nil: null },
+);
+
 export interface RunRecordOptions {
   /** Force a project run (no failure, numbers present, M > 0, N > 0). */
   project?: boolean;
@@ -123,6 +132,7 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
       entries: gapEntriesArb,
       limits: limitsArb,
       recovery: fc.option(recoveryArb, { nil: null }),
+      embedded: embeddedArb,
     })
     .map((r) => {
       const { candidates, translatedFrac, zeroTranslated, dropped } = r.counts;
@@ -151,9 +161,14 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
         stages: r.stages,
         failure: r.failure,
         numbers: r.noNumbers ? null : numbers,
-        gaps: summariseGaps(r.entries, { typeErrors, droppedPlacements: dropped }),
+        gaps: summariseGaps(r.entries, {
+          typeErrors,
+          droppedPlacements: dropped,
+          ...(r.embedded ? { embeddedSwfs: { count: r.embedded.count, examples: [`id 1: CWS v10, ${r.embedded.totalBytes} bytes`] } } : {}),
+        }),
         limits: r.limits,
         recovery: r.recovery,
+        embeddedSwfs: r.embedded,
       } satisfies RunRecord;
     });
 }
@@ -176,6 +191,7 @@ export function toOutcomeRecord(rec: RunRecord, referenceId: string | null = nul
     obfuscated: null,
     recovery: rec.recovery,
     referenceId: o.outcome === "failed" ? referenceId : null,
+    ...(rec.embeddedSwfs ? { embeddedSwfs: rec.embeddedSwfs } : {}),
   };
 }
 

@@ -14,6 +14,8 @@ import type { ClassPathEntry } from '../emit/classPaths';
 import type { EmitOptions, EmitResult } from '../emit/emit';
 import type { UnpackInput, UnpackResult } from '../unpack/unpack';
 import { readFacts } from '../facts/readFacts';
+import { embeddedSwfExample, summariseEmbeddedSwfs } from '../facts/embeddedSwf';
+import type { EmbeddedSwf } from '../facts/embeddedSwf';
 import { scanAbcNames } from '../facts/abcNames';
 import type { TagRange } from '../facts/swfBody';
 import { obfuscationVerdict } from '../recover/detect';
@@ -99,6 +101,7 @@ interface FactsRead {
   /** The decompressed body and the ABC tag ranges, only when the Facts were read without refusal. */
   body?: Uint8Array;
   abcRanges?: TagRange[];
+  embeddedSwfs?: EmbeddedSwf[];
 }
 
 async function factsStage(swfPath: string, maxInputBytes: number): Promise<FactsRead> {
@@ -120,7 +123,7 @@ async function factsStage(swfPath: string, maxInputBytes: number): Promise<Facts
   }
   bytes = new Uint8Array(await readFile(swfPath));
   const r = readFacts(bytes, { maxSizeBytes: maxInputBytes }, nodeInflate);
-  return r.ok ? { facts: r.facts, refusal: null, body: r.body, abcRanges: r.abcRanges } : { facts: r.facts, refusal: r.reasonCode };
+  return r.ok ? { facts: r.facts, refusal: null, body: r.body, abcRanges: r.abcRanges, embeddedSwfs: r.embeddedSwfs } : { facts: r.facts, refusal: r.reasonCode };
 }
 
 /** invalidNames of the pure scan over a file on disk; null when it cannot be read, parsed or scanned (never throws). */
@@ -450,6 +453,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let handwritten: HandwrittenReportEntry[] = [];
   const overridden = new Set(args.handwrittenClasses);
   let facts: Facts | null = null;
+  let embeddedList: EmbeddedSwf[] = [];
   let classified: ClassifiedFailure | null = null;
   let referenceId: string | null = null;
   let obfuscated: OutcomeRecord['obfuscated'] = null;
@@ -461,6 +465,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     // Facts stage: no FFDec process starts for a refused input.
     const read = await factsStage(resolve(args.swfPath), runLimits.maxSizeMiB * 1024 * 1024);
     facts = read.facts;
+    embeddedList = read.embeddedSwfs ?? [];
     if (read.refusal !== null) throw new FactsRefusedError(read.refusal);
     // ABC_Name_Scan and the verdict: after the Facts, before the first FFDec call. A ZWS file has no readable body, so no verdict.
     if (facts !== null && facts.signature !== 'ZWS' && read.body !== undefined && read.abcRanges !== undefined) {
@@ -725,7 +730,9 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   const gaps = ranToGate ? summariseGaps([...unsupported, ...flashGapEntries], {
         typeErrors: numbersOf(finalReport, 0).typeErrors,
         droppedPlacements: artifact?.stats.placementsDropped ?? 0,
+        embeddedSwfs: { count: embeddedList.length, examples: embeddedList.slice(0, 5).map(embeddedSwfExample) },
       }) : [];
+  const embeddedSummary = summariseEmbeddedSwfs(embeddedList);
   const registered = new Set((finalReport?.classes ?? []).filter((c) => !c.omitted).map((c) => c.className));
   const stubDependents = countStubDependents((translated?.classes ?? []).filter((c) => registered.has(c.className)));
   const numbers = ranToGate ? numbersOf(finalReport, artifact?.stats.placementsDropped ?? 0, stubDependents) : null;
@@ -742,6 +749,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     gaps,
     limits: runLimits,
     recovery,
+    embeddedSwfs: embeddedSummary,
   });
 
   const record: OutcomeRecord = {
@@ -757,6 +765,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     obfuscated,
     recovery,
     referenceId: decision.outcome === 'failed' ? referenceId : null,
+    ...(embeddedSummary !== null ? { embeddedSwfs: embeddedSummary } : {}),
   };
   if (decision.outcome === 'refused' || decision.outcome === 'failed') {
     // Requirement 9: remove only what this run wrote. The Emit refusals returned above and never reach here.

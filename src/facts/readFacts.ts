@@ -3,6 +3,7 @@
  * function, so this module imports no node:* module. Never throws for any input bytes.
  */
 import type { Facts, ReasonCode } from "../outcome/outcome";
+import { detectEmbeddedSwfs, type EmbeddedSwf } from "./embeddedSwf";
 import { parseBody, scriptVersionOf, type TagRange } from "./swfBody";
 
 /** Declared decompressed length above this is refused `too-large` (chosen, not measured). */
@@ -17,7 +18,7 @@ export interface FactsLimits {
 export type InflateFn = (data: Uint8Array, maxOutputLength: number) => Uint8Array;
 
 export type FactsResult =
-  | { ok: true; facts: Facts; body: Uint8Array; abcRanges: TagRange[] }
+  | { ok: true; facts: Facts; body: Uint8Array; abcRanges: TagRange[]; embeddedSwfs: EmbeddedSwf[] }
   | { ok: false; reasonCode: ReasonCode; facts: Facts | null };
 
 const HEADER_SOURCE = [
@@ -60,7 +61,7 @@ export function readFacts(bytes: Uint8Array, limits: FactsLimits, inflate: Infla
   // Step 3: ZWS is header facts only (no LZMA decoder).
   if (sig === "ZWS") {
     facts.source.header = ["signature", "version", "compression", "sizeBytes", "declaredLength"];
-    return { ok: true, facts, body: new Uint8Array(0), abcRanges: [] };
+    return { ok: true, facts, body: new Uint8Array(0), abcRanges: [], embeddedSwfs: [] };
   }
 
   let body: Uint8Array;
@@ -88,5 +89,5 @@ export function readFacts(bytes: Uint8Array, limits: FactsLimits, inflate: Infla
   // Step 6
   facts.scriptVersion = scriptVersionOf(info.tagCodes);
   if (facts.scriptVersion === "as1-2") return { ok: false, reasonCode: "actionscript-1-2", facts };
-  return { ok: true, facts, body, abcRanges: info.abcRanges };
+  return { ok: true, facts, body, abcRanges: info.abcRanges, embeddedSwfs: detectEmbeddedSwfs(body, info.binaryRanges) };
 }

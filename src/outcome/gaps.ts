@@ -13,6 +13,7 @@ export const COUNTED_GAP_KINDS: readonly GapKind[] = [
   "type-error",
   "dropped-placement",
   "flash-api-gap",
+  "embedded-swf",
 ];
 
 /** Named_Limits only: never counted as a Gap. */
@@ -27,6 +28,8 @@ export interface GapExtras {
   typeErrors?: number;
   typeErrorExamples?: string[];
   droppedPlacements?: number;
+  /** One gap entry: count is the number of embedded SWFs, examples are generic (id, signature, size). */
+  embeddedSwfs?: { count: number; examples: string[] };
 }
 
 const counted = new Set<string>(COUNTED_GAP_KINDS);
@@ -65,5 +68,16 @@ export function summariseGaps(entries: readonly GapEntry[], extras: GapExtras = 
     }
   }
   add("dropped-placement", extras.droppedPlacements ?? 0);
+  const emb = extras.embeddedSwfs;
+  if (emb && emb.count > 0) {
+    add("embedded-swf", emb.count);
+    const g = byKind.get("embedded-swf");
+    for (const ex of emb.examples) {
+      if (g && g.examples.length < MAX_GAP_EXAMPLES) {
+        const s = scrub(ex);
+        if (s !== "") g.examples.push(s);
+      }
+    }
+  }
   return [...byKind.values()].sort((a, b) => b.count - a.count || (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0));
 }

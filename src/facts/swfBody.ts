@@ -8,6 +8,7 @@ export const TAG_DO_ACTION = 12;
 export const TAG_DO_INIT_ACTION = 59;
 export const TAG_DO_ABC = 72;
 export const TAG_DO_ABC2 = 82;
+export const TAG_DEFINE_BINARY_DATA = 87;
 
 export interface TagRange {
   code: number;
@@ -25,6 +26,8 @@ export interface BodyInfo {
   tagCodes: number[];
   /** Byte ranges of DoABC (72) and DoABC2 (82) tags. */
   abcRanges: TagRange[];
+  /** Byte ranges of top-level DefineBinaryData (87) tags. Tags inside a sprite are not walked. */
+  binaryRanges: TagRange[];
 }
 
 /** null means the body is damaged. */
@@ -56,6 +59,7 @@ export function parseBody(body: Uint8Array): BodyInfo | null {
 
   const tagCodes: number[] = [];
   const abcRanges: TagRange[] = [];
+  const binaryRanges: TagRange[] = [];
   let pos = headEnd;
   let sawEnd = false;
   while (pos + 2 <= body.length) {
@@ -71,6 +75,7 @@ export function parseBody(body: Uint8Array): BodyInfo | null {
     if (pos + len > body.length) return null;
     tagCodes.push(code);
     if (code === TAG_DO_ABC || code === TAG_DO_ABC2) abcRanges.push({ code, start: pos, end: pos + len });
+    if (code === TAG_DEFINE_BINARY_DATA) binaryRanges.push({ code, start: pos, end: pos + len });
     pos += len;
     if (code === TAG_END) {
       sawEnd = true;
@@ -85,6 +90,7 @@ export function parseBody(body: Uint8Array): BodyInfo | null {
     declaredFrames,
     tagCodes,
     abcRanges,
+    binaryRanges,
   };
 }
 

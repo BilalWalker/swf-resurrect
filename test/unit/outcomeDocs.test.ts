@@ -25,6 +25,12 @@ describe("docs/outcome.md", () => {
     expect(doc.match(/```json/g)?.length).toBe(4);
   });
 
+  it("the embeddedSwfs example is the writer's output", () => {
+    const text = serialiseOutcome({ ...EXAMPLES.converted, embeddedSwfs: { count: 1, totalBytes: 7349081, largestBytes: 7349081 } });
+    expect(JSON.stringify(JSON.parse(text).embeddedSwfs)).toBe('{"count":1,"largestBytes":7349081,"totalBytes":7349081}');
+    expect(doc).toContain('"embeddedSwfs": {"count":1,"largestBytes":7349081,"totalBytes":7349081}');
+    expect(doc).toContain("the file is a wrapper around another SWF that was not converted (N embedded, X MiB); ");
+  });
   it("lists every exit code of the table", () => {
     for (const [outcome, code] of Object.entries(EXIT_CODES)) {
       if (outcome === "usage") continue;

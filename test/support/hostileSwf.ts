@@ -3,7 +3,7 @@ import { deflateSync, inflateSync } from "node:zlib";
 
 /** Byte builder for SWF headers, tags and damaged variants. No FFDec involved (robustness Requirement 5.9, 8.1). */
 
-export const TAG = { End: 0, ShowFrame: 1, DoAction: 12, FileAttributes: 69, DoABC: 72, DoABC2: 82, DoInitAction: 59 } as const;
+export const TAG = { End: 0, ShowFrame: 1, DoAction: 12, FileAttributes: 69, DoABC: 72, DoABC2: 82, DoInitAction: 59, DefineBinaryData: 87, DefineSprite: 39 } as const;
 
 /** The inflate function the edge caller gives readFacts. */
 export function nodeInflate(data: Uint8Array, maxOutputLength: number): Uint8Array {
@@ -201,6 +201,16 @@ export function buildConstantPool(spec: PoolSpec = {}): number[] {
   }));
   out.push(...(spec.trailer ?? []));
   return out;
+}
+
+/** A DefineBinaryData (87) tag: characterId u16, reserved u32, then the data. */
+export function binaryDataTag(characterId: number, data: ArrayLike<number>): number[] {
+  return tag(TAG.DefineBinaryData, [...u16(characterId), ...u32(0), ...Array.from(data)], true);
+}
+
+/** A small embedded SWF for a binary-data payload: FWS and CWS are real files, ZWS is a header with a few bytes. */
+export function embeddedSwfBytes(sig: "FWS" | "CWS" | "ZWS", version = 10): Uint8Array {
+  return buildSwf({ signature: sig, version });
 }
 
 /** A DoABC (72) payload is the ABC bytes; a DoABC2 (82) payload is u32 flags, a zero-terminated name, then the ABC bytes. */

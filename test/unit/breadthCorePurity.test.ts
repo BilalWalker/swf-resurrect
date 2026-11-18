@@ -45,6 +45,7 @@ const CORE_FILES = [
   "src/facts/swfBody.ts", // robustness 3.1
   "src/facts/readFacts.ts", // robustness 3.1 (inflate passed in)
   "src/facts/abcNames.ts", // robustness 17.1
+  "src/facts/embeddedSwf.ts", // robustness 27.1
   "src/recover/detect.ts", // robustness 17.2
   "src/recover/record.ts", // robustness 18.3
   "src/translate/flashApiTable.ts", // robustness 14.1

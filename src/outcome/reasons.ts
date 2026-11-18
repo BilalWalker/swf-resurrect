@@ -84,6 +84,14 @@ export interface GapsSentenceInput {
   gaps: GapSummary[];
   /** Present for a recovered run. */
   recovery?: { recovered: number; candidates: number } | null;
+  /** Present when an embedded SWF was not converted. totalBytes null when unknown. */
+  embedded?: { count: number; totalBytes: number | null } | null;
+}
+
+/** `the file is a wrapper around another SWF that was not converted (N embedded, X MiB); ` */
+export function wrapperStatement(e: { count: number; totalBytes: number | null }): string {
+  const size = e.totalBytes === null ? "" : `, ${(e.totalBytes / (1024 * 1024)).toFixed(1)} MiB`;
+  return `the file is a wrapper around another SWF that was not converted (${e.count} embedded${size}); `;
 }
 
 /** The two highest gap kinds: count descending, then kind name. */
@@ -99,15 +107,24 @@ export function topGaps(gaps: GapSummary[], n = 2): GapSummary[] {
  * Over 200 characters the gap part is dropped first (Requirement 16.4).
  */
 export function convertedWithGapsReason(input: GapsSentenceInput): string {
-  const prefix = input.recovery
+  const recovery = input.recovery
     ? `obfuscated: names renamed, ${input.recovery.recovered} of ${input.recovery.candidates} classes recovered; `
     : "";
   const untranslated = input.untranslatedCode ?? 0;
   const withCode = untranslated > 0 ? ` (${untranslated} with untranslated code)` : "";
   const base = `${input.translated} of ${input.candidates} classes translated${withCode}, ${input.typeErrors} type errors`;
-  const top = topGaps(input.gaps);
+  // The wrapper gap is already said by the wrapper statement.
+  const top = topGaps(input.gaps.filter((g) => g.kind !== "embedded-swf"));
   const gapPart = top.length > 0 ? `; most gaps: ${top.map((g) => `${g.kind} (${g.count})`).join(", ")}` : "";
-  const full = prefix + base + gapPart;
-  if (full.length <= MAX_REASON_LENGTH) return full;
-  return truncateReason(prefix + base);
+  // Longest first. The gap part goes first, then the wrapper size, then the whole wrapper statement
+  // (it stays in `gaps` and `embeddedSwfs`); the class counts and the recovery prefix are never cut.
+  const wrappers = input.embedded
+    ? [wrapperStatement(input.embedded), wrapperStatement({ count: input.embedded.count, totalBytes: null }), ""]
+    : [""];
+  for (const w of wrappers) {
+    const head = recovery + w + base;
+    if (head + gapPart !== head && (head + gapPart).length <= MAX_REASON_LENGTH) return head + gapPart;
+    if (head.length <= MAX_REASON_LENGTH) return head;
+  }
+  return truncateReason(recovery + base);
 }
