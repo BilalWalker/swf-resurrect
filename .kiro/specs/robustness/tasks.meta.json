@@ -736,6 +736,11 @@
         "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794927887118
+      },
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794933844722
       }
     ],
     "20. Convert: button symbols and Scene_JSON 4": [
@@ -743,6 +748,13 @@
         "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794929655603
+      }
+    ],
+    "21. Runtime and Shim: the button state model, `SimpleButton`, hit region and drawing": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794936214188
       }
     ]
   }

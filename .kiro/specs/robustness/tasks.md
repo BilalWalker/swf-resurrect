@@ -309,7 +309,7 @@ Rules that apply to every task:
     - **Property 23: Button symbol conversion and scene round trip** (each record in exactly the states whose flags are set; each state ordered by depth with no repeated depth; writing then parsing a scene gives an equal scene; version 3 without a button, 4 with one; reader accepts 2, 3 and 4), in `test/property/button.property.test.ts` (create), generator in `test/property/gen/genButtonRecords.ts` (create).
     - **Validates: Requirements 20.1, 20.2, 21.1, 21.2**
 
-- [ ] 21. Runtime and Shim: the button state model, `SimpleButton`, hit region and drawing
+- [x] 21. Runtime and Shim: the button state model, `SimpleButton`, hit region and drawing
   - Commit area: `Runtime` (Shim named). Verification V2. Read the design Runtime and Shim table (read in Ruffle `avm2_button.rs` and `player.rs` at the pinned commit), D-C1 to D-C3, D-C5, D-C6, D-C9 and Properties 24 and 25. Tests run with the FakeBackend and a manual clock (Requirement 20.15). Add every behaviour with its evidence to `flash-behaviour.md` in this commit: the state-change table, the pick rule, the disabled rule and the release-outside rule (read), and the disabled-button state reset (Open_Item O10, neither read nor measured; read `set_enabled` in `avm2_button.rs` first).
   - [x] 21.1 Add `template/runtime/buttonModel.ts` (pure)
     - `step(state, event) -> state` with the Ruffle table: RollOver to Over, RollOut to Up, Press to Down, Release to Over, ReleaseOutside to Up, MouseUpInside to Up, DragOut to Over, DragOver to Down; `hitRegion(button, state)` is the shapes of the current state container united with the hit container, each through the placement transform; with no hit records the hit container is empty so the shapes of the current state serve (D-C3, finding F4; A3). Add to the purity list.
@@ -352,7 +352,7 @@ Rules that apply to every task:
     - Run `test/unit/clickgotoReplay.test.ts`, `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score tests. State every committed sample's Overall_Match and Trace_Score before and after Block C in the commit body; none may drop (Requirement 11.1). The sample table plus the generated fixture is the Requirement 20.18 check.
     - _Requirements: 11.1, 11.4, 20.18_
 
-- [~] 24. Checkpoint 3: Block C done, final
+- [-] 24. Checkpoint 3: Block C done, final
   - STOP. This is the final Checkpoint (Requirement 22.3). Follow the Checkpoint procedure of the rules: run the full suite `npm test -- --run`, hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/robustness/reviews/checkpoint-3.md`, act on its findings in a new commit, then stop and report.
   - The report holds the items of the Checkpoint procedure (real `git status`, commits since Checkpoint 2, per-sample table, both Play_Tests, Outcome, reason code and exit code of every Hostile_Fixture, new Named_Limits, Open_Items, Warm_Suite_Time, Credits_Line). It also states (Requirement 22.2): as numbers only the `redball4.swf` Outcome when present, with the `button` entry count before and after; the Named_Limits and Open_Items added by this spec; whether the hover work was delivered or the D-C8 fallback applied; the table of decisions U1 to U9 and amendments A1, A3 to A5, A7 to A15 with the task that built each; and the total credits against about 250 and the Credits_Line.
   - _Requirements: 22.1, 22.2, 22.3, 24.1 to 24.4_
