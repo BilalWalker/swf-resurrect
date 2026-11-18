@@ -11,6 +11,10 @@
     "15.2 Write the property tests of `Point`": {
       "status": "passed",
       "lastRunTimestamp": 1794904747167
+    },
+    "18.4 Write the property tests and measure the local file": {
+      "status": "passed",
+      "lastRunTimestamp": 1794917002187
     }
   },
   "executionHistory": {
@@ -532,6 +536,18 @@
         "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794913643322
+      }
+    ],
+    "19. Checkpoint 2: Block B done": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794917062366
+      },
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794924159904
       }
     ]
   }
