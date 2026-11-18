@@ -379,3 +379,27 @@
 .dropzone {
   isolation: isolate;
 }
+
+/* ---- The ground of the yard: painted earth under the stones, its own edges already fading to the night. ---- */
+.yard {
+  position: relative;
+  isolation: isolate;
+}
+.yard::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 40px;
+  bottom: -70px;
+  left: 50%;
+  width: min(100vw, 1900px);
+  transform: translateX(-50%);
+  background: url('/art/ground.webp') center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+/* the ground fades in under the heading instead of starting on a line */
+.yard::before {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 22%);
+}
