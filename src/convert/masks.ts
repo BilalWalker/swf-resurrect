@@ -1,11 +1,11 @@
 // PURE: mask classification and resolution (design, section 5).
 // No fs, child_process, clock, randomness or locale-dependent calls.
-import type { DisplayListEntry, ShapeSymbol, SpriteSymbol } from '../../template/runtime/scene';
+import type { ButtonSymbol, DisplayListEntry, ShapeSymbol, SpriteSymbol } from '../../template/runtime/scene';
 import type { DroppedPlacement } from './resolveTimeline';
 
 export type MaskClass = { trivial: true } | { trivial: false; reason: string };
 
-type Symbols = Readonly<Record<string, ShapeSymbol | SpriteSymbol>>;
+type Symbols = Readonly<Record<string, ShapeSymbol | SpriteSymbol | ButtonSymbol>>;
 
 function isIdentityCt(ct: DisplayListEntry['colorTransform']): boolean {
   return ct[0] === 1 && ct[1] === 1 && ct[2] === 1 && ct[3] === 1 && ct[4] === 0 && ct[5] === 0 && ct[6] === 0 && ct[7] === 0;
@@ -19,6 +19,7 @@ export function classifyMask(symbolId: number, symbols: Symbols): MaskClass {
   const sym = Object.prototype.hasOwnProperty.call(symbols, String(symbolId)) ? symbols[String(symbolId)] : undefined;
   if (sym === undefined) return { trivial: false, reason: `character ${symbolId} is not defined` };
   if (sym.type === 'shape') return { trivial: true };
+  if (sym.type === 'button') return { trivial: false, reason: `character ${symbolId} is a button` };
   for (let fi = 0; fi < sym.frames.length; fi += 1) {
     for (const e of sym.frames[fi] as DisplayListEntry[]) {
       const child = Object.prototype.hasOwnProperty.call(symbols, String(e.symbolId)) ? symbols[String(e.symbolId)] : undefined;

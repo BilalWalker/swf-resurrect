@@ -91,10 +91,16 @@ describe('3.3 observed id names are verified, unobserved ones stay UNVERIFIED', 
       expect(markOf(t), t).not.toContain('UNVERIFIED');
     }
   });
-  it('the six unobserved names are still UNVERIFIED', () => {
-    for (const t of ['DefineText2Tag', 'DefineButtonTag', 'DefineSoundTag', 'SoundStreamHeadTag', 'SoundStreamHead2Tag', 'DefineVideoStreamTag']) {
+  it('the five unobserved names are still UNVERIFIED', () => {
+    for (const t of ['DefineText2Tag', 'DefineSoundTag', 'SoundStreamHeadTag', 'SoundStreamHead2Tag', 'DefineVideoStreamTag']) {
       expect(markOf(t), t).toContain('UNVERIFIED');
     }
+  });
+  it('DefineButtonTag is labelled as measured on a generated file (U5), not UNVERIFIED', () => {
+    const at = src.indexOf('DefineButtonTag: ');
+    const mark = src.slice(src.lastIndexOf('/**', at), at);
+    expect(mark).toContain('Measured on a generated file');
+    expect(mark).not.toContain('UNVERIFIED');
   });
   it('id attribute names', () => {
     expect(FFDEC_XML.staticText.idAttr).toBe('characterID');

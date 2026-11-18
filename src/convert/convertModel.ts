@@ -1,10 +1,11 @@
 // PURE: TagsModel -> ConvertResult (design, "Converter pure part").
 // No fs, child_process, clock, randomness or locale-dependent calls.
 import { DEFAULT_SCENE_NAME, validateScene } from '../../template/runtime/scene';
-import type { DisplayListEntry, SceneJson, ShapeSymbol, SpriteSymbol } from '../../template/runtime/scene';
+import type { ButtonSymbol, DisplayListEntry, SceneJson, ShapeSymbol, SpriteSymbol } from '../../template/runtime/scene';
 import { printShapeJson } from '../../template/runtime/shapeJson';
 import { sortUnsupported } from '../pipeline/unsupported';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
+import { buildButton } from './buttons';
 import { MalformedFrameDataError, ShapeExportError, SymbolCycleError, UnknownSymbolError } from './errors';
 import type { TagsModel, TimelineModel, UnsupportedKind } from './model';
 import { resolveMasks } from './masks';
@@ -87,6 +88,12 @@ function validateModel(model: TagsModel): void {
   for (const id of model.morphShapeIds) if (!isId(id)) malformed(`invalid morph shape id ${String(id)}`);
   for (const a of model.shapeAssets) if (!isId(a.id)) malformed(`invalid shape asset id ${String(a.id)}`);
   for (const s of model.symbolClasses) if (!isId(s.id)) malformed(`invalid symbolClass id ${String(s.id)}`);
+  for (const b of model.buttons ?? []) {
+    if (!isId(b.id)) malformed(`invalid button id ${String(b.id)}`);
+    for (const r of b.records) {
+      if (!isId(r.characterId) || !isId(r.depth)) malformed(`invalid record in button ${b.id}`);
+    }
+  }
   for (const o of model.unsupported) {
     if (o.characterId !== undefined && !isId(o.characterId)) malformed(`invalid observation id ${String(o.characterId)}`);
   }
@@ -166,7 +173,7 @@ export function convertModel(model: TagsModel): ConvertResult {
   }
 
   // Shapes.
-  const symbols: Record<string, ShapeSymbol | SpriteSymbol> = {};
+  const symbols: Record<string, ShapeSymbol | SpriteSymbol | ButtonSymbol> = {};
   const shapeFiles: ShapeFile[] = [];
   const images = new Map<number, ImageFile>();
   const addShape = (id: number, asset: TagsModel['shapeAssets'][number], kind: 'shape' | 'text', label: string): void => {
@@ -247,6 +254,43 @@ export function convertModel(model: TagsModel): ConvertResult {
     bitmapSet.add(id);
   }
 
+  // Buttons (Scene_JSON 4). A record whose character is not drawn, or not defined, is left out and says why.
+  const buttonIds = new Set<number>();
+  const buttonEdges = new Map<number, number[]>();
+  const sortedButtons = [...(model.buttons ?? [])].sort((a, b) => a.id - b.id);
+  for (const b of sortedButtons) {
+    if (b.id === 0 || buttonIds.has(b.id) || spriteById.has(b.id) || symbols[String(b.id)] !== undefined || unsupportedChars.has(b.id)) {
+      malformed(`character id ${b.id} defined twice`);
+    }
+    const kept = b.records.filter((r) => {
+      const kind = unsupportedChars.get(r.characterId);
+      if (kind !== undefined) {
+        unsupported.push({
+          kind,
+          id: r.characterId,
+          message: `button ${b.id}: a record for character ${r.characterId} is left out; that character is not drawn`,
+        });
+        return false;
+      }
+      if (symbols[String(r.characterId)] === undefined && !spriteById.has(r.characterId)) {
+        warnings.push(`button ${b.id}: record for undefined character ${r.characterId} left out`);
+        return false;
+      }
+      return true;
+    });
+    const built = buildButton({ ...b, records: kept }, classById.get(b.id));
+    symbols[String(b.id)] = built.symbol;
+    buttonIds.add(b.id);
+    for (const l of built.limits) unsupported.push({ kind: l.kind, id: b.id, message: l.message });
+    buttonEdges.set(b.id, [...new Set(kept.map((r) => r.characterId).filter((c) => spriteById.has(c)))].sort((x, y) => x - y));
+  }
+  if (buttonIds.size > 0) {
+    unsupported.push({
+      kind: 'button-sound',
+      message: 'DefineButtonSound and DefineButtonCxform tags are not read: button sounds are not played and the button colour transform tag is ignored',
+    });
+  }
+
   // Timelines.
   const timelines: Array<[number, TimelineModel]> = [[0, model.root]];
   for (const id of [...spriteById.keys()].sort((a, b) => a - b)) {
@@ -316,7 +360,7 @@ export function convertModel(model: TagsModel): ConvertResult {
         if (!Object.prototype.hasOwnProperty.call(symbols, String(e.symbolId)) && !spriteById.has(e.symbolId)) {
           throw new UnknownSymbolError(e.symbolId, id, fi + 1, e.depth);
         }
-        if (spriteById.has(e.symbolId)) targets.add(e.symbolId);
+        if (spriteById.has(e.symbolId) || buttonIds.has(e.symbolId)) targets.add(e.symbolId);
       }
     });
     edges.set(id, [...targets].sort((a, b) => a - b));
@@ -355,11 +399,13 @@ export function convertModel(model: TagsModel): ConvertResult {
     stack.pop();
     state.set(id, 2);
   };
+  for (const [id, targets] of buttonEdges) edges.set(id, targets);
   for (const [id] of timelines) if (state.get(id) === undefined) visit(id);
+  for (const id of buttonIds) if (state.get(id) === undefined) visit(id);
 
   // Class links on non-sprites.
   for (const id of [...classById.keys()].sort((a, b) => a - b)) {
-    if (id !== 0 && !spriteById.has(id)) {
+    if (id !== 0 && !spriteById.has(id) && !buttonIds.has(id)) {
       warnings.push(`symbolClass: id ${id} (${classById.get(id)}) is not a sprite; class link ignored`);
     }
   }
@@ -385,7 +431,7 @@ export function convertModel(model: TagsModel): ConvertResult {
   }
 
   const scene: SceneJson = {
-    formatVersion: 3,
+    formatVersion: buttonIds.size > 0 ? 4 : 3,
     stage: {
       width: model.header.widthPx,
       height: model.header.heightPx,

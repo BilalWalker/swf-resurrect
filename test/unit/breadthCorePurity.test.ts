@@ -50,6 +50,7 @@ const CORE_FILES = [
   "src/translate/flashApiTable.ts", // robustness 14.1
   "src/translate/renderApiStubs.ts", // robustness 14.2
   "src/translate/stubDependents.ts", // robustness 16.2
+  "src/convert/buttons.ts", // robustness 20.2
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

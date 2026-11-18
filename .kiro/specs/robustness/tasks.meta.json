@@ -15,6 +15,10 @@
     "18.4 Write the property tests and measure the local file": {
       "status": "passed",
       "lastRunTimestamp": 1794917002187
+    },
+    "20.3 Write the property test of the conversion": {
+      "status": "passed",
+      "lastRunTimestamp": 1794929240810
     }
   },
   "executionHistory": {
@@ -548,6 +552,120 @@
         "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794924159904
+      },
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927866340
+      }
+    ],
+    "20.1 Verify the button XML names": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927882009
+      },
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927893049
+      },
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794928201165
+      }
+    ],
+    "20.2 Add `src/convert/buttons.ts` and Scene_JSON 4": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927882396
+      },
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794928211309
+      },
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794929164630
+      }
+    ],
+    "20.3 Write the property test of the conversion": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927882814
+      },
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794929174932
+      }
+    ],
+    "21.1 Add `template/runtime/buttonModel.ts` (pure)": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927883309
+      }
+    ],
+    "21.2 Add `SimpleButton`, loader support and drawing": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927883637
+      }
+    ],
+    "21.3 Write the property tests of hit region and state": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927883978
+      }
+    ],
+    "22.1 Add the Shim constants and the Player hover tracking": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927884370
+      }
+    ],
+    "22.2 Connect the state model to the events and the click": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927884729
+      }
+    ],
+    "23.1 Run the generated button fixture through the pipeline in Chromium": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927885084
+      }
+    ],
+    "23.2 Remove delivered `button` entries and report the rest": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927886218
+      }
+    ],
+    "23.3 Guard the existing floors": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927886619
+      }
+    ],
+    "24. Checkpoint 3: Block C done, final": [
+      {
+        "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794927887118
       }
     ]
   }

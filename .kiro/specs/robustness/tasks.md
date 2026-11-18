@@ -285,7 +285,7 @@ Rules that apply to every task:
     - **Property 17: Recovery order, one Unpack, and fallback** (fake FFDec whose rename, deobfuscate and unpack calls each succeed or fail, any remaining time: not obfuscated gives no rename or deobfuscate call and one Unpack on the input; obfuscated gives rename on the copy, deobfuscate on the renamed copy, one Unpack on the recovered copy; a failed step gives one Unpack on the original with `fallback` true if the remaining time is at least the unpack allowance, else `refused time-limit`; never two Unpack calls) and **Property 18: Recovery is deterministic and leaves the input alone** (a fake FFDec that renames by a fixed rule: byte-equal translated files and an equal renamed-names list across two runs, input SHA-256 unchanged, Verify receives the input path), in `test/property/recover.property.test.ts` (extend). If `redball4.swf` is present, a test that skips otherwise runs the Pipeline with the default limits and records, as numbers only and without a class name: the Outcome, the wall-clock time of every stage, the share of the 300 s run limit used, the Candidate_Classes, translated, clean, loose, unsupported, omitted, type errors, `Ã‚Â§Ã‚Â§push` and `Ã‚Â§Ã‚Â§pop` lines left, and the unresolved names of the brief (`Point`, `URLRequest`, `navigateToURL`, `Security`, `Loader`, `LocalConnection`) (Requirements 6.16, 16.10; Open_Items O7, O8, O13). It also hashes the recovered file of two real FFDec runs (Open_Item O7). The expected Outcome under the defaults is `converted-with-gaps` (U1); if it is not, the commit body says so and Checkpoint 2 reports it as a finding. Record the numbers in the commit body for Checkpoint 2.
     - **Validates: Requirements 6.16, 15.1, 15.3, 15.4, 16.1, 16.3, 16.5, 16.6, 16.10**
 
-- [-] 19. Checkpoint 2: Block B done
+- [x] 19. Checkpoint 2: Block B done
   - STOP. Follow the Checkpoint procedure of the rules. Block B covers Requirements 13 to 19.
   - Run the full suite `npm test -- --run`, hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/robustness/reviews/checkpoint-2.md`, and act on its findings in a new commit before reporting. Tasks 14 and 15 changed `template/`, so the score floor tests are part of the full suite and the per-sample table shows every sample unchanged or higher.
   - The report holds the items of the Checkpoint procedure (real `git status`, commits since Checkpoint 1, per-sample table, both Play_Tests, Outcome of every Hostile_Fixture, new Named_Limits, Open_Items, Warm_Suite_Time, Credits_Line against the Block B share of about 90 and the threshold of 120). It also states (Requirement 19.2, 19.3): as numbers only and without a class name, the Outcome of `redball4.swf` when present under the default limits, which is expected to be `converted-with-gaps` (Candidate_Classes, translated, clean, loose, unsupported, omitted, type errors, `Ã‚Â§Ã‚Â§push` and `Ã‚Â§Ã‚Â§pop` lines left, unresolved Flash names), the wall-clock time of each stage including `recover` and the one Unpack of the recovered copy, and the share of the 300 s run limit used; the Named_Limits added by Block B (`api-stub:`, `api-stub-no-event:`, `obfuscation-recovered`); and the Open_Items of Requirements 16 and 17 (O2, O7, O8, O12, O13, O15).
@@ -295,64 +295,64 @@ Rules that apply to every task:
 
 - [ ] 20. Convert: button symbols and Scene_JSON 4
   - Commit area: `Convert`. Verification V2 (`template/runtime/scene.ts` changes). Block C starts here: restate the Block C share of about 60 credits. Read the design "Block C: buttons", "Convert" (the XML-name table), D-C7, findings F2, F3 and F12, and Property 23. The U5 decision lifts the `UNVERIFIED` stop for `DefineButtonTag`; any other button XML name beyond the design's table is a stop.
-  - [ ] 20.1 Verify the button XML names
+  - [x] 20.1 Verify the button XML names
     - Use `swf_find_tags` on `redball4.swf` (when present) for `DefineButton2Tag` and its `BUTTONRECORD` attributes, and write the generated round trip (`test/support/buttonSwf.ts`, created here: an XML skeleton with shapes, one `DefineButtonTag` and one `DefineButton2Tag`, run through `-xml2swf` and `-swf2xml`) for `DefineButtonTag`. Update `src/convert/ffdecXml.ts` so `DefineButtonTag` carries the label "measured on a generated file", not `UNVERIFIED` (U5; Open_Item O11).
     - Tests: `test/unit/buttonXml.test.ts` (create): the names and attributes of both tags and the record flags parse from the generated dump.
     - _Requirements: 20.3_
 
-  - [ ] 20.2 Add `src/convert/buttons.ts` and Scene_JSON 4
+  - [x] 20.2 Add `src/convert/buttons.ts` and Scene_JSON 4
     - Pure. A record joins every state whose flag is true; entries are ordered by `placeDepth`; two records at one depth in one state keep the later one (Named_Limit `button-duplicate-depth`); records with a blend mode or filter list are drawn without them (`button-record-effects`); button actions (`<actions>`, `actionBytes`) are AVM1 and ignored (`button-avm1-actions`); `DefineButtonSound` and `DefineButtonCxform` are not read (`button-sound`). New symbol `{ type: 'button', className?, trackAsMenu, states: { up, over, down, hit } }`. `formatVersion` is 4 only when the scene holds a button symbol and 3 otherwise; the reader (`template/runtime/scene.ts`) accepts 2, 3 and 4; every committed golden keeps its bytes. Convert returns `stats.placementsDropped` without button placements for delivered states. Update `.kiro/steering/tech.md` (Scene_JSON 3 and 4) and `structure.md` in this commit.
     - Tests: `test/unit/buttons.test.ts` (create): states per flag, depth order, duplicate depth, effects, version 3 without a button and 4 with one, reader accepts 2, 3 and 4; goldens unchanged (`test/unit/translateGolden.test.ts` and the scene goldens still pass).
     - _Requirements: 20.1, 20.2, 20.20, 21.2, 21.3_
 
-  - [ ] 20.3 Write the property test of the conversion
+  - [-] 20.3 Write the property test of the conversion
     - **Property 23: Button symbol conversion and scene round trip** (each record in exactly the states whose flags are set; each state ordered by depth with no repeated depth; writing then parsing a scene gives an equal scene; version 3 without a button, 4 with one; reader accepts 2, 3 and 4), in `test/property/button.property.test.ts` (create), generator in `test/property/gen/genButtonRecords.ts` (create).
     - **Validates: Requirements 20.1, 20.2, 21.1, 21.2**
 
 - [ ] 21. Runtime and Shim: the button state model, `SimpleButton`, hit region and drawing
   - Commit area: `Runtime` (Shim named). Verification V2. Read the design Runtime and Shim table (read in Ruffle `avm2_button.rs` and `player.rs` at the pinned commit), D-C1 to D-C3, D-C5, D-C6, D-C9 and Properties 24 and 25. Tests run with the FakeBackend and a manual clock (Requirement 20.15). Add every behaviour with its evidence to `flash-behaviour.md` in this commit: the state-change table, the pick rule, the disabled rule and the release-outside rule (read), and the disabled-button state reset (Open_Item O10, neither read nor measured; read `set_enabled` in `avm2_button.rs` first).
-  - [ ] 21.1 Add `template/runtime/buttonModel.ts` (pure)
+  - [~] 21.1 Add `template/runtime/buttonModel.ts` (pure)
     - `step(state, event) -> state` with the Ruffle table: RollOver to Over, RollOut to Up, Press to Down, Release to Over, ReleaseOutside to Up, MouseUpInside to Up, DragOut to Over, DragOver to Down; `hitRegion(button, state)` is the shapes of the current state container united with the hit container, each through the placement transform; with no hit records the hit container is empty so the shapes of the current state serve (D-C3, finding F4; A3). Add to the purity list.
     - Tests: `test/unit/buttonModel.test.ts` (create): each row of the table, the hit region with and without hit records.
     - _Requirements: 20.4, 20.5, 20.6, 20.7, 20.8, 20.20_
 
-  - [ ] 21.2 Add `SimpleButton`, loader support and drawing
+  - [~] 21.2 Add `SimpleButton`, loader support and drawing
     - `template/shim/SimpleButton.ts` extends `InteractiveObject` with `upState`, `overState`, `downState`, `hitTestState`, `enabled`, `useHandCursor`; the Translator binds a linked button symbol to its class as for other symbols. The loader builds each state as an unparented container of the entries; only the current state is in the render list and the hit container is never drawn. A pointer event inside a button targets the button itself (`mouseChildren` false, D-C5). `enabled = false` draws the up state and dispatches no mouse event (D-C6). A button inside a rotated, scaled or masked placement uses the same placement transform as other symbols. Regenerate and stage the member table; list in `ADDED_APIS.md`.
     - Tests: `test/unit/simpleButton.test.ts` (create): states, `enabled`, binding; `test/unit/buttonNodes.test.ts` (create) on the FakeBackend: only the current state is drawn, the hit shapes are never drawn, the transform of a rotated placement.
     - _Requirements: 20.2, 20.4, 20.7, 20.9, 20.11, 20.12, 20.19_
 
-  - [ ] 21.3 Write the property tests of hit region and state
+  - [~] 21.3 Write the property tests of hit region and state
     - **Property 24: Button hit region** (a pointer event reaches the button if and only if the point lies inside a shape of the current state container or of the hit container after the placement transform; a point only in a non-current visible state does not) and **Property 25: Button state follows the pointer model** (for any sequence of moves, presses and releases, the drawn state equals the model: Down if pressed on the button and the pointer is on it; Over if the pointer is on it and not pressed, or pressed and the pointer left it; Up otherwise; a disabled button is always Up and receives no mouse event), in `test/property/button.property.test.ts` (extend).
     - **Validates: Requirements 20.4, 20.5, 20.6, 20.7, 20.8, 20.10, 20.12, 20.16, 20.17, 20.19**
 
 - [ ] 22. Runtime and Shim: hover and roll events
   - Commit area: `Runtime` (Shim named). Verification V2. Read the design finding F5, D-C4, D-C8 and Open_Item O9. The Player and Shim gain `mouseOver`, `mouseOut`, `rollOver`, `rollOut` (A4, U6); this is new work, not a reuse of existing rules. Before coding, read Ruffle `core/src/display_object/interactive.rs` event dispatch for the bubbling split (O9: `mouseOver` and `mouseOut` bubble, `rollOver` and `rollOut` do not, from Flash documentation, not yet read in Ruffle) and record the result in `flash-behaviour.md`. If the Block C spend is more than a third above its share when this task starts, apply the D-C8 fallback instead: deliver the up state, the hit area and the click only, record `button-state:over`, `button-state:down` and `button-hit-area` as Named_Limits in the Unsupported_Feature_List and the Fidelity_Report whenever a button placement exists, mark 22.1 and 22.2 as "not delivered" in the commit body, and say so at Checkpoint 3.
-  - [ ] 22.1 Add the Shim constants and the Player hover tracking
+  - [~] 22.1 Add the Shim constants and the Player hover tracking
     - `MouseEvent.MOUSE_OVER`, `MOUSE_OUT`, `ROLL_OVER`, `ROLL_OUT`. On a pointer move the Player compares the new Hit_Target with the previous one and dispatches `mouseOut` and `rollOut` at the old and `mouseOver` and `rollOver` at the new, before `mouseMove` handlers run. While a button is down the same events fire, plus drag-out and drag-over for the pressed object (AVM2 rule read in `player.rs`). On release outside the pressed object the pressed object gets `ReleaseOutside` and the object now under the pointer gets `RollOver` at once. Existing samples must keep their Trace_Score and Overall_Match (V2 floor tests). Regenerate and stage the member table.
     - Tests: `test/unit/hoverEvents.test.ts` (create) with the FakeBackend and manual clock: event order, bubbling split, no event when the target is unchanged, release outside.
     - _Requirements: 20.5, 20.6, 20.10, 20.20_
 
-  - [ ] 22.2 Connect the state model to the events and the click
+  - [~] 22.2 Connect the state model to the events and the click
     - The Player feeds `RollOver`, `RollOut`, `Press`, `Release`, `ReleaseOutside`, `DragOut`, `DragOver` into `buttonModel.step` for the button under the pointer and calls `syncAll()` afterwards. A press and release on the same Pressed_Target dispatches `MouseEvent.CLICK` at the button (bubbling to its parents), and a listener added by translated code is called. `buttonMode` and `useHandCursor` stay stored only. The commit body states every committed sample's scores before and after.
     - Tests: `test/unit/playerButtons.test.ts` (create): up at rest, over on hover, down on press, click on release, no click on release elsewhere, disabled button inert.
     - _Requirements: 20.4, 20.5, 20.6, 20.9, 20.10, 20.12, 20.15_
 
 - [ ] 23. Test and Verify: the generated-button end to end and the Outcome count
   - Commit area: `Test` (Verify and Pipeline named). Verification V2. Read the design D-C7, finding F2 and Requirement 21. No committed sample holds a button (A5), so Requirement 20.18 is met by two checks: every committed sample keeps its scores, and the generated button fixture passes.
-  - [ ] 23.1 Run the generated button fixture through the pipeline in Chromium
+  - [~] 23.1 Run the generated button fixture through the pipeline in Chromium
     - `test/e2e/buttonFixture.e2e.test.ts` (create; a `chromium` slot): build the fixture with `test/support/buttonSwf.ts`, run the pipeline, build the project, load it, and check that the up state draws at rest, the over state while hovering, the down state while pressed, and that `click` fires a listener; a hit-area point outside the drawn state also reacts. Take one screenshot with the `playwright` MCP and look at it; it is not scored.
     - _Requirements: 20.4, 20.5, 20.6, 20.7, 20.9, 20.18, 20.19_
 
-  - [ ] 23.2 Remove delivered `button` entries and report the rest
+  - [~] 23.2 Remove delivered `button` entries and report the rest
     - The Unsupported_Feature_List keeps a `button` entry only for a feature not delivered; the Fidelity_Report lists the button Named_Limits whenever a button placement exists (Requirement 20.14); the Outcome's `droppedPlacements` falls accordingly. The commit body gives the `button` entry count before (78 on the day of writing, from the local file) and after, as numbers, when `redball4.swf` is present (the check skips otherwise; the number is informational).
     - Tests: `test/unit/buttonReport.test.ts` (create): delivered states leave no `button` entry; an undelivered state leaves its Named_Limit; `test/unit/report.test.ts` (extend): the Fidelity_Report lists them.
     - _Requirements: 20.2, 20.13, 20.14, 21.1, 21.2, 21.3_
 
-  - [ ] 23.3 Guard the existing floors
+  - [~] 23.3 Guard the existing floors
     - Run `test/unit/clickgotoReplay.test.ts`, `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score tests. State every committed sample's Overall_Match and Trace_Score before and after Block C in the commit body; none may drop (Requirement 11.1). The sample table plus the generated fixture is the Requirement 20.18 check.
     - _Requirements: 11.1, 11.4, 20.18_
 
-- [ ] 24. Checkpoint 3: Block C done, final
+- [~] 24. Checkpoint 3: Block C done, final
   - STOP. This is the final Checkpoint (Requirement 22.3). Follow the Checkpoint procedure of the rules: run the full suite `npm test -- --run`, hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/robustness/reviews/checkpoint-3.md`, act on its findings in a new commit, then stop and report.
   - The report holds the items of the Checkpoint procedure (real `git status`, commits since Checkpoint 2, per-sample table, both Play_Tests, Outcome, reason code and exit code of every Hostile_Fixture, new Named_Limits, Open_Items, Warm_Suite_Time, Credits_Line). It also states (Requirement 22.2): as numbers only the `redball4.swf` Outcome when present, with the `button` entry count before and after; the Named_Limits and Open_Items added by this spec; whether the hover work was delivered or the D-C8 fallback applied; the table of decisions U1 to U9 and amendments A1, A3 to A5, A7 to A15 with the task that built each; and the total credits against about 250 and the Credits_Line.
   - _Requirements: 22.1, 22.2, 22.3, 24.1 to 24.4_

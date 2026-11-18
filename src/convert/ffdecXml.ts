@@ -4,6 +4,8 @@ import type {
   ColorTransformModel,
   MatrixModel,
   SpriteModel,
+  ButtonModel,
+  ButtonRecordModel,
   TimelineModel,
   TimelineOp,
   UnsupportedKind,
@@ -135,7 +137,7 @@ export const FFDEC_XML = {
     /** UNVERIFIED */ DefineSoundTag: 'sound',
     /** UNVERIFIED */ SoundStreamHeadTag: 'sound',
     /** UNVERIFIED */ SoundStreamHead2Tag: 'sound',
-    /** UNVERIFIED */ DefineButtonTag: 'button',
+    /** Measured on a generated file (FFDec 26.4.0 -xml2swf then -swf2xml, test/support/buttonSwf.ts; robustness F3, U5, Open_Item O11), id attribute `buttonId`. */ DefineButtonTag: 'button',
     /** Verified on FFDec 26.4.0 (breadth design section 7: `bitmapbuttons`), id attribute `buttonId`. */ DefineButton2Tag: 'button',
     /** UNVERIFIED */ DefineVideoStreamTag: 'video',
   },
@@ -143,10 +145,36 @@ export const FFDEC_XML = {
   /** Id attribute per unsupported tag; tags not listed use `characterID` (UNVERIFIED for the tags marked UNVERIFIED above). */
   unsupportedIdAttr: {
     DefineEditTextTag: 'characterID',
+    DefineButtonTag: 'buttonId',
     DefineButton2Tag: 'buttonId',
   },
   /** Default id attribute for an unsupported tag with no entry in `unsupportedIdAttr` (UNVERIFIED for those tags). */
   unsupportedIdAttrDefault: 'characterID',
+  /**
+   * Button tags and records. DefineButton2Tag and BUTTONRECORD: verified on FFDec 26.4.0 (36 tags in a local wild
+   * file). DefineButtonTag: measured on a generated file (test/support/buttonSwf.ts; Requirement 20.3, Open_Item O11).
+   */
+  button: {
+    tagV1: 'DefineButtonTag',
+    tagV2: 'DefineButton2Tag',
+    idAttr: 'buttonId',
+    trackAsMenu: 'trackAsMenu',
+    actionBytes: 'actionBytes',
+    /** DefineButton2Tag child list of AVM1 actions (measured with 20.1: <actions/> when empty). */
+    actions: 'actions',
+    characters: 'characters',
+    record: 'BUTTONRECORD',
+    stateUp: 'buttonStateUp',
+    stateOver: 'buttonStateOver',
+    stateDown: 'buttonStateDown',
+    stateHit: 'buttonStateHitTest',
+    characterId: 'characterId',
+    placeDepth: 'placeDepth',
+    hasBlendMode: 'buttonHasBlendMode',
+    hasFilterList: 'buttonHasFilterList',
+    placeMatrix: 'placeMatrix',
+    colorTransform: 'colorTransform',
+  },
   sprite: {
     /** Verified on FFDec 26.4.0 (line 79). */
     tag: 'DefineSpriteTag',
@@ -527,6 +555,8 @@ export function parseStructure(xmlText: string): {
   morphShapeIds: number[];
   staticTextIds: number[];
   bitmapIds: number[];
+  /** DefineButton and DefineButton2 tags with a characters list. */
+  buttons: ButtonModel[];
   /** From DefineSceneAndFrameLabelData; empty when the tag is absent. firstFrame is 1-based. */
   scenes: Array<{ name: string; firstFrame: number }>;
   unsupported: UnsupportedObservation[];
@@ -549,6 +579,7 @@ export function parseStructure(xmlText: string): {
     morphShapeIds: [] as number[],
     staticTextIds: [] as number[],
     bitmapIds: [] as number[],
+    buttons: [] as ButtonModel[],
     scenes: [] as Array<{ name: string; firstFrame: number }>,
     unsupported: ctx.unsupported,
   };
@@ -598,6 +629,14 @@ export function parseStructure(xmlText: string): {
       const id = attrNum(attrs, FFDEC_XML.staticText.idAttr);
       if (id !== undefined) out.staticTextIds.push(id);
       else ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
+    } else if (kind === FFDEC_XML.button.tagV1 || kind === FFDEC_XML.button.tagV2) {
+      // A button with a characters list is delivered as a button symbol; without one it stays an unsupported button.
+      const button = readButton(item, kind);
+      if (button) out.buttons.push(button);
+      else {
+        const id = attrNum(attrs, FFDEC_XML.button.idAttr);
+        ctx.unsupported.push(id !== undefined ? { kind: 'button', tagName: kind, characterId: id } : { kind: 'button', tagName: kind });
+      }
     } else if (kind in FFDEC_XML.unsupportedKinds) {
       const k = FFDEC_XML.unsupportedKinds[kind as keyof typeof FFDEC_XML.unsupportedKinds] as UnsupportedKind;
       const idAttr =
@@ -627,6 +666,47 @@ export function parseStructure(xmlText: string): {
     }
   }
   return out;
+}
+
+/** One DefineButtonTag or DefineButton2Tag item, or undefined when it has no id or no characters list. */
+function readButton(item: PNode, kind: string): ButtonModel | undefined {
+  const b = FFDEC_XML.button;
+  const attrs = attrsOf(item);
+  const id = attrNum(attrs, b.idAttr);
+  const chars = findChild(item, FFDEC_XML.item.element, b.characters);
+  if (id === undefined || !chars) return undefined;
+  const records: ButtonRecordModel[] = [];
+  for (const rec of childrenOf(chars.node, b.characters)) {
+    if (nameOf(rec) !== FFDEC_XML.item.element) continue;
+    const ra = attrsOf(rec);
+    if (attrStr(ra, FFDEC_XML.item.kindAttr) !== b.record) continue;
+    const characterId = attrNum(ra, b.characterId);
+    const depth = attrNum(ra, b.placeDepth);
+    if (characterId === undefined || depth === undefined) continue;
+    const r: ButtonRecordModel = {
+      up: attrBool(ra, b.stateUp),
+      over: attrBool(ra, b.stateOver),
+      down: attrBool(ra, b.stateDown),
+      hit: attrBool(ra, b.stateHit),
+      characterId,
+      depth,
+      hasBlendMode: attrBool(ra, b.hasBlendMode),
+      hasFilterList: attrBool(ra, b.hasFilterList),
+    };
+    const matrix = findChild(rec, FFDEC_XML.item.element, b.placeMatrix);
+    if (matrix) r.matrix = parseMatrix(matrix.attrs);
+    const ct = findChild(rec, FFDEC_XML.item.element, b.colorTransform);
+    if (ct) r.colorTransform = parseColorTransform(ct.attrs);
+    records.push(r);
+  }
+  let hasActions: boolean;
+  if (kind === b.tagV1) {
+    hasActions = (attrStr(attrs, b.actionBytes) ?? '') !== '';
+  } else {
+    const actions = findChild(item, FFDEC_XML.item.element, b.actions);
+    hasActions = actions !== undefined && childrenOf(actions.node, b.actions).some((n) => nameOf(n) === FFDEC_XML.item.element);
+  }
+  return { id, trackAsMenu: kind === b.tagV2 && attrBool(attrs, b.trackAsMenu), hasActions, records };
 }
 
 function itemTexts(item: PNode, listName: string): string[] {

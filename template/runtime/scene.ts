@@ -36,12 +36,21 @@ export interface SceneEntry {
 /** The name of the default scene of a timeline without scenes: one scene at frame 1. */
 export const DEFAULT_SCENE_NAME = 'Scene 1';
 
+/** A DefineButton or DefineButton2 symbol (formatVersion 4). Each state is a display list; `hit` may be empty. */
+export interface ButtonSymbol {
+  type: 'button';
+  className?: string; // omitted when not linked
+  trackAsMenu: boolean;
+  states: { up: DisplayListEntry[]; over: DisplayListEntry[]; down: DisplayListEntry[]; hit: DisplayListEntry[] };
+}
+export const BUTTON_STATE_NAMES = ['up', 'over', 'down', 'hit'] as const;
+
 export interface SceneJson {
-  /** 3 is written. 2 is read: it has no scenes, so the root reads as one scene at frame 1. */
-  formatVersion: 2 | 3;
+  /** 4 is written when the scene holds a button symbol, else 3. 2 is read: it has no scenes, so the root reads as one scene at frame 1. */
+  formatVersion: 2 | 3 | 4;
   stage: { width: number; height: number; backgroundColor: string; frameRate: number };
   rootSymbolId: number;
-  symbols: Record<string, ShapeSymbol | SpriteSymbol>;
+  symbols: Record<string, ShapeSymbol | SpriteSymbol | ButtonSymbol>;
 }
 
 export class SceneParseError extends Error {
@@ -80,9 +89,31 @@ function checkNumberTuple(v: unknown, length: number, path: string): void {
   for (let i = 0; i < length; i++) checkNumber(v[i], `${path}[${i}]`);
 }
 
+/** One display list (a frame or a button state): depths strictly ascending, every symbol defined. */
+function checkEntries(list: unknown[], path: string, symbols: Record<string, unknown>): void {
+  let prevDepth = -Infinity;
+  list.forEach((entry: unknown, ei: number) => {
+    const ep = `${path}[${ei}]`;
+    if (!isRecord(entry)) fail(ep, 'must be an object');
+    const depth = checkInt(entry.depth, `${ep}.depth`, -Number.MAX_SAFE_INTEGER);
+    if (depth <= prevDepth) fail(`${ep}.depth`, 'must be strictly ascending within a frame');
+    prevDepth = depth;
+    const symbolId = checkInt(entry.symbolId, `${ep}.symbolId`, 0);
+    if (!Object.prototype.hasOwnProperty.call(symbols, String(symbolId))) {
+      fail(`${ep}.symbolId`, `refers to missing symbol ${symbolId}`);
+    }
+    checkNumberTuple(entry.matrix, 6, `${ep}.matrix`);
+    checkNumberTuple(entry.colorTransform, 8, `${ep}.colorTransform`);
+    if (typeof entry.name !== 'string') fail(`${ep}.name`, 'must be a string');
+    if (entry.clipDepth !== undefined) checkInt(entry.clipDepth, `${ep}.clipDepth`, depth);
+  });
+}
+
 export function validateScene(scene: unknown): asserts scene is SceneJson {
   if (!isRecord(scene)) fail('scene', 'must be an object');
-  if (scene.formatVersion !== 2 && scene.formatVersion !== 3) fail('formatVersion', 'must be 2 or 3');
+  if (scene.formatVersion !== 2 && scene.formatVersion !== 3 && scene.formatVersion !== 4) {
+    fail('formatVersion', 'must be 2, 3 or 4');
+  }
 
   const stage = scene.stage;
   if (!isRecord(stage)) fail('stage', 'must be an object');
@@ -129,22 +160,7 @@ export function validateScene(scene: unknown): asserts scene is SceneJson {
       frames.forEach((frame: unknown, fi: number) => {
         const fp = `${sp}.frames[${fi}]`;
         if (!Array.isArray(frame)) fail(fp, 'must be an array');
-        let prevDepth = -Infinity;
-        frame.forEach((entry: unknown, ei: number) => {
-          const ep = `${fp}[${ei}]`;
-          if (!isRecord(entry)) fail(ep, 'must be an object');
-          const depth = checkInt(entry.depth, `${ep}.depth`, -Number.MAX_SAFE_INTEGER);
-          if (depth <= prevDepth) fail(`${ep}.depth`, 'must be strictly ascending within a frame');
-          prevDepth = depth;
-          const symbolId = checkInt(entry.symbolId, `${ep}.symbolId`, 0);
-          if (!Object.prototype.hasOwnProperty.call(symbols, String(symbolId))) {
-            fail(`${ep}.symbolId`, `refers to missing symbol ${symbolId}`);
-          }
-          checkNumberTuple(entry.matrix, 6, `${ep}.matrix`);
-          checkNumberTuple(entry.colorTransform, 8, `${ep}.colorTransform`);
-          if (typeof entry.name !== 'string') fail(`${ep}.name`, 'must be a string');
-          if (entry.clipDepth !== undefined) checkInt(entry.clipDepth, `${ep}.clipDepth`, depth);
-        });
+        checkEntries(frame, fp, symbols);
       });
       const labels = sym.labels;
       if (!Array.isArray(labels)) fail(`${sp}.labels`, 'must be an array');
@@ -156,7 +172,7 @@ export function validateScene(scene: unknown): asserts scene is SceneJson {
       });
       if (sym.scenes !== undefined) {
         if (Number(key) !== rootId) fail(`${sp}.scenes`, 'is allowed on the root symbol only');
-        if (scene.formatVersion !== 3) fail(`${sp}.scenes`, 'needs formatVersion 3');
+        if (scene.formatVersion < 3) fail(`${sp}.scenes`, 'needs formatVersion 3 or 4');
         const scenes = sym.scenes;
         if (!Array.isArray(scenes) || scenes.length === 0) fail(`${sp}.scenes`, 'must be a non-empty array');
         let prev = 0;
@@ -169,8 +185,21 @@ export function validateScene(scene: unknown): asserts scene is SceneJson {
           prev = first;
         });
       }
+    } else if (sym.type === 'button') {
+      if (scene.formatVersion !== 4) fail(`${sp}.type`, 'a button symbol needs formatVersion 4');
+      if (sym.className !== undefined && typeof sym.className !== 'string') {
+        fail(`${sp}.className`, 'must be a string when present');
+      }
+      if (typeof sym.trackAsMenu !== 'boolean') fail(`${sp}.trackAsMenu`, 'must be a boolean');
+      const states = sym.states;
+      if (!isRecord(states)) fail(`${sp}.states`, 'must be an object');
+      for (const name of BUTTON_STATE_NAMES) {
+        const list = states[name];
+        if (!Array.isArray(list)) fail(`${sp}.states.${name}`, 'must be an array');
+        checkEntries(list, `${sp}.states.${name}`, symbols);
+      }
     } else {
-      fail(`${sp}.type`, 'must be "shape" or "sprite"');
+      fail(`${sp}.type`, 'must be "shape", "sprite" or "button"');
     }
   }
 

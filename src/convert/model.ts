@@ -12,6 +12,8 @@ export interface TagsModel {
   morphShapeIds: number[]; // character ids of morph shape definition tags
   staticTextIds: number[]; // character ids of DefineText / DefineText2 tags
   bitmapIds: number[]; // character ids of DefineBits* tags
+  /** DefineButton / DefineButton2 symbols the converter delivers as button symbols (Scene_JSON 4). Absent: none. */
+  buttons?: ButtonModel[];
   /** DefineSceneAndFrameLabelData scenes, firstFrame 1-based. Absent or empty: one scene at frame 1. */
   scenes?: Array<{ name: string; firstFrame: number }>;
   shapeAssets: ShapeAssetModel[]; // one per file found under shapes/
@@ -60,6 +62,28 @@ export interface ColorTransformModel {
   add: [number, number, number, number];
 }
 
+/** One BUTTONRECORD: the character it places and the states whose flag is true. */
+export interface ButtonRecordModel {
+  up: boolean;
+  over: boolean;
+  down: boolean;
+  hit: boolean;
+  characterId: number;
+  depth: number; // placeDepth
+  matrix?: MatrixModel;
+  /** DefineButton2 only (CXFORMWITHALPHA). */
+  colorTransform?: ColorTransformModel;
+  hasBlendMode: boolean;
+  hasFilterList: boolean;
+}
+export interface ButtonModel {
+  id: number;
+  trackAsMenu: boolean; // DefineButton2 only; false for DefineButton
+  /** True when the tag holds AVM1 button actions (<actions> items, or non-empty ctionBytes); they are ignored. */
+  hasActions: boolean;
+  records: ButtonRecordModel[];
+}
+
 export interface ShapeAssetModel {
   id: number;
   svg: string | null; // null = no file; "" = zero-byte file
@@ -97,7 +121,11 @@ export type UnsupportedKind =
   | 'bitmap-smoothing'
   | 'text-metrics'
   | 'stroke-style'
-  | 'blend-mode';
+  | 'blend-mode'
+  | 'button-duplicate-depth'
+  | 'button-record-effects'
+  | 'button-avm1-actions'
+  | 'button-sound';
 export interface UnsupportedObservation {
   kind: UnsupportedKind;
   tagName: string;

@@ -707,7 +707,7 @@ export class Player {
   private withoutUnrenderableEntries(scene: SceneJson): SceneJson {
     const symbols: SceneJson['symbols'] = {};
     for (const [key, sym] of Object.entries(scene.symbols)) {
-      if (sym.type === 'shape') {
+      if (sym.type === 'shape' || sym.type === 'button') {
         symbols[key] = sym;
         continue;
       }
@@ -723,6 +723,8 @@ export class Player {
     const target = scene.symbols[String(entry.symbolId)];
     if (target === undefined) return false;
     if (target.type === 'sprite') return true;
+    // Button symbols are read (Scene_JSON 4) but not drawn until the Runtime gains SimpleButton (robustness task 21).
+    if (target.type === 'button') return false;
     if (this.shapeBounds.has(entry.symbolId)) return true;
     if (!this.reportedMissing.has(entry.symbolId)) {
       this.reportedMissing.add(entry.symbolId);
