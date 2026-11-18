@@ -9,6 +9,7 @@ import { checkClassFiles } from '../emit/bundlerGuard';
 import { emit } from '../emit/emit';
 import { translateStage } from '../translate/translateStage';
 import { typeCheckProject } from '../translate/typeCheckGate';
+import { recover } from '../recover/recover';
 import { unpack } from '../unpack/unpack';
 import { listOverrideClasses, readHandwrittenSet } from './handwrittenSet';
 import type { HandwrittenEntry } from './handwrittenSet';
@@ -128,6 +129,7 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 const realStages: PipelineStages = {
   unpack,
+  recover,
   convert: convertStage,
   translate: translateStage,
   emit,

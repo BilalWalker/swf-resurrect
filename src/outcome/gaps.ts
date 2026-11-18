@@ -16,7 +16,7 @@ export const COUNTED_GAP_KINDS: readonly GapKind[] = [
 ];
 
 /** Named_Limits only: never counted as a Gap. */
-export const NAMED_LIMIT_KINDS: readonly string[] = ["text-metrics", "filter", "stroke-style", "mask", "morph-shape"];
+export const NAMED_LIMIT_KINDS: readonly string[] = ["text-metrics", "filter", "stroke-style", "mask", "morph-shape", "obfuscation-recovered"];
 
 export interface GapEntry {
   kind: string;

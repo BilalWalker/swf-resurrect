@@ -16,10 +16,11 @@ import { readFacts } from '../facts/readFacts';
 import { scanAbcNames } from '../facts/abcNames';
 import type { TagRange } from '../facts/swfBody';
 import { obfuscationVerdict } from '../recover/detect';
+import { classNameOfScript, hasSourceSignal, obfuscationRecoveredEntry, renamedIdentifiers, unrecoverableEntries } from '../recover/record';
 import { classifyError } from '../outcome/classifyError';
 import { summariseGaps } from '../outcome/gaps';
 import { decideOutcome } from '../outcome/outcome';
-import type { ClassifiedFailure, Facts, Outcome, OutcomeLimits, OutcomeNumbers, OutcomeRecord, ReasonCode, StageRecord } from '../outcome/outcome';
+import type { ClassifiedFailure, Facts, Outcome, OutcomeLimits, OutcomeNumbers, OutcomeRecord, ReasonCode, RecoveryRecord, StageRecord } from '../outcome/outcome';
 import { writeOutcomeFile } from '../outcome/outcomeFile';
 import { reasonSentence } from '../outcome/reasons';
 import { failedReason, referenceIdFromDigest, referenceIdInput } from '../outcome/referenceId';
@@ -34,7 +35,8 @@ import { PipelineError } from './errors';
 import { killAll } from './processTree';
 import { planCleanup } from './cleanup';
 import type { CleanupPlan } from './cleanup';
-import { createGuard, RunAbortedError } from './guard';
+import { createGuard, RunAbortedError, TimeLimitError } from './guard';
+import type { RecoverInput, RecoverResult } from '../recover/recover';
 import type { Clock, RunGuard } from './guard';
 import { defaultLimits, stageAllowanceS } from './limits';
 import { realClock } from './realClock';
@@ -120,6 +122,35 @@ async function factsStage(swfPath: string, maxInputBytes: number): Promise<Facts
   return r.ok ? { facts: r.facts, refusal: null, body: r.body, abcRanges: r.abcRanges } : { facts: r.facts, refusal: r.reasonCode };
 }
 
+/** invalidNames of the pure scan over a file on disk; null when it cannot be read, parsed or scanned (never throws). */
+async function invalidNamesOf(path: string): Promise<number | null> {
+  try {
+    const bytes = new Uint8Array(await readFile(path));
+    const r = readFacts(bytes, { maxSizeBytes: Number.MAX_SAFE_INTEGER }, nodeInflate);
+    if (!r.ok || r.facts.signature === 'ZWS') return null;
+    return scanAbcNames(r.body, r.abcRanges).invalidNames;
+  } catch {
+    return null;
+  }
+}
+
+/** Qualified names of the exported classes whose source still holds a `§§push` or `§§pop` token. */
+async function classesWithSourceSignals(scriptsDir: unknown): Promise<string[]> {
+  if (typeof scriptsDir !== 'string') return [];
+  try {
+    const out: string[] = [];
+    for (const rel of await readdir(scriptsDir, { recursive: true })) {
+      const name = classNameOfScript(rel);
+      if (name === null) continue;
+      const text = await readFile(join(scriptsDir, rel), 'utf8').catch(() => '');
+      if (hasSourceSignal(text)) out.push(name);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 /** Number of `.as` files FFDec exported under scripts/; null when the directory is unknown or unreadable. */
 async function countAbcClasses(scriptsDir: unknown): Promise<number | null> {
   if (typeof scriptsDir !== 'string') return null;
@@ -149,6 +180,8 @@ export interface PipelineStages {
   /** Bundler_Guard injected into Emit (design 21.4); it rejects when Vite cannot run. */
   guard?(files: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, BundlerCheckData>>;
   verify?(req: VerifyRequest): Promise<VerifySummary>;
+  /** Recovery chain on a copy (Task 18). Absent means no recovery is attempted. Never throws for FFDec errors. */
+  recover?(i: RecoverInput): Promise<RecoverResult>;
 }
 
 export interface PipelineIo {
@@ -416,6 +449,9 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let classified: ClassifiedFailure | null = null;
   let referenceId: string | null = null;
   let obfuscated: OutcomeRecord['obfuscated'] = null;
+  let recovery: RecoveryRecord | null = null;
+  let recoveredPath: string | null = null; // set only when the recovered copy is the file that Unpack reads
+  let unrecoverable: UnsupportedFeatureEntry[] = [];
 
   try {
     // Facts stage: no FFDec process starts for a refused input.
@@ -426,13 +462,56 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     if (facts !== null && facts.signature !== 'ZWS' && read.body !== undefined && read.abcRanges !== undefined) {
       obfuscated = obfuscationVerdict(scanAbcNames(read.body, read.abcRanges));
     }
+    // Recovery (D-B4, D-B5): only for an obfuscated verdict, on a copy; Unpack then runs once, never twice.
+    let unpackPath = resolve(args.swfPath);
+    if (obfuscated?.detected === true && stages.recover !== undefined) {
+      const doRecover = stages.recover;
+      const recoverS = stageAllowanceS(guard.limits, 'recover');
+      const rec: RecoveryRecord = {
+        attempted: true, skipped: null, failedStep: null, fallback: false, renamedIdentifiers: 0,
+        deobfuscated: false, candidateClasses: 0, recoveredClasses: 0, unrecoverableClasses: 0,
+      };
+      recovery = rec;
+      let recovered: RecoverResult | null = null;
+      try {
+        recovered = await guard.runStage('recover', () =>
+          doRecover({
+            swfPath: resolve(args.swfPath),
+            workDir,
+            ffdecJarPath: args.ffdecJarPath,
+            allowanceMs: recoverS * 1000,
+            allowanceLabel: `${recoverS} s stage limit`,
+          }),
+        );
+      } catch (err) {
+        // A guard timeout of the recover stage is a recovery failure, like an FFDec timeout (D-B4); the
+        // remaining-time check below then decides between the fallback and `refused time-limit`.
+        if (!(err instanceof TimeLimitError)) throw err;
+      }
+      if (recovered !== null && recovered.ok) {
+        // Names renamed = invalid names of the original scan minus invalid names of the renamed copy (same pure scan), clamped at 0.
+        rec.renamedIdentifiers = renamedIdentifiers(obfuscated.invalidNames, await invalidNamesOf(recovered.renamedPath));
+        rec.deobfuscated = true;
+        unpackPath = recovered.recoveredPath;
+        recoveredPath = recovered.recoveredPath;
+        io.out('[recover] ok\n');
+      } else {
+        rec.fallback = true;
+        rec.skipped = recovered?.skipped ?? null;
+        rec.failedStep = recovered?.failedStep ?? null;
+        io.err('warn [recover]: recovery failed, the original file is unpacked\n');
+        const unpackMs = stageAllowanceS(guard.limits, 'unpack') * 1000;
+        if (guard.remainingRunMs() < unpackMs) throw new TimeLimitError('unpack', `${guard.limits.runLimitS} s run limit`);
+      }
+    }
+    const unpackS = stageAllowanceS(guard.limits, 'unpack');
     const unpacked = await guard.runStage('unpack', () =>
       stages.unpack({
-        swfPath: resolve(args.swfPath),
+        swfPath: unpackPath,
         workDir,
         ffdecJarPath: args.ffdecJarPath,
-        allowanceMs: stageAllowanceS(guard.limits, 'unpack') * 1000,
-        allowanceLabel: ` s stage limit`,
+        allowanceMs: unpackS * 1000,
+        allowanceLabel: `${unpackS} s stage limit`,
       }),
     );
     if (facts !== null) {
@@ -440,6 +519,13 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       if (facts.abcClassCount !== null) facts.source.ffdec = ['abcClassCount'];
     }
     io.out('[unpack] ok\n');
+    // D-B7: after Unpack of the recovered copy, a class whose source still holds §§push or §§pop is unrecoverable.
+    if (recovery !== null && recoveredPath !== null && obfuscated !== null) {
+      const names = await classesWithSourceSignals((unpacked as Partial<UnpackResult>).scriptsDir);
+      unrecoverable = unrecoverableEntries(names);
+      recovery.unrecoverableClasses = unrecoverable.length;
+      obfuscated = { ...obfuscated, sourceSignals: unrecoverable.length };
+    }
 
     stage = 'convert';
     artifact = await guard.runStage('convert', () => stages.convert(unpacked));
@@ -572,6 +658,12 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
       ? null
       : reportOf(translated, overridden, gate, omissions, loose, classPaths, problems, handwritten);
 
+  // Recovery entries (18.3): Unrecoverable_Classes are gaps; `obfuscation-recovered` is a Named_Limit (an unsupported
+  // entry of that kind, like `as3-interface`; not counted by summariseGaps) and is recorded once the recovered copy was translated.
+  if (recoveredPath !== null && recovery !== null && !recovery.fallback) {
+    unsupported = [...unsupported, ...unrecoverable, ...(translated !== null ? [obfuscationRecoveredEntry()] : [])];
+  }
+
   // Unsupported list: after success, or after a failure once Convert completed (Req 9.6).
   let writeFailed = false;
   if (artifact !== null && finalReport !== null) {
@@ -623,6 +715,11 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   const registered = new Set((finalReport?.classes ?? []).filter((c) => !c.omitted).map((c) => c.className));
   const stubDependents = countStubDependents((translated?.classes ?? []).filter((c) => registered.has(c.className)));
   const numbers = ranToGate ? numbersOf(finalReport, artifact?.stats.placementsDropped ?? 0, stubDependents) : null;
+  // Recovery counts come from the Translation_Report numbers: translated classes of the recovered copy (0 after a fallback).
+  if (recovery !== null && numbers !== null) {
+    recovery.candidateClasses = numbers.candidateClasses;
+    recovery.recoveredClasses = recovery.fallback || recoveredPath === null ? 0 : numbers.translatedClasses;
+  }
   const decision = decideOutcome({
     facts,
     stages: stageRecords,
@@ -630,7 +727,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     numbers,
     gaps,
     limits: runLimits,
-    recovery: null,
+    recovery,
   });
 
   const record: OutcomeRecord = {
@@ -644,7 +741,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     limits: runLimits,
     stages: stageRecords,
     obfuscated,
-    recovery: null,
+    recovery,
     referenceId: decision.outcome === 'failed' ? referenceId : null,
   };
   if (decision.outcome === 'refused' || decision.outcome === 'failed') {

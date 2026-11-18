@@ -86,6 +86,8 @@ export type UnsupportedKind =
   | 'untranslated-class'
   | 'class-omitted'
   | 'as3-interface'
+  | 'unrecoverable-class'
+  | 'obfuscation-recovered'
   | 'untranslated-code'
   | 'other-tag'
   | 'gradient-fill'

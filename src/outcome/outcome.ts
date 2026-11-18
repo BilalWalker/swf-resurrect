@@ -209,10 +209,14 @@ export function decideOutcome(record: RunRecord): Outcome {
     });
     return { outcome: "converted-with-gaps", reasonCode: null, reason, exitCode: exitCodeFor("converted-with-gaps") };
   }
+  const rec = record.recovery;
+  const recovered = rec && rec.attempted && rec.skipped === null && !rec.fallback;
   return {
     outcome: "converted",
     reasonCode: null,
-    reason: `${n.translatedClasses} of ${n.candidateClasses} classes translated`,
+    reason: recovered
+      ? `obfuscated: names renamed, ${rec.recoveredClasses} of ${rec.candidateClasses} classes recovered`
+      : `${n.translatedClasses} of ${n.candidateClasses} classes translated`,
     exitCode: exitCodeFor("converted"),
   };
 }

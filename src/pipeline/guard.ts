@@ -38,6 +38,8 @@ export interface RunGuard {
   readonly records: StageRecord[];
   runStage<T>(name: StageName, fn: () => Promise<T>): Promise<T>;
   killAll(): Promise<void>;
+  /** Milliseconds left of the run limit at this moment (may be negative). Pure over the clock. */
+  remainingRunMs(): number;
   /**
    * Ends the run: the running `runStage` rejects with RunAbortedError, every later `runStage` rejects at once,
    * and the registered children are killed. Safe to call more than once.
@@ -120,5 +122,7 @@ export function createGuard(options: GuardOptions): RunGuard {
     }
   }
 
-  return { limits, records, runStage, killAll, abort };
+  const remainingRunMs = (): number => runMs - (clock.now() - runStart);
+
+  return { limits, records, runStage, killAll, remainingRunMs, abort };
 }
