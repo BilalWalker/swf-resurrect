@@ -116,8 +116,9 @@ describe('button hit region (Player)', () => {
     const { player, btn } = build();
     setup(btn);
     let clicks = 0;
-    btn.addEventListener(MouseEvent.CLICK, () => clicks++);
-    player.dispatchClick(x, y);
+    // A click would move the state, and so the region, before the release; the first hover entry is tested under the state set above.
+    btn.addEventListener(MouseEvent.MOUSE_OVER, () => clicks++);
+    player.dispatchMouseMove(x, y);
     return clicks;
   }
 
@@ -152,10 +153,10 @@ describe('button hit region (Player)', () => {
     // Rotation 90 and scale 2 about (100, 100): the up shape (0..40, 0..30) maps to x 100-60..100, y 100..180.
     const { player, btn } = build([0, 2, -2, 0, 100, 100]);
     let clicks = 0;
-    btn.addEventListener(MouseEvent.CLICK, () => clicks++);
-    player.dispatchClick(70, 120); // inside the transformed up shape
+    btn.addEventListener(MouseEvent.MOUSE_OVER, () => clicks++);
+    player.dispatchMouseMove(70, 120); // inside the transformed up shape
     expect(clicks).toBe(1);
-    player.dispatchClick(20, 15); // inside the untransformed shape: now empty space
+    player.dispatchMouseMove(20, 15); // inside the untransformed shape: now empty space
     expect(clicks).toBe(1);
   });
 });

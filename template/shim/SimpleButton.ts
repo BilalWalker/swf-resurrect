@@ -98,6 +98,11 @@ export class SimpleButton extends InteractiveObject {
     return this._enabled ? this._state : 'up';
   }
 
+  /** The state the pointer model reached, whether or not the button is enabled. */
+  get _modelState(): ButtonState {
+    return this._state;
+  }
+
   /** Called by the Player: the state the pointer model reached. The render list follows at once. */
   _setState(state: ButtonState): void {
     this._state = state;

@@ -33,7 +33,9 @@ export class Event {
       type === 'click' ||
       type === 'mouseDown' ||
       type === 'mouseUp' ||
-      type === 'mouseMove');
+      type === 'mouseMove' ||
+      type === 'mouseOver' ||
+      type === 'mouseOut');
     this.cancelable = cancelable;
     this.eventPhase = eventPhase;
   }
@@ -65,6 +67,11 @@ export class MouseEvent extends Event {
   static readonly MOUSE_UP = 'mouseUp';
   static readonly MOUSE_MOVE = 'mouseMove';
   static readonly MOUSE_WHEEL = 'mouseWheel';
+  /** `mouseOver` and `mouseOut` bubble; `rollOver` and `rollOut` do not (Ruffle `interactive.rs`, read). */
+  static readonly MOUSE_OVER = 'mouseOver';
+  static readonly MOUSE_OUT = 'mouseOut';
+  static readonly ROLL_OVER = 'rollOver';
+  static readonly ROLL_OUT = 'rollOut';
   /** Lines scrolled by a wheel event; 0 for every other type. The Player does not dispatch the wheel (Named_Limit). */
   delta = 0;
 }

@@ -257,6 +257,36 @@ say which you did. The spec that holds the evidence is named with each item.
   Default_Instance_Name (ours, not Flash's). A clip inside a button state is built but its timeline does not advance
   (the frame walk stops at a button): a limit of task 21.2, not read in Ruffle.
 
+## Hover and roll events (robustness task 22.1)
+- **Evidence: read in Ruffle at `4a8d396`** (Open_Item O9 closed). `.work/ruffle-src` held an empty git repo; task 22.1 fetched
+  only `core/src/display_object/interactive.rs` and `core/src/player.rs` from raw.githubusercontent.com at that commit
+  (read for evidence, gitignored, not a dependency). Not measured against Flash or a running Ruffle.
+- **`mouseOver` and `mouseOut` bubble; `rollOver` and `rollOut` do not.** `interactive.rs` `event_dispatch_to_avm2`: `mouseOut`
+  and `mouseOver` are built with `bubbles = true`, `rollOut` and `rollOver` with `false`.
+- **Roll events are dispatched at every object of a chain, not bubbled.** `RollOut { to }`: `mouseOut` at the object, then
+  `rollOut` at the object and each parent up to, not including, `lowest_common_ancestor(object, to)` (the Stage when `to` is none).
+  `RollOver { from }`: `rollOver` at the same kind of chain first, then `mouseOver` at the object. So the order is out then roll for
+  leaving and roll then over for entering. Moving from a child to its parent gives the child `rollOut` and the parent no `rollOut`.
+- **`DragOut` and `DragOver` dispatch exactly like `RollOut` and `RollOver`** in AVM2 (one match arm each). `player.rs`
+  `update_mouse_state`, button held and the hovered object changed: `DragOut` at the pressed object when it is the one left,
+  `DragOver` when it is the one entered, then `RollOut` at the old and `RollOver` at the new (AVM2 only). So the pressed object
+  gets `mouseOut` and `rollOut` twice on a drag-out and `rollOver` and `mouseOver` twice on a drag-over. We copy that; it is
+  what the source does, not a measured Flash result.
+- **Release outside.** `ReleaseOutside` (AS3 type `releaseOutside`, bubbling) goes to the pressed object, then `RollOver` to the
+  object now hovered with `from` = the object hovered before the update. When that is the same object (the usual case, the
+  roll events already fired during the drag) the chain is empty: only `mouseOver` fires. Release inside: `MouseUpInside`
+  (`mouseUp`) at the hovered object, then `Release` (`click`) at the pressed one.
+- **Order against `mouseMove`: Ruffle differs from our task and design.** In `update_mouse_state` the list starts with
+  `MouseMoveInside` (the target's `mouseMove`) and the roll events follow, so Ruffle runs the target's `mouseMove` first (the
+  Stage-level move runs even earlier in `handle_input_event`). Design D-C4 and task 22.1 say hover events come before
+  `mouseMove`; the Player does that (`pointerEntry`: `updateHover`, then `mouseMove`). Open: the owner decides whether to
+  match Ruffle; the change is moving one line.
+- **Hover is recomputed on every pointer entry** (move, press, release); Ruffle skips it on a tick with no input. The
+  Hit_Target is the Stage_Object (no hovered object) outside any interactive object; no event is sent to the Stage for it.
+  Not read: pointer leaving the canvas (no event in our Player). Code: `template/runtime/player.ts` `updateHover`, `clipEvent`.
+
+- **Button state from events (task 22.2).** The Player feeds `rollOver`, `rollOut`, `dragOver`, `dragOut`, `press`, `release` and `releaseOutside` into `buttonModel.step` for the button hit, from `clipEvent` and the press and release paths, and `click` follows `release` on the same Pressed_Target. The roll event that follows a drag event of the pressed button is not fed (the model has one target state per event, so `dragOut` then `rollOut` would give up instead of over). A disabled button is skipped. Ours-only (`test/unit/playerButtons.test.ts`, Property 25 through the Player); the skipped roll feed is our choice, not read. A click moves the state before the release, so the hit region of a button whose states differ in place follows the state at each event: tests of the region use the first hover entry.
+
 ## Evidence register (as3-coverage task 30)
 One list of every Flash behaviour added in the spec, with its label. `read` = read in Ruffle at commit
 `4a8d396` (a note says when it was not re-read in task 30; `.work/ruffle-src` is empty and nothing is
@@ -299,7 +329,9 @@ above; nothing was missing.
 | Button state-change table and hit rule (current state union hit state; a hit inside targets the button) | read by the design (`avm2_button.rs`, `mouse_pick_avm2`), not re-read in task 21.1 | none |
 | Disabled button ignores every event but key presses | read by the design (`filter_clip_event`), not re-read in task 21.2 | none |
 | Disabled button draws Up and keeps the model's state for `enabled = true` | neither (design D-C6) | O10 |
-| Release outside: `ReleaseOutside` to the pressed object, `RollOver` to the object now under the pointer | read by the design (`player.rs`), not re-read; no code before task 22 | none |
+| Release outside: `ReleaseOutside` to the pressed object, `RollOver` to the object now under the pointer | read (`player.rs`, re-read in task 22.1; code in the Player, `releaseOutside` event and `rollOver`) | none |
+| `mouseOver` and `mouseOut` bubble, `rollOver` and `rollOut` do not (chain up to the common ancestor); drag-out and drag-over dispatch like roll events | read (`interactive.rs`, `player.rs`, task 22.1) | O9 closed |
+| Hover events before `mouseMove` (task and design) against Ruffle's `mouseMove` first | read; our order differs on purpose (task text) | owner to decide |
 | Only the current state is parented; the hit state has no node; a button state child takes no Default_Instance_Name | ours-only (FakeBackend, `test/unit/buttonNodes.test.ts`) | none |
 | A clip inside a button state does not advance | ours-only | none |
 | Ruffle ran `spacer` after a click on the player; `entity_game` loaded and did not advance; Input_Script not replayed | measured | O9 |

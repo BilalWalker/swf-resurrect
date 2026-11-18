@@ -40,6 +40,7 @@ import { hasOffsets, stripAlphaAdd } from './colourMatrix';
 import { constructorSite, messageOf, type ErrorSink } from './errorReport';
 import { inspectStage, type Inspection } from './inspect';
 import { bindTimerClock, runDueTimers } from './timers';
+import { step, type ButtonEvent } from './buttonModel';
 import { hitTestAll, resolveHitTarget, type TargetNode } from './hitTest';
 import type { ButtonSymbol, ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
 import { ScriptQueue } from './scriptQueue';
@@ -296,36 +297,47 @@ export class Player {
     return { x: this.pointerX, y: this.pointerY };
   }
 
-  /** Pointer moved: `mouseMove` at the Hit_Target when the position changed. */
+  /** Pointer moved: hover events, then `mouseMove` at the Hit_Target when the position changed. */
   dispatchMouseMove(x: number, y: number): void {
     this.pointerEntry(x, y);
   }
 
   /** Button pressed: records the Pressed_Target and dispatches `mouseDown` at the Hit_Target. */
   dispatchMouseDown(x: number, y: number): void {
-    const target = this.pointerEntry(x, y, false);
+    const target = this.pointerEntry(x, y, false, true);
     if (!this.buttonDown) {
       this.buttonDown = true;
       this.pressed = target;
+      this.feedButton(target, 'press');
       target.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_DOWN));
     }
     this.syncAll();
   }
 
   /**
-   * Button released: `mouseUp` at the Hit_Target, then `click` at the Pressed_Target when it is the
-   * Hit_Target. Otherwise the outcome names the release-outside pair; no event is dispatched for it.
+   * Button released: hover events (the button counts as up), `mouseUp` at the Hit_Target, then `click` at the
+   * Pressed_Target when it is the Hit_Target. Otherwise the Pressed_Target gets `releaseOutside` and the object now
+   * under the pointer gets `rollOver` at once (Ruffle `player.rs`, read); the outcome names the pair.
    */
   dispatchMouseUp(x: number, y: number): PointerOutcome {
-    const target = this.pointerEntry(x, y, false);
+    const hoveredBefore = this.hovered;
+    const target = this.pointerEntry(x, y, false, false);
     let outcome: PointerOutcome = { releaseOutside: null };
     if (this.buttonDown) {
       const pressed = this.pressed;
       this.buttonDown = false;
       this.pressed = null;
       target.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_UP));
-      if (pressed === target) target.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
-      else if (pressed !== null) outcome = { releaseOutside: { pressed, hit: target } };
+      if (pressed === target) {
+        this.feedButton(target, 'release');
+        target.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
+      }
+      else if (pressed !== null) {
+        outcome = { releaseOutside: { pressed, hit: target } };
+        this.clipEvent('releaseOutside', pressed, null);
+        // `from` is the object hovered before this release, as in Ruffle (it may equal the new one).
+        if (target !== this.stage) this.clipEvent('rollOver', target as DisplayObject, hoveredBefore);
+      }
     }
     this.syncAll();
     return outcome;
@@ -352,10 +364,11 @@ export class Player {
   }
 
   /**
-   * One hit test per entry; publishes a changed position and dispatches `mouseMove` before the entry's
-   * own event. Returns the Hit_Target (the Stage_Object when no shape is hit).
+   * One hit test per entry; publishes a changed position, dispatches the hover events and then `mouseMove`
+   * before the entry's own event. `down` is whether the button counts as held for the hover rule (a press counts
+   * as held, a release as up). Returns the Hit_Target (the Stage_Object when no shape is hit).
    */
-  private pointerEntry(x: number, y: number, sync = true): PointerTarget {
+  private pointerEntry(x: number, y: number, sync = true, down = this.buttonDown): PointerTarget {
     const cache = new Map<unknown, TargetView>();
     // One hit view per top; the highest index is tried first and the root clip last (Requirement 7.6).
     let picked: TargetView | Stage = this.stage;
@@ -365,16 +378,93 @@ export class Player {
       picked = resolveHitTarget(hits, this.stage, this.root === tops[i] ? targetViewOf(this.root, cache) : null);
     }
     const target = picked === this.stage ? this.stage : ((picked as TargetView).source as DisplayObjectContainer);
-    if (x !== this.pointerX || y !== this.pointerY) {
+    const moved = x !== this.pointerX || y !== this.pointerY;
+    if (moved) {
       this.pointerX = x;
       this.pointerY = y;
       setPointerPosition(x, y);
-      target.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_MOVE));
     }
+    this.updateHover(target, down);
+    if (moved) target.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_MOVE));
     if (sync) this.syncAll();
     return target;
   }
 
+  /**
+   * Compares the Hit_Target with the previous one (`hovered`, null for the Stage_Object) and fires the roll events.
+   * Ruffle `player.rs` `update_mouse_state` (read). Button up: roll out at the old, roll over at the new. Button
+   * down (AVM2): a drag-out when the pressed object is the one left, a drag-over when it is the one entered, then the
+   * same roll out and roll over. No event when the target is unchanged.
+   */
+  private updateHover(target: PointerTarget, down: boolean): void {
+    const next = target === this.stage ? null : (target as DisplayObject);
+    const cur = this.hovered;
+    if (cur === next) return;
+    this.hovered = next;
+    if (down && this.pressed !== null && this.pressed !== this.stage) {
+      const pressed = this.pressed as DisplayObject;
+      if (pressed === cur) this.clipEvent('dragOut', pressed, next);
+      else if (pressed === next) this.clipEvent('dragOver', pressed, cur);
+    }
+    if (cur !== null) this.clipEvent('rollOut', cur, next);
+    if (next !== null) this.clipEvent('rollOver', next, cur);
+  }
+
+  /**
+   * The one place a Ruffle `ClipEvent` for hover and release reaches script. Task 22.2 also feeds the button
+   * state model from here. `other` is the object left (`rollOver`, `dragOver`) or entered (`rollOut`, `dragOut`);
+   * null stands for the Stage_Object. In AVM2 `dragOut` and `rollOut` dispatch alike, as do `dragOver` and `rollOver`
+   * (`interactive.rs` `event_dispatch_to_avm2`, read).
+   */
+  private clipEvent(kind: 'rollOver' | 'rollOut' | 'dragOver' | 'dragOut' | 'releaseOutside', obj: PointerTarget, other: DisplayObject | null): void {
+    // The button state model sees the event first. The roll event that follows a drag event of the pressed button is not fed:
+    // the drag event already set the state and the model has one target state per event (Ruffle's table).
+    if (kind !== 'rollOver' && kind !== 'rollOut') this.feedButton(obj, kind);
+    else if (obj !== this.pressed) this.feedButton(obj, kind);
+    if (kind === 'releaseOutside') {
+      obj.dispatchEvent(new MouseEvent('releaseOutside', true));
+      return;
+    }
+    const out = kind === 'rollOut' || kind === 'dragOut';
+    // The chain from obj up to, not including, the lowest common ancestor with the other object (the Stage_Object
+    // when there is none): `rollOut` / `rollOver` go to each of them and do not bubble.
+    const lca = this.lowestCommonAncestor(obj, other ?? this.stage);
+    const rolls = (): void => {
+      for (let p: DisplayObject | ParentNode | null = obj as DisplayObject; p !== null && p !== lca; p = p._parent) {
+        p.dispatchEvent(new MouseEvent(out ? MouseEvent.ROLL_OUT : MouseEvent.ROLL_OVER, false));
+      }
+    };
+    if (out) {
+      obj.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_OUT, true));
+      rolls();
+    } else {
+      rolls();
+      obj.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_OVER, true));
+    }
+  }
+
+  /** Feeds one event to the state model of a button and redraws it. A disabled button is inert (its state is kept). */
+  private feedButton(obj: PointerTarget, event: ButtonEvent): void {
+    if (!(obj instanceof SimpleButton) || !obj.enabled) return;
+    obj._setState(step(obj._modelState, event));
+  }
+
+  /** Ruffle `lowest_common_ancestor`: the deepest object both chains share, or null when they share none. */
+  private lowestCommonAncestor(a: PointerTarget, b: PointerTarget): DisplayObject | ParentNode | null {
+    const chain = (o: PointerTarget): Array<DisplayObject | ParentNode> => {
+      const out: Array<DisplayObject | ParentNode> = [];
+      for (let p: DisplayObject | ParentNode | null = o as DisplayObject; p !== null; p = p._parent) out.push(p);
+      return out.reverse();
+    };
+    const ca = chain(a);
+    const cb = chain(b);
+    let common: DisplayObject | ParentNode | null = null;
+    for (let i = 0; i < ca.length && i < cb.length && ca[i] === cb[i]; i++) common = ca[i]!;
+    return common;
+  }
+
+  /** The object under the pointer at the last entry; null when that was the Stage_Object. */
+  private hovered: DisplayObject | null = null;
   private pointerX = 0;
   private pointerY = 0;
   private buttonDown = false;

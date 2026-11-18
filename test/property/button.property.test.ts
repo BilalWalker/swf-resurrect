@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildButton } from '../../src/convert/buttons';
 import type { ButtonRecordModel } from '../../src/convert/model';
 import { parseScene, serialiseScene } from '../../src/convert/sceneJson';
-import { step, type ButtonEvent, type ButtonState } from '../../template/runtime/buttonModel';
+import type { ButtonState } from '../../template/runtime/buttonModel';
 import { ManualClock } from '../../template/runtime/clock';
 import { Player } from '../../template/runtime/player';
 import { validateScene } from '../../template/runtime/scene';
@@ -76,7 +76,7 @@ const BUTTON_SYMBOL: ButtonSymbol = {
   trackAsMenu: false,
   states: { up: [entryOf(1, 0, 0)], over: [entryOf(1, 100, 0)], down: [entryOf(1, 100, 0)], hit: [entryOf(1, 0, 100)] },
 };
-function buildButtonPlayer(m: [number, number, number, number, number, number]): { player: Player; btn: SimpleButton } {
+function buildButtonPlayer(m: [number, number, number, number, number, number], symbol: ButtonSymbol = BUTTON_SYMBOL): { player: Player; btn: SimpleButton } {
   const scene = {
     formatVersion: 4,
     stage: { width: 300, height: 300, backgroundColor: '#ffffff', frameRate: 10 },
@@ -84,7 +84,7 @@ function buildButtonPlayer(m: [number, number, number, number, number, number]):
     symbols: {
       '0': { type: 'sprite', frameCount: 1, frames: [[{ depth: 1, symbolId: 2, matrix: m, colorTransform: ID_CT, name: '' }]], labels: [] },
       '1': boxShape('1.shape.json'),
-      '2': BUTTON_SYMBOL,
+      '2': symbol,
     },
   } as unknown as SceneJson;
   const shapeBounds = new Map([[1, { x: 0, y: 0, width: 40, height: 30 }]]);
@@ -108,8 +108,9 @@ describe('button hit region (Player)', () => {
         const { player, btn } = buildButtonPlayer(m);
         btn._setState(state);
         let clicks = 0;
-        btn.addEventListener(MouseEvent.CLICK, () => clicks++);
-        player.dispatchClick(m[0] * lx + m[2] * ly + m[4], m[1] * lx + m[3] * ly + m[5]);
+        // A click would move the state (hover, then press) and so the region; the first hover entry is tested under the state set here.
+        btn.addEventListener(MouseEvent.MOUSE_OVER, () => clicks++);
+        player.dispatchMouseMove(m[0] * lx + m[2] * ly + m[4], m[1] * lx + m[3] * ly + m[5]);
         const expected = insideRect(lx, ly, RECTS[state]) || insideRect(lx, ly, RECTS.hit);
         expect(clicks).toBe(expected ? 1 : 0);
       }),
@@ -120,47 +121,55 @@ describe('button hit region (Player)', () => {
 
 // ---- Property 25 ----
 type PointerAction = 'moveOn' | 'moveOff' | 'press' | 'release';
+const ON: [number, number] = [10, 10];
+const OFF: [number, number] = [200, 200];
+// All states draw the same box, so the pointer stays on the button whatever the state.
+const STILL_SYMBOL: ButtonSymbol = {
+  type: 'button',
+  trackAsMenu: false,
+  states: { up: [entryOf(1, 0, 0)], over: [entryOf(1, 0, 0)], down: [entryOf(1, 0, 0)], hit: [] },
+};
 describe('button state model', () => {
   // Feature: robustness, Property 25: Button state follows the pointer model
   // **Validates: Requirements 20.5, 20.6, 20.10, 20.16, 20.17, 20.19**
-  // Model-level until task 22.2: the actions are turned into ButtonEvents here, by the rule the Player will use. Task 22.2
-  // extends this same property to feed real pointer events through the Player and compare the drawn state.
+  // Real pointer calls go through the Player (task 22.2); `model` below is the independent expectation.
   it('Property 25: the drawn state equals the pointer model for any sequence, and a disabled button is always up and inert', () => {
     const actions = fc.array(fc.constantFrom<PointerAction>('moveOn', 'moveOff', 'press', 'release'), { maxLength: 40 });
     fc.assert(
       fc.property(actions, fc.boolean(), (seq, enabled) => {
-        const btn = new SimpleButton();
+        const { player, btn } = buildButtonPlayer([1, 0, 0, 1, 0, 0], STILL_SYMBOL);
         btn.enabled = enabled;
-        let mouseEvents = 0;
-        btn.addEventListener(MouseEvent.MOUSE_DOWN, () => mouseEvents++);
+        let mouseDowns = 0;
+        btn.addEventListener(MouseEvent.MOUSE_DOWN, () => mouseDowns++);
         let on = false;
+        let down = false;
         let pressedOnButton = false;
-        let state: ButtonState = 'up';
+        let expectedDowns = 0;
         for (const a of seq) {
-          let ev: ButtonEvent | null = null;
           if (a === 'moveOn' && !on) {
             on = true;
-            ev = pressedOnButton ? 'dragOver' : 'rollOver';
+            player.dispatchMouseMove(...ON);
           } else if (a === 'moveOff' && on) {
             on = false;
-            ev = pressedOnButton ? 'dragOut' : 'rollOut';
-          } else if (a === 'press' && on && !pressedOnButton) {
-            pressedOnButton = true;
-            ev = 'press';
-          } else if (a === 'release' && pressedOnButton) {
+            player.dispatchMouseMove(...OFF);
+          } else if (a === 'press') {
+            const [x, y] = on ? ON : OFF;
+            if (!down) {
+              down = true;
+              pressedOnButton = on;
+              if (on) expectedDowns++;
+            }
+            player.dispatchMouseDown(x, y);
+          } else if (a === 'release') {
+            const [x, y] = on ? ON : OFF;
+            down = false;
             pressedOnButton = false;
-            ev = on ? 'release' : 'releaseOutside';
+            player.dispatchMouseUp(x, y);
           }
-          if (ev !== null) {
-            state = step(state, ev);
-            btn._setState(state);
-          }
-          const model: ButtonState = pressedOnButton && on ? 'down' : on ? 'over' : pressedOnButton ? 'over' : 'up';
-          expect(state).toBe(model);
+          const model: ButtonState = pressedOnButton && on ? 'down' : on || pressedOnButton ? 'over' : 'up';
           expect(btn._drawnState).toBe(enabled ? model : 'up');
-          btn.dispatchEvent(new MouseEvent(MouseEvent.MOUSE_DOWN));
         }
-        expect(mouseEvents).toBe(enabled ? seq.length : 0);
+        expect(mouseDowns).toBe(enabled ? expectedDowns : 0);
       }),
       fcConfig,
     );
