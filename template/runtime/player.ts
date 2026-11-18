@@ -43,6 +43,7 @@ import { bindTimerClock, runDueTimers } from './timers';
 import { step, type ButtonEvent } from './buttonModel';
 import { hitTestAll, resolveHitTarget, type TargetNode } from './hitTest';
 import type { ButtonSymbol, ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
+import { symbolClassNames } from './scene';
 import { ScriptQueue } from './scriptQueue';
 import { buildHitView, decomposeMatrix, NodeRegistry, ShapeObject } from './stageTree';
 
@@ -525,14 +526,14 @@ export class Player {
   }
 
   /**
-   * D39: the map from each registered constructor to the id of the symbol whose className is its registry key, and the
+   * D39: the map from each registered constructor to the id of the symbol whose className or classAliases hold its registry key, and the
    * provider for a Sprite constructor that runs with no ConstructionContext (`new Cls()` from script).
    */
   private installScriptConstruction(): void {
     const symbolOf = new Map<Function, number>();
     for (const [key, ctor] of Object.entries(this.classRegistry)) {
       for (const [id, sym] of Object.entries(this.scene.symbols)) {
-        if (sym.type === 'sprite' && sym.className === key) symbolOf.set(ctor, Number(id));
+        if (sym.type === 'sprite' && symbolClassNames(sym).includes(key)) symbolOf.set(ctor, Number(id));
       }
     }
     setContextForConstructor((newTarget) => {

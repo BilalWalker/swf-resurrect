@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { inflateSync } from 'node:zlib';
 import { basename, dirname, join, resolve } from 'node:path';
+import { symbolClassNames } from '../../template/runtime/scene';
 import type { ConvertedArtifact } from '../convert/writeConverted';
 import { omissionMessage } from '../emit/classOmissions';
 import type { BundlerCheckData, ClassOmission, LooseClass } from '../emit/classOmissions';
@@ -319,12 +320,15 @@ async function precheck(args: PipelineArgs): Promise<string | null> {
 function untranslatedClasses(artifact: ConvertedArtifact, available: ReadonlySet<string>): UnsupportedFeatureEntry[] {
   const entries: UnsupportedFeatureEntry[] = [];
   for (const [key, sym] of Object.entries(artifact.scene.symbols)) {
-    if ((sym.type !== 'sprite' && sym.type !== 'button') || sym.className === undefined || available.has(sym.className)) continue;
-    entries.push({
-      kind: 'untranslated-class',
-      id: Number(key),
-      message: `Class ${sym.className} has no translated class or override; a plain MovieClip is used`,
-    });
+    if (sym.type !== 'sprite' && sym.type !== 'button') continue;
+    for (const className of symbolClassNames(sym)) {
+      if (available.has(className)) continue;
+      entries.push({
+        kind: 'untranslated-class',
+        id: Number(key),
+        message: `Class ${className} has no translated class or override; a plain MovieClip is used`,
+      });
+    }
   }
   return entries;
 }

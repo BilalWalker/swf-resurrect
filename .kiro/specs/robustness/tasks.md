@@ -352,7 +352,7 @@ Rules that apply to every task:
     - Run `test/unit/clickgotoReplay.test.ts`, `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score tests. State every committed sample's Overall_Match and Trace_Score before and after Block C in the commit body; none may drop (Requirement 11.1). The sample table plus the generated fixture is the Requirement 20.18 check.
     - _Requirements: 11.1, 11.4, 20.18_
 
-- [-] 24. Checkpoint 3: Block C done, final
+- [x] 24. Checkpoint 3: Block C done, final
   - STOP. This is the final Checkpoint (Requirement 22.3). Follow the Checkpoint procedure of the rules: run the full suite `npm test -- --run`, hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/robustness/reviews/checkpoint-3.md`, act on its findings in a new commit, then stop and report.
   - The report holds the items of the Checkpoint procedure (real `git status`, commits since Checkpoint 2, per-sample table, both Play_Tests, Outcome, reason code and exit code of every Hostile_Fixture, new Named_Limits, Open_Items, Warm_Suite_Time, Credits_Line). It also states (Requirement 22.2): as numbers only the `redball4.swf` Outcome when present, with the `button` entry count before and after; the Named_Limits and Open_Items added by this spec; whether the hover work was delivered or the D-C8 fallback applied; the table of decisions U1 to U9 and amendments A1, A3 to A5, A7 to A15 with the task that built each; and the total credits against about 250 and the Credits_Line.
   - _Requirements: 22.1, 22.2, 22.3, 24.1 to 24.4_
@@ -369,75 +369,75 @@ Credits: no share is stated; each task states its credits in its commit body and
 
 - [ ] 25. Convert: several class names for one character id
   - Commit area: `Convert` (Emit and Runtime named only if the consumer change needs them). Verification V1, or V2 if a file under `template/` changes (a Scene_JSON field the Player reads). Read the design sections on Scene_JSON, the Symbol_Table and `className` linking, and Requirement 7 and 8 of the base spec. Today `src/convert/convertModel.ts` line 158 throws `MalformedFrameDataError` ("symbolClass: duplicate id N") and the run ends `failed internal-error`. A repeated id is legal in Flash (Ruffle keeps every pair). The general rule to build: every class name of the input stays linked to its symbol, identical pairs count once, and no SymbolClass list makes Convert throw. Downstream, Scene_JSON has one `className?` per sprite and button; the Emit registry (`planEmit.ts`, `linkedClassNames`) and the Player (`classRegistry`, `symbolOf`) read it. Design to state in 25.2: the first name in tag order stays `className`; each further distinct name is kept as an extra entry that Emit adds to `classRegistry` and the Player resolves to the same symbol (for example an optional `classAliases?: string[]` on the symbol, read by the version readers 2, 3 and 4, or equal registry keys with no scene change if the measurement shows the Player does not need them). The last pair instantiates, as in Ruffle, or the first, whichever the measurement of 25.2 and Ruffle's `set_avm2_class` order show; the design records which. Also decide, with the dump, whether FFDec's merged `ExportAssetsTag` names (not classes, absent from Ruffle's AVM2 path) are kept as links or reported as a warning, and say why.
-  - [ ] 25.1 Generate the fixture
+  - [x] 25.1 Generate the fixture
     - `test/support/symbolClassSwf.ts` (create): builds a SWF skeleton with FFDec `-xml2swf` (same method as `test/support/buttonSwf.ts`) holding two sprites, one `SymbolClassTag` with two class names for one character id, a repeated identical pair, id 0 with the document class and another name, and one export-assets pair; the tests name its classes `A`, `B`, `Doc`. Generated under a temporary directory, never committed.
-    - Tests: `test/unit/symbolClassSwf.test.ts` (create): the generated file unpacks and the dump shows the repeated id.
+    - Tests: `test/unit/symbolClassFixture.test.ts` (create): the generated file unpacks and the dump shows the repeated id.
     - _Requirements: 26.1_
 
-  - [ ] 25.2 Link every name to its symbol in `convertModel` and its consumers, and amend the documents
+  - [x] 25.2 Link every name to its symbol in `convertModel` and its consumers, and amend the documents
     - Replace the throw at line 158 with the rule above: collect all names per id in tag order, drop identical repeats, keep every distinct name linked, warn only for a link that cannot be kept. Update the consumers named in the design (`src/emit/planEmit.ts` registry, `template/runtime/player.ts` and `scene.ts` if the scene gains a field, `unbound-instance` check at lines 414 to 431 which reads one class per id). Amend `requirements.md` (new Requirement 26, item 1) and `design.md` (the design of this rule, the Ruffle lines read, the ExportAssets decision) in this same commit. If a file under `template/` changes, run the V2 floor tests and state every committed sample's scores before and after.
     - Tests: `test/unit/convertModel.test.ts` (extend): two names for one id both appear and no throw; identical repeats count once; id 0 with a second name; `test/unit/planEmit.test.ts` (extend): the registry holds every name of a linked symbol; `test/unit/player.test.ts` or the existing Player test (extend, if the Player changes): every name resolves to the same symbol.
     - _Requirements: 26.1, 26.2, 26.3_
 
-  - [ ] 25.3 Property test for class links
-    - `test/property/classLinks.test.ts` (create): `// Feature: robustness, Property 26: every SymbolClass pair stays linked and no list makes Convert throw`. For any generated list of pairs (ids from a small range including 0, names from a small pool, repeats and duplicates allowed) `convertModel` does not throw on the list, and every distinct (id, name) pair whose id is a sprite resolves to that symbol in the scene and the registry. Generators in `test/property/gen/`.
+  - [x] 25.3 Property test for class links
+    - `test/property/classLinks.property.test.ts` (create): `// Feature: robustness, Property 26: every SymbolClass pair stays linked and no list makes Convert throw`. For any generated list of pairs (ids from a small range including 0, names from a small pool, repeats and duplicates allowed) `convertModel` does not throw on the list, and every distinct (id, name) pair whose id is a sprite resolves to that symbol in the scene and the registry. Generators in `test/property/gen/`.
     - _Requirements: 26.1, 26.2_
 
-  - [ ] 25.4 Run the two local files and state the numbers
+  - [-] 25.4 Run the two local files and state the numbers
     - Run `earntodie.swf` and `giveuprobot.swf` from `.work/judge-test/` under the default limits (the check skips with a message when a file is absent; it writes only under `.work/`). The commit body gives, for each file, as numbers only: the Outcome, classes translated of candidates, and type errors. Class names of those files are never written.
     - Tests: none new; the numbers are informational.
     - _Requirements: 26.1_
 
 - [ ] 26. Pipeline: input-broken errors end `refused damaged`
   - Commit area: `Pipeline` (Convert and Unpack named). Verification V1. Read the design D-A2 (the error classifier), Requirement 4 on the reason codes, and `src/outcome/classifyError.ts`. Today only `INVALID_SWF`, `NOT_AS3`, `TIME_LIMIT`, `RUN_ABORTED`, `FFDEC_TIMEOUT` and an `FFDEC_EXIT` of the Unpack stage are classified; every other code, including `MALFORMED_FRAME_DATA`, ends `failed internal-error`. A file whose data is broken is the input's fault and must end `refused damaged`. An error of our own code, or of the environment, stays `failed internal-error`.
-  - [ ] 26.1 Classify each error class and record the table
+  - [~] 26.1 Classify each error class and record the table
     - One row per error class that Convert, Unpack, Facts and Recover can throw: `UnknownSymbolError` (`UNKNOWN_SYMBOL`, a placement names a character that is not defined), `ShapeExportError` (`SHAPE_EXPORT`, a shape has no usable SVG), `MalformedSvgError` (`MALFORMED_SVG`), `MalformedFrameDataError` (`MALFORMED_FRAME_DATA`, thrown from `convertModel.ts` lines 52 and 158 and `resolveTimeline.ts` lines 111 and 122), `SymbolCycleError` (`SYMBOL_CYCLE`), `InvalidClassNameError` (`INVALID_CLASS_NAME`, from `qualifiedName.ts` and `readUnpacked.ts` line 43), `InvalidSwfError`, `NotAs3Error`, `FfdecExitError`, `FfdecTimeoutError`, `MissingExportError` (`MISSING_EXPORT`, thrown after an FFDec run that wrote no `shapes`), `XmlVersionError` (`XML_VERSION`), `MissingHeaderValueError` (`MISSING_HEADER_VALUE`), `FfdecNotFoundError`, `JavaNotFoundError`; the plain `Error` of `pathData.ts` (path data from the SVG, a parse error of our reader on FFDec output); and the facts reader and ABC scan, which catch their own end-of-data signal and throw nothing to the pipeline. The proposed split, to confirm by reading each throw site and a generated broken file in 26.2: `refused damaged` for the errors that say the SWF's own data is inconsistent (`MALFORMED_FRAME_DATA`, `UNKNOWN_SYMBOL`, `SYMBOL_CYCLE`, `MALFORMED_SVG`, `SHAPE_EXPORT`, `INVALID_CLASS_NAME`, `MISSING_EXPORT`, and `FFDEC_EXIT` of Unpack, already so); `failed internal-error` for `XML_VERSION` and `MISSING_HEADER_VALUE` (our reader does not match this FFDec), `FFDEC_NOT_FOUND`, `JAVA_NOT_FOUND`, `RUN_ABORTED`, the plain path-data `Error` and any unknown error. Amend `requirements.md` (Requirement 26, item 2) and `design.md` (the table with code, throw site, meaning and outcome) in this commit.
     - Tests: none beyond 26.2; the table is checked by 26.3.
     - _Requirements: 26.4_
 
-  - [ ] 26.2 Implement the classifier and test it
+  - [~] 26.2 Implement the classifier and test it
     - Extend `classifyError` with the `refused damaged` rows of the table, keyed on `code` and never on message text; the reason sentence of `damaged` stays the existing one and no input text reaches it (Requirement 8 text scrub). Update `docs/outcome.md` where it lists the causes of `damaged` (keep `test/unit/outcomeDocs.test.ts` passing).
     - Tests: `test/unit/classifyError.test.ts` (extend): one case per row; `test/unit/brokenFrame.test.ts` (create): a SWF generated with `-xml2swf` whose frame data is broken (a placement of an undefined character, then a sprite that places itself) ends `refused damaged` with exit 3 through `runPipeline`, and the failing path writes `outcome.json`.
     - _Requirements: 26.4, 26.5_
 
-  - [ ] 26.3 Property test for the table
+  - [~] 26.3 Property test for the table
     - `test/property/outcome.test.ts` (extend): `// Feature: robustness, Property 27: every error class of the table maps to its stated outcome; an unknown error stays failed internal-error`. For each class in the table (the table is exported as data by `classifyError.ts` and the test imports it) an instance with generated arguments gives the stated kind and reason code; a generated error with an unknown code, a plain `Error` and a non-error value give `failed internal-error`.
     - _Requirements: 26.4, 26.5_
 
 - [ ] 27. Facts, Outcome and Convert: embedded SWF
   - Commit area: `Pipeline` (Facts, Outcome and Convert named). Verification V1. Read the design sections on the Facts_Reader, the gap kinds and reason sentences, and `docs/outcome.md`. Today a wrapper SWF (a document class that loads a SWF held in a `DefineBinaryDataTag`) ends `converted-with-gaps - 22 of 26 classes translated`, which hides that the real game was not converted. The local file holds one such tag of 7349081 bytes starting `CWS`. FFDec has `-export binaryData`; the signature can also be read from the dump.
-  - [ ] 27.1 Detect a `DefineBinaryDataTag` with a SWF signature
+  - [~] 27.1 Detect a `DefineBinaryDataTag` with a SWF signature
     - `src/facts/embeddedSwf.ts` (create, pure): given the tag body bytes of a `DefineBinaryData` tag (the readers in `src/facts` already walk tags), report `{ characterId, offset, length, signature: 'FWS' | 'CWS' | 'ZWS' }` for each tag whose data starts with one of those three signatures and has at least the 8-byte header; count and sizes in the Facts. Add the file to the purity test list. `test/support/hostileSwf.ts` (extend): a `DefineBinaryData` helper (tag 87).
     - Tests: `test/unit/embeddedSwf.test.ts` (create): FWS, CWS, ZWS found; no signature, a 2-byte payload and a tag cut short give none, no throw.
     - _Requirements: 26.6_
 
-  - [ ] 27.2 The `embedded-swf` gap kind and its reason sentence
+  - [~] 27.2 The `embedded-swf` gap kind and its reason sentence
     - Add `embedded-swf` to the gap kinds (`src/outcome/gaps.ts`), a reason sentence saying the file is a wrapper around another SWF that was not converted (`reasons.ts`, plain words, count and sizes only, no input text), the Outcome_File fields (count, total bytes, largest size), and `docs/outcome.md` with one JSON example; keep `test/unit/outcomeDocs.test.ts` passing. The Outcome of a wrapper stays `converted-with-gaps` unless 27.3 converts the inner file. Amend `requirements.md` (Requirement 26, item 3) and `design.md` (gap kind, sentence, fields) in this commit.
     - Tests: `test/unit/outcome.test.ts`, `test/unit/outcomeFile.test.ts`, `test/unit/reasons.test.ts` (extend): the kind is counted, the sentence has the numbers and no path, the file round-trips through the parser; `decideOutcome` puts it in the most-gaps summary by count.
     - _Requirements: 26.6, 26.7_
 
-  - [ ] 27.3 Measure, then decide whether to convert the inner SWF
+  - [~] 27.3 Measure, then decide whether to convert the inner SWF
     - Measure on the local wrapper file, as numbers only: the time of `-export binaryData` (or reading the bytes from the dump), the time and Outcome of running the pipeline on the extracted file, and the added code. Decide: extract the inner SWF into the work directory and convert that instead when it fits the budget and is general (any signature of 27.1, the inner file goes through the same Facts, Run_Limits, recovery and cleanup as an input, nesting is limited to one level, an inner file that is itself a wrapper is a gap); otherwise keep the gap of 27.2 and say why. The decision and the measurement are recorded in `design.md` in this commit, with `requirements.md` (Requirement 26, item 3) if the behaviour changes. If extracted: the Outcome says the inner file was converted (reason sentence and Outcome_File field), the extracted file lives under `.work`-style work directory covered by the cleanup plan and counted against the Run_Limits, and the output is the inner file's project. If not extracted: no code change beyond the design text and the commit body says which limit decided.
     - Tests: if extracted, `test/unit/embeddedExtract.test.ts` (create): the generated wrapper of 27.4 yields the inner file's project, the Outcome field says so, a wrapper whose inner file is damaged ends `refused damaged`, and the time limit applies to both stages; if not, none.
     - _Requirements: 26.8_
 
-  - [ ] 27.4 Tests, property and the local-file numbers
+  - [~] 27.4 Tests, property and the local-file numbers
     - `test/support/embeddedSwf.ts` (create): a generated wrapper (a tiny SWF inside a `DefineBinaryData` tag via `-xml2swf`, CWS and ZWS variants made by the hostile builder, no-signature variant). `test/unit/embeddedPipeline.test.ts` (create): the wrapper ends with the `embedded-swf` gap (or the extraction result of 27.3), CWS and ZWS variants both detected, a payload without a signature gives no gap. `test/property/facts.test.ts` (extend): `// Feature: robustness, Property 28: embedded SWF detection finds exactly the DefineBinaryData tags that start with a SWF signature`, for any generated tag list. The commit body gives, for the local wrapper file, as numbers only: Outcome, classes translated of candidates, type errors, time.
     - _Requirements: 26.6, 26.7, 26.8_
 
 - [ ] 28. Docs: correct the run-limit note
   - Commit area: `Docs`. Verification V1 (`npx vitest related --run` on the docs test). Read `docs/outcome.md`, the Run_Limits section of `tech.md` and Requirement 26 item 4.
-  - [ ] 28.1 Verify the web side and correct `docs/outcome.md`
+  - [~] 28.1 Verify the web side and correct `docs/outcome.md`
     - Read `web/` only (no edit): confirm the web side passes the run limit to the engine as `--run-limit` (default 300 s) and keeps its own kill 30 s above it as a backstop; quote file and line in the commit body. If it does not, stop and ask. Replace the note that says the web server kills at 180 s. Amend `requirements.md` (Requirement 26, item 4) in this commit.
     - Tests: `test/unit/outcomeDocs.test.ts` stays passing; extend it with a check that the doc no longer says 180.
     - _Requirements: 26.9_
 
-  - [ ] 28.2 Correct the same wording elsewhere
+  - [~] 28.2 Correct the same wording elsewhere
     - Grep `180` in `docs/`, `.kiro/specs/`, `.kiro/steering/` and `README` for the same statement and correct each hit that refers to the web kill; leave unrelated numbers. The commit body lists each file changed.
     - Tests: none beyond 28.1.
     - _Requirements: 26.9_
 
-- [ ] 29. Checkpoint 4: Block D done, final
+- [~] 29. Checkpoint 4: Block D done, final
   - STOP. This is the only Checkpoint of Block D. Follow the Checkpoint procedure of the rules: run the full suite `npm test -- --run`, hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/robustness/reviews/checkpoint-4.md`, act on its findings in a new commit, then stop and report.
   - The report holds the items of the Checkpoint procedure (real `git status`, commits since Checkpoint 3, per-sample table, both Play_Tests, Outcome, reason code and exit code of every Hostile_Fixture, new Named_Limits, Open_Items, Warm_Suite_Time, Credits_Line and the total credits of Block D). It adds one row per local file (`earntodie`, `giveuprobot`, `burritobison`, `papaspizzeria`, `run2`, `redball4`) under the default limits, as numbers only: Outcome, classes translated of candidates, type errors, time. `run2` is expected unchanged. It also states the 27.3 decision with its measurement and the 26.1 table.
   - _Requirements: 22.1, 22.2, 24.1 to 24.4, 26.1 to 26.9_

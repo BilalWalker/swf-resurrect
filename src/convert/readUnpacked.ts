@@ -9,6 +9,7 @@ import { parseStructure, readDumpHeader } from './ffdecXml';
 import type { ClassSourceModel, ShapeAssetModel, TagsModel, UnsupportedObservation } from './model';
 import { extractSvgOrigin } from './svgOrigin';
 import { InvalidClassNameError, scriptRelPath } from './qualifiedName';
+import { symbolClassPairs } from './classLinks';
 import { parseSymbolsCsv } from './symbolsCsv';
 
 function byCodeUnit(a: string, b: string): number {
@@ -51,8 +52,10 @@ export async function readUnpacked(unpacked: UnpackResult): Promise<TagsModel> {
   const { xmlVersion, header } = readDumpHeader(dumpText);
   const structure = parseStructure(dumpText);
 
-  const symbolClasses = parseSymbolsCsv(
-    unpacked.symbolClassPath === null ? '' : await readFile(unpacked.symbolClassPath, 'utf8'),
+  // symbols.csv lists the SymbolClassTag pairs first and the ExportAssetsTag pairs after them; only the first are classes.
+  const symbolClasses = symbolClassPairs(
+    parseSymbolsCsv(unpacked.symbolClassPath === null ? '' : await readFile(unpacked.symbolClassPath, 'utf8')),
+    structure.symbolClassPairs,
   );
 
   const files = await listSvgFiles(unpacked.shapesDir);

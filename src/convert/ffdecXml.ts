@@ -559,6 +559,8 @@ export function parseStructure(xmlText: string): {
   buttons: ButtonModel[];
   /** From DefineSceneAndFrameLabelData; empty when the tag is absent. firstFrame is 1-based. */
   scenes: Array<{ name: string; firstFrame: number }>;
+  /** Pairs held by the SymbolClassTag items (the first lines of symbols.csv); 0 when the tag is absent. */
+  symbolClassPairs: number;
   unsupported: UnsupportedObservation[];
 } {
   const parser = new XMLParser({
@@ -581,6 +583,7 @@ export function parseStructure(xmlText: string): {
     bitmapIds: [] as number[],
     buttons: [] as ButtonModel[],
     scenes: [] as Array<{ name: string; firstFrame: number }>,
+    symbolClassPairs: 0,
     unsupported: ctx.unsupported,
   };
   if (!swf) return out;
@@ -656,6 +659,9 @@ export function parseStructure(xmlText: string): {
       else ctx.unsupported.push({ kind: 'other-tag', tagName: kind });
     } else if (kind === FFDEC_XML.timeline.sceneAndLabelData) {
       out.scenes = readScenes(item);
+    } else if (kind === FFDEC_XML.symbolClass.tag) {
+      const ids = findChild(item, FFDEC_XML.item.element, FFDEC_XML.symbolClass.ids);
+      if (ids) out.symbolClassPairs += childrenOf(ids.node, FFDEC_XML.symbolClass.ids).filter((n) => nameOf(n) === FFDEC_XML.item.element).length;
     } else if (IGNORED_DEFINE_TAGS.has(kind) || kind.startsWith(FFDEC_XML.fontTagPrefix)) {
       // known, nothing to read
     } else if (kind.startsWith('Define')) {

@@ -51,7 +51,7 @@ function toEntry(r: ButtonRecordModel): DisplayListEntry {
  * Builds the button symbol. Records are taken in tag order; `className` is the SymbolClass link, when there is one.
  * Every record's character must exist in the scene (the caller drops the others first).
  */
-export function buildButton(button: ButtonModel, className?: string): BuiltButton {
+export function buildButton(button: ButtonModel, className?: string, classAliases: readonly string[] = []): BuiltButton {
   const limits: ButtonLimit[] = [];
   const who = `button ${button.id}`;
 
@@ -98,5 +98,6 @@ export function buildButton(button: ButtonModel, className?: string): BuiltButto
     states: { up: list('up'), over: list('over'), down: list('down'), hit: list('hit') },
   };
   if (className !== undefined) symbol.className = className;
+  if (classAliases.length > 0) symbol.classAliases = [...classAliases];
   return { symbol, limits };
 }

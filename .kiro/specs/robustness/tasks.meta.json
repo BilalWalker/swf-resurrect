@@ -751,6 +751,11 @@
         "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794982802980
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983812245
       }
     ],
     "20. Convert: button symbols and Scene_JSON 4": [
@@ -765,6 +770,139 @@
         "executionId": "3e4eadd3-8d6b-4768-8e90-9158f72b6e7d",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794936214188
+      }
+    ],
+    "25.1 Generate the fixture": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983813098
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983823265
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794984031979
+      }
+    ],
+    "25.2 Link every name to its symbol in `convertModel` and its consumers, and amend the documents": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983813498
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794984032355
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794984839356
+      }
+    ],
+    "25.3 Property test for class links": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983813812
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794984839762
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794984910470
+      }
+    ],
+    "25.4 Run the two local files and state the numbers": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983814119
+      },
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794984910779
+      }
+    ],
+    "26.1 Classify each error class and record the table": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983814443
+      }
+    ],
+    "26.2 Implement the classifier and test it": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983814715
+      }
+    ],
+    "26.3 Property test for the table": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983814997
+      }
+    ],
+    "27.1 Detect a `DefineBinaryDataTag` with a SWF signature": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983815259
+      }
+    ],
+    "27.2 The `embedded-swf` gap kind and its reason sentence": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983815488
+      }
+    ],
+    "27.3 Measure, then decide whether to convert the inner SWF": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983815776
+      }
+    ],
+    "27.4 Tests, property and the local-file numbers": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983816044
+      }
+    ],
+    "28.1 Verify the web side and correct `docs/outcome.md`": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983816354
+      }
+    ],
+    "28.2 Correct the same wording elsewhere": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983816638
+      }
+    ],
+    "29. Checkpoint 4: Block D done, final": [
+      {
+        "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794983816916
       }
     ]
   }

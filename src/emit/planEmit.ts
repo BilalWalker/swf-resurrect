@@ -1,5 +1,6 @@
 // Pure emit planning: no node:fs, no clock, no randomness. Same input, same plan.
 import type { SceneJson } from '../../template/runtime/scene';
+import { symbolClassNames } from '../../template/runtime/scene';
 import type { ShapeFile } from '../convert/convertModel';
 import type { TranslatedClass } from '../translate/planTranslate';
 import { canonicalClassPath, parseQualifiedName, relativeSpecifier, shimSpecifier } from '../convert/qualifiedName';
@@ -62,7 +63,7 @@ function linkedClassNames(scene: SceneJson): Set<string> {
   const names = new Set<string>();
   for (const key of Object.keys(scene.symbols)) {
     const symbol = scene.symbols[key];
-    if ((symbol.type === 'sprite' || symbol.type === 'button') && symbol.className !== undefined) names.add(symbol.className);
+    if (symbol.type === 'sprite' || symbol.type === 'button') for (const n of symbolClassNames(symbol)) names.add(n);
   }
   return names;
 }

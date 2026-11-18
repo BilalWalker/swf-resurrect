@@ -6,6 +6,7 @@ import { printShapeJson } from '../../template/runtime/shapeJson';
 import { sortUnsupported } from '../pipeline/unsupported';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
 import { buildButton } from './buttons';
+import { buildClassLinks } from './classLinks';
 import { MalformedFrameDataError, ShapeExportError, SymbolCycleError, UnknownSymbolError } from './errors';
 import type { TagsModel, TimelineModel, UnsupportedKind } from './model';
 import { resolveMasks } from './masks';
@@ -153,11 +154,10 @@ export function convertModel(model: TagsModel): ConvertResult {
     if (assetById.has(a.id)) malformed(`duplicate shape asset ${a.id}`);
     assetById.set(a.id, a);
   }
+  // Every class name stays linked (Requirement 26.1): one primary name per id, the other names are aliases.
+  const links = buildClassLinks(model.symbolClasses);
   const classById = new Map<number, string>();
-  for (const e of model.symbolClasses) {
-    if (classById.has(e.id)) throw new MalformedFrameDataError('root', null, `symbolClass: duplicate id ${e.id}`);
-    classById.set(e.id, e.className);
-  }
+  for (const [id, l] of links) classById.set(id, l.primary);
   const propsByClass = new Map<string, string[] | null>();
   for (const c of model.classSources) propsByClass.set(c.className, c.properties);
 
@@ -278,7 +278,7 @@ export function convertModel(model: TagsModel): ConvertResult {
       }
       return true;
     });
-    const built = buildButton({ ...b, records: kept }, classById.get(b.id));
+    const built = buildButton({ ...b, records: kept }, classById.get(b.id), links.get(b.id)?.aliases);
     symbols[String(b.id)] = built.symbol;
     buttonIds.add(b.id);
     for (const l of built.limits) unsupported.push({ kind: l.kind, id: b.id, message: l.message });
@@ -350,6 +350,8 @@ export function convertModel(model: TagsModel): ConvertResult {
     };
     const className = classById.get(id);
     if (className !== undefined) sprite.className = className;
+    const aliases = links.get(id)?.aliases ?? [];
+    if (aliases.length > 0) sprite.classAliases = aliases;
     if (id === 0) sprite.scenes = rootScenes(model.scenes, r.frames.length, warnings);
     symbols[String(id)] = sprite;
 
@@ -414,9 +416,9 @@ export function convertModel(model: TagsModel): ConvertResult {
   for (const [id] of timelines) {
     const className = classById.get(id);
     if (className === undefined) continue;
-    const props = propsByClass.get(className);
-    if (props === undefined || props === null) continue;
-    const declared = new Set(props);
+    const known = [className, ...(links.get(id)?.aliases ?? [])].map((n) => propsByClass.get(n));
+    if (known.every((p) => p === undefined || p === null)) continue;
+    const declared = new Set(known.flatMap((p) => p ?? []));
     const names = new Set<string>();
     for (const frame of (symbols[String(id)] as SpriteSymbol).frames) {
       for (const e of frame) if (e.name !== '' && !declared.has(e.name)) names.add(e.name);

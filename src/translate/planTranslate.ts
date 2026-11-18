@@ -1,6 +1,7 @@
 // Pure planning step of the Translate stage (design 3). No node:* imports.
 
 import type { SceneJson } from '../../template/runtime/scene';
+import { symbolClassNames } from '../../template/runtime/scene';
 import { qualifiedFromScriptPath } from '../convert/qualifiedName';
 import { DuplicateClassError } from './errors';
 import type { FlashApiGapUse } from './flashApiGaps';
@@ -86,10 +87,12 @@ export function keyScriptPaths(relPaths: readonly string[]): { keyed: Array<{ qu
 export function childNamesByClass(scene: SceneJson): Map<string, Set<string>> {
   const out = new Map<string, Set<string>>();
   for (const sym of Object.values(scene.symbols)) {
-    if (sym.type !== 'sprite' || sym.className === undefined) continue;
-    const names = out.get(sym.className) ?? new Set<string>();
-    for (const p of sym.frames[0] ?? []) if (p.name !== '') names.add(p.name);
-    out.set(sym.className, names);
+    if (sym.type !== 'sprite') continue;
+    for (const className of symbolClassNames(sym)) {
+      const names = out.get(className) ?? new Set<string>();
+      for (const p of sym.frames[0] ?? []) if (p.name !== '') names.add(p.name);
+      out.set(className, names);
+    }
   }
   return out;
 }
@@ -158,10 +161,11 @@ export function planTranslate(
   const emitted = new Set<string>();
   const queue: string[] = [];
   for (const sym of Object.values(scene.symbols)) {
-    const name = (sym as { className?: string }).className;
-    if (name !== undefined && translated.has(name) && !emitted.has(name)) {
-      emitted.add(name);
-      queue.push(name);
+    for (const name of symbolClassNames(sym as { className?: string; classAliases?: string[] })) {
+      if (translated.has(name) && !emitted.has(name)) {
+        emitted.add(name);
+        queue.push(name);
+      }
     }
   }
   while (queue.length > 0) {

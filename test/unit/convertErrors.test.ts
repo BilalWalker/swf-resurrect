@@ -107,17 +107,9 @@ describe('convertModel error paths', () => {
     expect((e as Error).message).toBe('Sprite places itself: 2 -> 3 -> 2');
   });
 
-  it('rejects duplicate symbol-class ids', () => {
-    const e = fail(
-      model({
-        symbolClasses: [
-          { id: 0, className: 'A' },
-          { id: 0, className: 'B' },
-        ],
-      }),
-    );
-    expect(e).toBeInstanceOf(MalformedFrameDataError);
-    expect((e as Error).message).toContain('duplicate id 0');
+  it('keeps several names for one symbol-class id instead of throwing (Requirement 26.1)', () => {
+    const r = convertModel(model({ symbolClasses: [{ id: 0, className: 'A' }, { id: 0, className: 'B' }] }));
+    expect(r.scene.symbols['0']).toMatchObject({ className: 'A', classAliases: ['B'] });
   });
 });
 

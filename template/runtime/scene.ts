@@ -23,6 +23,8 @@ export interface DisplayListEntry {
 export interface SpriteSymbol {
   type: 'sprite';
   className?: string; // omitted when not linked
+  /** Further class names linked to this symbol (SymbolClass repeats an id). Omitted when empty. */
+  classAliases?: string[];
   frameCount: number; // equals frames.length
   frames: DisplayListEntry[][]; // frames[i] is frame i + 1
   labels: Array<{ name: string; frame: number }>; // frame is 1-based
@@ -40,6 +42,8 @@ export const DEFAULT_SCENE_NAME = 'Scene 1';
 export interface ButtonSymbol {
   type: 'button';
   className?: string; // omitted when not linked
+  /** Further class names linked to this symbol (SymbolClass repeats an id). Omitted when empty. */
+  classAliases?: string[];
   trackAsMenu: boolean;
   states: { up: DisplayListEntry[]; over: DisplayListEntry[]; down: DisplayListEntry[]; hit: DisplayListEntry[] };
 }
@@ -150,6 +154,9 @@ export function validateScene(scene: unknown): asserts scene is SceneJson {
       if (sym.className !== undefined && typeof sym.className !== 'string') {
         fail(`${sp}.className`, 'must be a string when present');
       }
+      if (sym.classAliases !== undefined && (!Array.isArray(sym.classAliases) || sym.classAliases.some((n: unknown) => typeof n !== 'string'))) {
+        fail(`${sp}.classAliases`, 'must be an array of strings when present');
+      }
       const max = Number(key) === rootId ? MAX_ROOT_FRAMES : Number.MAX_SAFE_INTEGER;
       const frameCount = checkInt(sym.frameCount, `${sp}.frameCount`, 1, max);
       const frames = sym.frames;
@@ -190,6 +197,9 @@ export function validateScene(scene: unknown): asserts scene is SceneJson {
       if (sym.className !== undefined && typeof sym.className !== 'string') {
         fail(`${sp}.className`, 'must be a string when present');
       }
+      if (sym.classAliases !== undefined && (!Array.isArray(sym.classAliases) || sym.classAliases.some((n: unknown) => typeof n !== 'string'))) {
+        fail(`${sp}.classAliases`, 'must be an array of strings when present');
+      }
       if (typeof sym.trackAsMenu !== 'boolean') fail(`${sp}.trackAsMenu`, 'must be a boolean');
       const states = sym.states;
       if (!isRecord(states)) fail(`${sp}.states`, 'must be an object');
@@ -222,4 +232,9 @@ export function parseScene(text: string): SceneJson {
   const root = value.symbols[String(value.rootSymbolId)] as SpriteSymbol;
   if (root.scenes === undefined) root.scenes = [{ name: DEFAULT_SCENE_NAME, firstFrame: 1 }];
   return value;
+}
+
+/** Every class name linked to a sprite or button symbol: className first, then the aliases. */
+export function symbolClassNames(symbol: { className?: string; classAliases?: readonly string[] }): string[] {
+  return symbol.className === undefined ? [] : [symbol.className, ...(symbol.classAliases ?? [])];
 }

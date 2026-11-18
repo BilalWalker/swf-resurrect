@@ -476,3 +476,13 @@ Further facts from the code that shape the requirements:
 3. WHEN a task changes the `[translate]` console line in `src/pipeline/pipeline.ts`, THE implementer SHALL make the line use the numbers after the type-check gate, or label it as a pre-check count, in its own commit, so that the console line and the Translation_Report no longer disagree. (Amended at Checkpoint 1, owner decision: the label is a separate indented line after the `[translate] ok (...)` line, which keeps its original bracket text, because the web server parses that text.)
 4. WHEN a task changes `.kiro/steering/tech.md`, THE implementer SHALL correct the Scene_JSON `formatVersion` statement (Requirement 10.4) in its own commit.
 5. EACH fix of this requirement SHALL carry the test named in the requirement that it implements, where that requirement names one.
+
+### Requirement 26: Local-file findings (Block D)
+
+**User Story:** As the owner, I want the faults that five local games showed handled in general, so that no real file ends ailed internal-error for a reason of its input.
+
+#### Acceptance Criteria
+
+1. THE Convert stage SHALL keep every class name of the SymbolClass list linked to its symbol, SHALL count identical (id, name) pairs once, and SHALL NOT throw for any SymbolClass list, including a list with several names for one character id.
+2. WHEN a character id has several class names, THE symbol's className SHALL be the name Ruffle instantiates it with (the last pair in tag order; for id 0 the first, the root class) and every other distinct name SHALL be kept in an optional classAliases array of the sprite or button symbol, which THE Scene_JSON writer SHALL emit only when it is not empty and the readers of formatVersion 2, 3 and 4 SHALL accept; WHEN no symbol has an alias, THE Scene_JSON bytes SHALL equal those written before this requirement.
+3. THE Emit registry, the translated-class set, and THE Player SHALL treat every alias as a linked class name: each alias class registered under its own name SHALL build the same symbol when the Player or script code instantiates it, and a symbol without aliases SHALL behave as before; THE ExportAssetsTag pairs that FFDec's symbols.csv lists after the SymbolClassTag pairs SHALL NOT be class links.

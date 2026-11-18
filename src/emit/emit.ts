@@ -17,6 +17,7 @@ import type { TranslationProblem } from '../translate/report';
 import type { EvalRange, GateResult } from '../translate/typeCheckGate';
 import { relativeSpecifier } from '../convert/qualifiedName';
 import type { SceneJson } from '../../template/runtime/scene';
+import { symbolClassNames } from '../../template/runtime/scene';
 
 export interface EmitOptions {
   outputDir: string;
@@ -271,8 +272,8 @@ function linkedSymbols(scene: SceneJson): LinkedSymbol[] {
   const out: LinkedSymbol[] = [];
   for (const key of Object.keys(scene.symbols)) {
     const symbol = scene.symbols[key];
-    if ((symbol.type === 'sprite' || symbol.type === 'button') && symbol.className !== undefined) {
-      out.push({ symbolId: Number(key), className: symbol.className });
+    if (symbol.type === 'sprite' || symbol.type === 'button') {
+      for (const className of symbolClassNames(symbol)) out.push({ symbolId: Number(key), className });
     }
   }
   return out;
