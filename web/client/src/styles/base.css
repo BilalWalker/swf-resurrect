@@ -154,11 +154,13 @@ pre,
   }
 }
 
+/* The moon hangs in the right margin on wide screens and sits in the header row elsewhere, so it
+   never slides behind the drop zone or the page title. */
 .moon {
   position: absolute;
-  top: clamp(48px, 9vh, 110px);
-  right: clamp(24px, 12vw, 200px);
-  width: clamp(70px, 10vw, 128px);
+  top: 84px;
+  right: calc((100vw - var(--max)) / 2 - 116px);
+  width: 96px;
   aspect-ratio: 1;
   border-radius: 50%;
   background:
@@ -169,6 +171,17 @@ pre,
   box-shadow:
     0 0 40px 6px rgba(185, 248, 215, 0.25),
     0 0 140px 40px rgba(126, 242, 184, 0.08);
+}
+
+@media (max-width: 1439px) {
+  .moon {
+    top: 13px;
+    right: var(--gutter);
+    width: 40px;
+    box-shadow:
+      0 0 18px 3px rgba(185, 248, 215, 0.22),
+      0 0 60px 16px rgba(126, 242, 184, 0.07);
+  }
 }
 
 .horizon {
@@ -336,6 +349,12 @@ main,
 
 .wordmark {
   white-space: nowrap;
+}
+
+@media (max-width: 1439px) {
+  .top {
+    padding-right: calc(var(--gutter) + 56px);
+  }
 }
 
 @media (max-width: 560px) {
