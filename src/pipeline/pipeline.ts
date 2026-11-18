@@ -32,7 +32,7 @@ import { planCleanup } from './cleanup';
 import type { CleanupPlan } from './cleanup';
 import { createGuard, RunAbortedError } from './guard';
 import type { Clock, RunGuard } from './guard';
-import { defaultLimits } from './limits';
+import { defaultLimits, stageAllowanceS } from './limits';
 import { realClock } from './realClock';
 import type { PipelineStage } from './errors';
 import { classifyOverrides } from './handwrittenSet';
@@ -409,6 +409,8 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
         swfPath: resolve(args.swfPath),
         workDir,
         ffdecJarPath: args.ffdecJarPath,
+        allowanceMs: stageAllowanceS(guard.limits, 'unpack') * 1000,
+        allowanceLabel: ` s stage limit`,
       }),
     );
     if (facts !== null) {

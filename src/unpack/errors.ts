@@ -38,6 +38,8 @@ export class FfdecExitError extends UnpackError {
 
 export class FfdecTimeoutError extends UnpackError {
   readonly code = 'FFDEC_TIMEOUT';
+  /** The limit that applied when a stage allowance bounded the call, for example 120 s stage limit. Set by unpack. */
+  limit?: string;
   constructor(readonly seconds: number = 60) {
     super(`FFDec exceeded the ${seconds} second limit and was stopped`);
   }

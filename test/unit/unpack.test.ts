@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { InvalidClassNameError } from '../../src/convert/qualifiedName';
-import { MissingExportError } from '../../src/unpack/errors';
+import { FfdecTimeoutError, MissingExportError } from '../../src/unpack/errors';
 import type { FfdecSpawner } from '../../src/unpack/spawnFfdec';
 import { unpack } from '../../src/unpack/unpack';
 
@@ -106,5 +106,47 @@ describe('unpack text export (fake FFDec)', () => {
   it('12.1 a missing texts directory is an error only when the dump has text', async () => {
     expect((await run(false, true)).result).toBeInstanceOf(MissingExportError);
     expect((await run(false, false)).result.textsDir).toBeDefined();
+  });
+});
+
+describe('unpack per-call bound from the stage allowance (fake FFDec)', () => {
+  async function setup() {
+    const dir = await mkdtemp(join(tmpdir(), 'swf-unpack-allow-'));
+    workDirs.push(dir);
+    const swf = join(dir, 'in.swf');
+    await writeFile(swf, 'FWS\x09rest');
+    const jar = join(dir, 'ffdec-cli.jar');
+    await writeFile(jar, 'jar');
+    return { dir, swf, jar };
+  }
+  it('passes the remaining allowance to each call, not a fixed 60 s, and names the limit on timeout', async () => {
+    const { dir, swf, jar } = await setup();
+    const xml = await readFile(join(root, 'test', 'fixtures', 'clickgoto', 'structure.xml'), 'utf8');
+    let t = 0;
+    const seen: number[] = [];
+    const spawner: FfdecSpawner = async (req) => {
+      seen.push(req.timeoutMs);
+      t += 70_000; // longer than 60 s: must not be cut
+      if (seen.length === 2) throw new FfdecTimeoutError(Math.round(req.timeoutMs / 1000));
+      await writeFile(req.args[2]!, xml);
+      return { stdout: '', stderr: '' };
+    };
+    const err = await unpack({
+      swfPath: swf, workDir: dir, ffdecJarPath: jar, spawner,
+      allowanceMs: 120_000, allowanceLabel: '120 s stage limit', now: () => t,
+    }).catch((e: unknown) => e);
+    expect(seen[0]).toBe(120_000);
+    expect(seen).toEqual([120_000, 50_000]);
+    expect((err as FfdecTimeoutError).limit).toBe('120 s stage limit');
+  });
+  it('keeps the fixed 60 s default without an allowance', async () => {
+    const { dir, swf, jar } = await setup();
+    const seen: number[] = [];
+    const spawner: FfdecSpawner = async (req) => {
+      seen.push(req.timeoutMs);
+      throw new Error('stop');
+    };
+    await unpack({ swfPath: swf, workDir: dir, ffdecJarPath: jar, spawner }).catch(() => undefined);
+    expect(seen).toEqual([60_000]);
   });
 });

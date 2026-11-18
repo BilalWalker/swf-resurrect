@@ -3,7 +3,7 @@ import { resolve, join } from 'node:path';
 import { checkXmlVersion, isAs3Dump, readDumpHeader } from '../convert/ffdecXml';
 import type { SwfHeader, XmlVersion } from '../convert/ffdecXml';
 import { parseSymbolsCsv } from '../convert/symbolsCsv';
-import { FfdecNotFoundError, MissingExportError, NotAs3Error } from './errors';
+import { FfdecNotFoundError, FfdecTimeoutError, MissingExportError, NotAs3Error } from './errors';
 import { spawnFfdec } from './spawnFfdec';
 import type { FfdecSpawner } from './spawnFfdec';
 import { assertValidSwfFile } from './swfSniff';
@@ -16,6 +16,15 @@ export interface UnpackInput {
   ffdecJarPath: string;
   javaCommand?: string;
   timeoutMs?: number;
+  /**
+   * Stage allowance in ms. When given, each FFDec call is bounded by what is left of it, not by 	imeoutMs.
+   * Without it the fixed 	imeoutMs (default 60 s) applies, as before.
+   */
+  allowanceMs?: number;
+  /** Names the allowance in a timeout error, for example 120 s stage limit. */
+  allowanceLabel?: string;
+  /** Test seam: milliseconds clock for the remaining allowance. */
+  now?: () => number;
   /** Test seam: replaces the real process spawner. */
   spawner?: FfdecSpawner;
 }
@@ -72,7 +81,18 @@ export async function unpack(input: UnpackInput): Promise<UnpackResult> {
   const jarPath = resolve(input.ffdecJarPath);
   const javaCommand = input.javaCommand ?? 'java';
   const timeoutMs = input.timeoutMs ?? 60_000;
-  const run = input.spawner ?? spawnFfdec;
+  const spawn = input.spawner ?? spawnFfdec;
+  const now = input.now ?? Date.now;
+  const startedAt = now();
+  const run: FfdecSpawner = async (req) => {
+    const bound = input.allowanceMs === undefined ? timeoutMs : Math.max(1, input.allowanceMs - (now() - startedAt));
+    try {
+      return await spawn({ ...req, timeoutMs: bound });
+    } catch (err) {
+      if (err instanceof FfdecTimeoutError && input.allowanceMs !== undefined && input.allowanceLabel !== undefined) err.limit = input.allowanceLabel;
+      throw err;
+    }
+  };
 
   await assertValidSwfFile(swfPath);
   if (!(await exists(jarPath))) throw new FfdecNotFoundError(jarPath);

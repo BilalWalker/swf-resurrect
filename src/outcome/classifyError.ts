@@ -37,8 +37,11 @@ export function classifyError(err: unknown, stage: string): ClassifiedFailure {
     case "RUN_ABORTED":
       // Thrown by RunGuard.abort after SIGINT or SIGBREAK: a failed run with its own reason, not a refusal.
       return { kind: "internal", reasonCode: "internal-error", reason: RUN_STOPPED, stage };
-    case "FFDEC_TIMEOUT":
-      return { kind: "refused", reasonCode: "time-limit", stage };
+    case "FFDEC_TIMEOUT": {
+      // unpack sets `limit` when a stage allowance bounded the call (for example `120 s stage limit`).
+      const limit = (err as { limit?: unknown }).limit;
+      return { kind: "refused", reasonCode: "time-limit", stage, ...(typeof limit === "string" ? { limit } : {}) };
+    }
     case "FFDEC_EXIT":
       // Only an FFDec exit of the Unpack stage means the file could not be read; the text of
       // FFDec goes to ffdec-<Reference_Id>.log (task 8.1), never to the reason.
