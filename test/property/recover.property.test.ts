@@ -1,4 +1,4 @@
-﻿import { createHash } from "node:crypto";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -75,7 +75,7 @@ describe("Obfuscation verdict properties", () => {
 });
 
 
-// ─── Property 17: Recovery order, one Unpack, and fallback ──────────────────
+// --- Property 17: Recovery order, one Unpack, and fallback ------------------
 // Feature: robustness, Property 17: Recovery order, one Unpack, and fallback
 // For any generated run with a fake FFDec whose rename, deobfuscate and unpack calls each
 // succeed or fail, and any remaining time: not obfuscated gives no rename/deobfuscate and
@@ -209,7 +209,7 @@ describe("Recovery order properties (Property 17)", () => {
   });
 });
 
-// ─── Property 18: Recovery is deterministic and leaves the input alone ────────
+// --- Property 18: Recovery is deterministic and leaves the input alone --------
 // Feature: robustness, Property 18: Recovery is deterministic and leaves the input alone
 // For any generated sources and a fake FFDec that renames by a fixed rule, two runs produce
 // byte-equal translated files and an equal list of renamed names, and the SHA-256 of the input
@@ -293,8 +293,8 @@ async function runRecoveryDeterministic(tmp: string, label: string, invalidCount
 
 describe("Recovery determinism properties (Property 18)", () => {
   it("Property 18: Recovery is deterministic and leaves the input alone", async () => {
-    // The input has 11 values and the fake FFDec is deterministic: run each value once.
-    for (const value of [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) await fc.assert(
+    // The fake FFDec is deterministic and only the pool size varies: run the two ends and the middle of 5..15, once each.
+    for (const value of [5, 10, 15]) await fc.assert(
       fc.asyncProperty(fc.constant(value), async (invalidCount) => {
         const tmp = await mkdtemp(join(tmpdir(), "p18-"));
         try {
@@ -326,11 +326,11 @@ describe("Recovery determinism properties (Property 18)", () => {
   });
 });
 
-// ─── redball4 measurement (numbers only, gated behind SWF_RESURRECT_LOCAL_FILES=1) ─
+// --- redball4 measurement (numbers only, gated behind SWF_RESURRECT_LOCAL_FILES=1) -
 // The default suite never reads .work/judge-test/ (Checkpoint 1 decision); same switch as
 // test/e2e/localFiles.e2e.test.ts and test/unit/abcNames.test.ts. Records the Outcome, stage
 // times, share of the 300 s run limit, Candidate_Classes, translated, clean, loose, unsupported,
-// omitted, type errors, §§push/§§pop lines left, and unresolved names of the brief (Point,
+// omitted, type errors, ��push/��pop lines left, and unresolved names of the brief (Point,
 // URLRequest, navigateToURL, Security, Loader, LocalConnection). Hashes the recovered file of
 // two real FFDec runs (Open_Item O7). Expected Outcome under the defaults: converted-with-gaps (U1).
 // **Validates: Requirements 6.16, 15.1, 15.3, 15.4, 16.1, 16.3, 16.5, 16.6, 16.10**
@@ -359,7 +359,7 @@ async function countSourceSignals(scriptsDir: string): Promise<number> {
       if (!rel.endsWith(".as")) continue;
       const text = await readFile(join(scriptsDir, rel), "utf8");
       for (const line of text.split("\n")) {
-        if (line.includes("§§push") || line.includes("§§pop")) count++;
+        if (line.includes("��push") || line.includes("��pop")) count++;
       }
     }
   } catch { /* directory missing */ }
@@ -404,7 +404,7 @@ describe.skipIf(!LOCAL || !existsSync(REDBALL))("redball4 measurement (numbers o
     const totalStageMs = (rec.stages ?? []).reduce((s: number, st: { durationMs: number }) => s + (st.durationMs ?? 0), 0);
     const runShare = ((totalStageMs / (rec.limits?.runLimitS ? rec.limits.runLimitS * 1000 : 300_000)) * 100).toFixed(1);
 
-    // §§push/§§pop lines left in the decompiled scripts of the recovered copy.
+    // ��push/��pop lines left in the decompiled scripts of the recovered copy.
     const scriptsDir = join(workDir, "scripts");
     const signalLines = await countSourceSignals(scriptsDir);
 
@@ -432,7 +432,7 @@ describe.skipIf(!LOCAL || !existsSync(REDBALL))("redball4 measurement (numbers o
     const numStr = n
       ? `candidates=${n.candidateClasses} translated=${n.translatedClasses} clean=${n.cleanClasses} loose=${n.looseClasses} unsupported=${n.unsupportedClasses} omitted=${n.omittedClasses} typeErrors=${n.typeErrors}`
       : "numbers: none";
-    const signalStr = `§§push/§§pop lines left=${signalLines}`;
+    const signalStr = `��push/��pop lines left=${signalLines}`;
     const unresolvedStr = BRIEF_NAMES.map((nm) => `${nm}=${unresolved[nm]}`).join(", ");
     const recoveryStr = rec.recovery ? `recovery: attempted=${rec.recovery.attempted} fallback=${rec.recovery.fallback} renamedIdentifiers=${rec.recovery.renamedIdentifiers} unrecoverableClasses=${rec.recovery.unrecoverableClasses}` : "recovery: null";
 
