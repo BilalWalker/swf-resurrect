@@ -75,6 +75,19 @@ async function listFiles(dir: string): Promise<string[]> {
     .sort();
 }
 
+/**
+ * outcome.json with its time-dependent field dropped (robustness D-A10: `stages[].durationMs` is the only one) and,
+ * when `dropVerify`, without the `verify` stage entry that only a `--verify` run records. Other files: the bytes.
+ */
+function comparable(file: string, bytes: Buffer, dropVerify: boolean): Buffer {
+  if (file !== 'outcome.json') return bytes;
+  const record = JSON.parse(bytes.toString('utf8')) as { stages: { name: string; durationMs?: number }[] };
+  record.stages = record.stages
+    .filter((s) => !(dropVerify && s.name === 'verify'))
+    .map(({ durationMs: _ignored, ...rest }) => rest);
+  return Buffer.from(JSON.stringify(record));
+}
+
 async function compareTrees(a: string, b: string): Promise<string[]> {
   const [filesA, filesB] = await Promise.all([listFiles(a), listFiles(b)]);
   const diffs: string[] = [];
@@ -85,7 +98,7 @@ async function compareTrees(a: string, b: string): Promise<string[]> {
   for (const f of filesA) {
     if (!setB.has(f)) continue;
     const [x, y] = await Promise.all([readFile(join(a, f)), readFile(join(b, f))]);
-    if (!x.equals(y)) diffs.push(`differs: ${f}`);
+    if (!comparable(f, x, false).equals(comparable(f, y, false))) diffs.push(`differs: ${f}`);
   }
   return diffs;
 }
@@ -151,7 +164,7 @@ async function compareWithVerifiedTree(fresh: string, verified: string): Promise
   if (diffs.length > 0) return diffs;
   for (const f of filesFresh) {
     const [x, y] = await Promise.all([readFile(join(fresh, f)), readFile(join(verified, f))]);
-    if (!x.equals(y)) diffs.push(`differs: ${f}`);
+    if (!comparable(f, x, false).equals(comparable(f, y, true))) diffs.push(`differs: ${f}`);
   }
   return diffs;
 }
