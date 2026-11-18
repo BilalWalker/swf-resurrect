@@ -11,6 +11,15 @@ let cleanup: (() => void) | null = null;
 function decorate(): void {
   const sky = document.getElementById('sky');
   if (sky !== null) {
+    // Small lights placed on the painted backdrop: `.scene` has the backdrop's box, so percentages are picture coordinates.
+    const scene = document.createElement('div');
+    scene.className = 'scene';
+    for (const c of ['moon-glow', 'chapel-light', 'wisp wisp-1', 'wisp wisp-2', 'wisp wisp-3', 'lightning']) {
+      const el = document.createElement('span');
+      el.className = c;
+      scene.append(el);
+    }
+    sky.prepend(scene);
     sky.append(svg(HORIZON), svg(BAT));
     const bat2 = svg(BAT);
     bat2.classList.add('bat-2');

@@ -515,3 +515,152 @@ main:focus {
 .sky .horizon {
   display: none;
 }
+
+/* ---- Life on the backdrop. `.scene` covers exactly the box the backdrop image is painted in (cover, top
+   centre, picture 1672 x 941), so each light below is placed in picture percentages and stays on its spot. ---- */
+.scene {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: max(100vw, calc(max(100vh, 760px) * 1672 / 941));
+  aspect-ratio: 1672 / 941;
+  transform: translateX(-50%);
+}
+.scene > span {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.moon-glow {
+  left: 80.1%;
+  top: 12.6%;
+  width: 22%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(200, 225, 240, 0.22) 0 26%, rgba(160, 200, 230, 0.1) 42%, transparent 68%);
+  animation: moon-pulse 7s ease-in-out infinite alternate;
+}
+@keyframes moon-pulse {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* the chapel window on the far hill: a candle someone left burning */
+.chapel-light {
+  left: 20.75%;
+  top: 25.2%;
+  width: 1.5%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(255, 196, 110, 0.95) 0 22%, rgba(255, 150, 60, 0.35) 45%, transparent 70%);
+  animation: candle 5.3s steps(1, end) infinite;
+}
+@keyframes candle {
+  0% {
+    opacity: 0.9;
+  }
+  7% {
+    opacity: 0.55;
+  }
+  11% {
+    opacity: 1;
+  }
+  38% {
+    opacity: 0.7;
+  }
+  41% {
+    opacity: 0.95;
+  }
+  63% {
+    opacity: 0.1;
+  }
+  66% {
+    opacity: 0.85;
+  }
+  88% {
+    opacity: 0.6;
+  }
+}
+
+/* will-o'-the-wisps wandering along the ridges */
+.wisp {
+  width: 0.9%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(200, 255, 225, 0.95) 0 18%, rgba(126, 242, 184, 0.4) 40%, transparent 70%);
+  opacity: 0;
+  animation: wander 19s ease-in-out infinite;
+}
+.wisp-1 {
+  left: 37%;
+  top: 34%;
+}
+.wisp-2 {
+  left: 72%;
+  top: 37%;
+  animation-duration: 26s;
+  animation-delay: 7s;
+}
+.wisp-3 {
+  left: 12%;
+  top: 31%;
+  animation-duration: 31s;
+  animation-delay: 13s;
+}
+@keyframes wander {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.6;
+    translate: 380% -160%;
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    translate: 760% 40%;
+  }
+}
+
+/* rare sheet lightning behind the clouds */
+.scene > .lightning {
+  left: 50%;
+  top: 14%;
+  width: 100%;
+  aspect-ratio: 4;
+  border-radius: 0;
+  background: radial-gradient(ellipse 45% 70% at 42% 40%, rgba(190, 215, 255, 0.5), transparent 70%);
+  opacity: 0;
+  animation: lightning 37s linear infinite;
+  animation-delay: 9s;
+}
+@keyframes lightning {
+  0%,
+  96.2%,
+  97%,
+  98.2%,
+  100% {
+    opacity: 0;
+  }
+  96.5% {
+    opacity: 0.8;
+  }
+  97.4% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wisp,
+  .lightning {
+    display: none;
+  }
+}
