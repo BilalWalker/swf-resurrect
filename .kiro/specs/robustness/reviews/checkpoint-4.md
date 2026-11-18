@@ -95,3 +95,5 @@ h. Earlier checkpoints' items are still open.
 
 ## Not run or verified by the reviewer
 Credits_Line (the owner reads the meter; it is not available to the agent, so the total credits of Block D are not stated); swf-inspector ("Not connected", FFDec used directly); a real broken-frame SWF through the CLI; Ruffle duplicate-character-id tolerance; the Ruffle lookup-failure fallback (read, not measured); papaspizzeria's 23 s; stray java and Chromium processes added timing noise.
+- Suite after this review: run 1 at ef6ff7c (cold run cache) 550 s, phase 1 10 failed / 2295 passed / 9 skipped (8 files), phase 2 2 passed; every failure was a load timeout (click_block and spacer refused time-limit, clickgoto and tweendemo render-failed) and each file passed alone (181 s).
+- Fix 4024412 `Test: rerun a cached pipeline run that has a render failure` (exit-0 runs with render-failed frames were cached for good); run 2 (warm cache) 149 s, phase 1 2309 passed / 7 skipped, phase 2 2 passed. The cold-run load cause is not fixed.
