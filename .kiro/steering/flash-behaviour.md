@@ -272,3 +272,14 @@ above; nothing was missing.
 
 Measured in task 30: only the packaged override, by running `test/unit/emit.test.ts` (24 tests pass, including the
 recursive override walk and the planned replacement of `a.b.Cls`). Nothing was run against Ruffle in task 30.
+
+## Point (robustness task 15.1)
+- **`flash.geom.Point` formulas.** Evidence: read in Ruffle `core/src/avm2/globals/flash/geom/Point.as` at `4a8d396`
+  by the robustness design (section "Point"); not re-read in task 15.1 (`.work/ruffle-src` is empty). Not measured
+  against Flash. Code: `template/shim/Point.ts`.
+  - `length` = `sqrt(x*x + y*y)`; `toString()` = `(x=1, y=2)`; `equals` is `==` on both fields.
+  - `normalize(t)`: when `length > 0`, scale by `t / length`; a point of length 0 is unchanged.
+  - `distance(a, b)` = `b.subtract(a).length`.
+  - `interpolate(a, b, f)` = `(b.x - (b.x - a.x) * f, b.y - (b.y - a.y) * f)`, so `f = 1` gives `a` and `f = 0` gives `b`.
+  - `polar(len, angle)` = `(len * cos(angle), len * sin(angle))`.
+  - `offset`, `copyFrom`, `setTo` assign in place.

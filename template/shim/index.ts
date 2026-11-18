@@ -13,6 +13,7 @@ export { MovieClip } from './MovieClip';
 export { Dictionary } from './Dictionary';
 export { Shape } from './Shape';
 export { Rectangle } from './Rectangle';
+export { Point } from './Point';
 export { trace, setTraceSink } from './trace';
 export { getDefinitionByName, getQualifiedClassName, getTimer, isInstanceOf, registerDefinitions } from './utils';
 export { ArgumentError, IllegalOperationError } from './errors';

@@ -7,6 +7,10 @@
     "14.3 Write the property tests of the table and stubs": {
       "status": "passed",
       "lastRunTimestamp": 1794903610221
+    },
+    "15.2 Write the property tests of `Point`": {
+      "status": "passed",
+      "lastRunTimestamp": 1794904747167
     }
   },
   "executionHistory": {
@@ -397,6 +401,37 @@
         "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794903394004
+      },
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794904375411
+      }
+    ],
+    "14. Translate and Shim: the Flash_API_Table and generated stubs": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794904375542
+      }
+    ],
+    "15.1 Add `template/shim/Point.ts`": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794904376083
+      },
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794904686480
+      }
+    ],
+    "15.2 Write the property tests of `Point`": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794904687191
       }
     ]
   }

@@ -303,7 +303,7 @@ describe('construction context', () => {
 describe('shim public surface', () => {
   it('does not export the internal API', () => {
     expect(Object.keys(publicShim).sort()).toEqual(
-      ['ArgumentError', 'Dictionary', 'DisplayObject', 'DisplayObjectContainer', 'Event', 'EventDispatcher', 'ExternalInterface', 'GlowFilter', 'Graphics', 'GraphicsPathWinding', 'IllegalOperationError', 'InteractiveObject', 'Keyboard', 'KeyboardEvent', 'Loader', 'LoaderInfo', 'LocalConnection', 'MouseEvent', 'MovieClip', 'Rectangle', 'Security', 'Shape', 'SharedObject', 'Sound', 'SoundChannel', 'SoundMixer', 'SoundTransform', 'Sprite', 'Stage', 'StageScaleMode', 'TextField', 'Timer', 'TimerEvent', 'URLLoader', 'URLRequest', 'URLVariables', 'declareImplements', 'defineInterface', 'getDefinitionByName', 'getQualifiedClassName', 'getTimer', 'isInstanceOf', 'navigateToURL', 'registerDefinitions', 'setTraceSink', 'trace'],
+      ['ArgumentError', 'Dictionary', 'DisplayObject', 'DisplayObjectContainer', 'Event', 'EventDispatcher', 'ExternalInterface', 'GlowFilter', 'Graphics', 'GraphicsPathWinding', 'IllegalOperationError', 'InteractiveObject', 'Keyboard', 'KeyboardEvent', 'Loader', 'LoaderInfo', 'LocalConnection', 'MouseEvent', 'MovieClip', 'Point', 'Rectangle', 'Security', 'Shape', 'SharedObject', 'Sound', 'SoundChannel', 'SoundMixer', 'SoundTransform', 'Sprite', 'Stage', 'StageScaleMode', 'TextField', 'Timer', 'TimerEvent', 'URLLoader', 'URLRequest', 'URLVariables', 'declareImplements', 'defineInterface', 'getDefinitionByName', 'getQualifiedClassName', 'getTimer', 'isInstanceOf', 'navigateToURL', 'registerDefinitions', 'setTraceSink', 'trace'],
     );
   });
 });
