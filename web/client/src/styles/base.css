@@ -664,3 +664,12 @@ main:focus {
     display: none;
   }
 }
+
+/* One of the far-off dead (undead.ts): a frame of the silhouette sheet, standing on a ridge of the backdrop. */
+.scene > .undead {
+  aspect-ratio: 100 / 146;
+  border-radius: 0;
+  background: url('/art/zombie-sheet.png') 0 0 / 1200% 100% no-repeat;
+  /* black like the ridges, with a faint spectral rim so the figure reads against the night sky */
+  filter: brightness(0) drop-shadow(0 0 2px rgba(150, 255, 200, 0.5));
+}

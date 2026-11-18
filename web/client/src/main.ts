@@ -4,6 +4,7 @@ import { svg } from './dom';
 import { renderJob } from './job';
 import { renderLanding } from './landing';
 import { renderResult } from './result';
+import { raiseTheDead } from './undead';
 
 const main = document.getElementById('main') as HTMLElement;
 let cleanup: (() => void) | null = null;
@@ -20,6 +21,7 @@ function decorate(): void {
       scene.append(el);
     }
     sky.prepend(scene);
+    raiseTheDead(scene);
     sky.append(svg(HORIZON), svg(BAT));
     const bat2 = svg(BAT);
     bat2.classList.add('bat-2');
