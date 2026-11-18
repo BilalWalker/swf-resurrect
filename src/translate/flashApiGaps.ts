@@ -145,5 +145,5 @@ export function flashApiGapMessage(className: string, use: FlashApiGapUse): stri
       : policyOf(use.qualified) === 'gap'
         ? 'a Flash class with policy gap'
         : 'a Flash class that is neither in the Shim nor in the Flash_API_Table';
-  return `${className} line ${use.line}: ${what} is ${why}; no stub is generated and the type error stays`;
+  return `${className} line ${use.line}: ${what} is ${why}; no stub is generated; a type error would stay if the code is translated`;
 }
