@@ -71,6 +71,17 @@ describe('Property 27: residual attribution', () => {
     );
   });
 
+  // Regression: seed 368318246 failed at run 196 of 200 once. Two entries of equal area, kind and message
+  // but different boxes were tied, so the register order decided which one won.
+  it('breaks a tie of area, kind and message by box, whatever the register order (seed 368318246)', () => {
+    const region: DiffRegion = { id: 1, bbox: { x0: 4, x1: 4, y0: 5, y1: 5 }, pixels: 1, first: { x: 4, y: 5 } };
+    const a: ResidualEntry = { frame: 1, bbox: { x0: 4, x1: 9, y0: 5, y1: 11 }, kind: 'a', message: 'y' };
+    const b: ResidualEntry = { frame: 1, bbox: { x0: 3, x1: 9, y0: 4, y1: 9 }, kind: 'a', message: 'y' };
+    const pick = (entries: ResidualEntry[]) =>
+      attributeRegions(1, [region], { formatVersion: 1 as const, sample: 's', entries })[0]!.entry;
+    expect(pick([a, b])).toEqual(b);
+    expect(pick([b, a])).toEqual(b);
+  });
   it('validateResidualRegister rejects each bad field and names it', () => {
     const stage = { width: N, height: N };
     const base = (e: Partial<ResidualEntry> | Record<string, unknown>): unknown => ({

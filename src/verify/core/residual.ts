@@ -102,15 +102,19 @@ function contains(outer: Bbox, inner: Bbox): boolean {
   return outer.x0 <= inner.x0 && outer.y0 <= inner.y0 && outer.x1 >= inner.x1 && outer.y1 >= inner.y1;
 }
 
-/** Smaller area first, then (kind, message) in code-unit order. */
+/** Smaller area first, then (kind, message) in code-unit order, then the box (x0, y0, x1, y1). */
 function better(a: ResidualEntry, b: ResidualEntry): boolean {
-  const d = area(a.bbox) - area(b.bbox) || cmpStr(a.kind, b.kind) || cmpStr(a.message, b.message);
+  const d = area(a.bbox) - area(b.bbox) || cmpStr(a.kind, b.kind) || cmpStr(a.message, b.message) ||
+    a.bbox.x0 - b.bbox.x0 ||
+    a.bbox.y0 - b.bbox.y0 ||
+    a.bbox.x1 - b.bbox.x1 ||
+    a.bbox.y1 - b.bbox.y1;
   return d < 0;
 }
 
 /**
  * One attribution per region, in region order. The entry is the containing entry of the same frame with the
- * smallest box area (ties by kind, then message); null when none contains the region or there is no register.
+ * smallest box area (ties by kind, message, then box); null when none contains the region or there is no register.
  * Independent of the order of the register's entries.
  */
 export function attributeRegions(
