@@ -15,6 +15,38 @@ function codeOf(err: unknown): string | null {
 }
 
 /**
+ * The table of design D-D2 as data: one entry per error code that has a stated outcome other than the
+ * default. `refusedAtStage` means the refusal only holds at that stage (FFDEC_EXIT at unpack); at any
+ * other stage the error is `failed internal-error`. Codes not listed here end `failed internal-error`.
+ */
+export interface ErrorTableRow {
+  readonly code: string;
+  readonly kind: 'refused' | 'internal';
+  readonly reasonCode: string;
+  readonly refusedAtStage?: string;
+}
+
+export const ERROR_TABLE: readonly ErrorTableRow[] = [
+  { code: 'MALFORMED_FRAME_DATA', kind: 'refused', reasonCode: 'damaged' },
+  { code: 'UNKNOWN_SYMBOL', kind: 'refused', reasonCode: 'damaged' },
+  { code: 'SYMBOL_CYCLE', kind: 'refused', reasonCode: 'damaged' },
+  { code: 'FFDEC_EXIT', kind: 'refused', reasonCode: 'damaged', refusedAtStage: 'unpack' },
+  { code: 'INVALID_SWF', kind: 'refused', reasonCode: 'not-swf' },
+  { code: 'NOT_AS3', kind: 'refused', reasonCode: 'actionscript-1-2' },
+  { code: 'TIME_LIMIT', kind: 'refused', reasonCode: 'time-limit' },
+  { code: 'FFDEC_TIMEOUT', kind: 'refused', reasonCode: 'time-limit' },
+  { code: 'RUN_ABORTED', kind: 'internal', reasonCode: 'internal-error' },
+  { code: 'SHAPE_EXPORT', kind: 'internal', reasonCode: 'internal-error' },
+  { code: 'MALFORMED_SVG', kind: 'internal', reasonCode: 'internal-error' },
+  { code: 'MISSING_EXPORT', kind: 'internal', reasonCode: 'internal-error' },
+  { code: 'INVALID_CLASS_NAME', kind: 'internal', reasonCode: 'internal-error' },
+  { code: 'XML_VERSION', kind: 'internal', reasonCode: 'internal-error' },
+  { code: 'MISSING_HEADER_VALUE', kind: 'internal', reasonCode: 'internal-error' },
+  { code: 'FFDEC_NOT_FOUND', kind: 'internal', reasonCode: 'internal-error' },
+  { code: 'JAVA_NOT_FOUND', kind: 'internal', reasonCode: 'internal-error' },
+];
+
+/**
  * `stage` is the stage that was running when the error was thrown (`unpack`, `convert`, ...).
  * Every error not named in the table is an internal error, which ends as `failed`, never `damaged`.
  */
@@ -47,6 +79,11 @@ export function classifyError(err: unknown, stage: string): ClassifiedFailure {
       // FFDec goes to ffdec-<Reference_Id>.log (task 8.1), never to the reason.
       if (stage === "unpack") return { kind: "refused", reasonCode: "damaged", stage };
       return { kind: "internal", reasonCode: "internal-error", stage };
+    case "MALFORMED_FRAME_DATA":
+    case "UNKNOWN_SYMBOL":
+    case "SYMBOL_CYCLE":
+      // The SWF's own data is inconsistent (design D-D2). No input text reaches the reason.
+      return { kind: "refused", reasonCode: "damaged", stage };
     case "JAVA_NOT_FOUND":
     case "FFDEC_NOT_FOUND":
       return { kind: "internal", reasonCode: "internal-error", reason: MISSING_COMPONENT, stage };

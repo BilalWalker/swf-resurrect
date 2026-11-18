@@ -7,6 +7,7 @@ import { runPipeline } from '../../src/pipeline/pipeline';
 import type { PipelineArgs, PipelineStages } from '../../src/pipeline/pipeline';
 import { PipelineError } from '../../src/pipeline/errors';
 import { EmitWriteError, OutputDirNotEmptyError, UnsafeForceTargetError } from '../../src/emit/errors';
+import { MalformedFrameDataError } from '../../src/convert/errors';
 import { InvalidSwfError } from '../../src/unpack/errors';
 import type { ClassOmission, LooseClass } from '../../src/emit/classOmissions';
 import type { GateResult } from '../../src/translate/typeCheckGate';
@@ -238,6 +239,34 @@ describe('runPipeline', () => {
     expect(calls).toEqual(['unpack']);
     expect(await readdir(outDir)).toEqual(['outcome.json']);
     expect(out.trimEnd().split('\n').at(-1)).toBe('Outcome: refused not-swf the file is not a SWF');
+  });
+
+  it('ends refused damaged, exit 3, with no Failure_Log, after broken frame data at convert', async () => {
+    const stages = makeStages({
+      async convert() {
+        calls.push('convert');
+        throw new MalformedFrameDataError('root', 1, 'move at an empty depth');
+      },
+    });
+    expect(await runPipeline(args(), stages, io)).toBe(3);
+    expect(calls).toEqual(['unpack', 'convert']);
+    expect(await readdir(outDir)).toEqual(['outcome.json']);
+    const o = JSON.parse(await readFile(join(outDir, 'outcome.json'), 'utf8'));
+    expect(o).toMatchObject({ outcome: 'refused', reasonCode: 'damaged' });
+    expect(JSON.stringify(o)).not.toMatch(/MalformedFrameData|empty depth|\bat \S+ \(/);
+    expect(out.trimEnd().split('\n').at(-1)).toBe('Outcome: refused damaged the file could not be read');
+    expect(err).not.toContain('empty depth');
+  });
+
+  it('keeps a TypeError at convert failed internal-error, exit 1', async () => {
+    const stages = makeStages({
+      async convert() {
+        throw new TypeError('x is not a function');
+      },
+    });
+    expect(await runPipeline(args(), stages, io)).toBe(1);
+    const o = JSON.parse(await readFile(join(outDir, 'outcome.json'), 'utf8'));
+    expect(o).toMatchObject({ outcome: 'failed', reasonCode: 'internal-error' });
   });
 
   it('passes --force through to the emit stage', async () => {

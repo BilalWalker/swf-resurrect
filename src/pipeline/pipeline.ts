@@ -650,6 +650,9 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
           } else {
             io.err(`error [${reported}]: ${reasonSentence('damaged')}\n`);
           }
+        } else if (classified.kind === 'refused' && classified.reasonCode === 'damaged') {
+          // Broken frame data and the like: the input's fault, no Failure_Log, no input text on stderr.
+          io.err(`error [${reported}]: ${reasonSentence('damaged')}\n`);
         } else {
           io.err(`error [${reported}]: ${messageOf(err)}\n`);
         }
