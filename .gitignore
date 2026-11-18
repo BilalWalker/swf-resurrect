@@ -17,3 +17,6 @@ out/
 # Local Claude Code preview config
 .claude/
 .vitest/
+
+# Playwright MCP scratch folder
+.playwright-mcp/
