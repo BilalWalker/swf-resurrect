@@ -83,6 +83,8 @@ export interface OutcomeNumbers {
   typeErrors: number;
   droppedPlacements: number;
   namedLimits: number;
+  /** Registered classes whose Shim imports name a Flash_API_Table stub (robustness Requirement 17.9). Overlaps the other class counts. */
+  stubDependentClasses: number;
 }
 
 export interface GapSummary {

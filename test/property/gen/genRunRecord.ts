@@ -144,6 +144,7 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
         typeErrors,
         droppedPlacements: dropped,
         namedLimits: 0,
+        stubDependentClasses: 0,
       };
       return {
         facts: r.facts,

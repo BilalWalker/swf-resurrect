@@ -238,12 +238,12 @@ Rules that apply to every task:
 
 - [ ] 16. Translate: policy lookup, `flash-api-gap` problems, stub-dependency count and the stall listing
   - Commit area: `Translate` (Pipeline and Verify named). Verification V1. Read the design D-A3 and the end of "Flash_API_Table and stubs" ("Shipping"). General rule only; no sample name.
-  - [ ] 16.1 Report gaps by policy
+  - [x] 16.1 Report gaps by policy
     - When a translated class uses a Flash class or member that is neither in the Shim nor in the table, or whose policy is `gap`, the Translation_Report names the class and member as a `flash-api-gap` problem, no stub is generated, and the type error stays visible (Requirement 17.5). The Outcome's `gaps` count `flash-api-gap`.
     - Tests: `test/unit/flashApiGap.test.ts` (create) with Fixture_Classes: a `gap` class, an unknown class, a member missing from a stub entry.
     - _Requirements: 17.5, 17.13_
 
-  - [ ] 16.2 Count stub-dependent classes and list the stubs that can stall
+  - [-] 16.2 Count stub-dependent classes and list the stubs that can stall
     - A pure scan of each translated class's resolved Shim imports against the table's `stub` set gives the count of classes whose type check depends on a stub; it goes into the Outcome_File. The Fidelity_Report lists the `api-stub:` and `api-stub-no-event:` limits that the Replay observed and states which of the listed stubs can stall a game (`canStall` in the table). Update `docs/outcome.md` and its example test for the new field.
     - Tests: `test/unit/stubDependents.test.ts` (create); `test/unit/report.test.ts` (extend): the Fidelity_Report lists observed `api-stub:` and `api-stub-no-event:` limits and marks the stalling stubs.
     - _Requirements: 17.7, 17.9_

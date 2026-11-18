@@ -10,6 +10,7 @@ import { emitTs, escapeComment } from './emitTs';
 import type { BodyItem, EmitHooks, SuperHoist } from './emitTs';
 import { planFileImports } from './importPlan';
 import type { ImportPlanInput } from './importPlan';
+import { findFlashApiGaps } from './flashApiGaps';
 import { buildMemberTables, emittedMemberName, orderByDeclaration } from './memberTables';
 import { SHIM_MEMBER_TABLE } from './shimMembers.generated';
 import type { ImportPlan } from './importPlan';
@@ -437,6 +438,10 @@ export function translateCore(source: string, options: TranslateOptions): Transl
     .sort((x, y) => cmp(x[0], y[0]))
     .map(([target, cuttable]) => ({ target, cuttable }));
   const cutSites = findCutSites(out.text);
+  const flashApiGaps = findFlashApiGaps({
+    tokens, imports: refs.imports, shimNames: options.shimNames, shimMembers: SHIM_MEMBER_TABLE,
+    declared: refs.declared, known: options.siblingClasses,
+  });
   // The interface is translated when its node survived the emit (a rolled-back node is an unsupported span).
   const interfaces = findInterfaces(nodes);
   const interfaceTranslated =
@@ -457,6 +462,7 @@ export function translateCore(source: string, options: TranslateOptions): Transl
     importRecords: imports.records,
     valueImports,
     ...(cutSites.length > 0 ? { cutSites } : {}),
+    ...(flashApiGaps.length > 0 ? { flashApiGaps } : {}),
     ...(interfaceTranslated ? { interfaceTranslated } : {}),
   };
 }

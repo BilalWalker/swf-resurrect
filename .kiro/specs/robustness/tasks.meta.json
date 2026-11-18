@@ -433,6 +433,25 @@
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794904687191
       }
+    ],
+    "16.1 Report gaps by policy": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794904938111
+      },
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794905230890
+      }
+    ],
+    "16.2 Count stub-dependent classes and list the stubs that can stall": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794905231633
+      }
     ]
   }
 }

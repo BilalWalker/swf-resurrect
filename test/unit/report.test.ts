@@ -241,3 +241,34 @@ describe('hand-written classes in the reports (Requirement 33.3, 33.4)', () => {
     expect(renderFidelityHtml(none)).toContain('<h2 id="handwritten">Hand-written classes</h2>\n<p>none</p>');
   });
 });
+
+describe('Fidelity_Report: Flash API stubs the Replay used (robustness task 16.2)', () => {
+  const base = fc.sample(genReportInputs, { numRuns: 1, seed: 7 })[0]!;
+  const withLimits = (ids: string[]) =>
+    buildFidelityReport({
+      ...base,
+      behaviour: { status: 'not-compared', reason: 'no-reference-trace', namedLimits: ids.map((id) => ({ id, detail: `d ${id}` })) },
+    });
+
+  it('lists observed api-stub: and api-stub-no-event: limits and marks the stalling stubs', () => {
+    const r = withLimits(['useCapture-ignored', 'api-stub:Sound.play', 'api-stub-no-event:Sound', 'api-stub:SharedObject.getLocal', 'api-stub:navigateToURL', 'api-stub-no-event:URLLoader']);
+    const b = r.behaviour as { apiStubs?: Array<{ id: string; canStall: boolean }> };
+    expect(b.apiStubs).toEqual([
+      { id: 'api-stub-no-event:Sound', canStall: true },
+      { id: 'api-stub-no-event:URLLoader', canStall: true },
+      { id: 'api-stub:SharedObject.getLocal', canStall: false },
+      { id: 'api-stub:Sound.play', canStall: true },
+      { id: 'api-stub:navigateToURL', canStall: false },
+    ]);
+    const html = renderFidelityHtml(r);
+    expect(html).toContain('api-stub-no-event:Sound: can stall a game');
+    expect(html).toContain('api-stub:SharedObject.getLocal: does not stall a game');
+  });
+
+  it('adds nothing when the Replay observed no stub limit', () => {
+    const r = withLimits(['useCapture-ignored']);
+    expect('apiStubs' in r.behaviour).toBe(false);
+    expect(renderFidelityHtml(r)).not.toContain('Flash API stubs');
+    expect(serialiseFidelityReport(r)).not.toContain('apiStubs');
+  });
+});

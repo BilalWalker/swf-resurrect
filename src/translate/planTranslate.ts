@@ -3,6 +3,7 @@
 import type { SceneJson } from '../../template/runtime/scene';
 import { qualifiedFromScriptPath } from '../convert/qualifiedName';
 import { DuplicateClassError } from './errors';
+import type { FlashApiGapUse } from './flashApiGaps';
 import { findImportCuts } from './initHazards';
 import type { ImportCycleProblem } from './initHazards';
 import { buildMemberTables } from './memberTables';
@@ -42,6 +43,8 @@ export interface TranslatedClass {
   cutSites?: Array<{ target: string; line: number }>;
   /** Value imports of other classes, with cuttable as the import-cycle analysis read them. */
   valueImports?: Array<{ target: string; cuttable: boolean }>;
+  /** Flash classes and members that are neither in the Shim nor usable from the Flash_API_Table; absent when none. */
+  flashApiGaps?: FlashApiGapUse[];
 }
 
 export interface TranslateArtifact {
@@ -147,6 +150,7 @@ export function planTranslate(
       ...(r.parseFailed === true ? { parseFailed: true as const } : {}),
       ...(r.cutSites !== undefined ? { cutSites: r.cutSites } : {}),
       ...(r.valueImports !== undefined ? { valueImports: r.valueImports } : {}),
+      ...(r.flashApiGaps !== undefined ? { flashApiGaps: r.flashApiGaps } : {}),
     };
   };
   for (const s of sorted) translated.set(s.className, translateOne(s));

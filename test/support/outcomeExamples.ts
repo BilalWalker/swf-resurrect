@@ -52,6 +52,7 @@ export const EXAMPLES: Record<"converted" | "converted-with-gaps" | "refused" | 
       typeErrors: 0,
       droppedPlacements: 0,
       namedLimits: 0,
+      stubDependentClasses: 0,
     },
     gaps: [],
     stages: stages(["unpack", "convert", "translate", "emit", "gate"]),
@@ -75,6 +76,7 @@ export const EXAMPLES: Record<"converted" | "converted-with-gaps" | "refused" | 
       typeErrors: 2,
       droppedPlacements: 0,
       namedLimits: 1,
+      stubDependentClasses: 1,
     },
     gaps: [
       { kind: "type-error", count: 2, examples: ["Game.as(41): Property 'hitTest' does not exist"] },

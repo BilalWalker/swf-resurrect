@@ -2,6 +2,7 @@
 // Pure: no node:* imports, no clock, no randomness, no locale-dependent calls.
 import { canonicalJson } from '../../pipeline/canonicalJson';
 import type { ClassStatus, TranslationReport } from '../../translate/report';
+import { limitCanStall } from '../../translate/stubDependents';
 import { AA_TOLERANCE, FORMAT_VERSION } from './constants';
 import type { InputNote } from './inputNotes';
 import type { VisualLimit } from './limits';
@@ -115,17 +116,27 @@ export type VisualFrame =
     }
   | { frame: number; status: 'not-compared'; reason: 'reference-unavailable' | 'size-mismatch' | 'render-failed' };
 
+/** One `api-stub:` or `api-stub-no-event:` Named_Limit the Replay observed, with the table's canStall for its class. */
+export interface ApiStubListing {
+  id: string;
+  canStall: boolean;
+}
+
 export type BehaviourReport =
   | {
       status: 'not-compared';
       reason: 'no-reference-trace' | 'no-reference-input' | 'invalid-input-json' | 'trace-too-large' | 'replay-failed' | 'tick-rate' | 'empty-reference-trace';
       namedLimits: NamedLimitEntry[];
+      /** Present only when the Replay observed an api-stub limit (robustness 17.9). */
+      apiStubs?: ApiStubListing[];
       knownBehaviourGaps: string[];
     }
   | {
       status: 'compared';
       /** Named_Limits the Replay raised, by id; empty when no Replay ran. Not a list of every limit of the runtime. */
       namedLimits: NamedLimitEntry[];
+      /** Present only when the Replay observed an api-stub limit (robustness 17.9). */
+      apiStubs?: ApiStubListing[];
       referenceLineCount: number;
       capturedLineCount: number;
       matched: number;
@@ -211,14 +222,25 @@ function cleanNamedLimits(list: readonly NamedLimitEntry[] | undefined): NamedLi
   return [...byId].map(([id, detail]) => ({ id, detail })).sort((a, b) => cmpStr(a.id, b.id));
 }
 
+/** The observed stub limits, sorted by id, each with its canStall; absent (undefined) when there are none. */
+function apiStubListing(limits: readonly NamedLimitEntry[]): { apiStubs: ApiStubListing[] } | Record<string, never> {
+  const rows = limits
+    .filter((l) => l.id.startsWith('api-stub:') || l.id.startsWith('api-stub-no-event:'))
+    .map((l) => ({ id: l.id, canStall: limitCanStall(l.id) }));
+  return rows.length === 0 ? {} : { apiStubs: rows };
+}
+
 function buildBehaviour(b: BehaviourInput, gaps: string[]): BehaviourReport {
   if (b.status === 'not-compared') {
-    return { status: 'not-compared', reason: b.reason, namedLimits: cleanNamedLimits(b.namedLimits), knownBehaviourGaps: gaps };
+    const nl = cleanNamedLimits(b.namedLimits);
+    return { status: 'not-compared', reason: b.reason, namedLimits: nl, ...apiStubListing(nl), knownBehaviourGaps: gaps };
   }
   const c = b.comparison;
+  const nl = cleanNamedLimits(b.namedLimits);
   return {
     status: 'compared',
-    namedLimits: cleanNamedLimits(b.namedLimits),
+    namedLimits: nl,
+    ...apiStubListing(nl),
     referenceLineCount: c.referenceLineCount,
     capturedLineCount: c.capturedLineCount,
     matched: c.matched,

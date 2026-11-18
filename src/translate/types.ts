@@ -1,4 +1,5 @@
 /** Type-only definitions shared by the pure Transpiler files. No runtime code. */
+import type { FlashApiGapUse } from './flashApiGaps';
 import type { MemberTables } from './memberTables';
 
 export type DiagnosticKind = 'unsupported-construct' | 'loose-type' | 'class-omitted' | 'unresolved-identifier' | 'child-field-initialiser' | 'super-argument-field';
@@ -73,6 +74,8 @@ export interface TranslateResult {
   parseFailed?: true;
   /** Places where a cut import is read through `getDefinitionByName`, sorted by (line, target). */
   cutSites?: Array<{ target: string; line: number }>;
+  /** Flash classes and members the Shim and the Flash_API_Table do not cover (Requirement 17.5); absent when none. */
+  flashApiGaps?: FlashApiGapUse[];
 }
 
 /** One generated import line (design 14.1). */

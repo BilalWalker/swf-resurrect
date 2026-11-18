@@ -17,6 +17,7 @@ function numbers(over: Partial<OutcomeNumbers> = {}): OutcomeNumbers {
     typeErrors: 0,
     droppedPlacements: 0,
     namedLimits: 0,
+    stubDependentClasses: 0,
     ...over,
   };
 }

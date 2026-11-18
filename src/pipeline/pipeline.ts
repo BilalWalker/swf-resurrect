@@ -22,8 +22,9 @@ import { reasonSentence } from '../outcome/reasons';
 import { failedReason, referenceIdFromDigest, referenceIdInput } from '../outcome/referenceId';
 import { childNamesByClass } from '../translate/planTranslate';
 import type { TranslateArtifact } from '../translate/planTranslate';
-import { buildReport, classStatus, serialiseReport, untranslatedCodeEntries } from '../translate/report';
+import { buildReport, classStatus, flashApiGapProblems, serialiseReport, untranslatedCodeEntries } from '../translate/report';
 import type { TranslationProblem, TranslationReport } from '../translate/report';
+import { countStubDependents } from '../translate/stubDependents';
 import type { GateResult } from '../translate/typeCheckGate';
 import type { VerifyRequest, VerifySummary } from '../verify/edge/verifyStage';
 import { PipelineError } from './errors';
@@ -52,7 +53,7 @@ export type { VerifyRequest, VerifySummary };
  * clean + loose + untranslatedCode + unparsed + (omitted candidates) = candidates; omittedClasses also counts an omitted linked class
  * that is no candidate; translatedClasses = clean + loose + untranslatedCode.
  */
-export function numbersOf(report: TranslationReport, droppedPlacements: number): OutcomeNumbers {
+export function numbersOf(report: TranslationReport, droppedPlacements: number, stubDependentClasses = 0): OutcomeNumbers {
   const unparsed = report.classes.filter((c) => !c.omitted && c.parseFailed === true);
   const kept = report.classes.filter((c) => !c.omitted && c.parseFailed !== true);
   const untranslatedCode = kept.filter((c) => c.status === 'unsupported' && !c.loose);
@@ -70,6 +71,7 @@ export function numbersOf(report: TranslationReport, droppedPlacements: number):
     typeErrors: report.classes.reduce((n, c) => n + c.typeErrors.length, 0) + report.otherErrors.length,
     droppedPlacements,
     namedLimits: 0,
+    stubDependentClasses,
   };
 }
 /** A refusal found by the Facts stage; no FFDec process has started. */
@@ -305,7 +307,11 @@ function reportOf(
     gate,
     {
       omissions, loose, classPaths, handwritten,
-      problems: [...problems, ...(translated?.importCycles ?? []).map((c) => importCycleProblem(c.className, c.path))],
+      problems: [
+        ...problems,
+        ...(translated?.importCycles ?? []).map((c) => importCycleProblem(c.className, c.path)),
+        ...flashApiGapProblems(translated?.classes ?? [], overridden),
+      ],
       importCuts: (translated?.classes ?? []).flatMap((c) => (c.cutSites ?? []).map((s) => ({ className: c.className, target: s.target, line: s.line }))),
     },
   );
@@ -590,11 +596,17 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     classified = { ...classified, reason: failedReason(classified.reason ?? reasonSentence('internal-error'), referenceId) };
   }
   const ranToGate = failure === null && finalReport !== null && gate !== null;
-  const gaps = ranToGate ? summariseGaps(unsupported, {
+  // flash-api-gap is a Translation_Report problem kind, so it is read from the report (structured), not from the unsupported list.
+  const flashGapEntries = (finalReport?.problems ?? [])
+    .filter((p) => p.kind === 'flash-api-gap')
+    .map((p) => ({ kind: p.kind, example: p.message }));
+  const gaps = ranToGate ? summariseGaps([...unsupported, ...flashGapEntries], {
         typeErrors: numbersOf(finalReport, 0).typeErrors,
         droppedPlacements: artifact?.stats.placementsDropped ?? 0,
       }) : [];
-  const numbers = ranToGate ? numbersOf(finalReport, artifact?.stats.placementsDropped ?? 0) : null;
+  const registered = new Set((finalReport?.classes ?? []).filter((c) => !c.omitted).map((c) => c.className));
+  const stubDependents = countStubDependents((translated?.classes ?? []).filter((c) => registered.has(c.className)));
+  const numbers = ranToGate ? numbersOf(finalReport, artifact?.stats.placementsDropped ?? 0, stubDependents) : null;
   const decision = decideOutcome({
     facts,
     stages: stageRecords,

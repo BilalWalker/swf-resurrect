@@ -5,6 +5,7 @@ import { omissionMessage } from '../emit/classOmissions';
 import type { ClassPathEntry } from '../emit/classPaths';
 import type { HandwrittenReportEntry } from '../pipeline/handwrittenSet';
 import type { UnsupportedFeatureEntry } from '../pipeline/unsupported';
+import { flashApiGapMessage } from './flashApiGaps';
 import type { TranslatedClass } from './planTranslate';
 import type { GateError, GateResult } from './typeCheckGate';
 import type { Diagnostic } from './types';
@@ -36,9 +37,15 @@ export interface ClassReportEntry {
 
 /** A condition of the run that the reader must see (Requirements 26.7 and 26.13). */
 export interface TranslationProblem {
-  kind: 'bundler-guard-unavailable' | 'handwritten-override-unparsable' | 'handwritten-not-in-set' | 'import-cycle';
+  kind: 'bundler-guard-unavailable' | 'handwritten-override-unparsable' | 'handwritten-not-in-set' | 'import-cycle' | 'flash-api-gap';
   /** Override path relative to the handwritten directory, for handwritten-override-unparsable. */
   path?: string;
+  /** flash-api-gap: the translated class that uses the Flash class or member. */
+  className?: string;
+  /** flash-api-gap: the qualified Flash class. */
+  flashClass?: string;
+  /** flash-api-gap: the member; absent for a class gap. */
+  member?: string;
   message: string;
   line?: number;
   column?: number;
@@ -197,6 +204,25 @@ export function buildReport(
 
 export function serialiseReport(r: TranslationReport): string {
   return canonicalJson(r, 'translationReport');
+}
+
+/** One `flash-api-gap` problem per (class, Flash class, member) of every emitted, non-overridden class (Requirement 17.5). */
+export function flashApiGapProblems(classes: readonly TranslatedClass[], overridden: ReadonlySet<string>): TranslationProblem[] {
+  const out: TranslationProblem[] = [];
+  for (const c of classes) {
+    if (overridden.has(c.className)) continue;
+    for (const u of c.flashApiGaps ?? []) {
+      out.push({
+        kind: 'flash-api-gap',
+        className: c.className,
+        flashClass: u.qualified,
+        ...(u.member === undefined ? {} : { member: u.member }),
+        message: flashApiGapMessage(c.className, u),
+        line: u.line,
+      });
+    }
+  }
+  return out;
 }
 
 /** One entry per `unsupported-construct` Diagnostic, and one `as3-interface` Named_Limit per AS3 interface that was not translated, of every emitted, non-overridden class. */

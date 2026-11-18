@@ -233,6 +233,10 @@ function behaviourSection(r: FidelityReport): string {
   } else {
     parts.push(`<ul>\n${b.namedLimits.map((l) => `<li>${e(l.id)}: ${e(l.detail)}</li>`).join('\n')}\n</ul>`);
   }
+  if (b.apiStubs !== undefined) {
+    parts.push('<h3>Flash API stubs the Replay used</h3>');
+    parts.push(`<ul>\n${b.apiStubs.map((s) => `<li>${e(s.id)}: ${s.canStall ? 'can stall a game (a stub that dispatches no event)' : 'does not stall a game'}</li>`).join('\n')}\n</ul>`);
+  }
   parts.push('<h3>Known behaviour gaps</h3>');
   if (b.knownBehaviourGaps.length === 0) {
     parts.push('<p>none</p>');

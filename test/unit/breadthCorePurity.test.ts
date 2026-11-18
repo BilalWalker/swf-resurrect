@@ -46,6 +46,7 @@ const CORE_FILES = [
   "src/facts/readFacts.ts", // robustness 3.1 (inflate passed in)
   "src/translate/flashApiTable.ts", // robustness 14.1
   "src/translate/renderApiStubs.ts", // robustness 14.2
+  "src/translate/stubDependents.ts", // robustness 16.2
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];
