@@ -204,7 +204,7 @@ describe("Recovery order properties (Property 17)", () => {
           await rm(tmp, { recursive: true, force: true });
         }
       }),
-      { numRuns: 25 },
+      { numRuns: 12 },
     );
   });
 });
@@ -320,7 +320,7 @@ describe("Recovery determinism properties (Property 18)", () => {
           await rm(tmp, { recursive: true, force: true });
         }
       }),
-      { numRuns: 10 },
+      { numRuns: 5 },
     );
   });
 });

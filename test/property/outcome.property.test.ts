@@ -217,6 +217,12 @@ describe("outcome properties", () => {
       }),
       small,
     );
+  });
+
+  it("Property 3: a run whose Unpack throws a non-FFDec error ends failed internal-error", async () => {
+    const small = { ...fcConfig, numRuns: 8 };
+    const unpackThrows = (e: unknown): PipelineStages =>
+      ({ unpack: async () => { throw e; }, convert: async () => { throw new Error("no"); }, translate: async () => { throw new Error("no"); }, emit: async () => { throw new Error("no"); }, typeCheck: async () => { throw new Error("no"); } }) as unknown as PipelineStages;
     await fc.assert(
       fc.asyncProperty(internalErrArb, async (e) => {
         const r = await runWithFakes(buildSwf(), unpackThrows(e));
@@ -230,8 +236,10 @@ describe("outcome properties", () => {
 
   // Feature: robustness, Property 2: A fault at any stage still ends in one valid Outcome
   // **Validates: Requirements 1.6, 1.7, 1.8, 2.5, 3.6, 5.5, 5.7**
-  it("Property 2: a fault at any stage still ends in one valid Outcome", async () => {
-    const STAGES = ["unpack", "convert", "translate", "emit", "typeCheck", "recover"] as const;
+  // One test per stage, so each has its own time budget under suite load (4 runs each).
+  const FAULT_STAGES = ["unpack", "convert", "translate", "emit", "typeCheck", "recover"] as const;
+  it.each(FAULT_STAGES)("Property 2: a fault at the %s stage still ends in one valid Outcome", async (faultStage) => {
+    const STAGES: readonly (typeof FAULT_STAGES)[number][] = [faultStage];
     const faultArb: fc.Arbitrary<unknown> = fc.oneof(
       internalErrArb,
       fc.stringMatching(/^[a-z]{4,12}$/).map((s) => new RangeError(`ZQX${s}QXZ`)),
@@ -287,7 +295,7 @@ describe("outcome properties", () => {
           expect(parsed.outcome).toBe("converted");
         }
       }),
-      { ...fcConfig, numRuns: 8 },
+      { ...fcConfig, numRuns: 4 },
     );
   });
   // Feature: robustness, Property 14: Determinism of the Outcome_File  // **Validates: Requirements 11.7**
