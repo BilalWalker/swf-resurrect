@@ -1,11 +1,11 @@
 // The shared pipeline run cache (task 29.1): same inputs give one run, a changed input gives a new one, and the
 // bypass variable gives every caller a fresh run. A counting fake stands in for the pipeline child process.
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, utimes, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createSharedRuns, NO_RUN_CACHE_ENV } from '../support/sharedPipelineRun';
+import { createSharedRuns, hasRenderFailure, NO_RUN_CACHE_ENV } from '../support/sharedPipelineRun';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -65,6 +65,44 @@ describe('shared pipeline run cache', () => {
     expect(new Set([first.outDir, changedSample.outDir, changedSource.outDir, changedArgs.outDir]).size).toBe(4);
     expect(calls[3]).toEqual([swf, changedArgs.outDir, '--verify', '--force', '--reference-dir', 'x']);
     expect(existsSync(first.outDir), 'the stale run of the same sample is removed').toBe(false);
+  });
+
+  it('keeps a run with a render failure only as long as a failed run', async () => {
+    calls = [];
+    const shaky = () =>
+      createSharedRuns({
+        sharedDir: join(root, 'shared'),
+        common: () => common,
+        bypass: () => false,
+        unstable: async () => calls.length === 1, // only the first run has a render failure
+        run: async (args, logPath) => {
+          calls.push(args);
+          await mkdir(args[1]!, { recursive: true });
+          await writeFile(logPath, 'ok');
+          return 0;
+        },
+      });
+    const first = await shaky()('v', swf);
+    const again = await shaky()('v', swf); // same suite: reused, so the tests still see the failure
+    expect(calls).toHaveLength(1);
+    const old = new Date(Date.now() - 10 * 60 * 1000);
+    await utimes(join(first.outDir, '..', 'DONE'), old, old); // a later suite
+    const later = await shaky()('v', swf);
+    const stable = await shaky()('v', swf);
+    await utimes(join(first.outDir, '..', 'DONE'), old, old);
+    const stillKept = await shaky()('v', swf);
+    expect(calls).toHaveLength(2);
+    expect([again.code, later.code, stable.code, stillKept.code]).toEqual([0, 0, 0, 0]);
+  });
+
+  it('reads a render-failed problem from the fidelity report', async () => {
+    const dir = join(root, 'report');
+    await mkdir(dir, { recursive: true });
+    expect(await hasRenderFailure(dir)).toBe(false);
+    await writeFile(join(dir, 'fidelity-report.json'), JSON.stringify({ problems: [{ kind: 'size-mismatch' }] }));
+    expect(await hasRenderFailure(dir)).toBe(false);
+    await writeFile(join(dir, 'fidelity-report.json'), JSON.stringify({ problems: [{ kind: 'render-failed', frame: 3 }] }));
+    expect(await hasRenderFailure(dir)).toBe(true);
   });
 
   it('gives every caller a fresh run when the cache is bypassed', async () => {

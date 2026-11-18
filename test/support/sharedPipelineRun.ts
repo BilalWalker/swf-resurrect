@@ -11,6 +11,10 @@
 //   - the pipeline options: the full argument list, `--verify --force` plus the caller's `extraArgs`;
 //   - the Chromium build (the path of Playwright's executable, which carries its revision) and the node version.
 //
+// Reuse: a run that exited 0 is kept until an input changes, unless its report lists a `render-failed` frame (a
+// Chromium wait that ran out on a busy machine). That run, like a failed one, is reused only for FAILED_REUSE_MS,
+// so the suite that made it still reports it and the next suite runs it again.
+//
 // Bypass: set SWF_RESURRECT_NO_RUN_CACHE=1 and every call gets a fresh run of its own (no memo, no reuse across
 // calls or workers). Leftover directories are removed by the next cached run of the same sample.
 import { spawn } from 'node:child_process';
@@ -101,6 +105,20 @@ export interface SharedRunDeps {
   run: (args: string[], logPath: string) => Promise<number>;
   /** True when the cache is bypassed. */
   bypass: () => boolean;
+  /**
+   * True when a run that exited 0 still holds a load-dependent failure (a frame whose render timed out). Such a run
+   * is kept only as long as a failed one, so a busy suite does not leave it to every later suite. Default: never.
+   */
+  unstable?: (outDir: string) => Promise<boolean>;
+}
+/** True when the run's fidelity report lists a `render-failed` problem. */
+export async function hasRenderFailure(outDir: string): Promise<boolean> {
+  try {
+    const report = JSON.parse(await readFile(join(outDir, 'fidelity-report.json'), 'utf8')) as { problems?: { kind?: string }[] };
+    return (report.problems ?? []).some((p) => p.kind === 'render-failed');
+  } catch {
+    return false; // no report: the exit code already says what happened
+  }
 }
 export interface SharedRunOptions {
   extraArgs?: string[];
@@ -108,10 +126,11 @@ export interface SharedRunOptions {
 }
 export function createSharedRuns(deps: SharedRunDeps): (name: string, swfPath: string, opts?: SharedRunOptions) => Promise<SharedRun> {
   const memo = new Map<string, Promise<SharedRun>>();
-  async function readDone(dir: string): Promise<{ code: number; ageMs: number } | null> {
+  async function readDone(dir: string): Promise<{ code: number; keep: boolean; ageMs: number } | null> {
     const done = join(dir, 'DONE');
     if (!existsSync(done)) return null;
-    return { code: Number((await readFile(done, 'utf8')).trim()), ageMs: Date.now() - statSync(done).mtimeMs };
+    const code = Number((await readFile(done, 'utf8')).trim());
+    return { code, keep: code === 0 && !existsSync(join(dir, 'UNSTABLE')), ageMs: Date.now() - statSync(done).mtimeMs };
   }
   async function fresh(name: string, swfPath: string, args: string[]): Promise<SharedRun> {
     const dir = join(deps.sharedDir, `${name}-nocache-${randomBytes(6).toString('hex')}`);
@@ -130,7 +149,7 @@ export function createSharedRuns(deps: SharedRunDeps): (name: string, swfPath: s
     const started = Date.now();
     for (;;) {
       const done = await readDone(dir);
-      if (done !== null && (done.code === 0 || done.ageMs < FAILED_REUSE_MS)) return { ...result, code: done.code };
+      if (done !== null && (done.keep || done.ageMs < FAILED_REUSE_MS)) return { ...result, code: done.code };
       try {
         await mkdir(dir);
       } catch {
@@ -154,8 +173,10 @@ export function createSharedRuns(deps: SharedRunDeps): (name: string, swfPath: s
             }
           }
           await rm(join(dir, 'DONE'), { force: true });
+          await rm(join(dir, 'UNSTABLE'), { force: true });
           await rm(result.outDir, { recursive: true, force: true });
           const code = await deps.run([swfPath, result.outDir, ...args], result.logPath);
+          if (code === 0 && deps.unstable !== undefined && (await deps.unstable(result.outDir))) await writeFile(join(dir, 'UNSTABLE'), '');
           await writeFile(join(dir, 'DONE'), String(code));
           return { ...result, code };
         } finally {
@@ -184,4 +205,5 @@ export const sharedPipelineRun = createSharedRuns({
   common: commonInputs,
   run: (args, logPath) => withSlot('pipeline', PIPELINE_SLOTS, () => runChild(args, logPath)),
   bypass: () => process.env[NO_RUN_CACHE_ENV] === '1',
+  unstable: hasRenderFailure,
 });
