@@ -72,10 +72,12 @@ afterEach(async () => {
 });
 
 describe('pipeline console lines (S3)', () => {
-  it('labels the translate counts as taken before the type check', async () => {
+  it('keeps the translate bracket text and labels the counts on the next line', async () => {
     await runPipeline(args(), stages(), io);
     const lines = out.split('\n');
-    expect(lines).toContain('[translate] ok (0 classes before type check: 0 clean, 0 loose, 0 unsupported)');
+    const i = lines.indexOf('[translate] ok (0 classes: 0 clean, 0 loose, 0 unsupported)');
+    expect(i).toBeGreaterThan(-1);
+    expect(lines[i + 1]).toBe('  counts taken before the type check; final counts are in translation-report.json');
   });
 
   it('leaves the unpack and typecheck ok lines unchanged', async () => {

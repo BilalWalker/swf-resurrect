@@ -117,13 +117,13 @@ describe('runPipeline', () => {
     expect(await runPipeline(args(), makeStages(), io)).toBe(0);
     expect(calls).toEqual(['unpack', 'convert', 'translate', 'emit', 'typeCheck']);
     const lines = out.split('\n');
-    expect(lines.slice(0, 6).join('\n')).toBe(
-      `[unpack] ok\n[convert] ok (4 svg written, 1 morph skipped)\n[translate] ok (0 classes before type check: 0 clean, 0 loose, 0 unsupported)\n[emit] ok\n[typecheck] ok (0 errors)\nDone: ${outDir}`,
+    expect(lines.slice(0, 7).join('\n')).toBe(
+      `[unpack] ok\n[convert] ok (4 svg written, 1 morph skipped)\n[translate] ok (0 classes: 0 clean, 0 loose, 0 unsupported)\n  counts taken before the type check; final counts are in translation-report.json\n[emit] ok\n[typecheck] ok (0 errors)\nDone: ${outDir}`,
     );
     // The Outcome_Line is the last line and nothing follows it.
-    expect(lines).toHaveLength(8);
-    expect(lines[6]).toMatch(/^Outcome: converted-with-gaps - /);
-    expect(lines[7]).toBe('');
+    expect(lines).toHaveLength(9);
+    expect(lines[7]).toMatch(/^Outcome: converted-with-gaps - /);
+    expect(lines[8]).toBe('');
   });
 
   it('writes unsupported-features.json with untranslated-class entries', async () => {

@@ -473,6 +473,6 @@ Further facts from the code that shape the requirements:
 
 1. WHEN a task changes `src/unpack/` (`spawnFfdec`), THE implementer SHALL fix the process-tree kill (Requirement 6.15) in its own commit.
 2. WHEN a task changes `src/pipeline/cli.ts`, THE implementer SHALL fix the `handwritten/SET.json` read-error message (Requirement 5.6) in its own commit.
-3. WHEN a task changes the `[translate]` console line in `src/pipeline/pipeline.ts`, THE implementer SHALL make the line use the numbers after the type-check gate, or label it as a pre-check count, in its own commit, so that the console line and the Translation_Report no longer disagree.
+3. WHEN a task changes the `[translate]` console line in `src/pipeline/pipeline.ts`, THE implementer SHALL make the line use the numbers after the type-check gate, or label it as a pre-check count, in its own commit, so that the console line and the Translation_Report no longer disagree. (Amended at Checkpoint 1, owner decision: the label is a separate indented line after the `[translate] ok (...)` line, which keeps its original bracket text, because the web server parses that text.)
 4. WHEN a task changes `.kiro/steering/tech.md`, THE implementer SHALL correct the Scene_JSON `formatVersion` statement (Requirement 10.4) in its own commit.
 5. EACH fix of this requirement SHALL carry the test named in the requirement that it implements, where that requirement names one.

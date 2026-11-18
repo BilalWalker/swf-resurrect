@@ -109,7 +109,7 @@ describe('Facts stage (task 7.2)', () => {
 describe('Outcome numbers (task 7.2)', () => {
   it('come from the report after the gate, not from the [translate] line', async () => {
     await runPipeline(args(), stages({ gateErrors: [gateError({ file: 'src/A.ts' })] }), io);
-    expect(out).toContain('[translate] ok (2 classes before type check: 2 clean, 0 loose, 0 unsupported)');
+    expect(out).toContain('[translate] ok (2 classes: 2 clean, 0 loose, 0 unsupported)');
     const report = JSON.parse(await readFile(join(tmp, 'out', 'translation-report.json'), 'utf8'));
     const o = await outcome();
     expect(report.classes.map((c: { status: string }) => c.status).sort()).toEqual(['clean', 'unsupported']);
