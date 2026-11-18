@@ -588,7 +588,10 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     classified = { ...classified, reason: failedReason(classified.reason ?? reasonSentence('internal-error'), referenceId) };
   }
   const ranToGate = failure === null && finalReport !== null && gate !== null;
-  const gaps = ranToGate ? summariseGaps(unsupported, { typeErrors: numbersOf(finalReport, 0).typeErrors }) : [];
+  const gaps = ranToGate ? summariseGaps(unsupported, {
+        typeErrors: numbersOf(finalReport, 0).typeErrors,
+        droppedPlacements: artifact?.stats.placementsDropped ?? 0,
+      }) : [];
   const numbers = ranToGate ? numbersOf(finalReport, artifact?.stats.placementsDropped ?? 0) : null;
   const decision = decideOutcome({
     facts,

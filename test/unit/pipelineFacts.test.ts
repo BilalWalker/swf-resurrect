@@ -106,6 +106,17 @@ describe('Facts stage (task 7.2)', () => {
   });
 });
 
+describe('Dropped placements (Checkpoint 1)', () => {
+  it('shows one dropped placement in numbers, gaps and the reason', async () => {
+    await runPipeline(args(), stages({ placementsDropped: 1 }), io);
+    const o = await outcome();
+    expect(o.outcome).toBe('converted-with-gaps');
+    expect(o.numbers.droppedPlacements).toBe(1);
+    expect(o.gaps).toMatchObject([{ kind: 'dropped-placement', count: 1 }]);
+    expect(o.gaps).toHaveLength(1);
+    expect(o.reason).toContain('dropped-placement');
+  });
+});
 describe('Outcome numbers (task 7.2)', () => {
   it('come from the report after the gate, not from the [translate] line', async () => {
     await runPipeline(args(), stages({ gateErrors: [gateError({ file: 'src/A.ts' })] }), io);
