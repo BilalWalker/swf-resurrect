@@ -293,8 +293,9 @@ async function runRecoveryDeterministic(tmp: string, label: string, invalidCount
 
 describe("Recovery determinism properties (Property 18)", () => {
   it("Property 18: Recovery is deterministic and leaves the input alone", async () => {
-    await fc.assert(
-      fc.asyncProperty(fc.integer({ min: 5, max: 15 }), async (invalidCount) => {
+    // The input has 11 values and the fake FFDec is deterministic: run each value once.
+    for (const value of [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) await fc.assert(
+      fc.asyncProperty(fc.constant(value), async (invalidCount) => {
         const tmp = await mkdtemp(join(tmpdir(), "p18-"));
         try {
           const inputPath = join(tmp, "a.swf");
@@ -320,7 +321,7 @@ describe("Recovery determinism properties (Property 18)", () => {
           await rm(tmp, { recursive: true, force: true });
         }
       }),
-      { numRuns: 5 },
+      { numRuns: 1 },
     );
   });
 });
