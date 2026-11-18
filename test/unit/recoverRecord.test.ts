@@ -48,7 +48,7 @@ function spawner(renamedInvalid: number | null): FfdecSpawner {
   };
 }
 
-function stages(opts: { scripts: Record<string, string> } = { scripts: {} }): PipelineStages {
+function stages(opts: { scripts: Record<string, string>; classes?: string[] } = { scripts: {} }): PipelineStages {
   return {
     recover: (i) => recover({ ...i, spawner: spawner(5), now: () => nowMs }),
     async unpack(i) {
@@ -69,7 +69,7 @@ function stages(opts: { scripts: Record<string, string> } = { scripts: {} }): Pi
       } as never;
     },
     async translate() {
-      return { classes: [tc('A'), tc('B')], skippedScripts: [] };
+      return { classes: (opts.classes ?? ['A', 'B']).map(tc), skippedScripts: [] };
     },
     async emit(_a, o) {
       await mkdir(o.outputDir, { recursive: true });
@@ -157,7 +157,7 @@ describe('recovery record in runPipeline (18.3)', () => {
     await writeFile(join(tmp, 'a.swf'), swfWithNames(20, 10));
     await runPipeline(
       args(),
-      stages({ scripts: { 'A.as': 'class A {}', 'Bad.as': 'var x = §§push(1)', 'pkg/Inner.as': 'var y = §§pop()' } }),
+      stages({ scripts: { 'A.as': 'class A {}', 'Bad.as': 'var x = §§push(1)', 'pkg/Inner.as': 'var y = §§pop()' }, classes: ['A', 'Bad', 'pkg.Inner'] }),
       io,
     );
     const o = await outcome();
@@ -174,6 +174,15 @@ describe('recovery record in runPipeline (18.3)', () => {
     expect(limit.message).toBe(OBFUSCATION_RECOVERED_MESSAGE);
   });
 
+  it('counts only Candidate_Classes: a source with the signals that is no candidate is not a gap', async () => {
+    await writeFile(join(tmp, 'a.swf'), swfWithNames(20, 10));
+    await runPipeline(args(), stages({ scripts: { 'A.as': 'class A {}', 'Bad.as': 'var x = §§push(1)', 'Helper.as': 'var y = §§pop()' }, classes: ['A', 'Bad'] }), io);
+    const o = await outcome();
+    expect(o.recovery.unrecoverableClasses).toBe(1);
+    expect(o.obfuscated.sourceSignals).toBe(1);
+    const u = await unsupported();
+    expect(u.entries.filter((e: { kind: string }) => e.kind === 'unrecoverable-class').map((e: { tag: string }) => e.tag)).toEqual(['Bad']);
+  });
   it('a fallback run has recoveredClasses 0, no Named_Limit and the ordinary reason', async () => {
     await writeFile(join(tmp, 'a.swf'), swfWithNames(20, 10));
     const failStages: PipelineStages = {

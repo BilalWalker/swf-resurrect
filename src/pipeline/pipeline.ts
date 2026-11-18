@@ -660,6 +660,13 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
 
   // Recovery entries (18.3): Unrecoverable_Classes are gaps; `obfuscation-recovered` is a Named_Limit (an unsupported
   // entry of that kind, like `as3-interface`; not counted by summariseGaps) and is recorded once the recovered copy was translated.
+  // The count is per Candidate_Class (Requirement 16.7): a source with the signals that is no candidate (an inner helper, an omitted file) is not a gap.
+  if (recoveredPath !== null && recovery !== null && finalReport !== null && unrecoverable.length > 0) {
+    const candidates = new Set(finalReport.classes.map((c) => c.className));
+    unrecoverable = unrecoverable.filter((e) => candidates.has(e.tag ?? ''));
+    recovery.unrecoverableClasses = unrecoverable.length;
+    if (obfuscated !== null) obfuscated = { ...obfuscated, sourceSignals: unrecoverable.length };
+  }
   if (recoveredPath !== null && recovery !== null && !recovery.fallback) {
     unsupported = [...unsupported, ...unrecoverable, ...(translated !== null ? [obfuscationRecoveredEntry()] : [])];
   }
