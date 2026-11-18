@@ -20,7 +20,17 @@ export function truncateReason(text: string, max: number = MAX_REASON_LENGTH): s
  * names and FFDec stderr text. Result is one line of at most 200 characters.
  */
 export function scrub(text: string): string {
-  const kept = String(text)
+  // A removal can expose a new match (`$A/-` loses `$A`, then `/-` is a root path), so repeat
+  // until the text stops changing. Each pass only shortens the text, so this ends.
+  let current = String(text);
+  for (;;) {
+    const next = scrubOnce(current);
+    if (next === current) return next;
+    current = next;
+  }
+}
+function scrubOnce(text: string): string {
+  const kept = text
     .split(/\r?\n/)
     .filter((line) => !STACK_LINE.test(line) && !FFDEC_LINE.test(line))
     .join(" ");
