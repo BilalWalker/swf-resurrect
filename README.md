@@ -87,6 +87,8 @@ docker build -t swf-resurrect .
 docker run --rm -p 7860:7860 swf-resurrect
 ```
 
+Hosting options and deploy steps: [docs/hosting.md](docs/hosting.md).
+
 Tests:
 
 ```
