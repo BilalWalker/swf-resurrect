@@ -6,7 +6,7 @@ import { dirname, join, resolve } from 'node:path';
 import type { SceneJson } from '../../../template/runtime/scene';
 import type { UnsupportedFeatureEntry } from '../../pipeline/unsupported';
 import type { TranslationReport } from '../../translate/report';
-import { KNOWN_BEHAVIOUR_GAPS } from '../core/constants';
+import { knownBehaviourGapsFor } from '../core/constants';
 import { selectFrames } from '../core/frameSample';
 import { buildInputNotes, formatInputNotes } from '../core/inputNotes';
 import { knownVisualLimits } from '../core/limits';
@@ -250,7 +250,7 @@ export async function verifyStage(req: VerifyRequest): Promise<VerifySummary> {
       unattributed: unattributed.length,
     },
     behaviour,
-    knownBehaviourGaps: KNOWN_BEHAVIOUR_GAPS,
+    knownBehaviourGaps: knownBehaviourGapsFor(req.sampleName),
     problems,
     translation: req.translationReport,
   });

@@ -28,3 +28,26 @@ export const MAX_DETAIL_CHARS = 200;
 
 /** Known behaviour gaps. Gets 'goto-extra-cycle' only through the G7 revert rule. */
 export const KNOWN_BEHAVIOUR_GAPS: readonly string[] = [];
+
+/**
+ * Known behaviour gaps of one sample, keyed by sample name. Each entry names a cause that was traced
+ * from a missing or extra Reference_Trace line to a construct in the translation report or the
+ * emitted code. It only describes the report; it never changes a score.
+ */
+export const KNOWN_BEHAVIOUR_GAPS_BY_SAMPLE: Readonly<Record<string, readonly string[]>> = {
+  static_text: [
+    'Test: the try/catch block is not translated ("try" is not supported), so new StaticText() and the two catch traces never run (missing lines 1-2)',
+    'static text is drawn as shapes, so the child prints [object Shape], not [object StaticText] (missing line 3, extra line 1)',
+  ],
+  slider_component: [
+    'fl.controls.Slider is omitted because fl.core.UIComponent fails to load (TS2304: TextFormat not found), so symbol 20 is a plain MovieClip and never dispatches SliderEvent.CHANGE (missing lines 2-4, changeHandler)',
+  ],
+};
+
+/** The gaps the report lists for a sample: the global ones, then the sample's own. */
+export function knownBehaviourGapsFor(sample: string): readonly string[] {
+  const own = Object.prototype.hasOwnProperty.call(KNOWN_BEHAVIOUR_GAPS_BY_SAMPLE, sample)
+    ? KNOWN_BEHAVIOUR_GAPS_BY_SAMPLE[sample]!
+    : [];
+  return [...KNOWN_BEHAVIOUR_GAPS, ...own];
+}
