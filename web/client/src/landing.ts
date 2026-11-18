@@ -29,6 +29,15 @@ function setupNotice(setup: SetupStatus): HTMLElement | null {
   );
 }
 
+/**
+ * Which of the five painted gravestones (1 to 5 in the sheet) sample `index` gets. Shape 2, the cross, has a
+ * low plaque that holds a single line only, so a name that breaks into several parts gets the wide slab instead.
+ */
+function stoneShape(index: number, nameParts: number): number {
+  const shape = [1, 3, 5, 2, 4][index % 5];
+  return shape === 2 && nameParts > 1 ? 5 : shape;
+}
+
 /** art/sarc-anim.webp: 14 frames of the lid opening (0 closed, 13 fully open), 7 per row. */
 const SARC_FRAMES = 14;
 const SARC_COLS = 7;
@@ -190,17 +199,32 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
   });
 
   const stones = h('ul', { class: 'stones' });
-  for (const s of samples) {
+  for (const [i, s] of samples.entries()) {
+    const credit = [s.author, s.licence].filter((x) => x !== null).join(' · ');
+    const risen = s.cachedJobId !== null;
+    // The name may break after "_" or "-"; its size follows its longest part so it fits the stone's face.
+    const parts = s.name.split(/(?<=[_-])/);
+    const longest = Math.max(...parts.map((p) => p.length));
     const stone = h(
       'button',
-      { type: 'button', class: 'stone', 'aria-label': `Convert sample ${s.name}, ${formatBytes(s.bytes)}${s.cachedJobId !== null ? ', result ready' : ''}` },
-      h('span', { class: 'here-lies', 'aria-hidden': 'true' }, 'HERE LIES'),
-      h('span', { class: 'stone-name' }, s.name),
-      h('span', { class: 'stone-meta' }, `AS3 · ${formatBytes(s.bytes)}`),
-      s.author !== null || s.licence !== null
-        ? h('span', { class: 'stone-credit' }, [s.author, s.licence].filter((x) => x !== null).join(' · '))
-        : null,
-      s.cachedJobId !== null ? h('span', { class: 'stone-risen' }, 'Risen before: opens at once') : null,
+      {
+        type: 'button',
+        class: `stone stone-v${stoneShape(i, parts.length)}${risen ? ' is-risen' : ''}`,
+        'aria-label': `Convert sample ${s.name}, ${formatBytes(s.bytes)}${credit !== '' ? `, ${credit}` : ''}${risen ? ', result ready' : ''}`,
+      },
+      h(
+        'span',
+        { class: 'stone-face' },
+        h('span', { class: 'here-lies', 'aria-hidden': 'true' }, 'HERE LIES'),
+        h('span', { class: 'stone-name', style: `--name-chars: ${Math.max(longest, 5)}` }, ...parts.flatMap((p, n) => (n === 0 ? [p] : [h('wbr'), p]))),
+        h('span', { class: 'stone-meta' }, formatBytes(s.bytes)),
+      ),
+      h(
+        'span',
+        { class: 'stone-plaque', 'aria-hidden': 'true' },
+        risen ? h('span', { class: 'stone-risen' }, 'Risen before: opens at once') : null,
+        credit !== '' ? h('span', { class: 'stone-credit' }, credit) : null,
+      ),
     );
     stone.addEventListener('click', () => {
       if (s.cachedJobId !== null) return deps.openJob(s.cachedJobId);
@@ -243,7 +267,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
         'div',
         { class: 'yard-head' },
         h('h2', { id: 'yard-title' }, 'Or wake one of the resident dead'),
-        h('p', {}, 'Samples with documented provenance. Pick a stone to convert it.'),
+        h('p', {}, 'Samples with documented provenance. Pick a stone to convert it. Glowing stones have risen before and open at once.'),
       ),
       samples.length === 0 ? h('p', { class: 'yard-empty' }, 'The yard is empty: no samples/*/test.swf on this server.') : stones,
     ),
