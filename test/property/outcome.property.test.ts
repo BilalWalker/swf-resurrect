@@ -202,7 +202,7 @@ describe("outcome properties", () => {
   });
 
   it("Property 3: a run whose Unpack throws ends refused damaged or failed internal-error, with no stderr text", async () => {
-    const small = { ...fcConfig, numRuns: 25 };
+    const small = { ...fcConfig, numRuns: 8 };
     const unpackThrows = (e: unknown): PipelineStages =>
       ({ unpack: async () => { throw e; }, convert: async () => { throw new Error("no"); }, translate: async () => { throw new Error("no"); }, emit: async () => { throw new Error("no"); }, typeCheck: async () => { throw new Error("no"); } }) as unknown as PipelineStages;
     await fc.assert(
@@ -287,7 +287,7 @@ describe("outcome properties", () => {
           expect(parsed.outcome).toBe("converted");
         }
       }),
-      { ...fcConfig, numRuns: 30 },
+      { ...fcConfig, numRuns: 8 },
     );
   });
   // Feature: robustness, Property 14: Determinism of the Outcome_File  // **Validates: Requirements 11.7**

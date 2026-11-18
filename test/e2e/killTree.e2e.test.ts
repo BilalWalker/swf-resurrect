@@ -68,7 +68,7 @@ describe(`spawnFfdec timeout kills the process tree (${process.platform === 'win
     const pidFile = join(dir, 'grandchild.pid');
     writeFileSync(jar, script);
 
-    const run = spawnFfdec({ javaCommand: 'fake-java', jarPath: jar, args: [pidFile], timeoutMs: 3000 });
+    const run = spawnFfdec({ javaCommand: 'fake-java', jarPath: jar, args: [pidFile], timeoutMs: 1500 });
     await expect(run).rejects.toBeInstanceOf(FfdecTimeoutError);
 
     expect(existsSync(pidFile), 'the grandchild was started before the timeout').toBe(true);

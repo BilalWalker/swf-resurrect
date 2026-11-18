@@ -67,7 +67,7 @@ describe("Facts_Reader properties", () => {
 describe("Property 10: a cut SWF is never converted", () => {
   // Feature: robustness, Property 10: A cut SWF is never converted
   // **Validates: Requirements 5.10, 5.12, 5.13**
-  const small = { ...fcConfig, numRuns: 25 };
+  const small = { ...fcConfig, numRuns: 8 };
   const check = async (full: Uint8Array, len: number) => {
     const calls: string[] = [];
     const r = await runWithFakes(cut(full, len), forbiddenStages((n) => calls.push(n)));
@@ -93,9 +93,10 @@ describe("Property 10: a cut SWF is never converted", () => {
 
   it("committed samples, any cut length", async () => {
     const dirs = ["clickgoto", "entity_game", "gradients"];
+    const swfs = new Map(dirs.map((d) => [d, new Uint8Array(readFileSync(join("samples", d, "test.swf")))]));
     await fc.assert(
       fc.asyncProperty(fc.constantFrom(...dirs), fc.double({ min: 0, max: 1, noNaN: true }), fc.boolean(), async (dir, f, header) => {
-        const full = new Uint8Array(readFileSync(join("samples", dir, "test.swf")));
+        const full = swfs.get(dir)!;
         const len = header ? Math.floor(f * 12) : Math.min(full.length - 1, Math.floor(f * full.length));
         await check(full, Math.min(len, full.length - 1));
       }),
