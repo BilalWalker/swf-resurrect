@@ -44,7 +44,8 @@ npm install
 npm run typecheck           # tsc --noEmit
 npm run typecheck:template  # tsc --noEmit -p tsconfig.template.json
 npm test -- --run           # scripts/runTests.ts: main vitest run, then launchChromium.e2e alone
-npm run gen:shim-members    # regenerate src/translate/shimMembers.generated.ts from template/shim/
+npm run gen:shim-members    # regenerate src/translate/shimMembers.generated.ts from template/shim/ (stubs/ included)
+npm run gen:api-stubs       # write template/shim/stubs/<Class>.ts from the `stub` entries of src/translate/flashApiTable.ts; run gen:shim-members after it
 npm run test:local-files    # on request only: runs test/e2e/localFiles.e2e.test.ts on .work/judge-test/*.swf (about 90 s for redball4); writes .work/robustness-local/summary.md; the default suite skips it and never reads .work/judge-test/
 npm run fetch:static-text   # fetch the static_text sample into .work/ (never committed)
 npm run fetch:spacer [-- <path>]   # download the spacer release SWF (GPL-3.0) into .work/, or copy a local file; SHA-256 checked, exit 1 mismatch, 2 download failed, 3 unreadable path

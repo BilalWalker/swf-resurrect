@@ -183,10 +183,10 @@ describe('import lines from the import plan', () => {
   });
 
   it('drops a flash.* import and leaves an unresolved name unbound', () => {
-    const source = src('app', '  import flash.display.Sprite;\n  import flash.net.URLLoader;', 'Main extends Sprite {\n    public function f():void { var t:URLLoader; }\n  }');
+    const source = src('app', '  import flash.display.Sprite;\n  import flash.net.NetConnection;', 'Main extends Sprite {\n    public function f():void { var t:NetConnection; }\n  }');
     const r = tr(source, 'app.Main', []);
     expect(r.text).toContain("import { Sprite } from '../../shim';");
-    expect(r.text).not.toContain('import { URLLoader');
+    expect(r.text).not.toContain('import { NetConnection');
     expect(r.importRecords.filter((x) => x.kind === 'class')).toEqual([]);
   });
 });

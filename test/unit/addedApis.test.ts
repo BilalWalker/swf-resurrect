@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest";
 // that names a fixture line or states why it only supports another API.
 const shimFiles = readdirSync("template/shim").filter((f) => f.endsWith(".ts"));
 const shimText = (name: string): string => readFileSync(`template/shim/${name}`, "utf8");
-const allShim = shimFiles.map(shimText).join("\n");
+// The generated stubs (template/shim/stubs/, robustness task 14.2) are Shim sources too.
+const stubFiles = readdirSync("template/shim/stubs").filter((f) => f.endsWith(".ts")).map((f) => `stubs/${f}`);
+const allShim = [...shimFiles, ...stubFiles].map(shimText).join("\n");
 const rows = readFileSync("template/shim/ADDED_APIS.md", "utf8")
   .split(/\r?\n/)
   .filter((l) => l.startsWith("| ") && !l.startsWith("| ---") && !l.startsWith("| API |"))

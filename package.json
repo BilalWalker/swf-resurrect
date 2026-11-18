@@ -10,6 +10,7 @@
     "typecheck:template": "tsc --noEmit -p tsconfig.template.json",
     "pipeline": "tsx src/pipeline/cli.ts",
     "gen:shim-members": "tsx scripts/gen-shim-members.ts",
+    "gen:api-stubs": "tsx scripts/gen-api-stubs.ts",
     "mcp:swf-inspector": "tsx mcp/swf-inspector/main.ts",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "web:start": "tsx web/server/main.ts",

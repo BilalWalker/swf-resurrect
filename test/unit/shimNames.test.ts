@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import * as shim from '../../template/shim/index';
 import { extractShimExportNames } from '../../src/translate/shimMembers';
 import { SHIM_AS3_NAMES } from '../../src/translate/shimNames';
+import { stubClasses } from '../../src/translate/flashApiTable';
 
 function shimSources() {
   return readdirSync('template/shim')
@@ -17,6 +18,10 @@ describe('SHIM_AS3_NAMES (Requirement 2.3, design D1)', () => {
     expect([...SHIM_AS3_NAMES].sort()).toEqual(extractShimExportNames(shimSources()));
     for (const name of Object.keys(shim)) expect(SHIM_AS3_NAMES.has(name), name).toBe(true);
     for (const name of SHIM_AS3_NAMES) expect(name in shim, name).toBe(true);
+  });
+
+  it('holds every stub class of the Flash_API_Table (task 14.2)', () => {
+    for (const q of stubClasses()) expect(SHIM_AS3_NAMES.has(q.split('.').pop()!), q).toBe(true);
   });
 
   it('has no Proxy export (Requirement 20.5)', () => {

@@ -3,6 +3,10 @@
     "8.3 Write the property test of the run": {
       "status": "passed",
       "lastRunTimestamp": 1794853507837
+    },
+    "14.3 Write the property tests of the table and stubs": {
+      "status": "passed",
+      "lastRunTimestamp": 1794903610221
     }
   },
   "executionHistory": {
@@ -362,6 +366,37 @@
         "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794901292157
+      }
+    ],
+    "14.1 Add `src/translate/flashApiTable.ts`": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794902598403
+      },
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794902745269
+      }
+    ],
+    "14.2 Add `scripts/gen-api-stubs.ts`, `stubCall` and the generated stubs": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794902745810
+      },
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794903393875
+      }
+    ],
+    "14.3 Write the property tests of the table and stubs": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794903394004
       }
     ]
   }

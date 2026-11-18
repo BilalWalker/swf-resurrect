@@ -21,3 +21,19 @@ export type { AS3InterfaceToken } from './interfaces';
 export { Graphics, GraphicsPathWinding } from './Graphics';
 
 export { Timer, TimerEvent } from './Timer';
+
+// Generated API stubs (npm run gen:api-stubs, from src/translate/flashApiTable.ts). They ship in every project.
+export { ExternalInterface } from './stubs/ExternalInterface';
+export { LocalConnection } from './stubs/LocalConnection';
+export { Loader } from './stubs/Loader';
+export { LoaderInfo } from './stubs/LoaderInfo';
+export { navigateToURL } from './stubs/navigateToURL';
+export { Security } from './stubs/Security';
+export { SharedObject } from './stubs/SharedObject';
+export { Sound } from './stubs/Sound';
+export { SoundChannel } from './stubs/SoundChannel';
+export { SoundMixer } from './stubs/SoundMixer';
+export { SoundTransform } from './stubs/SoundTransform';
+export { URLLoader } from './stubs/URLLoader';
+export { URLRequest } from './stubs/URLRequest';
+export { URLVariables } from './stubs/URLVariables';
