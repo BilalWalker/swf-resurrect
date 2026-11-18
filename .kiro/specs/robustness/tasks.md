@@ -430,17 +430,17 @@ Credits: no share is stated; each task states its credits in its commit body and
   - [x] 28.1 Verify the web side and correct `docs/outcome.md`
     - Read `web/` only (no edit): confirm the web side passes the run limit to the engine as `--run-limit` (default 300 s) and keeps its own kill 30 s above it as a backstop; quote file and line in the commit body. If it does not, stop and ask. Replace the note that says the web server kills at 180 s. Amend `requirements.md` (Requirement 26, item 4) in this commit.
     - Tests: `test/unit/outcomeDocs.test.ts` stays passing; extend it with a check that the doc no longer says 180.
-    - _Requirements: 26.9_
+    - _Requirements: 6.3_
 
   - [x] 28.2 Correct the same wording elsewhere
     - Grep `180` in `docs/`, `.kiro/specs/`, `.kiro/steering/` and `README` for the same statement and correct each hit that refers to the web kill; leave unrelated numbers. The commit body lists each file changed.
     - Tests: none beyond 28.1.
-    - _Requirements: 26.9_
+    - _Requirements: 6.3_
 
 - [~] 29. Checkpoint 4: Block D done, final
   - STOP. This is the only Checkpoint of Block D. Follow the Checkpoint procedure of the rules: run the full suite `npm test -- --run`, hand the review to the `fidelity-reviewer` agent, commit its report as `.kiro/specs/robustness/reviews/checkpoint-4.md`, act on its findings in a new commit, then stop and report.
   - The report holds the items of the Checkpoint procedure (real `git status`, commits since Checkpoint 3, per-sample table, both Play_Tests, Outcome, reason code and exit code of every Hostile_Fixture, new Named_Limits, Open_Items, Warm_Suite_Time, Credits_Line and the total credits of Block D). It adds one row per local file (`earntodie`, `giveuprobot`, `burritobison`, `papaspizzeria`, `run2`, `redball4`) under the default limits, as numbers only: Outcome, classes translated of candidates, type errors, time. `run2` is expected unchanged. It also states the 27.3 decision with its measurement and the 26.1 table.
-  - _Requirements: 22.1, 22.2, 24.1 to 24.4, 26.1 to 26.9_
+  - _Requirements: 22.1, 22.2, 24.1 to 24.4, 26.1 to 26.8_
 
 ## Notes
 
