@@ -293,7 +293,7 @@ Rules that apply to every task:
 
 ### Block C: buttons (about 60 credits; stop and report above 80)
 
-- [ ] 20. Convert: button symbols and Scene_JSON 4
+- [x] 20. Convert: button symbols and Scene_JSON 4
   - Commit area: `Convert`. Verification V2 (`template/runtime/scene.ts` changes). Block C starts here: restate the Block C share of about 60 credits. Read the design "Block C: buttons", "Convert" (the XML-name table), D-C7, findings F2, F3 and F12, and Property 23. The U5 decision lifts the `UNVERIFIED` stop for `DefineButtonTag`; any other button XML name beyond the design's table is a stop.
   - [x] 20.1 Verify the button XML names
     - Use `swf_find_tags` on `redball4.swf` (when present) for `DefineButton2Tag` and its `BUTTONRECORD` attributes, and write the generated round trip (`test/support/buttonSwf.ts`, created here: an XML skeleton with shapes, one `DefineButtonTag` and one `DefineButton2Tag`, run through `-xml2swf` and `-swf2xml`) for `DefineButtonTag`. Update `src/convert/ffdecXml.ts` so `DefineButtonTag` carries the label "measured on a generated file", not `UNVERIFIED` (U5; Open_Item O11).
@@ -305,23 +305,23 @@ Rules that apply to every task:
     - Tests: `test/unit/buttons.test.ts` (create): states per flag, depth order, duplicate depth, effects, version 3 without a button and 4 with one, reader accepts 2, 3 and 4; goldens unchanged (`test/unit/translateGolden.test.ts` and the scene goldens still pass).
     - _Requirements: 20.1, 20.2, 20.20, 21.2, 21.3_
 
-  - [-] 20.3 Write the property test of the conversion
+  - [x] 20.3 Write the property test of the conversion
     - **Property 23: Button symbol conversion and scene round trip** (each record in exactly the states whose flags are set; each state ordered by depth with no repeated depth; writing then parsing a scene gives an equal scene; version 3 without a button, 4 with one; reader accepts 2, 3 and 4), in `test/property/button.property.test.ts` (create), generator in `test/property/gen/genButtonRecords.ts` (create).
     - **Validates: Requirements 20.1, 20.2, 21.1, 21.2**
 
 - [ ] 21. Runtime and Shim: the button state model, `SimpleButton`, hit region and drawing
   - Commit area: `Runtime` (Shim named). Verification V2. Read the design Runtime and Shim table (read in Ruffle `avm2_button.rs` and `player.rs` at the pinned commit), D-C1 to D-C3, D-C5, D-C6, D-C9 and Properties 24 and 25. Tests run with the FakeBackend and a manual clock (Requirement 20.15). Add every behaviour with its evidence to `flash-behaviour.md` in this commit: the state-change table, the pick rule, the disabled rule and the release-outside rule (read), and the disabled-button state reset (Open_Item O10, neither read nor measured; read `set_enabled` in `avm2_button.rs` first).
-  - [~] 21.1 Add `template/runtime/buttonModel.ts` (pure)
+  - [x] 21.1 Add `template/runtime/buttonModel.ts` (pure)
     - `step(state, event) -> state` with the Ruffle table: RollOver to Over, RollOut to Up, Press to Down, Release to Over, ReleaseOutside to Up, MouseUpInside to Up, DragOut to Over, DragOver to Down; `hitRegion(button, state)` is the shapes of the current state container united with the hit container, each through the placement transform; with no hit records the hit container is empty so the shapes of the current state serve (D-C3, finding F4; A3). Add to the purity list.
     - Tests: `test/unit/buttonModel.test.ts` (create): each row of the table, the hit region with and without hit records.
     - _Requirements: 20.4, 20.5, 20.6, 20.7, 20.8, 20.20_
 
-  - [~] 21.2 Add `SimpleButton`, loader support and drawing
+  - [x] 21.2 Add `SimpleButton`, loader support and drawing
     - `template/shim/SimpleButton.ts` extends `InteractiveObject` with `upState`, `overState`, `downState`, `hitTestState`, `enabled`, `useHandCursor`; the Translator binds a linked button symbol to its class as for other symbols. The loader builds each state as an unparented container of the entries; only the current state is in the render list and the hit container is never drawn. A pointer event inside a button targets the button itself (`mouseChildren` false, D-C5). `enabled = false` draws the up state and dispatches no mouse event (D-C6). A button inside a rotated, scaled or masked placement uses the same placement transform as other symbols. Regenerate and stage the member table; list in `ADDED_APIS.md`.
     - Tests: `test/unit/simpleButton.test.ts` (create): states, `enabled`, binding; `test/unit/buttonNodes.test.ts` (create) on the FakeBackend: only the current state is drawn, the hit shapes are never drawn, the transform of a rotated placement.
     - _Requirements: 20.2, 20.4, 20.7, 20.9, 20.11, 20.12, 20.19_
 
-  - [~] 21.3 Write the property tests of hit region and state
+  - [x] 21.3 Write the property tests of hit region and state
     - **Property 24: Button hit region** (a pointer event reaches the button if and only if the point lies inside a shape of the current state container or of the hit container after the placement transform; a point only in a non-current visible state does not) and **Property 25: Button state follows the pointer model** (for any sequence of moves, presses and releases, the drawn state equals the model: Down if pressed on the button and the pointer is on it; Over if the pointer is on it and not pressed, or pressed and the pointer left it; Up otherwise; a disabled button is always Up and receives no mouse event), in `test/property/button.property.test.ts` (extend).
     - **Validates: Requirements 20.4, 20.5, 20.6, 20.7, 20.8, 20.10, 20.12, 20.16, 20.17, 20.19**
 

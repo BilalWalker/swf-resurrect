@@ -4,6 +4,7 @@ import type { DisplayListEntry, SpriteSymbol } from '../runtime/scene';
 import type { DisplayObject } from './DisplayObject';
 import { Event } from './events';
 import type { MovieClip } from './MovieClip';
+import type { SimpleButton } from './SimpleButton';
 import type { DisplayObjectContainer, Sprite } from './Sprite';
 import { isStage, type ParentNode, type Stage } from './Stage';
 
@@ -104,6 +105,29 @@ export function withConstructionContext<T>(ctx: ConstructionContext, fn: () => T
   } finally {
     current = previous;
   }
+}
+
+/** What the Player runs inside the `SimpleButton` constructor of a button placement: builds the four states from the symbol. */
+export type ButtonBuilder = (button: SimpleButton) => void;
+
+let currentButtonBuilder: ButtonBuilder | null = null;
+
+/** Runs `fn` with `build` visible to the next `SimpleButton` constructor, which takes it (a nested `new` sees none). */
+export function withButtonBuilder<T>(build: ButtonBuilder, fn: () => T): T {
+  const previous = currentButtonBuilder;
+  currentButtonBuilder = build;
+  try {
+    return fn();
+  } finally {
+    currentButtonBuilder = previous;
+  }
+}
+
+/** The builder the running `SimpleButton` constructor consumes, or null for a button made by script. */
+export function takeButtonBuilder(): ButtonBuilder | null {
+  const b = currentButtonBuilder;
+  currentButtonBuilder = null;
+  return b;
 }
 
 /**

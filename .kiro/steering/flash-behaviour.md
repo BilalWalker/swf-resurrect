@@ -227,6 +227,36 @@ say which you did. The spec that holds the evidence is named with each item.
   Neither read in Ruffle nor measured against Flash (O24).
 - **`inspect()` `label` is the label on the exact absolute frame; `frame` is scene-relative.** Ours, not Flash's.
 
+## Buttons (robustness task 21.1)
+- **State-change table, hit rule.** RollOver to Over, RollOut to Up, Press to Down, Release to Over, ReleaseOutside to
+  Up, MouseUpInside to Up, DragOut to Over, DragOver to Down; each event has one target state whatever the old state is.
+  The hit region is the shapes of the current state container united with the hit container; with no hit records the
+  current state's shapes serve; a pointer event inside a button targets the button (`mouseChildren` false). Evidence:
+  read in Ruffle `avm2_button.rs` (`mouse_pick_avm2`) and `player.rs` at `4a8d396` by the robustness design (F4,
+  D-C2, D-C3, D-C5); not re-read in task 21.1 (`.work/ruffle-src` is empty). Not measured. Code:
+  `template/runtime/buttonModel.ts`.
+- **Disabled rule.** A button with `enabled` false ignores every event except key presses (and so does one with
+  `visible` false); it is still the pick result, so it hides what lies under it. Evidence: read in Ruffle
+  `avm2_button.rs` (`filter_clip_event`) at `4a8d396` by the robustness design; not re-read in task 21.2
+  (`.work/ruffle-src` is empty). Not measured. Code: `template/shim/SimpleButton.ts` `dispatchEvent` drops every
+  `MouseEvent` while disabled, for the button and so for its parents too (a disabled button hands nothing up).
+  The `visible` part is not implemented: an invisible button is not hit (the hit test skips it), which has the same effect.
+- **Disabled-button state reset (Open_Item O10).** Ruffle only ignores events; whether `set_enabled` puts the state back
+  to Up was NOT read and NOT measured. We choose (design D-C6, not Flash): a disabled button draws its up state, the
+  state the model had is kept, and `enabled = true` shows that state again. Label: neither. Code: `SimpleButton._drawnState`.
+  To close it, read `set_enabled` in `avm2_button.rs`.
+- **Release-outside rule.** `ReleaseOutside` goes to the pressed object, and the object now under the pointer gets
+  `RollOver` at once. Evidence: read in Ruffle `player.rs` at `4a8d396` by the robustness design; not re-read and not
+  measured. Task 21.2 has no code for it: `Player.dispatchMouseUp` still only reports the pair
+  (`PointerOutcome.releaseOutside`); the events and the state change come with task 22.1 and 22.2.
+- **What a button draws (task 21.2).** The render list of a button holds one object, the current state; the other states and
+  the hit state are not parented. The hit state has no backend node and is never drawn. A button placement takes the
+  placement transform of any symbol, and its state container sits at identity inside it. Evidence: the design's reading
+  of `avm2_button.rs` (only the current state child is parented, the hit area never is); ours-only for the Player code,
+  measured on the FakeBackend in `test/unit/buttonNodes.test.ts`, not compared with Flash. A button state child takes no
+  Default_Instance_Name (ours, not Flash's). A clip inside a button state is built but its timeline does not advance
+  (the frame walk stops at a button): a limit of task 21.2, not read in Ruffle.
+
 ## Evidence register (as3-coverage task 30)
 One list of every Flash behaviour added in the spec, with its label. `read` = read in Ruffle at commit
 `4a8d396` (a note says when it was not re-read in task 30; `.work/ruffle-src` is empty and nothing is
@@ -266,6 +296,12 @@ above; nothing was missing.
 | Static `DefineEditText` (wasStatic and readOnly) drawn as shapes from FFDec's text SVG (Block D); HUD digits compared by eye in `.work` screenshots against Ruffle; text-metrics limit stays | measured by eye | none |
 | Removal on the last frame is not seen between ticks (Play_Test) | ours-only | O31 |
 | `inspect()` label and frame fields | neither (ours, not Flash's) | none |
+| Button state-change table and hit rule (current state union hit state; a hit inside targets the button) | read by the design (`avm2_button.rs`, `mouse_pick_avm2`), not re-read in task 21.1 | none |
+| Disabled button ignores every event but key presses | read by the design (`filter_clip_event`), not re-read in task 21.2 | none |
+| Disabled button draws Up and keeps the model's state for `enabled = true` | neither (design D-C6) | O10 |
+| Release outside: `ReleaseOutside` to the pressed object, `RollOver` to the object now under the pointer | read by the design (`player.rs`), not re-read; no code before task 22 | none |
+| Only the current state is parented; the hit state has no node; a button state child takes no Default_Instance_Name | ours-only (FakeBackend, `test/unit/buttonNodes.test.ts`) | none |
+| A clip inside a button state does not advance | ours-only | none |
 | Ruffle ran `spacer` after a click on the player; `entity_game` loaded and did not advance; Input_Script not replayed | measured | O9 |
 | Runtime Named_Limits reach reports only from the Node replay (and the `spacer` Play_Test run) | ours-only | O28 |
 | `spacer` Overall_Match 100 does not see dynamic text; Infobar digits missing in the screenshot | ours-only | O29, O30 |

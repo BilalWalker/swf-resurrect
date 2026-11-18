@@ -1,6 +1,7 @@
 import type { DisplayObject } from '../shim/DisplayObject';
 import { Event, KeyboardEvent, MouseEvent } from '../shim/events';
 import {
+  attachChild,
   attachRoot,
   buildFrameOne,
   clipsPostOrder,
@@ -13,6 +14,7 @@ import {
   setContextForConstructor,
   setPointerPosition,
   stepTops,
+  withButtonBuilder,
   withConstructionContext,
   defaultInstanceName,
   resetInstanceCounter,
@@ -25,6 +27,7 @@ import {
 import { setTimeSource } from '../shim/utils';
 import { InteractiveObject } from '../shim/InteractiveObject';
 import { MovieClip } from '../shim/MovieClip';
+import { hitOwnerOf, SimpleButton } from '../shim/SimpleButton';
 import { DisplayObjectContainer, Sprite } from '../shim/Sprite';
 import { isStage, Stage, type ParentNode } from '../shim/Stage';
 import { TextField } from '../shim/TextField';
@@ -38,15 +41,18 @@ import { constructorSite, messageOf, type ErrorSink } from './errorReport';
 import { inspectStage, type Inspection } from './inspect';
 import { bindTimerClock, runDueTimers } from './timers';
 import { hitTestAll, resolveHitTarget, type TargetNode } from './hitTest';
-import type { ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
+import type { ButtonSymbol, ColorTransform8, DisplayListEntry, SceneJson, SpriteSymbol } from './scene';
 import { ScriptQueue } from './scriptQueue';
 import { buildHitView, decomposeMatrix, NodeRegistry, ShapeObject } from './stageTree';
+
+/** A class a symbol can be linked to: a clip class, or a class that extends SimpleButton for a button symbol. */
+export type LinkedClass = new (...args: any[]) => Sprite | SimpleButton;
 
 export interface PlayerOptions {
   scene: SceneJson;
   backend: RenderBackend;
   clock: Clock;
-  classRegistry: Record<string, new (...args: any[]) => Sprite>;
+  classRegistry: Record<string, LinkedClass>;
   /** Result of loading all shapes. */
   shapeBounds: ReadonlyMap<number, ShapeBounds>;
   /** The parsed Shape_JSON per shape symbol, for getBounds and pixelsOverlap. Optional: a shape without one has bounds only. */
@@ -98,14 +104,17 @@ function targetViewOf(o: DisplayObject, cache: Map<unknown, TargetView>): Target
   const known = cache.get(o);
   if (known !== undefined) return known;
   const container = o instanceof DisplayObjectContainer ? o : null;
-  const p = o._parent;
+  // A hit-test state is not a child of its button, so the button names it (D-C3).
+  const p = o._parent ?? hitOwnerOf(o) ?? null;
+  const isButton = o instanceof SimpleButton;
   const view: TargetView = {
     source: o,
     parent: p === null || isStage(p) ? (p as Stage | null) : targetViewOf(p as DisplayObject, cache),
-    isContainer: container !== null,
+    // A button takes the hit like a container whose children do not take it (D-C5).
+    isContainer: container !== null || isButton,
     interactiveLeaf: o instanceof TextField,
     mouseEnabled: container?.mouseEnabled ?? (o instanceof InteractiveObject ? o.mouseEnabled : true),
-    mouseChildren: container?.mouseChildren ?? true,
+    mouseChildren: isButton ? false : (container?.mouseChildren ?? true),
   };
   cache.set(o, view);
   return view;
@@ -130,7 +139,7 @@ export class Player {
   private readonly scene: SceneJson;
   private readonly backend: RenderBackend;
   private readonly clock: Clock;
-  private readonly classRegistry: Record<string, new (...args: any[]) => Sprite>;
+  private readonly classRegistry: Record<string, LinkedClass>;
   private readonly maxCatchUp: number;
   private readonly scripts = new ScriptQueue();
   private readonly nodes = new NodeRegistry();
@@ -388,7 +397,7 @@ export class Player {
     let Cls: new () => Sprite = MovieClip;
     if (symbol.className !== undefined) {
       const linked = this.classRegistry[symbol.className];
-      if (linked !== undefined) Cls = linked;
+      if (linked !== undefined) Cls = linked as new () => Sprite;
       else console.warn(`Player: class "${symbol.className}" is not in the registry; using MovieClip`);
     }
     // The Sprite constructor (MovieClip inherits it) registers the node and builds frame 1 (constructFrameOne), so the children are
@@ -459,12 +468,83 @@ export class Player {
     const symbol = this.scene.symbols[String(entry.symbolId)];
     if (symbol === undefined) throw new Error(`Player: unknown symbol ${entry.symbolId}`);
     if (symbol.type === 'sprite') return this.createClip(entry.symbolId, symbol, undefined, entry.name !== '');
+    if (symbol.type === 'button') return this.createButton(symbol, entry.name !== '');
     const bounds = this.shapeBounds.get(entry.symbolId);
     if (bounds === undefined) throw new Error(`Player: no bounds for shape ${entry.symbolId}`);
     // An unnamed shape takes the next Default_Instance_Name here (Requirement 28.2); a named one takes none.
     const shape = withoutDefaultName(() => new ShapeObject(entry.symbolId, bounds, this.shapes.get(entry.symbolId) ?? null));
     if (entry.name === '') shape.name = defaultInstanceName(takeInstanceNumber());
     this.nodes.register(shape, this.backend.createShape(entry.symbolId));
+    return shape;
+  }
+
+  // ---- buttons (robustness design D-C1) ----
+
+  /**
+   * A button placement: the linked class when there is one, else SimpleButton. The states are built inside the
+   * SimpleButton constructor (so before a linked class's own code runs), as clip children are for a Sprite.
+   */
+  private createButton(symbol: ButtonSymbol, named: boolean): SimpleButton {
+    let Cls: new () => SimpleButton = SimpleButton;
+    if (symbol.className !== undefined) {
+      const linked = this.classRegistry[symbol.className];
+      if (linked !== undefined) Cls = linked as new () => SimpleButton;
+      else console.warn(`Player: class "${symbol.className}" is not in the registry; using SimpleButton`);
+    }
+    let made: SimpleButton | null = null;
+    const build = (b: SimpleButton): void => {
+      made = b;
+      this.buildButton(b, symbol, named);
+    };
+    try {
+      return withButtonBuilder(build, () => new Cls());
+    } catch (thrown) {
+      if (Cls === SimpleButton) throw thrown;
+      const className = (symbol.className ?? Cls.name).split('.').pop() as string;
+      reportCaughtError({ site: constructorSite(className), message: messageOf(thrown), className });
+      // The states were built before the derived code ran, so a throw there leaves the partial instance.
+      if (made !== null) return made;
+      return withButtonBuilder(build, () => new SimpleButton());
+    }
+  }
+
+  /**
+   * Builds the four states of `button` from the symbol. Each is an unparented container of its entries; up, over and
+   * down get backend nodes, and only the current one is made a child (SimpleButton._refresh), so the render list holds
+   * one state. The hit state gets no node at all: it is never drawn. Entries keep no instance name and take no
+   * Default_Instance_Name (a button's own placement takes one, before its states, like a clip).
+   */
+  private buildButton(button: SimpleButton, symbol: ButtonSymbol, named: boolean): void {
+    if (!named) button.name = defaultInstanceName(takeInstanceNumber());
+    this.nodes.register(button, this.backend.createContainer());
+    const state = (list: readonly DisplayListEntry[], drawn: boolean): DisplayObjectContainer => {
+      const container = new DisplayObjectContainer();
+      if (drawn) this.nodes.register(container, this.backend.createContainer());
+      for (const entry of list) {
+        const child = this.createStateChild(entry, drawn);
+        this.applyMatrix(child, entry.matrix);
+        this.applyColor(child, entry.colorTransform);
+        attachChild(container, child);
+      }
+      return container;
+    };
+    button.trackAsMenu = symbol.trackAsMenu;
+    button.upState = state(symbol.states.up, true);
+    button.overState = state(symbol.states.over, true);
+    button.downState = state(symbol.states.down, true);
+    button.hitTestState = state(symbol.states.hit, false);
+  }
+
+  /** A child of a button state. `drawn` false (the hit state) makes a shape with bounds and no backend node. */
+  private createStateChild(entry: DisplayListEntry, drawn: boolean): DisplayObject {
+    const symbol = this.scene.symbols[String(entry.symbolId)];
+    if (symbol === undefined) throw new Error(`Player: unknown symbol ${entry.symbolId}`);
+    if (symbol.type === 'sprite') return this.createClip(entry.symbolId, symbol, undefined, true);
+    if (symbol.type === 'button') return this.createButton(symbol, true);
+    const bounds = this.shapeBounds.get(entry.symbolId);
+    if (bounds === undefined) throw new Error(`Player: no bounds for shape ${entry.symbolId}`);
+    const shape = withoutDefaultName(() => new ShapeObject(entry.symbolId, bounds, this.shapes.get(entry.symbolId) ?? null));
+    if (drawn) this.nodes.register(shape, this.backend.createShape(entry.symbolId));
     return shape;
   }
 
@@ -707,8 +787,14 @@ export class Player {
   private withoutUnrenderableEntries(scene: SceneJson): SceneJson {
     const symbols: SceneJson['symbols'] = {};
     for (const [key, sym] of Object.entries(scene.symbols)) {
-      if (sym.type === 'shape' || sym.type === 'button') {
+      if (sym.type === 'shape') {
         symbols[key] = sym;
+        continue;
+      }
+      if (sym.type === 'button') {
+        const keep = (list: DisplayListEntry[]): DisplayListEntry[] => list.filter((entry) => this.canRender(scene, entry));
+        const { up, over, down, hit } = sym.states;
+        symbols[key] = { ...sym, states: { up: keep(up), over: keep(over), down: keep(down), hit: keep(hit) } };
         continue;
       }
       symbols[key] = {
@@ -722,9 +808,7 @@ export class Player {
   private canRender(scene: SceneJson, entry: DisplayListEntry): boolean {
     const target = scene.symbols[String(entry.symbolId)];
     if (target === undefined) return false;
-    if (target.type === 'sprite') return true;
-    // Button symbols are read (Scene_JSON 4) but not drawn until the Runtime gains SimpleButton (robustness task 21).
-    if (target.type === 'button') return false;
+    if (target.type === 'sprite' || target.type === 'button') return true;
     if (this.shapeBounds.has(entry.symbolId)) return true;
     if (!this.reportedMissing.has(entry.symbolId)) {
       this.reportedMissing.add(entry.symbolId);

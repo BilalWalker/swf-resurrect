@@ -62,7 +62,7 @@ function linkedClassNames(scene: SceneJson): Set<string> {
   const names = new Set<string>();
   for (const key of Object.keys(scene.symbols)) {
     const symbol = scene.symbols[key];
-    if (symbol.type === 'sprite' && symbol.className !== undefined) names.add(symbol.className);
+    if ((symbol.type === 'sprite' || symbol.type === 'button') && symbol.className !== undefined) names.add(symbol.className);
   }
   return names;
 }

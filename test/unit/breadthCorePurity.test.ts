@@ -51,6 +51,7 @@ const CORE_FILES = [
   "src/translate/renderApiStubs.ts", // robustness 14.2
   "src/translate/stubDependents.ts", // robustness 16.2
   "src/convert/buttons.ts", // robustness 20.2
+  "template/runtime/buttonModel.ts", // robustness 21.1
 ];
 
 const FORBIDDEN = [/node:/, /\bDate\b/, /Math\.random/, /localeCompare/, /toLocale/, /["']playwright["']/, /["']pngjs["']/];

@@ -1,5 +1,6 @@
 import type { DisplayObject } from '../shim/DisplayObject';
 import { Shape } from '../shim/Shape';
+import { SimpleButton } from '../shim/SimpleButton';
 import { TextField } from '../shim/TextField';
 import type { DisplayObjectContainer } from '../shim/Sprite';
 import { isStage, type Stage } from '../shim/Stage';
@@ -180,7 +181,10 @@ export interface HitView extends HitNode {
  * and everything below it are left out of the view.
  */
 export function buildHitView(obj: DisplayObject, isMask: (o: DisplayObject) => boolean = () => false): HitView {
-  const kids = ((obj as Partial<DisplayObjectContainer>)._children ?? []).filter((k) => !isMask(k));
+  let listed: readonly DisplayObject[] = (obj as Partial<DisplayObjectContainer>)._children ?? [];
+  // The hit region of a button is its current state united with its hit-test state, which is not a child (D-C3).
+  if (obj instanceof SimpleButton && obj.hitTestState !== null && !listed.includes(obj.hitTestState)) listed = [...listed, obj.hitTestState];
+  const kids = listed.filter((k) => !isMask(k));
   const view: HitView = {
     source: obj,
     x: obj.x,

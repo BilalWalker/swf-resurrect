@@ -271,7 +271,7 @@ function linkedSymbols(scene: SceneJson): LinkedSymbol[] {
   const out: LinkedSymbol[] = [];
   for (const key of Object.keys(scene.symbols)) {
     const symbol = scene.symbols[key];
-    if (symbol.type === 'sprite' && symbol.className !== undefined) {
+    if ((symbol.type === 'sprite' || symbol.type === 'button') && symbol.className !== undefined) {
       out.push({ symbolId: Number(key), className: symbol.className });
     }
   }

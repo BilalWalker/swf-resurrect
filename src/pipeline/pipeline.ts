@@ -319,7 +319,7 @@ async function precheck(args: PipelineArgs): Promise<string | null> {
 function untranslatedClasses(artifact: ConvertedArtifact, available: ReadonlySet<string>): UnsupportedFeatureEntry[] {
   const entries: UnsupportedFeatureEntry[] = [];
   for (const [key, sym] of Object.entries(artifact.scene.symbols)) {
-    if (sym.type !== 'sprite' || sym.className === undefined || available.has(sym.className)) continue;
+    if ((sym.type !== 'sprite' && sym.type !== 'button') || sym.className === undefined || available.has(sym.className)) continue;
     entries.push({
       kind: 'untranslated-class',
       id: Number(key),

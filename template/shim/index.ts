@@ -7,6 +7,7 @@ export { InteractiveObject } from './InteractiveObject';
 export { TextField } from './TextField';
 export { GlowFilter } from './GlowFilter';
 export { DisplayObjectContainer, Sprite } from './Sprite';
+export { SimpleButton } from './SimpleButton';
 export { Stage } from './Stage';
 export { StageScaleMode } from './StageScaleMode';
 export { MovieClip } from './MovieClip';

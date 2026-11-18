@@ -6,10 +6,11 @@ import { EventDispatcher } from './events';
 import { classNameOf, registerClassName } from './classNames';
 import { namedLimit } from './errorSink';
 import { getPointerPosition } from './pointerState';
+import type { SimpleButton } from './SimpleButton';
 import type { DisplayObjectContainer } from './Sprite';
 import { StageScaleMode } from './StageScaleMode';
-/** What a display object's parent can be: a container, or the Stage_Object for the root. */
-export type ParentNode = DisplayObjectContainer | Stage;
+/** What a display object's parent can be: a container, a button (its current state), or the Stage_Object for the root. */
+export type ParentNode = DisplayObjectContainer | SimpleButton | Stage;
 /**
  * The Stage_Object: the top of the display tree. It is not a DisplayObject (no transform, no name, no backend node) but
  * it holds children: `_children[0]` is the root clip, and children added by script follow it in draw order. The
