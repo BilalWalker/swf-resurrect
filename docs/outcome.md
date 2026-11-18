@@ -394,3 +394,8 @@ writer's output.
   ]
 }
 ```
+
+## Local files (on request)
+
+The default suite never reads `.work/judge-test/`. To run the local, uncommitted files (empty, text, truncated, redball4) through the CLI, use `npm run test:local-files` (it sets `SWF_RESURRECT_LOCAL_FILES=1` and runs `test/e2e/localFiles.e2e.test.ts`). Every file found is reported with the same fields: Outcome, reason code, exit code, class numbers, gap kinds and counts, and stage durations, written to `.work/robustness-local/summary.md`. A file that is absent is skipped with a message. `redball4` takes about 90 s of CPU, so allow for that.
+

@@ -1,4 +1,8 @@
 // Local, uncommitted files under .work/judge-test/ run through the real CLI (robustness task 12.3).
+// ON REQUEST ONLY: the default suite skips this file without reading .work/judge-test/. Run it with
+//   npm run test:local-files        (or set SWF_RESURRECT_LOCAL_FILES=1 and run vitest on this file)
+// redball4.swf alone takes about 90 s of heavy CPU, which made the default suite unstable.
+// Every file found gets the same report; the table below only holds expectations as data.
 // Output goes under .work/robustness-local/<name>/. Every case skips with a message when its file is absent.
 // The results are written to .work/robustness-local/summary.md (never committed).
 // Validates: Requirements 5.11, 6.16, 8.6
@@ -39,7 +43,10 @@ const CASES: Array<{ name: string; file: string; outcome?: string; reason?: stri
   { name: 'redball4', file: 'redball4.swf' },
 ];
 
-describe('local files', () => {
+/** The default suite never reads .work/judge-test/: without the variable the whole block is skipped. */
+const requested = process.env.SWF_RESURRECT_LOCAL_FILES === '1';
+
+describe.skipIf(!requested)('local files', () => {
   afterAll(async () => {
     await mkdir(outRoot, { recursive: true });
     const md = [
@@ -64,21 +71,23 @@ describe('local files', () => {
       const rec = parseOutcome(await readFile(join(outDir, 'outcome.json'), 'utf8'));
       rows.push(`| ${c.file} | ${rec.outcome} | ${rec.reasonCode ?? '-'} | ${code} |`);
       console.log(`${c.file}: outcome=${rec.outcome} reason=${rec.reasonCode ?? '-'} exit=${code}`);
-      if (c.name === 'redball4') {
-        const n = rec.numbers;
-        const durations = rec.stages.map((s) => `${s.name}=${s.result}:${s.durationMs}ms`).join(', ');
-        const line = n
-          ? `redball4.swf numbers: candidates=${n.candidateClasses} translated=${n.translatedClasses} typeErrors=${n.typeErrors} gaps=${rec.gaps.map((g) => `${g.kind}:${g.count}`).join(',') || 'none'}`
-          : 'redball4.swf numbers: none (no numbers recorded)';
-        console.log(line);
-        console.log(`redball4.swf stage durations (default limits): ${durations}`);
-        notes.push(`## redball4.swf`, '', line, '', `Stage durations, default limits (first reading of Requirement 6.16): ${durations}`);
+      const n = rec.numbers;
+      const durations = rec.stages.map((s) => `${s.name}=${s.result}:${s.durationMs}ms`).join(', ') || 'none';
+      const gaps = rec.gaps.map((g) => `${g.kind}:${g.count}`).join(',') || 'none';
+      const line = n
+        ? `${c.file} numbers: candidates=${n.candidateClasses} translated=${n.translatedClasses} untranslated-code=${n.untranslatedCodeClasses} unparsed=${n.unparsedClasses} typeErrors=${n.typeErrors} gaps=${gaps}`
+        : `${c.file} numbers: none (no numbers recorded) gaps=${gaps}`;
+      console.log(line);
+      console.log(`${c.file} stage durations (default limits): ${durations}`);
+      notes.push(`## ${c.file}`, '', line, '', `Stage durations, default limits: ${durations}`, '');
+      // Expectations are data in the case table; a case without them is recorded only.
+      if (c.outcome !== undefined) {
+        expect(rec.outcome).toBe(c.outcome);
+        expect(rec.reasonCode).toBe(c.reason);
+        expect(code).toBe(c.exit);
+      } else {
         expect(output.length).toBeGreaterThan(0);
-        return;
       }
-      expect(rec.outcome).toBe(c.outcome);
-      expect(rec.reasonCode).toBe(c.reason);
-      expect(code).toBe(c.exit);
     },
     LONG_TIMEOUT_MS,
   );

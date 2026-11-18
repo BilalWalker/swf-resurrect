@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "tsx scripts/runTests.ts",
+    "test:local-files": "tsx scripts/runLocalFiles.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:template": "tsc --noEmit -p tsconfig.template.json",
     "pipeline": "tsx src/pipeline/cli.ts",
