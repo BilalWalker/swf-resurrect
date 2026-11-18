@@ -272,3 +272,13 @@ describe('Fidelity_Report: Flash API stubs the Replay used (robustness task 16.2
     expect(serialiseFidelityReport(r)).not.toContain('apiStubs');
   });
 });
+
+describe('Fidelity_Report: button Named_Limits (robustness task 23.2)', () => {
+  it('lists the button limits in knownVisualLimits when a button placement exists', () => {
+    const base = fc.sample(genReportInputs, { numRuns: 1, seed: 7 })[0]!;
+    const limit = { kind: 'unsupported-feature' as const, id: 5, message: 'button 5 has AVM1 button actions; they are ignored' };
+    const report = buildFidelityReport({ ...base, limits: [limit] });
+    expect(report.visual.knownVisualLimits).toContainEqual(limit);
+    expect(renderFidelityHtml(report)).toContain('AVM1 button actions');
+  });
+});

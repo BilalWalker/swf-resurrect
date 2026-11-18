@@ -337,18 +337,18 @@ Rules that apply to every task:
     - Tests: `test/unit/playerButtons.test.ts` (create): up at rest, over on hover, down on press, click on release, no click on release elsewhere, disabled button inert.
     - _Requirements: 20.4, 20.5, 20.6, 20.9, 20.10, 20.12, 20.15_
 
-- [ ] 23. Test and Verify: the generated-button end to end and the Outcome count
+- [x] 23. Test and Verify: the generated-button end to end and the Outcome count
   - Commit area: `Test` (Verify and Pipeline named). Verification V2. Read the design D-C7, finding F2 and Requirement 21. No committed sample holds a button (A5), so Requirement 20.18 is met by two checks: every committed sample keeps its scores, and the generated button fixture passes.
-  - [~] 23.1 Run the generated button fixture through the pipeline in Chromium
+  - [x] 23.1 Run the generated button fixture through the pipeline in Chromium
     - `test/e2e/buttonFixture.e2e.test.ts` (create; a `chromium` slot): build the fixture with `test/support/buttonSwf.ts`, run the pipeline, build the project, load it, and check that the up state draws at rest, the over state while hovering, the down state while pressed, and that `click` fires a listener; a hit-area point outside the drawn state also reacts. Take one screenshot with the `playwright` MCP and look at it; it is not scored.
     - _Requirements: 20.4, 20.5, 20.6, 20.7, 20.9, 20.18, 20.19_
 
-  - [~] 23.2 Remove delivered `button` entries and report the rest
+  - [x] 23.2 Remove delivered `button` entries and report the rest
     - The Unsupported_Feature_List keeps a `button` entry only for a feature not delivered; the Fidelity_Report lists the button Named_Limits whenever a button placement exists (Requirement 20.14); the Outcome's `droppedPlacements` falls accordingly. The commit body gives the `button` entry count before (78 on the day of writing, from the local file) and after, as numbers, when `redball4.swf` is present (the check skips otherwise; the number is informational).
     - Tests: `test/unit/buttonReport.test.ts` (create): delivered states leave no `button` entry; an undelivered state leaves its Named_Limit; `test/unit/report.test.ts` (extend): the Fidelity_Report lists them.
     - _Requirements: 20.2, 20.13, 20.14, 21.1, 21.2, 21.3_
 
-  - [~] 23.3 Guard the existing floors
+  - [x] 23.3 Guard the existing floors
     - Run `test/unit/clickgotoReplay.test.ts`, `test/e2e/overallMatch.e2e.test.ts` and the Trace_Score tests. State every committed sample's Overall_Match and Trace_Score before and after Block C in the commit body; none may drop (Requirement 11.1). The sample table plus the generated fixture is the Requirement 20.18 check.
     - _Requirements: 11.1, 11.4, 20.18_
 

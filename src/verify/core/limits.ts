@@ -33,6 +33,24 @@ const LIMITED_KINDS: ReadonlySet<string> = new Set([
   'morph-shape',
 ]);
 
+/** Button Named_Limits: listed whenever a button symbol is placed (Requirement 20.14). */
+const BUTTON_LIMIT_KINDS: ReadonlySet<string> = new Set([
+  'button-duplicate-depth',
+  'button-record-effects',
+  'button-avm1-actions',
+  'button-sound',
+]);
+
+function buttonIsPlaced(scene: SceneJson): boolean {
+  for (const sym of Object.values(scene.symbols)) {
+    if (sym === undefined || sym.type !== 'sprite') continue;
+    for (const frame of sym.frames) {
+      for (const e of frame) if (scene.symbols[String(e.symbolId)]?.type === 'button') return true;
+    }
+  }
+  return false;
+}
+
 /** Unsupported kinds that become a limit of the same kind (id and message kept). */
 const OWN_KINDS: ReadonlySet<string> = new Set([
   'gradient-fill',
@@ -110,7 +128,16 @@ export function knownVisualLimits(
     });
   }
 
+  const placed = buttonIsPlaced(scene);
   for (const u of unsupported) {
+    if (BUTTON_LIMIT_KINDS.has(u.kind)) {
+      if (placed) {
+        const l: VisualLimit = { kind: 'unsupported-feature', message: u.message };
+        if (u.id !== undefined) l.id = u.id;
+        found.push(l);
+      }
+      continue;
+    }
     const own = OWN_KINDS.has(u.kind);
     if (!own && !LIMITED_KINDS.has(u.kind)) continue;
     if (u.kind === 'text-metrics' && opts.allComparedFramesExact) continue;
