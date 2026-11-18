@@ -8,6 +8,10 @@ describe("shimMembers.generated.ts", () => {
       .filter((f) => f.endsWith(".ts"))
       .sort()
       .map((path) => ({ path, text: readFileSync(`template/shim/${path}`, "utf8") }));
+    // gen-shim-members.ts also reads the generated stub classes in template/shim/stubs.
+    for (const f of readdirSync("template/shim/stubs").filter((n) => n.endsWith(".ts")).sort()) {
+      files.push({ path: `stubs/${f}`, text: readFileSync(`template/shim/stubs/${f}`, "utf8") });
+    }
     const expected = renderShimMembersTs(extractShimMembers(files), extractShimExportNames(files));
     const committed = readFileSync("src/translate/shimMembers.generated.ts", "utf8").replace(/\r\n/g, "\n");
     if (committed !== expected) {
