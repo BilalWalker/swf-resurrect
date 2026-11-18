@@ -31,6 +31,8 @@ The code is in `src/outcome/` (`outcome.ts`, `outcomeFile.ts`, `exitCode.ts`, `r
 | `nothing-translated` | There are candidate classes and none could be translated. |
 | `internal-error` | An internal error stopped the run. |
 
+`encrypted` is defined and tested through `decideOutcome`, but the pipeline does not yet detect an encrypted file in a real run, so no real run ends with it.
+
 ## Exit codes
 
 | Exit code | Outcome |

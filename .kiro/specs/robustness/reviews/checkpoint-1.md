@@ -62,4 +62,15 @@ Not run or not verified
 
 ## Status of findings
 
-Findings 1 to 4 are open and not yet fixed. They are reported to the owner at the stop. There is no fixing commit yet.
+All four findings are fixed. Two consecutive runs of `npm test -- --run` (no SWF_RESURRECT_LOCAL_FILES) were fully green: run A 288 files passed, 1 skipped, 2025 tests passed, 5 skipped, main phase 119.30 s, second phase 2 tests 7.37 s, total 128.8 s; run B same counts, main phase 154.74 s, second phase 6.94 s, total 164.0 s. Logs: `.work/cp1-run-a.log`, `.work/cp1-run-b.log`.
+
+1. Fixed by 6033721. Cause: the local-file test ran redball4 in the default suite. It now runs only with `npm run test:local-files`.
+2. Fixed by 202f100 (tie-break by box in `better`).
+3. Fixed by 28e8a32. Cause: a fixed 60 s FFDec per-call timeout in `src/unpack/unpack.ts`. Each call is now bounded by the remaining stage allowance. Open: `src/verify/edge/ffdecFrames.ts` keeps a fixed 120 s, inside the 180 s verify allowance.
+4. Fixed by 313cced (`knownBehaviourGaps` for static_text and slider_component; both causes measured).
+
+Accepted open by the owner, no work now:
+- Encryption is not detected in a real run (stated in `docs/outcome.md`).
+- SIGTERM on Windows (O5).
+- The synchronous stage that cannot be interrupted (O1).
+- The 300 s run limit against the web server's 180 s (passed to the UI side).
