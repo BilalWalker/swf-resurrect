@@ -98,7 +98,7 @@ const nearEdge = (x: number, y: number): boolean =>
 describe('button hit region (Player)', () => {
   // Feature: robustness, Property 24: Button hit region
   // **Validates: Requirements 20.4, 20.5, 20.7, 20.8, 20.12, 20.19**
-  it('Property 24: a click reaches the button iff the point is in the current state or the hit shapes, after the placement transform', () => {
+  it('Property 24: a pointer event reaches the button iff the point is in the current state or the hit shapes, after the placement transform', () => {
     const placement = fc
       .tuple(fc.double({ min: 0.5, max: 3, noNaN: true }), fc.double({ min: 0, max: 6.28, noNaN: true }), fc.integer({ min: -50, max: 150 }), fc.integer({ min: -50, max: 150 }))
       .map(([s, a, tx, ty]): [number, number, number, number, number, number] => [s * Math.cos(a), s * Math.sin(a), -s * Math.sin(a), s * Math.cos(a), tx, ty]);
@@ -108,7 +108,7 @@ describe('button hit region (Player)', () => {
         const { player, btn } = buildButtonPlayer(m);
         btn._setState(state);
         let clicks = 0;
-        // A click would move the state (hover, then press) and so the region; the first hover entry is tested under the state set here.
+        // The pointer event tested is the first hover entry (mouseOver), not a click: a click would move the state (hover, then press) and so the region, so the region is read under the state set here.
         btn.addEventListener(MouseEvent.MOUSE_OVER, () => clicks++);
         player.dispatchMouseMove(m[0] * lx + m[2] * ly + m[4], m[1] * lx + m[3] * ly + m[5]);
         const expected = insideRect(lx, ly, RECTS[state]) || insideRect(lx, ly, RECTS.hit);
