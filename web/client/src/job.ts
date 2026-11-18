@@ -50,8 +50,9 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
     log,
   );
 
+  const head = h('header', { class: 'job-head' }, h('p', { class: 'eyebrow' }, 'Resurrection'), title, meta);
   main.replaceChildren(
-    h('header', { class: 'job-head' }, h('p', { class: 'eyebrow' }, 'Resurrection'), title, meta),
+    head,
     queue,
     failure,
     result,
@@ -178,6 +179,8 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
     }
     if (j.status === 'succeeded' && !resultShown) {
       resultShown = true;
+      // The result is the headline now: the job title steps back to one line above it.
+      head.classList.add('is-compact');
       deps.renderResult(result, j, { rerun });
       if (was !== undefined && was !== 'succeeded') announce(`It lives. ${j.name} was converted.`);
     }

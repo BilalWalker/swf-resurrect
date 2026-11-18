@@ -324,26 +324,30 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
       h(
         'header',
         { class: 'alive' },
-        h('h2', { id: 'alive-title', class: 'alive-title', tabindex: '-1' }, 'It lives.'),
-        h('p', { class: 'alive-sub' }, `${job.name} was raised as a TypeScript + Vite + PixiJS project.`),
+        h(
+          'div',
+          { class: 'alive-text' },
+          h('h2', { id: 'alive-title', class: 'alive-title', tabindex: '-1' }, 'It lives.'),
+          h('p', { class: 'alive-sub' }, `${job.name} is now a TypeScript + Vite + PixiJS project.`),
+        ),
         svg(EKG),
+        h(
+          'div',
+          { class: 'actions result-actions' },
+          job.artifacts.project
+            ? h('a', { class: 'btn btn-primary', href: jobUrl.zip(job.id), download: '' }, 'Take the body home (.zip)')
+            : null,
+          h('button', { type: 'button', class: 'btn', onclick: deps.rerun }, 'Re-run'),
+          h('a', { class: 'btn', href: '#/' }, 'Raise another'),
+        ),
       ),
       h(
         'div',
         { class: 'vitals', role: 'group', 'aria-label': 'Soul match and counts' },
-        gauge('Overall match', 'sampled frames compared with the original, pixel by pixel within a tolerance', r.overallMatch, 'No fidelity report was written.'),
-        gauge('Trace score', 'trace output of a replayed session compared with the original’s', r.traceScore, 'No fidelity report was written.'),
+        gauge('Overall match', 'Mean pixel match over sampled frames', r.overallMatch, 'No fidelity report was written.'),
+        gauge('Trace score', 'Trace lines matched in a replay', r.traceScore, 'No fidelity report was written.'),
         classesTile(r),
         graveTile(r, () => t.select('grave')),
-      ),
-      h(
-        'div',
-        { class: 'actions result-actions' },
-        job.artifacts.project
-          ? h('a', { class: 'btn btn-primary btn-large', href: jobUrl.zip(job.id), download: '' }, 'Take the body home (.zip)')
-          : null,
-        h('button', { type: 'button', class: 'btn', onclick: deps.rerun }, 'Re-run the ritual'),
-        h('a', { class: 'btn', href: '#/' }, 'Raise another'),
       ),
       seance(job, r),
       t.el,
