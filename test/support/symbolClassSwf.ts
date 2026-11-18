@@ -28,11 +28,12 @@ export const SYMBOL_CLASS_ITEMS: readonly (readonly Pair[])[] = [
   [[3, 'D']],
 ];
 
-/** The ExportAssetsTag pairs: a name for id 2 that is not a SymbolClass pair, and an identical copy of (3, `C`). */
-export const EXPORT_ASSET_PAIRS: readonly Pair[] = [
-  [2, 'ExportName'],
-  [3, 'C'],
-];
+/**
+ * The ExportAssetsTag items: a name for id 2 that is not a SymbolClass pair, and an identical copy of (3, `C`).
+ * The file tag order is ExportAssets, SymbolClass, ExportAssets, SymbolClass (as in real files), and FFDec writes
+ * symbols.csv in that tag order.
+ */
+export const EXPORT_ASSET_ITEMS: readonly (readonly Pair[])[] = [[[2, 'ExportName']], [[3, 'C']]];
 
 function pairsXml(tag: string, pairs: readonly Pair[]): string {
   return `<item type="${tag}" forceWriteAsLong="true">
@@ -82,8 +83,10 @@ export function symbolClassSkeletonXml(): string {
     ${shape(s)}
     ${sprite(spriteA, s)}
     ${sprite(spriteB, s)}
-    ${SYMBOL_CLASS_ITEMS.map((p) => pairsXml('SymbolClassTag', p)).join('\n    ')}
-    ${pairsXml('ExportAssetsTag', EXPORT_ASSET_PAIRS)}
+    ${pairsXml('ExportAssetsTag', EXPORT_ASSET_ITEMS[0])}
+    ${pairsXml('SymbolClassTag', SYMBOL_CLASS_ITEMS[0])}
+    ${pairsXml('ExportAssetsTag', EXPORT_ASSET_ITEMS[1])}
+    ${pairsXml('SymbolClassTag', SYMBOL_CLASS_ITEMS[1])}
     <item type="ShowFrameTag" forceWriteAsLong="false"/>
   </tags>
 </swf>

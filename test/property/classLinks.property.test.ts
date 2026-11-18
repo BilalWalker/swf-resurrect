@@ -94,11 +94,18 @@ describe('Property 26: SymbolClass links', () => {
     );
   });
 
-  it('keeps only the SymbolClassTag prefix of the csv entries', () => {
+  it('takes the class pairs from the dump list whatever the csv order (interleaved export pairs)', () => {
     fc.assert(
-      fc.property(genSymbolClassList, genSymbolClassList, (classPairs, exportPairs) => {
-        const csv = [...classPairs, ...exportPairs];
-        expect(symbolClassPairs(csv, classPairs.length)).toEqual(classPairs);
+      fc.property(genSymbolClassList, genSymbolClassList, fc.array(fc.nat(), { maxLength: 40 }), (classPairs, exportPairs, cuts) => {
+        // csv = SymbolClass and ExportAssets pairs interleaved in tag order: each cut inserts the next export pair.
+        const csv: typeof classPairs = [];
+        const exports = [...exportPairs];
+        classPairs.forEach((p, i) => {
+          if (cuts.includes(i) && exports.length > 0) csv.push(exports.shift()!);
+          csv.push(p);
+        });
+        csv.push(...exports);
+        expect(symbolClassPairs(csv, classPairs)).toEqual(classPairs);
         expect(symbolClassPairs(csv, undefined)).toEqual(csv);
       }),
       fcConfig,

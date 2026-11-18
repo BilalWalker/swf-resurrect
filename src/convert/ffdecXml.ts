@@ -559,8 +559,8 @@ export function parseStructure(xmlText: string): {
   buttons: ButtonModel[];
   /** From DefineSceneAndFrameLabelData; empty when the tag is absent. firstFrame is 1-based. */
   scenes: Array<{ name: string; firstFrame: number }>;
-  /** Pairs held by the SymbolClassTag items (the first lines of symbols.csv); 0 when the tag is absent. */
-  symbolClassPairs: number;
+  /** (id, name) pairs of the SymbolClassTag items in tag order, names exactly as dumped; empty when the tag is absent. */
+  symbolClassPairs: Array<{ id: number; className: string }>;
   unsupported: UnsupportedObservation[];
 } {
   const parser = new XMLParser({
@@ -583,7 +583,7 @@ export function parseStructure(xmlText: string): {
     bitmapIds: [] as number[],
     buttons: [] as ButtonModel[],
     scenes: [] as Array<{ name: string; firstFrame: number }>,
-    symbolClassPairs: 0,
+    symbolClassPairs: [] as Array<{ id: number; className: string }>,
     unsupported: ctx.unsupported,
   };
   if (!swf) return out;
@@ -660,8 +660,12 @@ export function parseStructure(xmlText: string): {
     } else if (kind === FFDEC_XML.timeline.sceneAndLabelData) {
       out.scenes = readScenes(item);
     } else if (kind === FFDEC_XML.symbolClass.tag) {
-      const ids = findChild(item, FFDEC_XML.item.element, FFDEC_XML.symbolClass.ids);
-      if (ids) out.symbolClassPairs += childrenOf(ids.node, FFDEC_XML.symbolClass.ids).filter((n) => nameOf(n) === FFDEC_XML.item.element).length;
+      const ids = itemTexts(item, FFDEC_XML.symbolClass.ids);
+      const names = itemTexts(item, FFDEC_XML.symbolClass.names);
+      for (let i = 0; i < Math.min(ids.length, names.length); i++) {
+        const id = Number(ids[i]);
+        if (Number.isSafeInteger(id) && id >= 0) out.symbolClassPairs.push({ id, className: names[i] });
+      }
     } else if (IGNORED_DEFINE_TAGS.has(kind) || kind.startsWith(FFDEC_XML.fontTagPrefix)) {
       // known, nothing to read
     } else if (kind.startsWith('Define')) {

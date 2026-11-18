@@ -31,7 +31,7 @@ describe('readUnpacked', () => {
     expect(model.header.frameCount).toBe(3);
   });
 
-  it('4.4 a null symbolClassPath gives empty symbolClasses and classSources', async () => {
+  it('4.4 the class links come from the dump, with or without a symbols.csv path', async () => {
     const dir = resolve(__dirname, '../fixtures/clickgoto');
     const { xmlVersion, header } = readDumpHeader(readFileSync(resolve(dir, 'structure.xml'), 'utf8'));
     const model = await readUnpacked({
@@ -44,8 +44,7 @@ describe('readUnpacked', () => {
       header,
       xmlVersion,
     });
-    expect(model.symbolClasses).toEqual([]);
-    expect(model.classSources).toEqual([]);
+    expect(model.symbolClasses.map((s) => s.className)).toEqual(['LeftButton', 'RightButton', 'MainTimeline']);
   });
 
   it('18.1 parseSymbolsCsv keeps dotted names unchanged', () => {

@@ -9,14 +9,17 @@ export interface ClassLink {
 }
 
 /**
- * Keeps the pairs that come from SymbolClassTag items. FFDec's symbols.csv lists those pairs first, in tag order, and
- * then the ExportAssetsTag pairs; the dump says how many pairs the SymbolClassTag items hold. Export pairs are not
- * AS3 class links (Ruffle ignores them), so they are dropped here. An undefined count keeps every entry.
+ * The class links of a movie: the (id, name) pairs of the SymbolClassTag items in tag order. FFDec's symbols.csv
+ * concatenates the pairs of SymbolClassTag and ExportAssetsTag items in file tag order, so no prefix of it is the
+ * SymbolClass list. Export pairs are not AS3 class links (Ruffle ignores them). Without dump pairs (a model built
+ * without a dump) every csv entry is kept.
  */
-export function symbolClassPairs(entries: readonly SymbolClassEntry[], pairCount: number | undefined): SymbolClassEntry[] {
-  return pairCount === undefined ? [...entries] : entries.slice(0, pairCount);
+export function symbolClassPairs(
+  csvEntries: readonly SymbolClassEntry[],
+  dumpPairs: readonly SymbolClassEntry[] | undefined,
+): SymbolClassEntry[] {
+  return (dumpPairs ?? csvEntries).map((e) => ({ id: e.id, className: e.className }));
 }
-
 /** One link per id. Identical (id, name) pairs count once; never throws. */
 export function buildClassLinks(entries: readonly SymbolClassEntry[]): Map<number, ClassLink> {
   const byId = new Map<number, string[]>();

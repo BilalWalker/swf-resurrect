@@ -12,10 +12,11 @@ describe.skipIf(skip !== null)('symbolClass fixture (generated, measured)', () =
   let m: SymbolClassMeasure;
   const get = (): SymbolClassMeasure => (m ??= measureSymbolClassSwf());
 
-  it('the dump holds two SymbolClassTag items and one ExportAssetsTag', () => {
+  it('the dump holds two SymbolClassTag items and two ExportAssetsTag items, interleaved in tag order', () => {
     const { dump } = get();
     expect(dump.match(/type="SymbolClassTag"/g)?.length).toBe(2);
-    expect(dump.match(/type="ExportAssetsTag"/g)?.length).toBe(1);
+    expect(dump.match(/type="ExportAssetsTag"/g)?.length).toBe(2);
+    expect([...dump.matchAll(/type="(ExportAssetsTag|SymbolClassTag)"/g)].map((x) => x[1])).toEqual(['ExportAssetsTag', 'SymbolClassTag', 'ExportAssetsTag', 'SymbolClassTag']);
   }, 120_000);
 
   it('the dump keeps the repeated id and the repeated pair', () => {
@@ -42,7 +43,12 @@ describe.skipIf(skip !== null)('symbolClass fixture (generated, measured)', () =
     expect(get().csvLines).toContain('2;"ExportName"');
   }, 120_000);
 
-  it('symbols.csv is the SymbolClass pairs in tag order (repeats kept), then the ExportAssets pairs', () => {
-    expect(get().csvLines).toEqual(['2;"A"', '2;"B"', '2;"A"', '3;"C"', '0;"Doc"', '0;"Extra"', '3;"D"', '2;"ExportName"', '3;"C"']);
+  it('symbols.csv is the pairs of every ExportAssets and SymbolClass tag, concatenated in file tag order (repeats kept)', () => {
+    expect(get().csvLines).toEqual([
+      '2;"ExportName"',
+      '2;"A"', '2;"B"', '2;"A"', '3;"C"', '0;"Doc"', '0;"Extra"',
+      '3;"C"',
+      '3;"D"',
+    ]);
   }, 120_000);
 });

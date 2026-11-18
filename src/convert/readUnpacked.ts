@@ -8,9 +8,9 @@ import { MalformedSvgError } from './errors';
 import { parseStructure, readDumpHeader } from './ffdecXml';
 import type { ClassSourceModel, ShapeAssetModel, TagsModel, UnsupportedObservation } from './model';
 import { extractSvgOrigin } from './svgOrigin';
-import { InvalidClassNameError, scriptRelPath } from './qualifiedName';
+import { InvalidClassNameError, parseQualifiedName, scriptRelPath } from './qualifiedName';
 import { symbolClassPairs } from './classLinks';
-import { parseSymbolsCsv } from './symbolsCsv';
+
 
 function byCodeUnit(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
@@ -52,11 +52,11 @@ export async function readUnpacked(unpacked: UnpackResult): Promise<TagsModel> {
   const { xmlVersion, header } = readDumpHeader(dumpText);
   const structure = parseStructure(dumpText);
 
-  // symbols.csv lists the SymbolClassTag pairs first and the ExportAssetsTag pairs after them; only the first are classes.
-  const symbolClasses = symbolClassPairs(
-    parseSymbolsCsv(unpacked.symbolClassPath === null ? '' : await readFile(unpacked.symbolClassPath, 'utf8')),
-    structure.symbolClassPairs,
-  );
+  // Class links are the SymbolClassTag pairs of the dump in tag order. symbols.csv holds the pairs of SymbolClassTag and
+  // ExportAssetsTag items in file tag order, so it is not read here.
+  const dumpPairs = structure.symbolClassPairs;
+  for (const p of dumpPairs) parseQualifiedName(p.className, 'convert'); // throws InvalidClassNameError; the name is kept unchanged
+  const symbolClasses = symbolClassPairs([], dumpPairs);
 
   const files = await listSvgFiles(unpacked.shapesDir);
   if (files === null && structure.declaredShapeIds.length > 0) {

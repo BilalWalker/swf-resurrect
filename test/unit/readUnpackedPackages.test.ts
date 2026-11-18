@@ -21,16 +21,24 @@ async function setup(csv: string): Promise<{ unpacked: UnpackResult; dir: string
   await mkdir(join(dir, 'scripts', 'fl', 'controls'), { recursive: true });
   await writeFile(join(dir, 'scripts', 'code', 'Interactivity3.as'), 'package code { public class Interactivity3 { public var a:int; } }');
   await writeFile(join(dir, 'scripts', 'fl', 'controls', 'Slider.as'), 'package fl.controls { public class Slider { public var b:int; } }');
-  await writeFile(join(dir, 'symbols.csv'), csv);
-  const { xmlVersion, header } = readDumpHeader(readFileSync(join(fixture, 'structure.xml'), 'utf8'));
+  // The class links come from the SymbolClassTag of the dump: put the given pairs there.
+  const pairs = [...csv.matchAll(/^(\d+);"(.*)"$/gm)].map((m) => ({ id: m[1], name: m[2] }));
+  const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const block = `<tags>${pairs.map((p) => `<item>${p.id}</item>`).join('')}</tags><names>${pairs.map((p) => `<item>${esc(p.name)}</item>`).join('')}</names>`;
+  const dump = readFileSync(join(fixture, 'structure.xml'), 'utf8').replace(
+    /(<item type="SymbolClassTag"[^>]*>)[\s\S]*?(<\/item>\s*<item type="ShowFrameTag")/,
+    (_m, a: string, b: string) => `${a}${block}${b}`,
+  );
+  await writeFile(join(dir, 'structure.xml'), dump);
+  const { xmlVersion, header } = readDumpHeader(dump);
   return {
     dir,
     unpacked: {
       workDir: dir,
       shapesDir: join(fixture, 'shapes'),
       textsDir: join(fixture, 'texts'),
-      structureDumpPath: join(fixture, 'structure.xml'),
-      symbolClassPath: join(dir, 'symbols.csv'),
+      structureDumpPath: join(dir, 'structure.xml'),
+      symbolClassPath: null,
       scriptsDir: join(dir, 'scripts'),
       header,
       xmlVersion,

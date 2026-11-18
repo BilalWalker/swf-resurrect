@@ -19,7 +19,7 @@ import { measureSymbolClassSwf, symbolClassSwfSkipReason } from '../support/symb
 const pair = (id: number, className: string): SymbolClassEntry => ({ id, className });
 /** The SymbolClassTag pairs of the fixture, in tag order: id 2 has A, B, A; id 3 has C then D; id 0 has Doc and Extra. */
 const CLASS_PAIRS: SymbolClassEntry[] = [pair(2, 'A'), pair(2, 'B'), pair(2, 'A'), pair(3, 'C'), pair(0, 'Doc'), pair(0, 'Extra'), pair(3, 'D')];
-/** The ExportAssetsTag pairs FFDec appends to symbols.csv. */
+/** The ExportAssetsTag pairs FFDec interleaves with the SymbolClassTag pairs in symbols.csv. */
 const EXPORT_PAIRS: SymbolClassEntry[] = [pair(2, 'ExportName'), pair(3, 'C')];
 
 const svg = '<svg width="10px" height="10px"><g transform="matrix(1,0,0,1,0,0)"><path d="M0 0"/></g></svg>';
@@ -60,28 +60,28 @@ describe('buildClassLinks', () => {
     expect(buildClassLinks([pair(5, 'X'), pair(5, 'X'), pair(5, 'X')]).get(5)).toEqual({ primary: 'X', aliases: [] });
   });
 
-  it('drops the export pairs that follow the SymbolClassTag pairs, and keeps all entries without a count', () => {
-    const csv = [...CLASS_PAIRS, ...EXPORT_PAIRS];
-    expect(symbolClassPairs(csv, CLASS_PAIRS.length)).toEqual(CLASS_PAIRS);
+  it('takes the dump pairs whatever the csv order, and keeps all csv entries without dump pairs', () => {
+    const csv = [EXPORT_PAIRS[0], ...CLASS_PAIRS.slice(0, 3), EXPORT_PAIRS[1], ...CLASS_PAIRS.slice(3)];
+    expect(symbolClassPairs(csv, CLASS_PAIRS)).toEqual(CLASS_PAIRS);
     expect(symbolClassPairs(csv, undefined)).toEqual(csv);
-    expect(symbolClassPairs(csv, 0)).toEqual([]);
+    expect(symbolClassPairs(csv, [])).toEqual([]);
   });
 });
 
-describe('parseStructure counts the SymbolClassTag pairs', () => {
+describe('parseStructure lists the SymbolClassTag pairs', () => {
   const item = (tag: string, pairs: Array<[number, string]>): string =>
     `<item type="${tag}"><tags>${pairs.map(([i]) => `<item>${i}</item>`).join('')}</tags><names>${pairs.map(([, n]) => `<item>${n}</item>`).join('')}</names></item>`;
   const dump = (items: string): string => `<swf _xmlExportMajor="4" _xmlExportMinor="2" frameRate="12" frameCount="1"><tags>${items}</tags></swf>`;
 
-  it('adds the items of every SymbolClassTag and ignores ExportAssetsTag', () => {
+  it('lists the items of every SymbolClassTag in tag order and ignores ExportAssetsTag', () => {
     const s = parseStructure(
       dump(item('SymbolClassTag', [[2, 'A'], [2, 'B'], [0, 'Doc']]) + item('ExportAssetsTag', [[2, 'E']]) + item('SymbolClassTag', [[3, 'D']])),
     );
-    expect(s.symbolClassPairs).toBe(4);
+    expect(s.symbolClassPairs).toEqual([pair(2, 'A'), pair(2, 'B'), pair(0, 'Doc'), pair(3, 'D')]);
   });
 
-  it('is 0 without the tag', () => {
-    expect(parseStructure(dump('')).symbolClassPairs).toBe(0);
+  it('is empty without the tag', () => {
+    expect(parseStructure(dump('')).symbolClassPairs).toEqual([]);
   });
 });
 
@@ -216,13 +216,11 @@ describe('Player', () => {
 
 const skip = symbolClassSwfSkipReason();
 describe.skipIf(skip !== null)('the generated fixture, through the real csv', () => {
-  it('drops the export pairs by position and converts without throwing', () => {
+  it('takes the class pairs from the dump, in tag order, whatever order the csv has', () => {
     const { csvLines, dump } = measureSymbolClassSwf();
     const entries = parseSymbolsCsv(csvLines.join('\n'));
-    const n = parseStructure(dump).symbolClassPairs;
-    expect(n).toBe(CLASS_PAIRS.length);
     expect(entries.length).toBe(CLASS_PAIRS.length + EXPORT_PAIRS.length);
-    const kept = symbolClassPairs(entries, n);
+    const kept = symbolClassPairs(entries, parseStructure(dump).symbolClassPairs);
     expect(kept).toEqual(CLASS_PAIRS);
     const links = buildClassLinks(kept);
     expect(links.get(2)).toEqual({ primary: 'A', aliases: ['B'] });
