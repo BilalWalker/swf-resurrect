@@ -39,7 +39,9 @@ describe("docs/outcome.md", () => {
   });
 
   it("states the web kill and O14 notes", () => {
-    expect(doc).toContain("180 s");
+    expect(doc).toContain("--run-limit");
+    expect(doc).toContain("wip/ui");
+    expect(doc).not.toMatch(/kills a job after 180|180 s kill/);
     expect(doc).toContain("O14");
     expect(doc).toContain("`numbers` is `null` for a refusal before Translate");
   });

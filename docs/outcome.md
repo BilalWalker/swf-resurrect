@@ -77,8 +77,11 @@ Notes:
 - `stubDependentClasses` (robustness task 16.2) is the number of registered classes whose Shim import line names a `stub` class of the Flash_API_Table (`Sound`, `URLLoader`, ...): their type check depends on a stub, and the game sees neutral values from it. It overlaps the class counts above. A pure scan of the translated imports; it does not say the stub was called (the Fidelity_Report lists the stubs the Replay observed).
 - `facts.abcClassCount` is the number of exported `.as` files. It can differ by one from the class count of
   `swf_summary` (seen on `redball4`; Open_Item O14).
-- The default run limit is 300 s. The web server kills a job after 180 s (`web/server/options.ts`), which is
-  shorter. The web owner must align the two; this repository does not edit `web/` (Requirement 6.3).
+- The default run limit is 300 s. The web server passes its own run limit (default 300 s, `SWF_RESURRECT_TIMEOUT_S`)
+  to the engine as `--run-limit` and keeps its own kill 30 s above it (300 s + 30 s = 330 s) as a backstop, so the
+  engine stops itself and reports `refused time-limit` first. This describes the web server as of branch `wip/ui`
+  (commit `eaaf776`: `web/server/options.ts`, `web/server/jobs.ts`), which is merged separately; `web/` on a
+  branch without that merge still kills at 180 s. This repository does not edit `web/` (Requirement 6.3).
 
 ### Run_Limits
 
@@ -88,7 +91,7 @@ not a positive integer (text, zero, negative, decimal) is a usage error and exit
 | Limit | Option | Variable | Default | Reason |
 |---|---|---|---|---|
 | Input size | `--max-size <MiB>` | `SWF_RESURRECT_MAX_SIZE_MIB` | 20 MiB | Equals the upload limit of `web/server/upload.ts`, so the CLI and the web app refuse the same files. |
-| Run | `--run-limit <seconds>` | `SWF_RESURRECT_RUN_LIMIT_S` | 300 s | Five minutes for the whole run: the stage allowances above add up to 540 s, so the run limit is the tighter bound. It exceeds the web server's 180 s kill, so the server ends a job first; the web owner aligns the two. |
+| Run | `--run-limit <seconds>` | `SWF_RESURRECT_RUN_LIMIT_S` | 300 s | Five minutes for the whole run: the stage allowances above add up to 540 s, so the run limit is the tighter bound. The web server passes its limit (default 300 s) as `--run-limit` and kills 30 s later as a backstop (branch `wip/ui`, merged separately). |
 | Stage base | `--stage-limit <seconds>` | `SWF_RESURRECT_STAGE_LIMIT_S` | 60 s | One unit of stage time. A stage may use the base times its weight. |
 
 Stage weights: `recover` 2, `unpack` 2, `convert` 1, `translate` 1, `emit` 1, `gate` 1, `verify` 3. With the

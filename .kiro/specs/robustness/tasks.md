@@ -78,7 +78,7 @@ Rules that apply to every task:
     - **Validates: Requirements 2.1, 2.2, 2.7, 2.9, 2.10, 11.7**
 
   - [x] 2.3 Add `docs/outcome.md` and its example test
-    - The four outcomes, the Reason_Codes with one sentence each, the exit-code table, the Outcome_File fields, one JSON example per outcome, a note that `abcClassCount` is the number of exported `.as` files and differs by one from `swf_summary` on `redball4` (Open_Item O14), a note that `numbers` is null for a refusal before Translate, and the note of Requirement 6.3: the default run limit of 300 s exceeds the 180 s per-job kill of `web/server/options.ts`, which the web owner must align. `test/unit/outcomeDocs.test.ts` (create) extracts each fenced JSON example and compares it with the writer's output for the same record. Update `.kiro/steering/structure.md` (the `src/outcome/` directory and `docs/outcome.md`) in the same commit.
+    - The four outcomes, the Reason_Codes with one sentence each, the exit-code table, the Outcome_File fields, one JSON example per outcome, a note that `abcClassCount` is the number of exported `.as` files and differs by one from `swf_summary` on `redball4` (Open_Item O14), a note that `numbers` is null for a refusal before Translate, and the note of Requirement 6.3: the default run limit of 300 s exceeds the 180 s per-job kill of `web/server/options.ts`, which the web owner must align (superseded: the web side passes --run-limit, Task 28). `test/unit/outcomeDocs.test.ts` (create) extracts each fenced JSON example and compares it with the writer's output for the same record. Update `.kiro/steering/structure.md` (the `src/outcome/` directory and `docs/outcome.md`) in the same commit.
     - _Requirements: 2.8, 6.3, 7.3, 10.1, 10.2, 10.4_
 
 - [x] 3. Facts: the pure Facts_Reader and the hostile SWF byte builder
@@ -162,7 +162,7 @@ Rules that apply to every task:
 - [x] 10. Pipeline: Run_Limits, injectable clock and the guard
   - Commit area: `Pipeline` (Unpack and Verify named). Verification V1. Read the design "Limits and process tree", D-A4, D-A5, D-A7, findings F1 and F10, and Properties 11 and 12. `src/pipeline/limits.ts` is pure (resolver). No timeout of any existing test or stage is raised.
   - [x] 10.1 Add `src/pipeline/limits.ts` and the CLI options
-    - `resolveLimits({ options, env })`: option beats variable beats default; a value that is not a positive integer is a usage error (exit 2, Requirement 6.8). Options `--max-size <MiB>`, `--run-limit <seconds>`, `--stage-limit <seconds>`; variables `SWF_RESURRECT_MAX_SIZE_MIB`, `SWF_RESURRECT_RUN_LIMIT_S`, `SWF_RESURRECT_STAGE_LIMIT_S`. Defaults (U1): 20 MiB (equal to `web/server/upload.ts`), 300 s per run, 60 s base per stage; the weights are recover 2, unpack 2, convert 1, translate 1, emit 1, gate 1, verify 3. The reasons for each default go into `docs/outcome.md`, with the note that the 300 s default exceeds the web server's 180 s kill. The Facts stage of Task 7.2 now reads the size limit from here.
+    - `resolveLimits({ options, env })`: option beats variable beats default; a value that is not a positive integer is a usage error (exit 2, Requirement 6.8). Options `--max-size <MiB>`, `--run-limit <seconds>`, `--stage-limit <seconds>`; variables `SWF_RESURRECT_MAX_SIZE_MIB`, `SWF_RESURRECT_RUN_LIMIT_S`, `SWF_RESURRECT_STAGE_LIMIT_S`. Defaults (U1): 20 MiB (equal to `web/server/upload.ts`), 300 s per run, 60 s base per stage; the weights are recover 2, unpack 2, convert 1, translate 1, emit 1, gate 1, verify 3. The reasons for each default go into `docs/outcome.md`, with the note that the 300 s default exceeds the web server's 180 s kill (superseded: the web side passes --run-limit, Task 28). The Facts stage of Task 7.2 now reads the size limit from here.
     - Tests: `test/unit/limits.test.ts` (create): precedence, a non-integer value, a zero, the weight table including `recover` 2.
     - _Requirements: 6.1, 6.2, 6.3, 6.8, 6.13_
 
@@ -404,7 +404,7 @@ Credits: no share is stated; each task states its credits in its commit body and
     - `test/property/errorTable.property.test.ts` (create): `// Feature: robustness, Property 27: every error class of the table maps to its stated outcome; an unknown error stays failed internal-error`. For each class in the table (the table is exported as data by `classifyError.ts` and the test imports it) an instance with generated arguments gives the stated kind and reason code; a generated error with an unknown code, a plain `Error` and a non-error value give `failed internal-error`.
     - _Requirements: 26.4, 26.5_
 
-- [ ] 27. Facts, Outcome and Convert: embedded SWF
+- [x] 27. Facts, Outcome and Convert: embedded SWF
   - Commit area: `Pipeline` (Facts, Outcome and Convert named). Verification V1. Read the design sections on the Facts_Reader, the gap kinds and reason sentences, and `docs/outcome.md`. Today a wrapper SWF (a document class that loads a SWF held in a `DefineBinaryDataTag`) ends `converted-with-gaps - 22 of 26 classes translated`, which hides that the real game was not converted. The local file holds one such tag of 7349081 bytes starting `CWS`. FFDec has `-export binaryData`; the signature can also be read from the dump.
   - [x] 27.1 Detect a `DefineBinaryDataTag` with a SWF signature
     - `src/facts/embeddedSwf.ts` (create, pure): given the tag body bytes of a `DefineBinaryData` tag (the readers in `src/facts` already walk tags), report `{ characterId, offset, length, signature: 'FWS' | 'CWS' | 'ZWS' }` for each tag whose data starts with one of those three signatures and has at least the 8-byte header; count and sizes in the Facts. Add the file to the purity test list. `test/support/hostileSwf.ts` (extend): a `DefineBinaryData` helper (tag 87).
@@ -421,18 +421,18 @@ Credits: no share is stated; each task states its credits in its commit body and
     - Tests: if extracted, `test/unit/embeddedExtract.test.ts` (create): the generated wrapper of 27.4 yields the inner file's project, the Outcome field says so, a wrapper whose inner file is damaged ends `refused damaged`, and the time limit applies to both stages; if not, none.
     - _Requirements: 26.8_
 
-  - [-] 27.4 Tests, property and the local-file numbers
+  - [x] 27.4 Tests, property and the local-file numbers
     - `test/support/embeddedSwf.ts` (create): a generated wrapper (a tiny SWF inside a `DefineBinaryData` tag via `-xml2swf`, CWS and ZWS variants made by the hostile builder, no-signature variant). `test/unit/embeddedPipeline.test.ts` (create): the wrapper ends with the `embedded-swf` gap only (27.3 decided not to extract the inner file), CWS and ZWS variants both detected, a payload without a signature gives no gap. `test/property/facts.test.ts` (extend): `// Feature: robustness, Property 28: embedded SWF detection finds exactly the DefineBinaryData tags that start with a SWF signature`, for any generated tag list. The commit body gives, for the local wrapper file, as numbers only: Outcome, classes translated of candidates, type errors, time.
     - _Requirements: 26.6, 26.7, 26.8_
 
-- [ ] 28. Docs: correct the run-limit note
+- [x] 28. Docs: correct the run-limit note
   - Commit area: `Docs`. Verification V1 (`npx vitest related --run` on the docs test). Read `docs/outcome.md`, the Run_Limits section of `tech.md` and Requirement 26 item 4.
-  - [~] 28.1 Verify the web side and correct `docs/outcome.md`
+  - [x] 28.1 Verify the web side and correct `docs/outcome.md`
     - Read `web/` only (no edit): confirm the web side passes the run limit to the engine as `--run-limit` (default 300 s) and keeps its own kill 30 s above it as a backstop; quote file and line in the commit body. If it does not, stop and ask. Replace the note that says the web server kills at 180 s. Amend `requirements.md` (Requirement 26, item 4) in this commit.
     - Tests: `test/unit/outcomeDocs.test.ts` stays passing; extend it with a check that the doc no longer says 180.
     - _Requirements: 26.9_
 
-  - [~] 28.2 Correct the same wording elsewhere
+  - [x] 28.2 Correct the same wording elsewhere
     - Grep `180` in `docs/`, `.kiro/specs/`, `.kiro/steering/` and `README` for the same statement and correct each hit that refers to the web kill; leave unrelated numbers. The commit body lists each file changed.
     - Tests: none beyond 28.1.
     - _Requirements: 26.9_
