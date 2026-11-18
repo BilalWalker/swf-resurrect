@@ -236,31 +236,31 @@ Rules that apply to every task:
     - **Property 21: Point algebra** (`a.add(b).subtract(b)` equals `a`; `distance` symmetric; `interpolate(a, b, f)` on the segment with `f = 1` giving `a` and `f = 0` giving `b`) and **Property 22: Point.normalize** (length after `normalize(t)` equals `t` within 1e-9 relative error; the origin unchanged), in `test/property/point.property.test.ts` (create), with finite doubles and a model built from the Ruffle formulas.
     - **Validates: Requirements 18.1, 18.2, 18.3, 18.4, 18.7, 18.8, 18.9**
 
-- [ ] 16. Translate: policy lookup, `flash-api-gap` problems, stub-dependency count and the stall listing
+- [x] 16. Translate: policy lookup, `flash-api-gap` problems, stub-dependency count and the stall listing
   - Commit area: `Translate` (Pipeline and Verify named). Verification V1. Read the design D-A3 and the end of "Flash_API_Table and stubs" ("Shipping"). General rule only; no sample name.
   - [x] 16.1 Report gaps by policy
     - When a translated class uses a Flash class or member that is neither in the Shim nor in the table, or whose policy is `gap`, the Translation_Report names the class and member as a `flash-api-gap` problem, no stub is generated, and the type error stays visible (Requirement 17.5). The Outcome's `gaps` count `flash-api-gap`.
     - Tests: `test/unit/flashApiGap.test.ts` (create) with Fixture_Classes: a `gap` class, an unknown class, a member missing from a stub entry.
     - _Requirements: 17.5, 17.13_
 
-  - [-] 16.2 Count stub-dependent classes and list the stubs that can stall
+  - [x] 16.2 Count stub-dependent classes and list the stubs that can stall
     - A pure scan of each translated class's resolved Shim imports against the table's `stub` set gives the count of classes whose type check depends on a stub; it goes into the Outcome_File. The Fidelity_Report lists the `api-stub:` and `api-stub-no-event:` limits that the Replay observed and states which of the listed stubs can stall a game (`canStall` in the table). Update `docs/outcome.md` and its example test for the new field.
     - Tests: `test/unit/stubDependents.test.ts` (create); `test/unit/report.test.ts` (extend): the Fidelity_Report lists observed `api-stub:` and `api-stub-no-event:` limits and marks the stalling stubs.
     - _Requirements: 17.7, 17.9_
 
-- [ ] 17. Facts and Recover: the ABC_Name_Scan and the obfuscation verdict
+- [x] 17. Facts and Recover: the ABC_Name_Scan and the obfuscation verdict
   - Commit area: `Pipeline` (Test named). Verification V1. Read D-B2, finding F6, finding F15, Open_Item O15 and Properties 15 and 16. Before coding read the AVM2 overview chapter on the constant pool and compare it with the layout in D-B2 (O15), and record the result in the commit body. `src/facts/abcNames.ts` and `src/recover/detect.ts` are pure and added to the purity list.
-  - [ ] 17.1 Add `src/facts/abcNames.ts` and extend the byte builder
+  - [x] 17.1 Add `src/facts/abcNames.ts` and extend the byte builder
     - `scanAbcNames(bytes)`: from the ranges that `readFacts` kept, take the ABC bytes of every `DoABC` (tag 72: the whole payload) and `DoABC2` (tag 82: skip a u32 flags field and a zero-terminated name) tag, walk the `cpool_info` as D-B2 lists (ints, uints, doubles, strings, namespaces, namespace sets, multinames of every kind), collect the strings used as multiname names, and count those that do not match `^[\p{L}_$][\p{L}\p{N}_$]*$` (flag `u`). Namespace names and literal strings are not counted. An unknown multiname kind, a read past the end, or no ABC tag gives `{ obfuscated: false }` with the counts read so far and never throws. Extend `test/support/hostileSwf.ts` with a constant-pool builder that places a known number of valid and invalid multiname names, literal strings and dotted namespace names.
     - Tests: `test/unit/abcNames.test.ts` (create): each multiname kind, a tag 72 and a tag 82 payload, a truncated pool, no ABC tag, the real counts of F15 on the committed samples (0 invalid names; the samples are cut from `samples/`) and on `redball4.swf` when present (numbers only, skips otherwise).
     - _Requirements: 14.1, 14.4, 14.5, 14.7_
 
-  - [ ] 17.2 Add `src/recover/detect.ts` and record the verdict
+  - [x] 17.2 Add `src/recover/detect.ts` and record the verdict
     - Verdict from the scan counts: `obfuscated` when `invalidNames / namesScanned >= 0.20` and `invalidNames >= 5` (D-B2; the threshold sits between 0 of 21 to 539 names in the committed samples and 1 537 of 2 919 on the local file; the numbers go in the commit body, not class names). The pipeline calls the scan and the verdict after the Facts stage and before the first FFDec call, and writes `obfuscated: { detected, namesScanned, invalidNames, sourceSignals: null }` to the Outcome_File. The 20 % and the floor of 5 are chosen, not measured against a population (Open_Item O2). Update `docs/outcome.md` and its example test.
     - Tests: `test/unit/obfuscationDetect.test.ts` (create): the 20 % boundary, the floor of 5, a committed-sample-like set gives not obfuscated, a small file with one odd name gives not obfuscated.
     - _Requirements: 14.2, 14.3, 14.5, 14.7_
 
-  - [ ] 17.3 Write the property tests of the scan and the verdict
+  - [x] 17.3 Write the property tests of the scan and the verdict
     - **Property 15: Obfuscation verdict over names** and **Property 16: ABC_Name_Scan reads what a constant pool holds, and never throws** (generated pools wrapped as tag 72 and tag 82 payloads; the scan returns the number of multiname names and invalid names the generator placed and ignores namespace names and literal strings; any byte string and any truncation gives a result without throwing and `obfuscated: false` when the pool cannot be read to the end of the multiname table), in `test/property/recover.property.test.ts` (create) and `test/property/facts.property.test.ts` (extend). Generators in `test/property/gen/genAbcPool.ts` (create).
     - **Validates: Requirements 14.1, 14.2, 14.3, 14.4, 14.5, 14.6**
 

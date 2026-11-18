@@ -13,6 +13,9 @@ import type { ClassPathEntry } from '../emit/classPaths';
 import type { EmitOptions, EmitResult } from '../emit/emit';
 import type { UnpackInput, UnpackResult } from '../unpack/unpack';
 import { readFacts } from '../facts/readFacts';
+import { scanAbcNames } from '../facts/abcNames';
+import type { TagRange } from '../facts/swfBody';
+import { obfuscationVerdict } from '../recover/detect';
 import { classifyError } from '../outcome/classifyError';
 import { summariseGaps } from '../outcome/gaps';
 import { decideOutcome } from '../outcome/outcome';
@@ -87,7 +90,15 @@ function nodeInflate(data: Uint8Array, maxOutputLength: number): Uint8Array {
 }
 
 /** Reads the file and the Facts. A too-large file is judged from its size and 8 header bytes, never read whole. */
-async function factsStage(swfPath: string, maxInputBytes: number): Promise<{ facts: Facts | null; refusal: ReasonCode | null }> {
+interface FactsRead {
+  facts: Facts | null;
+  refusal: ReasonCode | null;
+  /** The decompressed body and the ABC tag ranges, only when the Facts were read without refusal. */
+  body?: Uint8Array;
+  abcRanges?: TagRange[];
+}
+
+async function factsStage(swfPath: string, maxInputBytes: number): Promise<FactsRead> {
   const size = (await stat(swfPath)).size;
   let bytes: Uint8Array;
   if (size > maxInputBytes) {
@@ -106,7 +117,7 @@ async function factsStage(swfPath: string, maxInputBytes: number): Promise<{ fac
   }
   bytes = new Uint8Array(await readFile(swfPath));
   const r = readFacts(bytes, { maxSizeBytes: maxInputBytes }, nodeInflate);
-  return r.ok ? { facts: r.facts, refusal: null } : { facts: r.facts, refusal: r.reasonCode };
+  return r.ok ? { facts: r.facts, refusal: null, body: r.body, abcRanges: r.abcRanges } : { facts: r.facts, refusal: r.reasonCode };
 }
 
 /** Number of `.as` files FFDec exported under scripts/; null when the directory is unknown or unreadable. */
@@ -404,12 +415,17 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
   let facts: Facts | null = null;
   let classified: ClassifiedFailure | null = null;
   let referenceId: string | null = null;
+  let obfuscated: OutcomeRecord['obfuscated'] = null;
 
   try {
     // Facts stage: no FFDec process starts for a refused input.
     const read = await factsStage(resolve(args.swfPath), runLimits.maxSizeMiB * 1024 * 1024);
     facts = read.facts;
     if (read.refusal !== null) throw new FactsRefusedError(read.refusal);
+    // ABC_Name_Scan and the verdict: after the Facts, before the first FFDec call. A ZWS file has no readable body, so no verdict.
+    if (facts !== null && facts.signature !== 'ZWS' && read.body !== undefined && read.abcRanges !== undefined) {
+      obfuscated = obfuscationVerdict(scanAbcNames(read.body, read.abcRanges));
+    }
     const unpacked = await guard.runStage('unpack', () =>
       stages.unpack({
         swfPath: resolve(args.swfPath),
@@ -627,7 +643,7 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     gaps,
     limits: runLimits,
     stages: stageRecords,
-    obfuscated: null,
+    obfuscated,
     recovery: null,
     referenceId: decision.outcome === 'failed' ? referenceId : null,
   };

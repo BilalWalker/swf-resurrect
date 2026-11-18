@@ -29,13 +29,15 @@ function stages(names: StageRecord["name"][], failed?: StageRecord["name"]): Sta
 const base = {
   formatVersion: 1 as const,
   limits,
-  obfuscated: null,
   recovery: null,
 };
+
+const scanned = { detected: false, namesScanned: 97, invalidNames: 0, sourceSignals: null };
 
 export const EXAMPLES: Record<"converted" | "converted-with-gaps" | "refused" | "failed", OutcomeRecord> = {
   converted: {
     ...base,
+    obfuscated: scanned,
     outcome: "converted",
     reasonCode: null,
     reason: "6 of 6 classes translated",
@@ -60,6 +62,7 @@ export const EXAMPLES: Record<"converted" | "converted-with-gaps" | "refused" | 
   },
   "converted-with-gaps": {
     ...base,
+    obfuscated: scanned,
     outcome: "converted-with-gaps",
     reasonCode: null,
     reason: "5 of 6 classes translated (1 with untranslated code), 2 type errors; most gaps: type-error (2), untranslated-class (1)",
@@ -87,6 +90,7 @@ export const EXAMPLES: Record<"converted" | "converted-with-gaps" | "refused" | 
   },
   refused: {
     ...base,
+    obfuscated: null,
     outcome: "refused",
     reasonCode: "actionscript-1-2",
     reason: "the file uses ActionScript 1 or 2, which is not supported",
@@ -98,6 +102,7 @@ export const EXAMPLES: Record<"converted" | "converted-with-gaps" | "refused" | 
   },
   failed: {
     ...base,
+    obfuscated: scanned,
     outcome: "failed",
     reasonCode: "internal-error",
     reason: "an internal error stopped the run",

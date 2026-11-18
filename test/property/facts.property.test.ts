@@ -1,11 +1,14 @@
-import { readFileSync } from "node:fs";
+﻿import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import { scanAbcNames } from "../../src/facts/abcNames";
 import { readFacts } from "../../src/facts/readFacts";
-import { buildSwf, cut, flipByte, nodeInflate } from "../support/hostileSwf";
+import { isObfuscated } from "../../src/recover/detect";
+import { abcTag, buildConstantPool, buildSwf, cut, flipByte, nodeInflate } from "../support/hostileSwf";
 import { forbiddenStages, runWithFakes } from "../support/propPipeline";
 import { fcConfig } from "./config";
+import { genAbcPool } from "./gen/genAbcPool";
 import { genSwfHeader } from "./gen/genSwfHeader";
 
 const limits = { maxSizeBytes: 20 * 1024 * 1024 };
@@ -101,6 +104,57 @@ describe("Property 10: a cut SWF is never converted", () => {
         await check(full, Math.min(len, full.length - 1));
       }),
       small,
+    );
+  });
+});
+
+describe("ABC_Name_Scan properties", () => {
+  const scanAbc = (code: 72 | 82, abc: number[]) => {
+    const r = read(buildSwf({ version: 10, tags: [abcTag(code, abc)] }));
+    if (!r.ok) throw new Error(`readFacts failed: ${r.reasonCode}`);
+    return scanAbcNames(r.body, r.abcRanges);
+  };
+
+  it("Property 16: the scan returns the names and invalid names the generator placed", () => {
+    // **Validates: Requirements 14.1, 14.4**
+    fc.assert(
+      fc.property(genAbcPool, fc.constantFrom<72 | 82>(72, 82), (g, code) => {
+        const s = scanAbc(code, buildConstantPool(g.spec));
+        expect(s).toEqual({ namesScanned: g.placed, invalidNames: g.invalid, complete: true });
+      }),
+      fcConfig,
+    );
+  });
+
+  it("Property 16: any truncation of a pool gives a result, not obfuscated", () => {
+    // **Validates: Requirements 14.4, 14.5**
+    fc.assert(
+      fc.property(genAbcPool, fc.constantFrom<72 | 82>(72, 82), fc.nat(), (g, code, n) => {
+        const abc = buildConstantPool(g.spec);
+        const s = scanAbc(code, abc.slice(0, n % abc.length));
+        expect(s.complete).toBe(false);
+        expect(isObfuscated(s)).toBe(false);
+      }),
+      fcConfig,
+    );
+  });
+
+  it("Property 16: any byte string gives a result without throwing", () => {
+    // **Validates: Requirements 14.4, 14.5**
+    fc.assert(
+      fc.property(fc.uint8Array({ maxLength: 200 }), fc.constantFrom<72 | 82>(72, 82), (bytes, code) => {
+        const s = scanAbc(code, [...bytes]);
+        expect(s.invalidNames).toBeLessThanOrEqual(s.namesScanned);
+        if (!s.complete) expect(isObfuscated(s)).toBe(false);
+      }),
+      fcConfig,
+    );
+    fc.assert(
+      fc.property(fc.uint8Array({ maxLength: 100 }), fc.integer({ min: -5, max: 150 }), fc.integer({ min: -5, max: 150 }), fc.constantFrom(72, 82), (bytes, start, end, code) => {
+        const s = scanAbcNames(bytes, [{ code, start, end }] as never);
+        expect(typeof s.namesScanned).toBe("number");
+      }),
+      fcConfig,
     );
   });
 });

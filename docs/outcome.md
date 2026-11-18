@@ -56,7 +56,7 @@ The code is in `src/outcome/` (`outcome.ts`, `outcomeFile.ts`, `exitCode.ts`, `r
 | `gaps` | One entry per gap kind: `kind`, `count` and at most 5 `examples`. |
 | `limits` | The size, run and stage limits and the stage weights that applied. |
 | `stages` | Each stage that ran: `name`, `result` (`ok`, `error`, `skipped`) and `durationMs`. |
-| `obfuscated` | Detection result, or `null` when detection did not run. |
+| `obfuscated` | Detection result `{ detected, invalidNames, namesScanned, sourceSignals }`, or `null` when detection did not run (a refusal before the scan, a file whose body is not read such as `ZWS`). `detected` is true when at least 20 % of the multiname names read from the ABC constant pools are not legal identifiers and at least 5 are invalid. The 20 % and the 5 are chosen, not measured against a population (Open_Item O2). A file with no ABC tag, or a pool that could not be read to its end, gives `detected: false` with the counts read. `sourceSignals` is `null` until a source scan exists. |
 | `recovery` | The recovery record, or `null` when no recovery was tried. |
 | `referenceId` | Eight hex digits, only for `failed`; otherwise `null`. |
 
@@ -144,7 +144,12 @@ writer's output.
     "unsupportedClasses": 0,
     "untranslatedCodeClasses": 0
   },
-  "obfuscated": null,
+  "obfuscated": {
+    "detected": false,
+    "invalidNames": 0,
+    "namesScanned": 97,
+    "sourceSignals": null
+  },
   "outcome": "converted",
   "reason": "6 of 6 classes translated",
   "reasonCode": null,
@@ -248,7 +253,12 @@ writer's output.
     "unsupportedClasses": 1,
     "untranslatedCodeClasses": 1
   },
-  "obfuscated": null,
+  "obfuscated": {
+    "detected": false,
+    "invalidNames": 0,
+    "namesScanned": 97,
+    "sourceSignals": null
+  },
   "outcome": "converted-with-gaps",
   "reason": "5 of 6 classes translated (1 with untranslated code), 2 type errors; most gaps: type-error (2), untranslated-class (1)",
   "reasonCode": null,
@@ -374,7 +384,12 @@ writer's output.
     }
   },
   "numbers": null,
-  "obfuscated": null,
+  "obfuscated": {
+    "detected": false,
+    "invalidNames": 0,
+    "namesScanned": 97,
+    "sourceSignals": null
+  },
   "outcome": "failed",
   "reason": "an internal error stopped the run",
   "reasonCode": "internal-error",

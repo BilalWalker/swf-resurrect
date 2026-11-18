@@ -44,6 +44,8 @@ const CORE_FILES = [
   "src/pipeline/cleanup.ts", // robustness 11.1
   "src/facts/swfBody.ts", // robustness 3.1
   "src/facts/readFacts.ts", // robustness 3.1 (inflate passed in)
+  "src/facts/abcNames.ts", // robustness 17.1
+  "src/recover/detect.ts", // robustness 17.2
   "src/translate/flashApiTable.ts", // robustness 14.1
   "src/translate/renderApiStubs.ts", // robustness 14.2
   "src/translate/stubDependents.ts", // robustness 16.2

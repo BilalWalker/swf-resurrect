@@ -451,6 +451,49 @@
         "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
         "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
         "timestamp": 1794905231633
+      },
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794906265670
+      }
+    ],
+    "16. Translate: policy lookup, `flash-api-gap` problems, stub-dependency count and the stall listing": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794906265939
+      }
+    ],
+    "17.1 Add `src/facts/abcNames.ts` and extend the byte builder": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794906266166
+      },
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794911973574
+      }
+    ],
+    "17.2 Add `src/recover/detect.ts` and record the verdict": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794911973840
+      },
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794912208980
+      }
+    ],
+    "17.3 Write the property tests of the scan and the verdict": [
+      {
+        "executionId": "fab6c12a-4f03-4a31-b6a9-1002a9800353",
+        "chatSessionId": "sess_72dafaaf-42d2-4032-9542-f97dfc16ecaa",
+        "timestamp": 1794912209497
       }
     ]
   }

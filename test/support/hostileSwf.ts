@@ -99,3 +99,112 @@ export function flipByte(bytes: Uint8Array, index: number, mask = 0xff): Uint8Ar
 export function cutSample(path: string, length: number): Uint8Array {
   return cut(new Uint8Array(readFileSync(path)), length);
 }
+
+/** Variable-length u30/u32/s32 encoding (up to five bytes). */
+export function varint(v: number): number[] {
+  const out: number[] = [];
+  let x = v >>> 0;
+  do {
+    let b = x & 0x7f;
+    x = x >>> 7;
+    if (x !== 0) b |= 0x80;
+    out.push(b);
+  } while (x !== 0);
+  return out;
+}
+
+/** Multiname kinds of the AVM2 constant pool, with the shape of the data after the kind byte. */
+export const MN = {
+  QName: 0x07,
+  QNameA: 0x0d,
+  RTQName: 0x0f,
+  RTQNameA: 0x10,
+  RTQNameL: 0x11,
+  RTQNameLA: 0x12,
+  Multiname: 0x09,
+  MultinameA: 0x0e,
+  MultinameL: 0x1b,
+  MultinameLA: 0x1c,
+  TypeName: 0x1d,
+} as const;
+
+export interface PoolSpec {
+  ints?: number;
+  uints?: number;
+  doubles?: number;
+  /** Strings that no multiname uses (literals). */
+  literals?: string[];
+  /** Namespace names (dotted package paths); each gets one namespace entry and a set of one. */
+  namespaces?: string[];
+  /** Multinames; `name` is placed in the string table (kinds that carry no name ignore it). `kind` may be any byte. */
+  multinames?: Array<{ kind: number; name?: string; typeArgs?: number }>;
+  /** Appended after the multiname table (for a test that checks the scan stops at the table's end). */
+  trailer?: number[];
+}
+
+const NAMED_KINDS: number[] = [MN.QName, MN.QNameA, MN.RTQName, MN.RTQNameA, MN.Multiname, MN.MultinameA];
+
+/** The ABC bytes of a constant pool: minor and major version, then cpool_info (D-B2 layout). Entry 0 of each table is implicit. */
+export function buildConstantPool(spec: PoolSpec = {}): number[] {
+  const table = (count: number, entry: (i: number) => number[]): number[] => {
+    if (count === 0) return [0];
+    const out = [...varint(count + 1)];
+    for (let i = 0; i < count; i++) out.push(...entry(i));
+    return out;
+  };
+  const strings: string[] = [...(spec.literals ?? []), ...(spec.namespaces ?? [])];
+  const nameIndex = new Map<number, number>();
+  (spec.multinames ?? []).forEach((m, i) => {
+    if (NAMED_KINDS.includes(m.kind) && m.name !== undefined) {
+      strings.push(m.name);
+      nameIndex.set(i, strings.length); // 1-based: index 0 is the implicit empty string
+    }
+  });
+  const nsNames = spec.namespaces ?? [];
+  const litCount = (spec.literals ?? []).length;
+  const out: number[] = [0, 0, 46, 0];
+  out.push(...table(spec.ints ?? 0, (i) => varint(i + 1)));
+  out.push(...table(spec.uints ?? 0, (i) => varint(i + 1)));
+  out.push(...table(spec.doubles ?? 0, () => [0, 0, 0, 0, 0, 0, 0xf0, 0x3f]));
+  out.push(...table(strings.length, (i) => {
+    const bytes = [...Buffer.from(strings[i]!, "utf8")];
+    return [...varint(bytes.length), ...bytes];
+  }));
+  out.push(...table(nsNames.length, (i) => [0x16, ...varint(litCount + i + 1)]));
+  out.push(...table(nsNames.length, (i) => [...varint(1), ...varint(i + 1)]));
+  out.push(...table((spec.multinames ?? []).length, (i) => {
+    const m = spec.multinames![i]!;
+    const name = nameIndex.get(i) ?? 0;
+    switch (m.kind) {
+      case MN.QName:
+      case MN.QNameA:
+        return [m.kind, ...varint(nsNames.length > 0 ? 1 : 0), ...varint(name)];
+      case MN.RTQName:
+      case MN.RTQNameA:
+        return [m.kind, ...varint(name)];
+      case MN.RTQNameL:
+      case MN.RTQNameLA:
+        return [m.kind];
+      case MN.Multiname:
+      case MN.MultinameA:
+        return [m.kind, ...varint(name), ...varint(nsNames.length > 0 ? 1 : 0)];
+      case MN.MultinameL:
+      case MN.MultinameLA:
+        return [m.kind, ...varint(nsNames.length > 0 ? 1 : 0)];
+      case MN.TypeName: {
+        const n = m.typeArgs ?? 1;
+        return [m.kind, ...varint(1), ...varint(n), ...Array.from({ length: n }, () => varint(1)).flat()];
+      }
+      default:
+        return [m.kind, 1, 1];
+    }
+  }));
+  out.push(...(spec.trailer ?? []));
+  return out;
+}
+
+/** A DoABC (72) payload is the ABC bytes; a DoABC2 (82) payload is u32 flags, a zero-terminated name, then the ABC bytes. */
+export function abcTag(code: 72 | 82, abc: number[], name = "frame1"): number[] {
+  const payload = code === 72 ? abc : [...u32(0), ...Buffer.from(name, "latin1"), 0, ...abc];
+  return tag(code, payload, true);
+}
