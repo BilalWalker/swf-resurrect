@@ -81,8 +81,9 @@ describe.skipIf(!hasGit)("repository hygiene", () => {
       if (BINARY_EXT.test(p) || /^test\/fixtures\/.*\.xml$/.test(p) || p === "package-lock.json") continue;
       const buf = readFileSync(p);
       if (buf.length > 1_000_000 || buf.includes(0)) continue;
+      // Buffer.includes scans the bytes natively; the text is decoded only for the rare candidate.
+      if (!needles.some((n) => buf.includes(n, 0, "latin1"))) continue;
       const text = buf.toString("latin1");
-      if (!needles.some((n) => text.includes(n))) continue;
       if (patterns.some((re) => re.test(text))) offenders.push(p);
     }
     expect(offenders).toEqual([]);
