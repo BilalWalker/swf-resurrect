@@ -36,6 +36,8 @@ export interface TranslatedClass {
   importRecords: ImportRecord[];
   /** The source declares an AS3 interface that could not be translated: nothing is emitted for it but comments. */
   as3Interface?: boolean;
+  /** The D5 fallback produced this file (translated output did not parse); absent otherwise. */
+  parseFailed?: true;
   /** Where a cut import is read through getDefinitionByName (Requirement 37.3); absent when none. */
   cutSites?: Array<{ target: string; line: number }>;
   /** Value imports of other classes, with cuttable as the import-cycle analysis read them. */
@@ -142,6 +144,7 @@ export function planTranslate(
       ...(info?.unsupportedBase !== undefined ? { unsupportedBase: info.unsupportedBase } : {}),
       importRecords: r.importRecords,
       as3Interface: as3InterfaceName(s.source) !== null && r.interfaceTranslated !== true,
+      ...(r.parseFailed === true ? { parseFailed: true as const } : {}),
       ...(r.cutSites !== undefined ? { cutSites: r.cutSites } : {}),
       ...(r.valueImports !== undefined ? { valueImports: r.valueImports } : {}),
     };

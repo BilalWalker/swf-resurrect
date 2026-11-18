@@ -69,6 +69,8 @@ export interface TranslateResult {
    * `cuttable` is false when any use is in an extends or implements clause, a static initialiser or top-level code.
    */
   valueImports?: Array<{ target: string; cuttable: boolean }>;
+  /** Set (true) only by the D5 fallback: the translated output did not parse and the file is `// AS3:` comments. */
+  parseFailed?: true;
   /** Places where a cut import is read through `getDefinitionByName`, sorted by (line, target). */
   cutSites?: Array<{ target: string; line: number }>;
 }

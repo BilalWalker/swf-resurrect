@@ -43,17 +43,18 @@ import type { UnsupportedFeatureEntry } from './unsupported';
 export type { VerifyRequest, VerifySummary };
 
 /**
- * Counts of the Translation_Report (D-A3). Amended at Task 12.3, owner decision: a Candidate_Class is translated when
- * Emit registered it (not omitted, so its emitted file parses) and it is clean, loose, an applied override, or kept
+ * Counts of the Translation_Report (D-A3). Amended at Task 12.3, owner decision, condition 1: a Candidate_Class is translated when
+ * Emit registered it (not omitted) AND its emitted file parses (not the D5 fallback, `parseFailed`) and it is clean, loose, an applied override, or kept
  * with untranslated code (status `unsupported`, not loose). An omitted class (missing-source, syntax-error,
  * bundler-parse or any other omission) never counts, so a run whose candidates are all omitted has translatedClasses 0
  * and is refused `nothing-translated`.
  *
- * clean + loose + untranslatedCode + (omitted candidates) = candidates; omittedClasses also counts an omitted linked class
+ * clean + loose + untranslatedCode + unparsed + (omitted candidates) = candidates; omittedClasses also counts an omitted linked class
  * that is no candidate; translatedClasses = clean + loose + untranslatedCode.
  */
 export function numbersOf(report: TranslationReport, droppedPlacements: number): OutcomeNumbers {
-  const kept = report.classes.filter((c) => !c.omitted);
+  const unparsed = report.classes.filter((c) => !c.omitted && c.parseFailed === true);
+  const kept = report.classes.filter((c) => !c.omitted && c.parseFailed !== true);
   const untranslatedCode = kept.filter((c) => c.status === 'unsupported' && !c.loose);
   const cleanClasses = kept.filter((c) => c.status === 'clean' && !c.loose).length;
   const looseClasses = kept.filter((c) => c.status === 'loose' || c.loose).length;
@@ -63,6 +64,7 @@ export function numbersOf(report: TranslationReport, droppedPlacements: number):
     cleanClasses,
     looseClasses,
     untranslatedCodeClasses: untranslatedCode.length,
+    unparsedClasses: unparsed.length,
     unsupportedClasses: report.classes.filter((c) => c.status === 'unsupported').length,
     omittedClasses: report.omittedClasses.length,
     typeErrors: report.classes.reduce((n, c) => n + c.typeErrors.length, 0) + report.otherErrors.length,
@@ -298,6 +300,7 @@ function reportOf(
       overridden: overridden.has(c.className),
       ...(pathOf.has(c.className) ? { path: pathOf.get(c.className) as string } : {}),
       diagnostics: c.diagnostics,
+      ...(c.parseFailed === true ? { parseFailed: true as const } : {}),
     })),
     gate,
     {

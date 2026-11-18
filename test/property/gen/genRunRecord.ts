@@ -138,6 +138,7 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
         cleanClasses: translated - untranslatedCode,
         looseClasses: 0,
         untranslatedCodeClasses: untranslatedCode,
+        unparsedClasses: 0,
         unsupportedClasses: untranslatedCode,
         omittedClasses: candidates - translated,
         typeErrors,

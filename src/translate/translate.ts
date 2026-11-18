@@ -274,6 +274,7 @@ function fallback(source: string, firstMessage: string): TranslateResult {
     classes: [],
     packageName: '',
     importRecords: [],
+    parseFailed: true,
   };
 }
 

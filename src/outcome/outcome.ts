@@ -62,8 +62,8 @@ export interface RecoveryRecord {
 }
 
 /**
- * Amended at Task 12.3. Registered classes are clean, loose or kept with untranslated code; the rest are omitted:
- * cleanClasses + looseClasses + untranslatedCodeClasses + (candidates that are omitted) = candidateClasses, and
+ * Amended at Task 12.3. Registered classes are clean, loose, kept with untranslated code, or unparsed (the D5 fallback); the rest are omitted:
+ * cleanClasses + looseClasses + untranslatedCodeClasses + unparsedClasses + (candidates that are omitted) = candidateClasses, and
  * translatedClasses = cleanClasses + looseClasses + untranslatedCodeClasses.
  */
 export interface OutcomeNumbers {
@@ -74,6 +74,8 @@ export interface OutcomeNumbers {
   looseClasses: number;
   /** Registered classes whose status is unsupported and that are not loose: kept, with untranslated code in them. */
   untranslatedCodeClasses: number;
+  /** Registered classes whose translated output did not parse (the D5 fallback). They never count as translated. */
+  unparsedClasses: number;
   /** Every candidate whose report status is unsupported, registered or omitted. Overlaps the other fields; not part of the sum above. */
   unsupportedClasses: number;
   /** Every omission of the report, including a linked class that has no candidate (missing-source), so it can exceed candidateClasses. */

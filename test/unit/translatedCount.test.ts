@@ -10,13 +10,14 @@ import { buildSwf } from '../support/hostileSwf';
 
 let tmp: string;
 const io = { out: (_s: string) => {}, err: (_s: string) => {} };
-const tc = (className: string, unsupported: boolean) => ({
+const tc = (className: string, unsupported: boolean, parseFailed = false) => ({
   className, fileName: `${className}.ts`, text: '',
   diagnostics: unsupported ? [{ kind: 'unsupported-construct' as const, line: 3, message: 'no translation' }] : [],
   spans: [], extendsName: null, extendsQualified: null, importRecords: [],
+  ...(parseFailed ? { parseFailed: true as const } : {}),
 });
 
-function stages(names: string[], unsupported: boolean, omissions: ClassOmission[]): PipelineStages {
+function stages(names: string[], unsupported: boolean, omissions: ClassOmission[], parseFailed = false): PipelineStages {
   return {
     async unpack() {
       return {} as never;
@@ -30,7 +31,7 @@ function stages(names: string[], unsupported: boolean, omissions: ClassOmission[
       } as never;
     },
     async translate() {
-      return { classes: names.map((n) => tc(n, unsupported)), skippedScripts: [] };
+      return { classes: names.map((n) => tc(n, unsupported, parseFailed)), skippedScripts: [] };
     },
     async emit(_a, o) {
       await mkdir(o.outputDir, { recursive: true });
@@ -67,6 +68,14 @@ describe('translated count (Task 12.3)', () => {
     const exit = await runPipeline(args(), stages(['A', 'B', 'C'], true, omissions), io);
     const o = await outcome();
     expect(o.numbers).toMatchObject({ candidateClasses: 3, translatedClasses: 0, untranslatedCodeClasses: 0, omittedClasses: 3 });
+    expect(o).toMatchObject({ outcome: 'refused', reasonCode: 'nothing-translated' });
+    expect(exit).toBe(3);
+  });
+
+  it('every candidate is a D5 fallback (registered, not omitted): refused nothing-translated, exit 3', async () => {
+    const exit = await runPipeline(args(), stages(['A', 'B'], true, [], true), io);
+    const o = await outcome();
+    expect(o.numbers).toMatchObject({ candidateClasses: 2, translatedClasses: 0, untranslatedCodeClasses: 0, unparsedClasses: 2, omittedClasses: 0 });
     expect(o).toMatchObject({ outcome: 'refused', reasonCode: 'nothing-translated' });
     expect(exit).toBe(3);
   });

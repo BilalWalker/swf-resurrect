@@ -11,6 +11,7 @@ function numbers(over: Partial<OutcomeNumbers> = {}): OutcomeNumbers {
     cleanClasses: 0,
     looseClasses: 0,
     untranslatedCodeClasses: 0,
+    unparsedClasses: 0,
     unsupportedClasses: 0,
     omittedClasses: 0,
     typeErrors: 0,

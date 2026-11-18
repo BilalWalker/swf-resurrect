@@ -30,6 +30,8 @@ export interface ClassReportEntry {
   loose: boolean;
   diagnostics: Diagnostic[]; // sorted (line, kind); empty when overridden
   typeErrors: TypeErrorEntry[]; // sorted (line, column, code)
+  /** The D5 fallback: the translated output did not parse. Written only when true; such a class never counts as translated. */
+  parseFailed?: true;
 }
 
 /** A condition of the run that the reader must see (Requirements 26.7 and 26.13). */
@@ -78,6 +80,8 @@ export interface ReportClassInput {
   /** Emitted file of the class; default src/<className>.ts. */
   path?: string;
   diagnostics: readonly Diagnostic[];
+  /** The D5 fallback produced this class's file. */
+  parseFailed?: true;
   /** Maps an emitted line to its AS3 line, or null when generated. Absent means always null. */
   as3LineOf?: (emittedLine: number) => number | null;
 }
@@ -158,6 +162,7 @@ export function buildReport(
       loose: looseNames.has(c.className),
       diagnostics,
       typeErrors,
+      ...(c.parseFailed === true ? { parseFailed: true as const } : {}),
     };
   });
   entries.sort((a, b) => cmp(a.className, b.className));
