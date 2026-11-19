@@ -46,9 +46,26 @@ async function shoot(j: JobSummary, name: string): Promise<string> {
   try {
     await page.goto(`${server.url}/#/job/${j.id}`);
     await page.waitForSelector('.result-slot > *, .failure:not([hidden])', { timeout: 30_000 });
+    // The fidelity report is the main proof: wait until its frame has text and every image loaded.
+    if ((await page.locator('.report-frame').count()) > 0) {
+      await page.locator('.report-frame').scrollIntoViewIfNeeded();
+      const report = await (await page.locator('.report-frame').elementHandle())?.contentFrame();
+      if (!report) throw new Error('no fidelity report frame');
+      await report.waitForFunction(
+        () => document.body !== null && document.body.innerText.includes('Overall match') && [...document.images].every((i) => i.complete && i.naturalWidth > 0),
+        undefined,
+        { timeout: 30_000 },
+      );
+    }
+    // Headless Chromium paints a sandboxed frame below the first viewport white in a fullPage capture
+    // (measured: 100 % white pixels, while the frame held the report). So the viewport is made as tall
+    // as the page and the page is captured as it is.
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    await page.setViewportSize({ width: 1200, height });
+    await page.evaluate(() => window.scrollTo(0, 0));
     // Ruffle and the converted build draw a few frames first.
     await page.waitForTimeout(4000);
-    await page.screenshot({ path: join(SHOTS, `${name}.png`), fullPage: true });
+    await page.screenshot({ path: join(SHOTS, `${name}.png`) });
     return (await page.textContent('main')) ?? '';
   } finally {
     await page.close();
