@@ -104,6 +104,13 @@ export const LOCAL_CLIENT = 'local';
 
 const MAX_LOG_LINES = 2000;
 
+/**
+ * While setup is not ready, every POST re-checks it. `java -version` runs synchronously and blocks
+ * the event loop (seconds when the machine is busy), so its result is reused for this long; the jar
+ * check is a cheap existsSync and always runs. Java installed meanwhile is seen within 10 s.
+ */
+export const JAVA_RECHECK_MS = 10_000;
+
 async function readJson(path: string): Promise<unknown> {
   try {
     return JSON.parse(await readFile(path, 'utf8')) as unknown;
@@ -172,6 +179,8 @@ export class JobManager {
   private running: Job | null = null;
   private sampleHashes: Map<string, string> | null = null;
   private setup: SetupStatus | null = null;
+  /** Last `java -version` result while setup is not ready; see JAVA_RECHECK_MS. */
+  private javaCheck: { ok: boolean; atMs: number } | null = null;
   private stopping = false;
   private readonly settledWaiters = new Map<string, Array<(s: JobSummary) => void>>();
   private sweeping: Promise<RetentionDecision[]> | null = null;
@@ -245,7 +254,9 @@ export class JobManager {
           'Download FFDec (see .kiro/steering/tech.md) to tools/ffdec/, or set SWF_RESURRECT_FFDEC to the path of ffdec-cli.jar.',
       );
     }
-    if (!javaAvailable()) problems.push('Java was not found. FFDec needs Java 17 or newer on the PATH.');
+    const now = Date.now();
+    if (this.javaCheck === null || now - this.javaCheck.atMs >= JAVA_RECHECK_MS) this.javaCheck = { ok: javaAvailable(), atMs: now };
+    if (!this.javaCheck.ok) problems.push('Java was not found. FFDec needs Java 17 or newer on the PATH.');
     this.setup = {
       ready: problems.length === 0,
       problems,
