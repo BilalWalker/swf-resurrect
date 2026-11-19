@@ -91,6 +91,103 @@ function animateSarcophagus(zone: HTMLElement): void {
   show();
 }
 
+/**
+ * Now and then raises the hand beside a random stone for a few seconds, so the yard is never quite still.
+ * Stops by itself once the stones leave the page. Does nothing when the visitor asked for reduced motion.
+ */
+function restlessHands(stones: HTMLElement, hands: GraspingHand[]): void {
+  if (hands.length === 0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let shown = false; // the list is built before it is put on the page
+  const timer = window.setInterval(() => {
+    if (!stones.isConnected) {
+      if (shown) window.clearInterval(timer);
+      return;
+    }
+    shown = true;
+    if (document.hidden || Math.random() < 0.45) return;
+    hands[Math.floor(Math.random() * hands.length)].burst();
+  }, 3200);
+}
+
+/** art/hand-anim.webp: 30 frames, 10 per row. 0 nothing yet, 11 to 17 the hand at full height, 29 gone again. */
+const HAND_FRAMES = 30;
+const HAND_COLS = 10;
+const HAND_HOLD_FROM = 11;
+const HAND_HOLD_TO = 17;
+/** Rising and sinking are quick; while held, the frames at full height pass slowly, so the fingers flex, not twitch. */
+const HAND_MOVE_MS = 80;
+/** On hover the hand must answer at once: skip the first frames (soil only just cracking) and come up fast. */
+const HAND_HOVER_FROM = 5;
+const HAND_HOVER_MS = 42;
+const HAND_HOLD_MS = 260;
+
+interface GraspingHand {
+  /** Come up and stay, clawing, until released. */
+  rise(): void;
+  /** Sink back into the ground. */
+  release(): void;
+  /** Come up and go straight back down, if it is not already out. */
+  burst(): void;
+}
+
+/** Drives one hand sprite (landing.css `.grasp`) through its frames. */
+function graspingHand(el: HTMLElement): GraspingHand {
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let frame = 0;
+  let held = false;
+  let sway = 1;
+  let timer = 0;
+  const show = (): void => {
+    el.style.backgroundPosition = `${((frame % HAND_COLS) / (HAND_COLS - 1)) * 100}% ${(Math.floor(frame / HAND_COLS) / (HAND_FRAMES / HAND_COLS - 1)) * 100}%`;
+    el.classList.toggle('is-out', frame > 0);
+  };
+  const tick = (): void => {
+    timer = 0;
+    if (!el.isConnected) return;
+    const holding = held && frame >= HAND_HOLD_FROM && frame <= HAND_HOLD_TO;
+    if (holding) {
+      // at full height: drift back and forth through the frames there
+      if (frame >= HAND_HOLD_TO) sway = -1;
+      if (frame <= HAND_HOLD_FROM) sway = 1;
+      frame += sway;
+    } else {
+      frame++;
+      if (frame >= HAND_FRAMES) frame = 0;
+    }
+    show();
+    if (frame !== 0) timer = window.setTimeout(tick, holding ? HAND_HOLD_MS : held ? HAND_HOVER_MS : HAND_MOVE_MS);
+  };
+  const start = (): void => {
+    if (timer === 0) timer = window.setTimeout(tick, HAND_MOVE_MS);
+  };
+  return {
+    rise: () => {
+      held = true;
+      if (still) {
+        frame = HAND_HOLD_FROM + 2;
+        show();
+        return;
+      }
+      if (frame < HAND_HOVER_FROM) {
+        frame = HAND_HOVER_FROM;
+        show();
+      }
+      window.clearTimeout(timer);
+      timer = window.setTimeout(tick, HAND_HOVER_MS);
+    },
+    release: () => {
+      held = false;
+      if (still) {
+        frame = 0;
+        show();
+      } else if (frame > 0) start();
+    },
+    burst: () => {
+      if (frame === 0 && !held && !still) start();
+    },
+  };
+}
+
 export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promise<void> {
   main.replaceChildren(h('p', { class: 'loading' }, 'Lighting the lanterns...'));
   let setup: SetupStatus;
@@ -199,6 +296,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
   });
 
   const stones = h('ul', { class: 'stones' });
+  const hands: GraspingHand[] = [];
   for (const [i, s] of samples.entries()) {
     const credit = [s.author, s.licence].filter((x) => x !== null).join(' · ');
     const risen = s.cachedJobId !== null;
@@ -238,8 +336,17 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
         },
       );
     });
-    stones.append(h('li', {}, stone));
+    // The hand that comes out of the ground beside this stone: up while the stone is hovered or focused.
+    const grasp = h('span', { class: `grasp grasp-${i % 2 === 0 ? 'r' : 'l'}`, 'aria-hidden': 'true' });
+    const hand = graspingHand(grasp);
+    hands.push(hand);
+    stone.addEventListener('mouseenter', hand.rise);
+    stone.addEventListener('focus', hand.rise);
+    stone.addEventListener('mouseleave', hand.release);
+    stone.addEventListener('blur', hand.release);
+    stones.append(h('li', {}, stone, grasp));
   }
+  restlessHands(stones, hands);
 
   main.replaceChildren(
     ...[setupNotice(setup)].filter((x): x is HTMLElement => x !== null),

@@ -398,14 +398,46 @@
   pointer-events: none;
 }
 
+/* ---- A hand from the ground beside a stone: 30 frames cut from a clip that was generated on a crop of
+   this page's own ground, so its soil and light match. landing.ts steps the frames (hover, focus, and now
+   and then on its own). 80% down the frame is where the hand meets the ground. ---- */
 .stones li {
   position: relative;
+}
+.grasp {
+  position: absolute;
+  bottom: -46px;
+  z-index: 2;
+  width: 130px;
+  aspect-ratio: 200 / 300;
+  background: url('/art/hand-anim.webp') 0 0 / 1000% 300% no-repeat;
+  /* the clip is as dim as the ground; lift the hand a little, with contrast so it does not wash out */
+  filter: brightness(1.2) contrast(1.2) saturate(1.15);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.grasp.is-out {
+  opacity: 1;
+  transition-duration: 0s;
+}
+.grasp-l {
+  left: -62px;
+}
+.grasp-r {
+  right: -62px;
 }
 
 /* the ground fades in under the heading instead of starting on a line */
 .yard::before {
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22%);
   mask-image: linear-gradient(180deg, transparent 0, #000 22%);
+}
+
+/* a hovered or focused stone, with its plaque, sits above every hand in the yard */
+.stone:hover,
+.stone:focus-visible {
+  z-index: 4;
 }
 
 /* ---- Stones in the ground, not on it. ---- */
