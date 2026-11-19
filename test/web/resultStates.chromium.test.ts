@@ -111,6 +111,8 @@ describe('result page per Outcome (Chromium)', () => {
     expect(await page.locator('a[download]').count()).toBe(1);
     expect(await page.locator('.is-original .side-name').textContent()).toBe('Original (Flash, played by Ruffle)');
     expect(await page.locator('.is-converted .side-name').textContent()).toBe('Converted (TypeScript + PixiJS)');
+    // Keyboard games need the keys: the converted player takes focus once it has loaded.
+    await page.waitForFunction(() => document.activeElement?.matches('.is-converted iframe') === true, undefined, { timeout: 10_000 });
     await page.close();
   });
 

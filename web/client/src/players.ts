@@ -35,9 +35,13 @@ export function originalPlayer(job: JobSummary, aspect: string): Player {
   return { figure, restart: () => box.replaceChildren(make()) };
 }
 
-/** The converted project, built for the preview. */
+/** The converted project, built for the preview. Focused when it loads, so keyboard games get the keys. */
 export function convertedPlayer(job: JobSummary, aspect: string, buildDetail: string | null): Player {
-  const make = (): HTMLIFrameElement => frame(jobUrl.app(job.id), `${CONVERTED_LABEL}: ${job.name}`);
+  const make = (): HTMLIFrameElement => {
+    const f = frame(jobUrl.app(job.id), `${CONVERTED_LABEL}: ${job.name}`);
+    f.addEventListener('load', () => f.focus({ preventScroll: true }));
+    return f;
+  };
   const box = h(
     'div',
     { class: 'screen', style: `aspect-ratio: ${aspect}` },
