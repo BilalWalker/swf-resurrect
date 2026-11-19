@@ -593,7 +593,7 @@ main:focus {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(5, 7, 11, 0.15) 0%, rgba(5, 7, 11, 0.45) 45%, rgba(5, 7, 11, 0.2) 100%);
+  background: linear-gradient(180deg, rgba(5, 7, 11, 0.12) 0%, rgba(5, 7, 11, 0.22) 45%, rgba(5, 7, 11, 0.15) 100%);
 }
 .sky .moon,
 .sky .stars,
@@ -618,9 +618,9 @@ main:focus {
 }
 
 .moon-glow {
-  left: 80.1%;
-  top: 12.6%;
-  width: 22%;
+  left: 71.1%;
+  top: 8%;
+  width: 19%;
   aspect-ratio: 1;
   background: radial-gradient(circle, rgba(200, 225, 240, 0.22) 0 26%, rgba(160, 200, 230, 0.1) 42%, transparent 68%);
   animation: moon-pulse 7s ease-in-out infinite alternate;
@@ -636,9 +636,9 @@ main:focus {
 
 /* the chapel window on the far hill: a candle someone left burning */
 .chapel-light {
-  left: 20.75%;
-  top: 25.2%;
-  width: 1.5%;
+  left: 51.75%;
+  top: 23.9%;
+  width: 3%;
   aspect-ratio: 1;
   background: radial-gradient(circle, rgba(255, 196, 110, 0.95) 0 22%, rgba(255, 150, 60, 0.35) 45%, transparent 70%);
   animation: candle 5.3s steps(1, end) infinite;
@@ -787,13 +787,4 @@ main:focus {
   82% {
     opacity: 0.45;
   }
-}
-
-/* One of the risen (undead.ts): a frame of the silhouette sheet, standing on a ridge of the backdrop. */
-.scene > .undead {
-  aspect-ratio: 100 / 146;
-  border-radius: 0;
-  background: url('/art/zombie-sheet.png') 0 0 / 1200% 100% no-repeat;
-  /* black like the ridges, with a faint moonlit rim so the figure reads against the night sky */
-  filter: brightness(0) drop-shadow(0 0 2px rgba(170, 200, 230, 0.5));
 }

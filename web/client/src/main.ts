@@ -4,7 +4,6 @@ import { svg } from './dom';
 import { renderJob } from './job';
 import { renderLanding } from './landing';
 import { renderResult } from './result';
-import { raiseTheDead } from './undead';
 
 const main = document.getElementById('main') as HTMLElement;
 let cleanup: (() => void) | null = null;
@@ -23,11 +22,9 @@ function decorate(): void {
     // Candle light flickering in the painted jack-o'-lanterns and the lantern: [class, x %, y %, width %],
     // measured on the backdrop. Each gets its own pace so they never pulse together.
     const flames: Array<[string, number, number, number]> = [
-      ['pumpkin-glow', 7.3, 46.2, 4], ['pumpkin-glow', 7.6, 52.1, 5.5], ['pumpkin-glow', 7.8, 59.5, 7],
-      ['pumpkin-glow', 92.7, 46.2, 4], ['pumpkin-glow', 92.7, 52.1, 5.5], ['pumpkin-glow', 92.7, 59.5, 7],
-      ['pumpkin-glow', 26.1, 30.5, 2.6], ['pumpkin-glow', 32.1, 33.5, 2.6], ['pumpkin-glow', 40.5, 36.2, 2.6],
-      ['pumpkin-glow', 78.2, 37.8, 2.6], ['pumpkin-glow', 86.9, 33.7, 2.6],
-      ['lantern-glow', 91.0, 25.7, 2.4],
+      ['pumpkin-glow', 8.4, 59.2, 7.5], ['pumpkin-glow', 93.4, 60.8, 8],
+      ['pumpkin-glow', 15.7, 38.5, 2.4], ['pumpkin-glow', 26.5, 43.6, 2.4],
+      ['lantern-glow', 89.5, 20.5, 3],
     ];
     for (const [c, x, y, w] of flames) {
       const el = document.createElement('span');
@@ -36,7 +33,6 @@ function decorate(): void {
       scene.append(el);
     }
     sky.prepend(scene);
-    raiseTheDead(scene);
     sky.append(svg(HORIZON));
     // Bats crossing the sky: a painted sprite (art/bat-sheet.webp) flapped and flown by CSS.
     // and now and then a ghost drifting through (art/ghost.webp), flown by CSS
