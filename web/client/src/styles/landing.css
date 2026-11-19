@@ -469,3 +469,37 @@
 .stones li:nth-child(3n)::after {
   background-position: 18% 84%;
 }
+
+/* risen before: uneven mist drifting at the foot of the stone, different on every stone, instead of one even oval */
+.stone.is-risen::before {
+  left: -24%;
+  right: -16%;
+  bottom: -12%;
+  height: 42%;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse 34% 38% at 22% 62%, rgba(126, 242, 184, 0.34), transparent 70%),
+    radial-gradient(ellipse 26% 30% at 58% 76%, rgba(126, 242, 184, 0.26), transparent 70%),
+    radial-gradient(ellipse 20% 26% at 85% 50%, rgba(126, 242, 184, 0.2), transparent 70%);
+  filter: blur(3px);
+  animation: mist-drift 9s ease-in-out infinite alternate;
+}
+.stones li:nth-child(2n) .stone.is-risen::before {
+  transform: scaleX(-1);
+  animation-duration: 13s;
+}
+.stones li:nth-child(3n) .stone.is-risen::before {
+  height: 34%;
+  animation-duration: 11s;
+  animation-delay: -5s;
+}
+@keyframes mist-drift {
+  from {
+    translate: -7% 2%;
+    opacity: 0.65;
+  }
+  to {
+    translate: 8% -7%;
+    opacity: 1;
+  }
+}
