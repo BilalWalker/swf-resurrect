@@ -1,7 +1,7 @@
 // The result: "It lives." Scores as moon gauges (the number always printed), the original (in
 // Ruffle) beside the converted project, then the autopsy (fidelity report),
 // what stayed in the grave (unsupported features and classes) and the grimoire (source).
-import type { JobSummary, ResultSummary, ScoreSummary } from '../../shared/api';
+import type { JobOutcome, JobSummary, ResultSummary, ScoreSummary } from '../../shared/api';
 import { jobUrl } from './api';
 import { EKG, moonGauge } from './art';
 import { h, pct, svg } from './dom';
@@ -34,7 +34,29 @@ function gauge(title: string, measures: string, score: ScoreSummary | null, miss
   );
 }
 
-function classesTile(r: ResultSummary): HTMLElement {
+/**
+ * One class count per page: with the engine's numbers the tile shows "translated of candidates", the
+ * same figure as the gap panel. Without them (numbers: null, or a job from before the Outcome_File)
+ * it falls back to the translation report's total.
+ */
+function classesTile(r: ResultSummary, o: JobOutcome | null): HTMLElement {
+  const n = o?.numbers ?? null;
+  const plural = (k: number, w: string): string => `${k} ${w}${k === 1 ? '' : 's'}`;
+  if (n !== null) {
+    return h(
+      'div',
+      { class: 'tile' },
+      h('span', { class: 'tile-title' }, 'Classes translated'),
+      h('span', { class: 'tile-value' }, `${n.translatedClasses} of ${n.candidateClasses}`),
+      h(
+        'span',
+        { class: 'tile-sub' },
+        `${n.cleanClasses} clean · ${n.looseClasses} loose · ${n.unsupportedClasses} unsupported · ${n.omittedClasses} omitted`,
+        h('br'),
+        plural(n.typeErrors, 'type error'),
+      ),
+    );
+  }
   const c = r.classCounts;
   return h(
     'div',
@@ -48,7 +70,7 @@ function classesTile(r: ResultSummary): HTMLElement {
           { class: 'tile-sub' },
           `${c.clean} clean · ${c.loose} loose · ${c.unsupported} unsupported · ${c.omitted} omitted`,
           h('br'),
-          `${c.typeErrors} type error${c.typeErrors === 1 ? '' : 's'}${c.overridden > 0 ? ` · ${c.overridden} handwritten override${c.overridden === 1 ? '' : 's'}` : ''}`,
+          `${plural(c.typeErrors, 'type error')}${c.overridden > 0 ? ` · ${plural(c.overridden, 'handwritten override')}` : ''}`,
         ),
   );
 }
@@ -276,7 +298,7 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
         { class: 'vitals', role: 'group', 'aria-label': 'Soul match and counts' },
         gauge('Overall match', 'Mean pixel match over sampled frames', r.overallMatch, 'No fidelity report was written.'),
         gauge('Trace score', 'Trace lines matched in a replay', r.traceScore, 'No fidelity report was written.'),
-        classesTile(r),
+        classesTile(r, job.outcome),
         graveTile(r, () => t.select('grave')),
       ),
       playerPair(job, stageAspect(r.stage, job.outcome)),

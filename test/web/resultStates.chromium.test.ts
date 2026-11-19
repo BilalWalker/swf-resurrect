@@ -140,6 +140,10 @@ describe('result page per Outcome (Chromium)', () => {
     expect(panel).toContain('obfuscated: names renamed');
     expect(panel).not.toContain('will probably not run');
     expect(await page.textContent('.alive-title')).toBe('It lives, with gaps.');
+    // One class count per page: the tile shows the same figure as the gap panel.
+    const tile = page.locator('.tile', { hasText: 'Classes translated' });
+    expect(await tile.locator('.tile-value').textContent()).toBe('5 of 6');
+    expect(await tile.locator('.tile-sub').textContent()).toContain('5 clean · 0 loose · 1 unsupported · 1 omitted');
     await page.close();
   });
 
@@ -155,6 +159,7 @@ describe('result page per Outcome (Chromium)', () => {
     const text = (await none.textContent('.gap-panel')) ?? '';
     expect(text).toContain('1 type error in the TypeScript');
     expect(text).not.toContain('classes translated');
+    expect(await none.locator('.tile', { hasText: 'Classes translated' }).locator('.tile-value').textContent()).toBe('none reported');
     await none.close();
   });
 
