@@ -5,7 +5,7 @@ const limits: OutcomeLimits = {
   maxSizeMiB: 20,
   runLimitS: 300,
   stageLimitS: 60,
-  stageWeights: { recover: 2, unpack: 2, convert: 1, translate: 1, emit: 1, gate: 1, verify: 3 },
+  stageWeights: { recover: 2, unpack: 3, convert: 1, translate: 1, emit: 1, gate: 1, verify: 3 },
 };
 
 const facts: Facts = {

@@ -19,7 +19,6 @@ describe('convertModel', () => {
       shapesDir: resolve(dir, 'shapes'),
       textsDir: resolve(dir, 'texts'),
       structureDumpPath: resolve(dir, 'structure.xml'),
-      symbolClassPath: resolve(dir, 'symbols.csv'),
       scriptsDir: resolve(dir, 'scripts'),
       header,
       xmlVersion,

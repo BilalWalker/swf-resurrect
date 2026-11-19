@@ -33,7 +33,6 @@ async function load(sample: Sample): Promise<Loaded> {
     shapesDir: resolve(fixture, 'shapes'),
     textsDir: resolve(fixture, 'texts'),
     structureDumpPath: resolve(fixture, 'structure.xml'),
-    symbolClassPath: resolve(fixture, 'symbols.csv'),
     scriptsDir: resolve(fixture, 'scripts'),
     header,
     xmlVersion,

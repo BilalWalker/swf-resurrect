@@ -65,7 +65,7 @@ async function setup(opts: { jar?: boolean; swfBytes?: string } = {}): Promise<S
 }
 
 /** Fake spawner: first call (-swf2xml) writes `xml`; second call (-export) creates the listed outputs. */
-function fakeSpawner(workDir: string, xml: string, exports: string[] = ['shapes', 'scripts', 'symbolClass/symbols.csv']) {
+function fakeSpawner(workDir: string, xml: string, exports: string[] = ['shapes', 'scripts']) {
   const calls: SpawnRequest[] = [];
   const spawner: FfdecSpawner = async (req) => {
     calls.push(req);
@@ -176,7 +176,7 @@ describe('unpack error paths', () => {
     });
   });
 
-  it('2.6 AS2-only SWF stops before the export call', async () => {
+  it('2.6 AS2-only SWF ends not-AS3 and kills the export that ran beside the dump', async () => {
     const s = await setup();
     const xml = fixtureHead.replace('actionScript3="true"', 'actionScript3="false"');
     expect(xml).not.toBe(fixtureHead);
@@ -184,7 +184,8 @@ describe('unpack error paths', () => {
     await expect(unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner })).rejects.toBeInstanceOf(
       NotAs3Error,
     );
-    expect(calls.map((c) => c.args[0])).toEqual(['-swf2xml']);
+    expect(calls.map((c) => c.args[0])).toEqual(['-swf2xml', '-format']);
+    expect(calls[1]!.signal?.aborted).toBe(true);
   });
 
   it('2.6 a dump without FileAttributesTag is treated as not AS3', async () => {
@@ -194,7 +195,8 @@ describe('unpack error paths', () => {
     await expect(unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner })).rejects.toBeInstanceOf(
       NotAs3Error,
     );
-    expect(calls).toHaveLength(1);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]!.signal?.aborted).toBe(true);
   });
 
   it.each([
@@ -214,19 +216,12 @@ describe('unpack error paths', () => {
   describe('optional symbolClass/symbols.csv (Requirement 4)', () => {
     const withTag = () => fixtureHead.replace('</tags>', '<item type="SymbolClassTag" forceWriteAsLong="true"/>\n  </tags>');
 
-    it('4.1 no tag and no csv succeeds with symbolClassPath null', async () => {
+    it('32.2 the export names shape, script and text and not symbolClass; no csv is needed', async () => {
       const s = await setup();
-      const { spawner } = fakeSpawner(s.workDir, fixtureHead, ['shapes', 'scripts']);
+      const { spawner, calls } = fakeSpawner(s.workDir, withTag(), ['shapes', 'scripts']);
       const r = await unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner });
-      expect(r.symbolClassPath).toBeNull();
-    });
-
-    it('4.2 tag and no csv fails with the missing-export error', async () => {
-      const s = await setup();
-      const { spawner } = fakeSpawner(s.workDir, withTag(), ['shapes', 'scripts']);
-      const err = await unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner }).catch((e) => e);
-      expect(err).toBeInstanceOf(MissingExportError);
-      expect(err.names).toEqual(['symbolClass/symbols.csv']);
+      expect(calls[1]!.args).toEqual(['-format', 'text:svg', '-export', 'shape,script,text', s.workDir, s.swf]);
+      expect('symbolClassPath' in r).toBe(false);
     });
 
     it('4.3 another missing export still fails when no tag is present', async () => {
@@ -274,9 +269,8 @@ describe('unpack error paths', () => {
     );
     const err = await unpack({ swfPath: s.swf, workDir: s.workDir, ffdecJarPath: s.jar, spawner }).catch((e) => e);
     expect(err).toBeInstanceOf(MissingExportError);
-    expect(err.names).toEqual(['symbolClass/symbols.csv', 'scripts']);
+    expect(err.names).toEqual(['scripts']);
     expect(err.message).toContain('scripts');
-    expect(err.message).toContain('symbolClass/symbols.csv');
   });
 
   it('2.9 unsupported XML major reports found and supported versions', async () => {
@@ -287,7 +281,7 @@ describe('unpack error paths', () => {
     expect(err).toBeInstanceOf(XmlVersionError);
     expect(err.message).toContain('5.2');
     expect(err.message).toContain('4');
-    expect(calls).toHaveLength(1);
+    expect(calls[1]!.signal?.aborted).toBe(true);
   });
 
   it('2.10 missing header values are listed by name', async () => {

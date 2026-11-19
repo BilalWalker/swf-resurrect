@@ -1,4 +1,4 @@
-// Robustness 18.3: an Unpack FFDec timeout's Outcome reason names the stage allowance (120 s by default).
+// Robustness 18.3: an Unpack FFDec timeout's Outcome reason names the stage allowance (180 s by default).
 // The pipeline must pass `${unpackS} s stage limit` as allowanceLabel (a prior commit dropped the interpolation).
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -34,7 +34,7 @@ function args(): PipelineArgs {
 /** Mimics the real unpack: an FFDec timeout carries the allowanceLabel it received. */
 const stages = (): PipelineStages => ({
   async unpack(i) {
-    const err = new FfdecTimeoutError(120);
+    const err = new FfdecTimeoutError(180);
     if (i.allowanceLabel !== undefined) err.limit = i.allowanceLabel;
     throw err;
   },
@@ -50,12 +50,12 @@ beforeEach(async () => { tmp = await mkdtemp(join(tmpdir(), 'unpack-label-')); }
 afterEach(async () => { await rm(tmp, { recursive: true, force: true }); });
 
 describe('Unpack FFDec timeout reason names the stage allowance (18.3)', () => {
-  it('names 120 s stage limit by default', async () => {
+  it('names 180 s stage limit by default', async () => {
     await writeFile(join(tmp, 'a.swf'), swfWithNames(20));
     await runPipeline(args(), stages(), io);
     const o = JSON.parse(await readFile(join(tmp, 'out', 'outcome.json'), 'utf8'));
     expect(o.outcome).toBe('refused');
     expect(o.reasonCode).toBe('time-limit');
-    expect(o.reason).toContain('120 s stage limit');
+    expect(o.reason).toContain('180 s stage limit');
   });
 });

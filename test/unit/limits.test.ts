@@ -34,7 +34,10 @@ describe('resolveLimits', () => {
   });
 
   it('has the weight table, and recover gets 120 s by default', () => {
-    expect(STAGE_WEIGHTS).toEqual({ recover: 2, unpack: 2, convert: 1, translate: 1, emit: 1, gate: 1, verify: 3 });
+    expect(STAGE_WEIGHTS).toEqual({ recover: 2, unpack: 3, convert: 1, translate: 1, emit: 1, gate: 1, verify: 3 });
+    expect(stageAllowanceS(defaultLimits(), 'unpack')).toBe(180);
+    // 32.2: no stage allowance exceeds the run limit, which stays 300 s.
+    for (const stage of Object.keys(STAGE_WEIGHTS)) expect(stageAllowanceS(defaultLimits(), stage)).toBeLessThanOrEqual(defaultLimits().runLimitS);
     expect(defaultLimits().stageWeights).toEqual(STAGE_WEIGHTS);
     expect(stageAllowanceS(defaultLimits(), 'recover')).toBe(120);
     expect(stageAllowanceS(defaultLimits(), 'verify')).toBe(180);

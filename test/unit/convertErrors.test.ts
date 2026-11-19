@@ -188,7 +188,6 @@ describe('convertStage error paths with staging directories', () => {
       shapesDir: join(dir, 'shapes'),
       textsDir: join(dir, 'texts'),
       structureDumpPath: join(dir, 'structure.xml'),
-      symbolClassPath: join(dir, 'symbols.csv'),
       scriptsDir: join(dir, 'scripts'),
       header,
       xmlVersion,

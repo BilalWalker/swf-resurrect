@@ -1,4 +1,4 @@
-# Implementation Plan: robustness
+﻿# Implementation Plan: robustness
 
 ## Overview
 
@@ -494,14 +494,14 @@ Rules of Block E, in addition to the rules at the top: one logical change per co
     - Tests: none new; the numbers are informational.
     - _Requirements: 27.5, 27.8_
 
-- [ ] 32. Unpack: time on the largest file
+- [x] 32. Unpack: time on the largest file
   - Commit area: `Unpack` (Pipeline and Docs named when limits change). Verification V1. Read the design D-A4 (the stage weights) and `src/unpack/unpack.ts`. Owner's item 2: `earntodie.swf` (4 MB, 536 classes) takes 109 to 124 s in Unpack against the 120 s stage limit (60 s times weight 2) and ends `refused time-limit` on some runs. No test timeout is raised and the 300 s run limit does not change.
-  - [~] 32.1 Measure where the time goes
+  - [x] 32.1 Measure where the time goes
     - Repeat the measurement of the Block E facts on `earntodie.swf` three times each (`-swf2xml`, the combined export, each kind alone), as seconds with the machine state noted (what else ran), and with `-swf2xml` and the script export time of `redball4.swf` for scale. Record in `design.md` (D-E3) the table, the finding (the script export is about two thirds of the combined call; the dump costs one full parse of the file), and which exports the pipeline reads (the Block E facts): `shapes`, `texts`, `scripts` and the dump; `symbolClass` is not read. Check whether FFDec can export script classes selectively or the dump and the export can share one parse (one invocation or an option); a probe that fails is recorded as a number, not a guess.
     - Tests: none.
     - _Requirements: 27.9_
 
-  - [~] 32.2 Make Unpack cheaper, or re-weigh the stage limits
+  - [x] 32.2 Make Unpack cheaper, or re-weigh the stage limits
     - First choice, general savings: drop `symbolClass` from the export list (and the `parseSymbolsCsv` validation of a file nobody reads, keeping the check that the dump's SymbolClass names are valid Qualified_Names in Convert, where it already is), and any other measured saving of 32.1 (one invocation if FFDec can do it). `UnpackResult.symbolClassPath` goes with it where no consumer needs it (grep first; `unpack.test.ts` and the Convert tests are updated). Second choice, only if the measured saving does not bring `earntodie.swf` below 60 percent of its allowance: re-weigh the stage weights inside the unchanged 300 s run limit (for example unpack 3, convert 1, translate 1, emit 1, gate 1, verify 3, recover 2 = 12 against 300 s, with the weight table and the arithmetic in `tech.md`, `docs/outcome.md`, the limits tests and `design.md` D-A4 amended), and the commit body states the numbers: each stage's allowance before and after, the measured Unpack time and its allowance. No timeout in any test is raised; no stage allowance exceeds the run limit.
     - Tests: `test/unit/unpack.test.ts` (extend): the FFDec arguments of the second invocation do not name `symbolClass` (with the fake spawner); `test/unit/limits.test.ts` (extend, if weights change): the new weights and allowances; the existing guard tests stay unchanged.
     - _Requirements: 27.9, 27.10_

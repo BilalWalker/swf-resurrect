@@ -59,7 +59,7 @@ function stages(opts: { scripts: Record<string, string>; classes?: string[] } = 
         await mkdir(join(p, '..'), { recursive: true }).catch(() => undefined);
         await writeFile(p, text);
       }
-      return { scriptsDir, structureDumpPath: '', symbolClassPath: null, shapesDir: '', textsDir: '', workDir: i.workDir, header: {} as never, xmlVersion: {} as never } as never;
+      return { scriptsDir, structureDumpPath: '', shapesDir: '', textsDir: '', workDir: i.workDir, header: {} as never, xmlVersion: {} as never } as never;
     },
     async convert() {
       return {

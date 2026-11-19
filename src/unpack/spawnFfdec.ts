@@ -8,6 +8,8 @@ export interface SpawnRequest {
   jarPath: string;
   args: string[];
   timeoutMs: number;
+  /** When it aborts, the child tree is killed and the call rejects with the signal's reason. */
+  signal?: AbortSignal;
 }
 
 export interface SpawnOutput {
@@ -36,8 +38,16 @@ export const spawnFfdec: FfdecSpawner = (req) =>
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      req.signal?.removeEventListener('abort', onAbort);
       fn();
     };
+
+    const onAbort = (): void => {
+      if (child.pid !== undefined) void killTree(child.pid, child);
+      else child.kill();
+      finish(() => reject(req.signal?.reason ?? new Error('FFDec call aborted')));
+    };
+
 
     const timer = setTimeout(() => {
       timedOut = true;
@@ -45,6 +55,9 @@ export const spawnFfdec: FfdecSpawner = (req) =>
       else child.kill();
       finish(() => reject(new FfdecTimeoutError(Math.round(req.timeoutMs / 1000))));
     }, req.timeoutMs);
+
+    if (req.signal?.aborted) onAbort();
+    else req.signal?.addEventListener('abort', onAbort, { once: true });
 
     child.stdout?.setEncoding('utf8');
     child.stderr?.setEncoding('utf8');

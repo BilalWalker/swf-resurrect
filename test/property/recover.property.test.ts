@@ -85,7 +85,7 @@ describe("Obfuscation verdict properties", () => {
 // **Validates: Requirements 15.3, 16.1, 16.3, 16.5, 16.9**
 
 const RUN_LIMIT_MS = 300_000;
-const UNPACK_ALLOWANCE_MS = 120_000;
+const UNPACK_ALLOWANCE_MS = 180_000;
 
 const tc = (className: string) => ({
   className, fileName: `${className}.ts`, text: "", diagnostics: [], spans: [], extendsName: null, extendsQualified: null, importRecords: [],

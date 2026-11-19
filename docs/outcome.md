@@ -102,13 +102,14 @@ not a positive integer (text, zero, negative, decimal) is a usage error and exit
 | Limit | Option | Variable | Default | Reason |
 |---|---|---|---|---|
 | Input size | `--max-size <MiB>` | `SWF_RESURRECT_MAX_SIZE_MIB` | 20 MiB | Equals the upload limit of `web/server/upload.ts`, so the CLI and the web app refuse the same files. |
-| Run | `--run-limit <seconds>` | `SWF_RESURRECT_RUN_LIMIT_S` | 300 s | Five minutes for the whole run: the stage allowances above add up to 540 s, so the run limit is the tighter bound. The web server passes its limit (default 300 s) as `--run-limit` and kills 30 s later as a backstop (branch `wip/ui`, merged separately). |
+| Run | `--run-limit <seconds>` | `SWF_RESURRECT_RUN_LIMIT_S` | 300 s | Five minutes for the whole run: the stage allowances below add up to 720 s, so the run limit is the tighter bound, and no single allowance (at most 180 s) exceeds it. The web server passes its limit (default 300 s) as `--run-limit` and kills 30 s later as a backstop (branch `wip/ui`, merged separately). |
 | Stage base | `--stage-limit <seconds>` | `SWF_RESURRECT_STAGE_LIMIT_S` | 60 s | One unit of stage time. A stage may use the base times its weight. |
 
-Stage weights: `recover` 2, `unpack` 2, `convert` 1, `translate` 1, `emit` 1, `gate` 1, `verify` 3. With the
-default base, `recover` and `unpack` get 120 s each, `verify` 180 s and the others 60 s. Unpack and recover start
+Stage weights: `recover` 2, `unpack` 3, `convert` 1, `translate` 1, `emit` 1, `gate` 1, `verify` 3. With the
+default base, `unpack` and `verify` get 180 s each, `recover` 120 s and the others 60 s. Unpack and recover start
 FFDec (a Java process, slow to start and to decompile large files), and verify renders frames in a browser, so
-these three get more than the base. The limits that applied are written to `limits` in the Outcome_File.
+these three get more than the base. Unpack was 2 until a 4 MB file with 536 classes needed 109 to 158 s of it
+(the decompile of every class is about two thirds of the call); it runs its two FFDec calls at once and has 180 s. The limits that applied are written to `limits` in the Outcome_File.
 
 ## Examples
 
@@ -150,7 +151,7 @@ writer's output.
       "gate": 1,
       "recover": 2,
       "translate": 1,
-      "unpack": 2,
+      "unpack": 3,
       "verify": 3
     }
   },
@@ -267,7 +268,7 @@ writer's output.
       "gate": 1,
       "recover": 2,
       "translate": 1,
-      "unpack": 2,
+      "unpack": 3,
       "verify": 3
     }
   },
@@ -364,7 +365,7 @@ writer's output.
       "gate": 1,
       "recover": 2,
       "translate": 1,
-      "unpack": 2,
+      "unpack": 3,
       "verify": 3
     }
   },
@@ -414,7 +415,7 @@ writer's output.
       "gate": 1,
       "recover": 2,
       "translate": 1,
-      "unpack": 2,
+      "unpack": 3,
       "verify": 3
     }
   },

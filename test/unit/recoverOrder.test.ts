@@ -136,7 +136,7 @@ describe('recovery order in runPipeline (task 18.2)', () => {
 
     it(`a failed ${step} with too little time: refused time-limit, no Unpack`, async () => {
       await writeFile(join(tmp, 'a.swf'), swfWithNames(20, 5));
-      // The failing call uses 250 s of the 300 s run limit; 50 s are left, the unpack allowance is 120 s.
+      // The failing call uses 250 s of the 300 s run limit; 50 s are left, the unpack allowance is 180 s.
       await runPipeline(args(), stages(step, 250_000), io);
       expect(unpackCount()).toBe(0);
       const o = await outcome();

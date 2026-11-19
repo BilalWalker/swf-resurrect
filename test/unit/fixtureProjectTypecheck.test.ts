@@ -33,7 +33,6 @@ async function buildProject(sample: string): Promise<Map<string, string>> {
     shapesDir: resolve(fixture, 'shapes'),
     textsDir: resolve(fixture, 'texts'),
     structureDumpPath: resolve(fixture, 'structure.xml'),
-    symbolClassPath: resolve(fixture, 'symbols.csv'),
     scriptsDir,
     header,
     xmlVersion,

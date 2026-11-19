@@ -45,21 +45,21 @@ describe('RunGuard.runStage', () => {
     const p = guard.runStage('unpack', () => new Promise<never>(() => { settled = true; }));
     const caught = p.catch((e: unknown) => e);
     await Promise.resolve();
-    clock.advance(119 * S);
+    clock.advance(179 * S);
     expect(killAll).not.toHaveBeenCalled();
     clock.advance(1 * S);
     const err = await caught;
     expect(settled).toBe(true);
     expect(err).toBeInstanceOf(TimeLimitError);
-    expect(err).toMatchObject({ stage: 'unpack', limit: '120 s stage limit' });
+    expect(err).toMatchObject({ stage: 'unpack', limit: '180 s stage limit' });
     expect(killAll).toHaveBeenCalledTimes(1);
-    expect(guard.records).toEqual([{ name: 'unpack', result: 'error', durationMs: 120 * S }]);
+    expect(guard.records).toEqual([{ name: 'unpack', result: 'error', durationMs: 180 * S }]);
     const failure = classifyError(err, 'unpack');
-    expect(failure).toEqual({ kind: 'refused', reasonCode: 'time-limit', stage: 'unpack', limit: '120 s stage limit' });
+    expect(failure).toEqual({ kind: 'refused', reasonCode: 'time-limit', stage: 'unpack', limit: '180 s stage limit' });
     const d = decideOutcome({ facts: null, stages: guard.records, failure, numbers: null, gaps: [], limits: guard.limits, recovery: null });
     expect(d).toMatchObject({ outcome: 'refused', reasonCode: 'time-limit', exitCode: 3 });
     expect(d.reason).toContain('unpack');
-    expect(d.reason).toContain('120 s stage limit');
+    expect(d.reason).toContain('180 s stage limit');
   });
 
   it('stops a stage at the run limit when less time is left than its allowance', async () => {
@@ -109,7 +109,7 @@ describe('runPipeline with the guard', () => {
       const stages = {
         unpack: () => {
           // Time passes only when the test says so; this stage never settles.
-          setImmediate(() => clock.advance(120 * S));
+          setImmediate(() => clock.advance(180 * S));
           return new Promise<never>(() => undefined);
         },
       } as unknown as PipelineStages;
@@ -124,7 +124,7 @@ describe('runPipeline with the guard', () => {
       const o = JSON.parse(await readFile(join(tmp, 'out', 'outcome.json'), 'utf8'));
       expect(o).toMatchObject({ outcome: 'refused', reasonCode: 'time-limit', limits: defaultLimits() });
       expect(o.reason).toContain('unpack');
-      expect(o.stages).toEqual([{ name: 'unpack', result: 'error', durationMs: 120 * S }]);
+      expect(o.stages).toEqual([{ name: 'unpack', result: 'error', durationMs: 180 * S }]);
       expect(out).toContain('Outcome: refused time-limit');
     } finally {
       await rm(tmp, { recursive: true, force: true });

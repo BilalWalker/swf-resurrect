@@ -25,7 +25,7 @@ Outputs next to the project: `unsupported-features.json` and `translation-report
   | `--run-limit <seconds>` | `SWF_RESURRECT_RUN_LIMIT_S` | 300 |
   | `--stage-limit <seconds>` | `SWF_RESURRECT_STAGE_LIMIT_S` | 60 |
 
-  A stage's allowance is the stage limit times its weight: recover 2, unpack 2, convert 1, translate 1, emit 1, gate 1, verify 3. The guard (`src/pipeline/guard.ts`) abandons a stage that passes its allowance or the run limit, kills the registered child processes (`processTree.ts`) and ends the run `refused time-limit`. A blocked synchronous stage still cannot be interrupted (Open_Item O1).
+  A stage's allowance is the stage limit times its weight: recover 2, unpack 3, convert 1, translate 1, emit 1, gate 1, verify 3 (allowances 120, 180, 60, 60, 60, 60 and 180 s, 720 s in all; the 300 s run limit is the tighter bound and no allowance exceeds it). Unpack runs `-swf2xml` and `-export shape,script,text` at the same time (D-E3). The guard (`src/pipeline/guard.ts`) abandons a stage that passes its allowance or the run limit, kills the registered child processes (`processTree.ts`) and ends the run `refused time-limit`. A blocked synchronous stage still cannot be interrupted (Open_Item O1).
 - Every run writes `outcome.json` (the Outcome_File) in the output directory and prints one Outcome_Line (for example `Outcome: refused time-limit ...` or `Outcome: converted-with-gaps - 19 of 27 classes translated, ...`). Fields, reason codes and examples are in `docs/outcome.md`.
 - Exit codes: 0 `converted` or `converted-with-gaps`, 1 `failed`, 2 usage or path error, 3 `refused`.
 
@@ -56,7 +56,7 @@ Inside an emitted project (`out/<sample>`): `npm install`, `npm run dev` (run ma
 ## FFDec (checked by hand, 2026-11-11)
 - Version 26.4.0, zip release from github.com/jindrapetrik/jpexs-decompiler, unpacked to `tools/ffdec/` (gitignored, never committed). Needs Java 17+.
 - Run as `java -jar tools/ffdec/ffdec-cli.jar <args>`. Output contains ANSI colour codes; strip them before parsing.
-- `-export shape,script,symbolClass <outdir> <swf>` writes `shapes/<id>.svg`, `scripts/<Class>.as`, `symbolClass/symbols.csv` (`<id>;"<Class>"`, id 0 is the root timeline).
+- `-export shape,script,symbolClass <outdir> <swf>` writes `shapes/<id>.svg`, `scripts/<Class>.as`, `symbolClass/symbols.csv` (`<id>;"<Class>"`, id 0 is the root timeline). Unpack asks for `shape,script,text` only: nothing reads the csv since the class links come from the dump (`-format text:svg` for the texts).
 - `-swf2xml <swf> <out.xml>` dumps every tag. This is the only timeline source; there is no timeline export. Root element carries `_xmlExportMajor`/`_xmlExportMinor` (4.2 today) and FFDec warns the structure is not final, so check the version.
 - In the XML, placements are `PlaceObject2Tag` items with `depth`, `characterId`, `name`, `placeFlagMove`, and a `matrix` child in twips (divide by 20 for pixels). Sprites are `DefineSpriteTag` with `subTags`. Frames end at `ShowFrameTag`.
 - Shape SVGs wrap the paths in a `<g transform="matrix(1,0,0,1,tx,ty)">` that shifts the shape so its bounds start at 0,0. The paths inside the wrapper are already in shape-origin coordinates. Convert strips the wrapper and records (tx, ty) as the origin in Scene_JSON (used for bounds); the runtime does not shift.

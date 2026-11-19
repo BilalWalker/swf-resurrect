@@ -8,7 +8,7 @@ export const DEFAULT_STAGE_LIMIT_S = 60;
 /** Weight of each stage: its allowance is `stageLimitS * weight`. */
 export const STAGE_WEIGHTS: Readonly<Record<string, number>> = {
   recover: 2,
-  unpack: 2,
+  unpack: 3,
   convert: 1,
   translate: 1,
   emit: 1,

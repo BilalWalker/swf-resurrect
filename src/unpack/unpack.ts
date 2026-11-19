@@ -2,7 +2,6 @@ import { access, open, readFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { checkXmlVersion, isAs3Dump, readDumpHeader } from '../convert/ffdecXml';
 import type { SwfHeader, XmlVersion } from '../convert/ffdecXml';
-import { parseSymbolsCsv } from '../convert/symbolsCsv';
 import { FfdecNotFoundError, FfdecTimeoutError, MissingExportError, NotAs3Error } from './errors';
 import { spawnFfdec } from './spawnFfdec';
 import type { FfdecSpawner } from './spawnFfdec';
@@ -17,7 +16,7 @@ export interface UnpackInput {
   javaCommand?: string;
   timeoutMs?: number;
   /**
-   * Stage allowance in ms. When given, each FFDec call is bounded by what is left of it, not by 	imeoutMs.
+   * Stage allowance in ms. When given, each FFDec call is bounded by what is left of it, not by timeoutMs.
    * Without it the fixed 	imeoutMs (default 60 s) applies, as before.
    */
   allowanceMs?: number;
@@ -35,8 +34,6 @@ export interface UnpackResult {
   /** Static text SVGs (texts/<id>.svg); FFDec writes the directory only when the SWF has text. */
   textsDir: string;
   structureDumpPath: string;
-  /** null: no SymbolClassTag in the dump and no symbols.csv. */
-  symbolClassPath: string | null;
   scriptsDir: string;
   header: SwfHeader;
   xmlVersion: XmlVersion;
@@ -74,7 +71,7 @@ async function readHead(path: string, bytes: number): Promise<string> {
   }
 }
 
-/** Unpacks a SWF with exactly two FFDec invocations: -swf2xml, then -format text:svg -export shape,script,symbolClass,text. */
+/** Unpacks a SWF with exactly two FFDec invocations, run at once: -swf2xml, and -format text:svg -export shape,script,text. */
 export async function unpack(input: UnpackInput): Promise<UnpackResult> {
   const swfPath = resolve(input.swfPath);
   const workDir = resolve(input.workDir);
@@ -98,31 +95,51 @@ export async function unpack(input: UnpackInput): Promise<UnpackResult> {
   if (!(await exists(jarPath))) throw new FfdecNotFoundError(jarPath);
 
   const structureDumpPath = join(workDir, 'structure.xml');
-  await run({ javaCommand, jarPath, args: ['-swf2xml', swfPath, structureDumpPath], timeoutMs });
 
-  const head = await readHead(structureDumpPath, AS3_CHECK_BYTES);
-  if (!isAs3Dump(head)) throw new NotAs3Error();
+  // The dump and the export read the same SWF and write different files, so the two FFDec processes run at once
+  // (design D-E3). Both calls get what is left of the stage allowance at their start, which is the whole of it, so
+  // the stage as a whole stays inside the allowance. The first error that matters is the one the sequential order gave:
+  // a dump error, then not-AS3 or a bad XML version, then an export error. A failed dump or a refused file kills the export.
+  const exportAbort = new AbortController();
+  const dumpP = run({ javaCommand, jarPath, args: ['-swf2xml', swfPath, structureDumpPath], timeoutMs });
+  const exportP = run({
+    javaCommand,
+    jarPath,
+    args: ['-format', 'text:svg', '-export', 'shape,script,text', workDir, swfPath],
+    timeoutMs,
+    signal: exportAbort.signal,
+  }).then(
+    () => null,
+    (error: unknown) => ({ error }),
+  );
 
-  const xmlText = await readFile(structureDumpPath, 'utf8');
-  const { xmlVersion, header } = readDumpHeader(xmlText);
-  checkXmlVersion(xmlVersion);
+  let xmlText: string;
+  let xmlVersion: XmlVersion;
+  let header: SwfHeader;
+  try {
+    await dumpP;
+    const head = await readHead(structureDumpPath, AS3_CHECK_BYTES);
+    if (!isAs3Dump(head)) throw new NotAs3Error();
+    xmlText = await readFile(structureDumpPath, 'utf8');
+    ({ xmlVersion, header } = readDumpHeader(xmlText));
+    checkXmlVersion(xmlVersion);
+  } catch (err) {
+    exportAbort.abort(err);
+    await exportP;
+    throw err;
+  }
   if (xmlVersion.minor !== 2) {
     console.warn(`Warning: FFDec XML export minor version is ${xmlVersion.minor}; the verified version is 4.2`);
   }
-
-  await run({ javaCommand, jarPath, args: ['-format', 'text:svg', '-export', 'shape,script,symbolClass,text', workDir, swfPath], timeoutMs });
+  const exported = await exportP;
+  if (exported !== null) throw exported.error;
 
   const shapesDir = join(workDir, 'shapes');
-  const symbolClassPath = join(workDir, 'symbolClass', 'symbols.csv');
   const textsDir = join(workDir, 'texts');
   const scriptsDir = join(workDir, 'scripts');
-  const symbolClassTag = hasSymbolClassTag(xmlText);
-  const symbolClassPresent = await exists(symbolClassPath);
   const expected: Array<[string, string, boolean]> = [
     ['shapes', shapesDir, true],
     ['structure.xml', structureDumpPath, true],
-    // symbols.csv is expected only when the dump holds a SymbolClassTag.
-    ['symbolClass/symbols.csv', symbolClassPath, symbolClassTag],
     ['scripts', scriptsDir, true],
     // texts/ is expected only when the dump holds a text definition tag.
     ['texts', textsDir, hasTextTag(xmlText)],
@@ -133,14 +150,11 @@ export async function unpack(input: UnpackInput): Promise<UnpackResult> {
   }
   if (missing.length > 0) throw new MissingExportError(missing);
 
-  if (symbolClassPresent) parseSymbolsCsv(await readFile(symbolClassPath, 'utf8'), 'unpack');
-
   return {
     workDir,
     shapesDir,
     textsDir,
     structureDumpPath,
-    symbolClassPath: symbolClassPresent ? symbolClassPath : null,
     scriptsDir,
     header,
     xmlVersion,

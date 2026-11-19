@@ -159,7 +159,7 @@ describe('Failures at Unpack and the class counts', () => {
     const clock = createFakeClock();
     const st = stages({
       unpack: () => {
-        setImmediate(() => clock.advance(120 * 1000));
+        setImmediate(() => clock.advance(180 * 1000));
         return new Promise<never>(() => undefined);
       },
     });
