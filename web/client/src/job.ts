@@ -109,6 +109,8 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
     }
     failure.hidden = false;
     failure.className = 'failure';
+    // Same title size and place as a refused or converted result: the panel is the headline.
+    head.classList.add('is-compact');
     fill(
       failure,
       failedView(j, { rerun }),

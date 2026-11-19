@@ -174,6 +174,7 @@ describe('result page per Outcome (Chromium)', () => {
       'refused',
     );
     expect(await page.textContent('.outcome-reason')).toBe('the file uses ActionScript 1 or 2, which is not supported');
+    expect(await page.locator('.job-head.is-compact').count()).toBe(1);
     expect(await page.textContent('.outcome-hint')).toContain('This tool converts ActionScript 3 files');
     expect(await page.locator('a[download]').count()).toBe(0);
     expect(await page.locator('iframe[src*="/app/"]').count()).toBe(0);
@@ -217,6 +218,8 @@ describe('result page per Outcome (Chromium)', () => {
     expect(text).toContain('Something went wrong on our side');
     expect(text).toContain('3fa9c01e');
     expect(await page.locator('.failure pre').count()).toBe(0);
+    // The job title steps back to one line above the panel, as on the refused page.
+    expect(await page.locator('.job-head.is-compact').count()).toBe(1);
     expect(await page.locator('.failure .is-original .side-name').textContent()).toBe('Original (Flash, played by Ruffle)');
     expect(await page.locator('a[download]').count()).toBe(0);
     await page.close();
