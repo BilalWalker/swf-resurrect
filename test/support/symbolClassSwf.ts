@@ -35,14 +35,14 @@ export const SYMBOL_CLASS_ITEMS: readonly (readonly Pair[])[] = [
  */
 export const EXPORT_ASSET_ITEMS: readonly (readonly Pair[])[] = [[[2, 'ExportName']], [[3, 'C']]];
 
-function pairsXml(tag: string, pairs: readonly Pair[]): string {
+export function pairsXml(tag: string, pairs: readonly Pair[]): string {
   return `<item type="${tag}" forceWriteAsLong="true">
       <tags>${pairs.map(([id]) => `<item>${id}</item>`).join('')}</tags>
       <names>${pairs.map(([, n]) => `<item>${n}</item>`).join('')}</names>
     </item>`;
 }
 
-function shape(id: number): string {
+export function shape(id: number): string {
   return `<item type="DefineShape4Tag" forceWriteAsLong="true" reserved="0" shapeId="${id}" usesFillWindingRule="false" usesNonScalingStrokes="false" usesScalingStrokes="true">
       <edgeBounds type="RECT" Xmax="400" Xmin="0" Ymax="400" Ymin="0" nbits="11"/>
       <shapeBounds type="RECT" Xmax="400" Xmin="0" Ymax="400" Ymin="0" nbits="11"/>
@@ -61,7 +61,7 @@ function shape(id: number): string {
     </item>`;
 }
 
-function sprite(id: number, shapeId: number): string {
+export function sprite(id: number, shapeId: number): string {
   return `<item type="DefineSpriteTag" forceWriteAsLong="false" frameCount="1" hasEndTag="true" spriteId="${id}">
       <subTags>
         <item type="PlaceObject2Tag" characterId="${shapeId}" depth="1" forceWriteAsLong="false" placeFlagHasCharacter="true" placeFlagHasClipActions="false" placeFlagHasClipDepth="false" placeFlagHasColorTransform="false" placeFlagHasMatrix="true" placeFlagHasName="false" placeFlagHasRatio="false" placeFlagMove="false">
@@ -100,7 +100,7 @@ export interface SymbolClassMeasure {
   dump: string;
 }
 
-function ffdec(args: string[]): void {
+export function ffdec(args: string[]): void {
   const r = spawnSync('java', ['-jar', BUTTON_FFDEC_JAR, ...args], { encoding: 'utf8', windowsHide: true, timeout: 90_000 });
   if (r.status !== 0) throw new Error(`ffdec ${args[0]} failed (${r.status}): ${r.stdout}${r.stderr}`);
 }

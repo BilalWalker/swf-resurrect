@@ -102,6 +102,73 @@ describe('planTranslate', () => {
   });
 });
 
+// Robustness task 31.2 (D-E2): a class named only by a string literal in a reached class is a candidate.
+// Validates: Requirements 27.5, 27.6
+describe('planTranslate: classes named by a string (D-E2)', () => {
+  const withBody = (pkg: string, name: string, body: string, imports = '') =>
+    `package ${pkg} {\n  import flash.display.MovieClip;\n  import flash.utils.getDefinitionByName;\n${imports}  public class ${name} extends MovieClip {\n    public function ${name}() {\n      ${body}\n    }\n  }\n}\n`;
+  /** A two-frame preloader: frame 1 links Preloader, which creates the main class by name. */
+  const preloader = (literal: string) =>
+    withBody('', 'Preloader', `nextFrame(); var c:Class = getDefinitionByName(${literal}) as Class; addChild(new c());`);
+  const names = (r: ReturnType<typeof planTranslate>) => r.classes.map((c) => c.className);
+  const game = [
+    { className: 'game.Main', source: withBody('game', 'Main', 'new Helper();') },
+    { className: 'game.Helper', source: 'package game {\n  public class Helper {\n  }\n}\n' },
+    { className: 'Unused', source: cls('Unused') },
+  ];
+
+  it('reaches the class a literal names, and what that class names in turn; an unnamed class stays out', () => {
+    const r = planTranslate([{ className: 'Preloader', source: preloader('"game.Main"') }, ...game], sceneWith(['Preloader']), tsSyntaxCheck);
+    expect(names(r)).toEqual(['Preloader', 'game.Helper', 'game.Main']);
+  });
+
+  it('reads the package forms pkg.Name and pkg::Name, and folds a concatenation of literals', () => {
+    for (const lit of ['"game::Main"', "'game.' + 'Main'", '"game" + "::Main"']) {
+      const r = planTranslate([{ className: 'Preloader', source: preloader(lit) }, ...game], sceneWith(['Preloader']), tsSyntaxCheck);
+      expect(names(r)).toContain('game.Main');
+    }
+  });
+
+  it('misses a name built at run time and a name in a comment', () => {
+    const src = withBody('', 'Preloader', 'var n:String = "game." + suffix(); getDefinitionByName(n); // "game.Main"\n      /* "game.Main" */');
+    const r = planTranslate([{ className: 'Preloader', source: src }, ...game], sceneWith(['Preloader']), tsSyntaxCheck);
+    expect(names(r)).toEqual(['Preloader']);
+  });
+
+  it('keeps the old closure under the symbols rule and every class under the all rule', () => {
+    const sources = [{ className: 'Preloader', source: preloader('"game.Main"') }, ...game];
+    expect(names(planTranslate(sources, sceneWith(['Preloader']), tsSyntaxCheck, [], undefined, 'symbols'))).toEqual(['Preloader']);
+    expect(names(planTranslate(sources, sceneWith(['Preloader']), tsSyntaxCheck, [], undefined, 'all'))).toEqual(['Preloader', 'Unused', 'game.Helper', 'game.Main']);
+  });
+
+  it('ends on a cycle of names', () => {
+    const r = planTranslate(
+      [
+        { className: 'A', source: withBody('', 'A', 'getDefinitionByName("B");') },
+        { className: 'B', source: withBody('', 'B', 'getDefinitionByName("A");') },
+      ],
+      sceneWith(['A']),
+      tsSyntaxCheck,
+    );
+    expect(names(r)).toEqual(['A', 'B']);
+  });
+
+  it('reports a reached class whose translation fails', () => {
+    const broken = 'package game {\n  public class Main {\n    public function Main() {\n      §§push(1);\n    }\n  }\n}\n';
+    const r = planTranslate([{ className: 'Preloader', source: preloader('"game.Main"') }, { className: 'game.Main', source: broken }], sceneWith(['Preloader']), tsSyntaxCheck);
+    const main = r.classes.find((c) => c.className === 'game.Main');
+    expect(main).toBeDefined();
+    expect(main?.parseFailed === true || (main?.diagnostics.length ?? 0) > 0).toBe(true);
+  });
+
+  it('gives the same classes and texts for any order of the sources', () => {
+    const sources = [{ className: 'Preloader', source: preloader('"game.Main"') }, ...game];
+    const a = planTranslate(sources, sceneWith(['Preloader']), tsSyntaxCheck);
+    const b = planTranslate([...sources].reverse(), sceneWith(['Preloader']), tsSyntaxCheck);
+    expect(b).toEqual(a);
+  });
+});
+
 describe('translateStage errors', () => {
   const artifact = { scene: sceneWith([]) } as unknown as ConvertedArtifact;
   const unpackedAt = (scriptsDir: string) => ({ scriptsDir }) as unknown as UnpackResult;

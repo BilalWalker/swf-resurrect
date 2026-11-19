@@ -14,9 +14,13 @@ import { SHIM_AS3_NAMES } from './shimNames';
 import { normalizeNewlines, tokenize } from './tokenizer';
 import { as3InterfaceName } from './interfaceDecl';
 import { translate } from './translate';
+import { namedClasses } from './classNameLiterals';
 import type { Diagnostic, ImportRecord, LineSpan, SyntaxCheck } from './types';
 
 export type { ImportRecord } from './types';
+
+/** `symbols`: classes of Scene_JSON symbols; `symbols-and-names`: also classes named by a string literal in a reached class; `all`: every exported class. */
+export type SeedRule = 'symbols' | 'symbols-and-names' | 'all';
 
 export interface ScriptSource {
   className: string; // Qualified_Name
@@ -104,6 +108,8 @@ export function planTranslate(
   syntaxCheck: SyntaxCheck,
   skippedScripts: readonly string[] = [],
   childNamesByClass?: ReadonlyMap<string, ReadonlySet<string>>,
+  /** Which classes seed the closure (D-E2). Default: the symbols, then the names their code holds. */
+  seedRule: SeedRule = 'symbols-and-names',
 ): TranslateArtifact {
   const sorted = [...sources].sort((a, b) => compareCodeUnits(a.className, b.className));
   const siblingClasses: ReadonlySet<string> = new Set(sorted.map((s) => s.className));
@@ -168,10 +174,19 @@ export function planTranslate(
       }
     }
   }
+  if (seedRule === 'all') {
+    for (const name of translated.keys()) {
+      emitted.add(name);
+      queue.push(name);
+    }
+  }
+  const sourceText = new Map(sorted.map((s) => [s.className, s.source]));
   while (queue.length > 0) {
-    const cls = translated.get(queue.pop() as string);
+    const name = queue.pop() as string;
+    const cls = translated.get(name);
     if (cls === undefined) continue;
-    const next = [cls.extendsQualified, ...cls.importRecords.map((r) => (r.kind === 'class' ? (r.target ?? null) : null))];
+    const named = seedRule === 'symbols-and-names' ? namedClasses(sourceText.get(name) as string, siblingClasses) : [];
+    const next = [cls.extendsQualified, ...cls.importRecords.map((r) => (r.kind === 'class' ? (r.target ?? null) : null)), ...named];
     for (const n of next) {
       if (n != null && translated.has(n) && !emitted.has(n)) {
         emitted.add(n);

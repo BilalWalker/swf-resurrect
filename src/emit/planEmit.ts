@@ -68,6 +68,15 @@ function linkedClassNames(scene: SceneJson): Set<string> {
   return names;
 }
 
+/** True when a code line (not a `//` comment line) of the class calls `getDefinitionByName(` (D-E2). */
+export function callsDefinitionLookup(text: string): boolean {
+  for (const line of text.split('\n')) {
+    const t = line.trimStart();
+    if (!t.startsWith('//') && t.includes('getDefinitionByName(')) return true;
+  }
+  return false;
+}
+
 /**
  * Registry source: exactly the Scene_JSON-linked names found in classNames and not in omitted,
  * sorted by code unit. An omitted class has no import and no entry.
@@ -157,7 +166,9 @@ export function planEmitDetailed(
     // Only translated text carries recorded import lines; an override is written as it is.
     files.set(path, t !== undefined && !overridden.has(n) ? resolveImportLines(text, t.importRecords, path, chosen) : text);
   }
-  files.set(CLASSES_PATH, buildClassesTs(input.scene, names, omitted, chosen, input.translated.some((c) => (c.cutSites?.length ?? 0) > 0)));
+  // Every emitted class is registered for getDefinitionByName when some class looks one up (D-E2), as Ruffle finds any loaded class by name.
+  const lookup = input.translated.some((c) => (c.cutSites?.length ?? 0) > 0) || names.some((n) => callsDefinitionLookup(sources.get(n) as string));
+  files.set(CLASSES_PATH, buildClassesTs(input.scene, names, omitted, chosen, lookup));
 
   return {
     files: [...files.keys()].sort(byCodeUnit).map((path) => ({ path, content: files.get(path) as string })),

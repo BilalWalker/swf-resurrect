@@ -401,6 +401,61 @@ D-E1. Owner's rule: no run presents a small candidate set as the whole file. `nu
 - Sentence: `<T> of <N> classes translated (<N> of <M> classes considered) (<K> with untranslated code), <E> type errors; most gaps: ...`. The clause is present only for a project outcome with `N < M`. The gap part leaves `classes-not-considered` (and `embedded-swf`) out, as the clause and the wrapper statement already say it.
 - Drop order over 200 characters (`MAX_REASON_LENGTH`), first to last: the gap part; the wrapper size (`, X MiB`); the `(K with untranslated code)` part; the `, E type errors` part; the wrapper statement. Never cut: the recovery prefix, `<T> of <N> classes translated` and the considered clause (that head is at most about 160 characters for 9-digit numbers, so the final truncation is unreachable in practice). This changes the reading of Requirement 16.4 in one place: a wrapper statement or a recovery prefix can now push the untranslated and type-error parts out of the sentence; both numbers stay in `numbers`. Property 6 checks them in the plain case only (no recovery, no wrapper, no clause).
 - Measured, from the existing outputs under `.work/` (considered of total): the twelve samples have N = M (`radial`, `gradients`, `acid-color-2` 0 of 0; `clickgoto` 4, `tweendemo` 4, `mask_reapply` 1, `click_block` 1, `3_joystick` 1, `static_text` 2, `slider_component` 27, `entity_game` 23, `spacer` 24), so no committed sample changes Outcome. Local files: `canabalt` 10 of 172, `giveuprobot` 21 of 266, `earntodie` 100 of 536, `burritobison` 26 of 27, `redball4` 56 of 225, `run2` 291 of 302, the inner SWF of the wrapper 276 of 276; `papaspizzeria` is refused (ActionScript 1 or 2) and has no numbers. Each of the local files was already `converted-with-gaps`.
+### Block E: classes named by a string (D-E2, Requirement 27.5 and 27.6)
+
+D-E2. Owner's rule (item 1b): reach the classes no symbol or import names, by one general rule chosen by measurement. Two rules were measured (task 31.1): (a) every exported class is a candidate; (b) a class whose Qualified_Name equals a string literal (or a `+` concatenation of literals; `pkg::Name` read as `pkg.Name`) in the source of a reached class is reached, and the `extends` and import closure continues from it. Rule (b) takes every such literal and not only an argument of `getDefinitionByName`, because in the local files the name reaches the call through a field set before `super()`; a literal that names a class by accident adds that class, which is reported like any candidate.
+
+Measured with `.work/m31/measure.ts` (git-ignored): `runPipeline` with the real stages and the default limits, no `--verify`; only Unpack is cached per file (one real FFDec run per file, not what this task measures). Columns: considered of total, translated, type errors, dropped placements, Translate s, Emit s (Emit runs the type-check gate inside its stage, so the gate figure is in it; the separate gate stage is 0.0 s), size of `src/` in KiB. The first run of each file was cold and ran while nothing else ran; the later runs ran next to the next file's measurement, so seconds vary by tens of percent.
+
+| File | Rule | Considered | Translated | Type errors | Dropped | Translate s | Emit s | src KiB |
+|---|---|---|---|---|---|---|---|---|
+| canabalt | today | 10 of 172 | 4 | 43 | 0 | 3.5 | 13.4 | 20 |
+| canabalt | (b) | 169 of 172 | 58 | 201 | 0 | 1.0 | 5.1 | 207 |
+| canabalt | (a) | 172 of 172 | 59 | 203 | 0 | 0.9 | 4.8 | 208 |
+| giveuprobot | today | 21 of 266 | 16 | 47 | 0 | 4.1 | 9.9 | 36 |
+| giveuprobot | (b) | 263 of 266 | 125 | 334 | 0 | 1.3 | 5.0 | 280 |
+| giveuprobot | (a) | 266 of 266 | 127 | 336 | 0 | 1.3 | 5.1 | 282 |
+| earntodie | today | 100 of 536 | 53 | 50 | 73 | 20.5 | 8.7 | 107 |
+| earntodie | (b) | 101 of 536 | 53 | 50 | 73 | 9.4 | 8.0 | 108 |
+| earntodie | (a) | 536 of 536 | 124 | 245 | 73 | 9.6 | 14.7 | 10516 |
+| redball4 | today | 56 of 225 | 17 | 438 | 120 | 6.2 | 14.2 | 611 |
+| redball4 | (b) | 81 of 225 | 42 | 438 | 120 | 6.9 | 15.1 | 615 |
+| redball4 | (a) | 225 of 225 | 93 | 813 | 120 | 6.5 | 17.0 | 2335 |
+| burritobison | today | 26 of 27 | 22 | 40 | 10 | 0.7 | 9.8 | 38 |
+| burritobison | (b) | 26 of 27 | 22 | 40 | 10 | 0.3 | 4.3 | 38 |
+| burritobison | (a) | 27 of 27 | 23 | 40 | 10 | 0.3 | 4.5 | 38 |
+| run2 | today | 291 of 302 | 176 | 4404 | 34 | 7.3 | 21.2 | 1461 |
+| run2 | (b) | 291 of 302 | 176 | 4404 | 34 | 7.7 | 9.0 | 1461 |
+| run2 | (a) | 302 of 302 | 184 | 4413 | 34 | 3.5 | 8.7 | 1470 |
+
+`papaspizzeria` is refused (ActionScript 1 or 2) under every rule and has no numbers. Every run ended `converted-with-gaps` with exit 0, inside the limits: the largest Emit is 21.2 s (cold) of its 60 s allowance, 17.0 s under rule (a) and the largest Translate 20.5 s (cold) of 60 s; the earntodie run under the default limits still needs its Unpack (108.8 s of the 120 s allowance here, D-E3), which neither rule changes.
+
+What rule (b) finds: the main class of each two-frame preloader file (`canabalt`, `giveuprobot`, `earntodie`, 3 of 3). From it the closure adds 159 classes in `canabalt` and 242 in `giveuprobot`, and 25 in `redball4`. In `earntodie` it adds 1: the main class is one of the 47 classes whose source keeps `§§push` and ends in the D5 fallback, which keeps no `extends` or imports, so the closure stops there. That is a translation limit, not a reach rule, and the 435 classes stay in `notConsideredClasses` and in the sentence.
+
+Decision: rule (b). Time does not decide (both fit). The numbers do: over (b), rule (a) adds 3 classes in `canabalt` and `giveuprobot` (1 and 2 translated), and in `earntodie` and `redball4` it adds 435 and 144 classes that no reached code names by literal or import. Those cost 195 and 375 more type errors and 10.2 MiB and 1.7 MiB more source (368 of `earntodie`'s classes are D5 comment files), for classes that only a name built at run time or read from data could create. Rule (b) emits what Ruffle can instantiate from the code: `getDefinitionByName` (Ruffle `core/src/avm2/globals/flash/utils.rs`, `get_definition_by_name`, fetched at `4a8d396` in task 31.1) looks the string up in the caller's application domain with `get_defined_value_handling_vector`, so it finds any class whose DoABC has run (`movie_clip.rs` `run_abc_and_symbol_tags`, lines 4324 to 4440). A class created only from data (an E4X or XML level file, a name read from a server) is missed by (b) and counted as not considered, so the run still says it; rule (a) would emit it, but nothing in the project would create it either unless the registry below holds it, and it would be paid for in every file.
+
+- Code: `src/translate/classNameLiterals.ts` (pure: `stringLiterals`, `namedClasses`, on the tokenizer, comments skipped, literals with an escape ignored) feeds the closure queue of `planTranslate`, whose seventh parameter `seedRule` is `symbols-and-names` by default (`symbols` and `all` are kept for the measurement and the tests). The queue is a set, so a cycle of names ends; the output is sorted by code unit, so the order of the sources does not change it.
+- Registry: `planEmitDetailed` registers every emitted class that is not omitted in `classes.ts` with `registerDefinitions` when an emitted class calls `getDefinitionByName(` on a line that is not a `//` comment, or has an import-cycle cut (as before). The `classRegistry` of linked symbols is unchanged. Omission is unchanged: an omitted class has no import and no entry, and `getDefinitionByName` of it throws `#1065` as in Flash.
+- Committed samples: D-E1 measured N = M for all twelve, so the closure cannot grow; only `slider_component` and `spacer` call `getDefinitionByName`, and both already register every class through their import-cycle cuts, so no `classes.ts` changes.
+- Preloader pattern (task 31.3, Requirement 27.7). The pattern needed two Shim members that were missing: `MovieClip.nextFrame()` (Ruffle `next_frame`, `movie_clip.rs` line 840: to the next frame and stop, at once) and `framesLoaded` (the frame count). `test/unit/preloaderPattern.test.ts` translates a Fixture_Class preloader (stops, waits three ticks, `framesLoaded == totalFrames`, `nextFrame()`, `getDefinitionByName` of a name kept in a field, `new`, `addChild`) and a main class that nothing imports, through `planTranslate`, `planEmitDetailed` and the Player on the FakeBackend with a manual clock: the main class is a child of the root after the third tick and not before, the document class is the root, and `classes.ts` registers the main class. A generated two-frame SWF (`test/support/preloaderSwf.ts`, FFDec `-xml2swf`) holds the id 0 pair in frame 1 and the main-class pair in frame 2; `parseStructure` and `convertModel` give the document class on the root and the main class on its sprite. No Chromium or pipeline end-to-end: the file has no DoABC and there is no AS3 compiler, so `runPipeline` would translate nothing.
+- Frame gating, decided (Property 30 as written in the plan is dropped, the number 30 is used for the closure property instead): a lookup on frame 1 of a class linked in frame 2 succeeds here and throws `#1065` in Ruffle. Gating would need the frame of each SymbolClass pair in Scene_JSON (Convert and format change, plus a Player rule) for a case that no known file hits, since the preloaders look up after `nextFrame()`. Behaviour kept; a test records the difference. Open_Item.
+- Property 30 (`test/property/reach.property.test.ts`): over generated literal graphs of six classes, the emitted set equals the closure of the graph computed without the planner, in code-unit order; adding a literal never removes a class; planning only the reached classes reaches the same set; reversing the sources changes nothing.
+
+After (task 31.4), fresh `npm run pipeline` runs, default limits, no `--verify`, no cached Unpack, `converted-with-gaps` and exit 0 unless stated. Before = the 31.1 `today` rows (considered of total, translated, type errors, dropped); wall times before were not recorded (the `d-` logs hold no times).
+
+| File | Considered before | Considered after | Translated before | Translated after | Type errors before | Type errors after | Dropped before | Dropped after | Wall s after |
+|---|---|---|---|---|---|---|---|---|---|
+| canabalt | 10 of 172 | 169 of 172 | 4 | 58 | 43 | 199 | 0 | 0 | 17.1 |
+| giveuprobot | 21 of 266 | 263 of 266 | 16 | 125 | 47 | 334 | 0 | 0 | 20.2 |
+| earntodie | 100 of 536 | 101 of 536 | 53 | 53 | 50 | 50 | 73 | 73 | 164.8 |
+| burritobison | 26 of 27 | 26 of 27 | 22 | 22 | 40 | 40 | 10 | 10 | 16.8 |
+| redball4 | 56 of 225 | 81 of 225 | 17 | 42 | 438 | 438 | 120 | 120 | 91.9 |
+| run2 | 291 of 302 | 291 of 302 | 176 | 176 | 4404 | 4404 | 34 | 34 | 67.9 |
+| papaspizzeria | refused | refused (`actionscript-1-2`, exit 3) | | | | | | | 1.7 |
+
+No run ended `refused time-limit`. `earntodie` took 164.8 s of the 300 s run limit, almost all of it Unpack (D-E3), and ended `converted-with-gaps` with 435 classes not considered (its main class is a D5 fallback file, see above). `canabalt` and `giveuprobot` each leave 3 classes not considered, which no literal or import names.
+- The Flash_API_Table still lists `flash.utils.getDefinitionByName` as a gap (`flash-api-gap`), because a name built at run time may still miss; this task does not change the table.
+
 ## Data Models
 
 ```ts

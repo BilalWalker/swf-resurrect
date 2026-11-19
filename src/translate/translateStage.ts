@@ -6,7 +6,7 @@ import type { ConvertedArtifact } from '../convert/writeConverted';
 import type { UnpackResult } from '../unpack/unpack';
 import { ScriptsDirError } from './errors';
 import { keyScriptPaths, planTranslate } from './planTranslate';
-import type { ScriptSource, TranslateArtifact } from './planTranslate';
+import type { ScriptSource, SeedRule, TranslateArtifact } from './planTranslate';
 import { tsSyntaxCheck } from './tsSyntaxCheck';
 
 async function listAs(dir: string): Promise<string[]> {
@@ -24,6 +24,7 @@ export async function translateStage(
   unpacked: UnpackResult,
   artifact: ConvertedArtifact,
   childNames?: ReadonlyMap<string, ReadonlySet<string>>,
+  seedRule?: SeedRule,
 ): Promise<TranslateArtifact> {
   const dir = unpacked.scriptsDir;
   let paths: string[];
@@ -48,5 +49,5 @@ export async function translateStage(
   if (skipped.length > 0) {
     console.warn(`translate: skipped ${skipped.length} script(s) with no valid class name: ${skipped.join(', ')}`);
   }
-  return planTranslate(sources, artifact.scene, tsSyntaxCheck, skipped, childNames);
+  return planTranslate(sources, artifact.scene, tsSyntaxCheck, skipped, childNames, seedRule);
 }

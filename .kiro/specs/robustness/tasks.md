@@ -1,4 +1,4 @@
-﻿# Implementation Plan: robustness
+# Implementation Plan: robustness
 
 ## Overview
 
@@ -457,39 +457,39 @@ Facts measured on the local files before the tasks were written (FFDec dumps and
 
 Rules of Block E, in addition to the rules at the top: one logical change per commit with its tests; the code tasks amend `requirements.md` (new Requirement 27) and `design.md` (decisions D-E1 and up) in the same commit as the code that needs it; a measured claim is written with its numbers; no timeout is raised; local games are never committed or named by class (file names and numbers only); tests use generated fixtures and skip with a message when a local file is absent.
 
-- [ ] 30. Facts and Outcome: say how many classes were considered
+- [x] 30. Facts and Outcome: say how many classes were considered
   - Commit area: `Pipeline` (Facts and Outcome named). Verification V1. Read the design sections on the Facts_Reader, the Outcome numbers, the reason sentences (`convertedWithGapsReason`, `src/outcome/reasons.ts`) and the gap kinds, and `docs/outcome.md`. Today a run that translated 4 of 10 classes of a file with 172 does not say 172: `numbers.candidateClasses` is the closure, and `facts.abcClassCount` is in Facts only. Owner's rule (item 1a): no run presents a small candidate set as the whole file. Amend `requirements.md` (new Requirement 27, item 1) and `design.md` (D-E1, the numbers and the sentence, with the drop order below) in this commit.
-  - [-] 30.1 The numbers
+  - [x] 30.1 The numbers
     - Add `numbers.consideredClasses` (the candidate count, equal to `candidateClasses`) and `numbers.totalClasses` (equal to `facts.abcClassCount`, null when Facts has none) to the Outcome numbers and the Outcome_File, and `notConsideredClasses = totalClasses - consideredClasses` when both are known (never negative: a candidate that is not an exported `.as` file, such as a linked class with no source, is not counted in the total, so the difference is clamped at 0 and the clamp is stated in the design). The writer and the parser accept files without the new fields (older Outcome_Files), and `numbersOf` takes the total as a parameter. Pure code stays pure (no `node:*` import).
     - Tests: `test/unit/outcome.test.ts` and `test/unit/outcomeFile.test.ts` (extend): the fields round-trip; an Outcome_File without them parses; the clamp.
     - _Requirements: 27.1, 27.2_
 
-  - [~] 30.2 The sentence and the gap kind
+  - [x] 30.2 The sentence and the gap kind
     - Every Outcome that has both numbers states them in the reason sentence in the form `<N> of <M> classes considered`, for the outcomes that have a project (`converted`, `converted-with-gaps`) and when N is less than M. When N equals M the sentence does not add the clause. The clause goes in front of the gap part: `<T> of <N> classes translated (<N> of <M> classes considered), <E> type errors; most gaps: ...`. Drop order when the sentence passes 200 characters (`MAX_REASON_LENGTH`): first the gap part, then the `(with untranslated code)` part, then the type-error part; the `of <M> classes considered` clause is the last to go and is never cut by `truncateReason` (if the head alone is over 200, the clause moves to the front). A new gap kind `classes-not-considered` (count `M - N`) is added to `src/outcome/gaps.ts` so that the gap summary and `decideOutcome` count it; a run with `M - N > 0` is `converted-with-gaps`, never `converted`. `docs/outcome.md` gets the new fields, the clause, the drop order and one JSON example (keep `test/unit/outcomeDocs.test.ts` passing).
     - Tests: `test/unit/reasons.test.ts` (extend): the clause for 10 of 172; absent when equal; the drop order at the 200 limit with long gap lists; `test/unit/outcome.test.ts` (extend): `classes-not-considered` makes a clean run `converted-with-gaps`, and a timeline-only file (0 of 0) stays `converted`; `test/unit/outcomeDocs.test.ts` (extend): the doc names the clause and the kind.
     - _Requirements: 27.1, 27.3, 27.4_
 
-  - [~] 30.3 Property test for the clause
+  - [x] 30.3 Property test for the clause
     - `test/property/outcome.test.ts` (extend): `// Feature: robustness, Property 29: the sentence states the considered and total counts of the numbers and never presents a partial candidate set as the whole file`. For any generated numbers with `totalClasses > consideredClasses` the sentence of a project outcome contains `<N> of <M> classes considered` with exactly those two numbers, is at most 200 characters, and the Outcome is `converted-with-gaps`; for any numbers with `consideredClasses = totalClasses` the clause is absent. Generators in `test/property/gen/`.
     - _Requirements: 27.1, 27.3_
 
-- [ ] 31. Translate, Emit and Convert: reach the classes that no symbol or import names
+- [x] 31. Translate, Emit and Convert: reach the classes that no symbol or import names
   - Commit area: `Translate` (Emit, Convert and Runtime named when they change). Verification V1; V2 when a file under `template/` changes, with every committed sample's Overall_Match and Trace_Score stated before and after in the commit body. Read the design sections on the emit closure (`planTranslate`), the class registry (`planEmit.ts`), the Player's class registry and symbol lookup, the Shim's `getDefinitionByName` if it has one (`template/shim/`), and `.kiro/steering/flash-behaviour.md`. Owner's rule (item 1b): decide by measurement between making every class of the ABC a candidate and following `getDefinitionByName` and string class names from reachable code; implement one rule, general, nothing keyed on a framework, a file or a class name; the preloader pattern must run (the preloader creates the main class by name on the right frame); Ruffle is the reference. Amend `requirements.md` (Requirement 27, item 2) and `design.md` (D-E2, the decision with the measured numbers) in the commit of 31.2.
-  - [~] 31.1 Measure and decide
+  - [x] 31.1 Measure and decide
     - Measure on `canabalt.swf`, `giveuprobot.swf` and `earntodie.swf` (and `redball4.swf`, `burritobison.swf`, `papaspizzeria.swf`, `run2.swf` when present), as numbers only, for each of the two rules: (a) every `.as` class of the ABC is a candidate: candidates, translated, type errors, Translate time, Emit time, Gate (type-check) time, size of the output; (b) names followed from reachable code: the string literals that name a class (a literal passed to `getDefinitionByName`, assigned to a field that is later passed, `ApplicationDomain.getDefinition`), how many of the three files' main classes it finds, and how many classes the closure of those adds. The decision is stated in `design.md` with the table, and says what each rule does for a class that is only ever created by name from data (E4X, an XML level file), which (b) cannot see. If (a) makes the Gate pass the 60 s stage allowance on `earntodie.swf`, or the output size makes the project unusable, the design says so and chooses between (b) and (a) limited to the classes of the frames after frame 1 (the classes of the DoABC tag of a frame that a SymbolClass tag of the same frame links, or the whole DoABC tag, as Ruffle loads them); the choice is by the measured cost, not by taste. If the one Ruffle file needed for the `getDefinitionByName` lookup is not in `.work/ruffle-src`, fetch only that file from `raw.githubusercontent.com` at the pinned commit into `.work/ruffle-src` (git-ignored).
     - Tests: none; the measurement is the evidence recorded in 31.2's design text.
     - _Requirements: 27.5_
 
-  - [~] 31.2 Implement the chosen rule
+  - [x] 31.2 Implement the chosen rule
     - Implement the rule of 31.1 in the place the design names (the closure seed in `planTranslate` for rule (a); a pure literal-name scan in `src/translate/` feeding the seed for rule (b)). The numbers of 30 follow: `consideredClasses` is the new set. A class that the new rule adds and whose translation fails is reported like any candidate (gap, never hidden). Add the behaviour to `.kiro/steering/flash-behaviour.md` with its Ruffle evidence (file and lines read in 31.1), and a line to `template/shim/ADDED_APIS.md` for any Shim API the rule needs (for example `getDefinitionByName` backed by the class registry, if the Shim has none).
     - Tests: `test/unit/planTranslate.test.ts` (extend): a class named by no symbol and no import is a candidate under the chosen rule; a Fixture_Class with a literal name passed to `getDefinitionByName` brings the named class (rule (b)) or every class (rule (a)); a class whose translation fails is still reported; the order is stable (same input, same output).
     - _Requirements: 27.5, 27.6_
 
-  - [~] 31.3 The preloader pattern runs
+  - [x] 31.3 The preloader pattern runs
     - `test/support/preloaderSwf.ts` (create): a SWF generated with FFDec `-xml2swf` (same method as `test/support/symbolClassSwf.ts`) with two frames: frame 1 holds a document class that stops, waits for `framesLoaded == totalFrames`, calls `nextFrame()` and creates the main class by name through `getDefinitionByName`, and frame 2 holds the SymbolClass tag that links the main class. The AS3 bytecode is generated by the same tool the other generated fixtures use; if FFDec cannot assemble the bytecode from source, the fixture is a Fixture_Class pair translated directly plus a hand-built Scene_JSON with two frames, and the commit body says so. `test/unit/preloaderPlay.test.ts` (create), in the Player with the FakeBackend: the main class exists on the stage after the frame on which the preloader called `nextFrame()` (not before: the lookup before `nextFrame()` fails as in Ruffle), the document class is bound to the root, and the Outcome of the generated file counts the main class as considered. If a property fits (any frame count N of 2 to 5, the class linked in frame K resolves from frame K on and not before), add it as Property 30 in `test/property/preloader.property.test.ts` with `// Feature: robustness, Property 30: a class linked in frame K resolves by name from frame K on and not earlier`; otherwise the commit body says why no property fits and the number 30 stays unused.
     - _Requirements: 27.5, 27.7_
 
-  - [~] 31.4 Numbers per local file, before and after
+  - [x] 31.4 Numbers per local file, before and after
     - Run the local files named in 31.1 under the default limits (skip with a message when absent; write only under `.work/`). The commit body gives, per file, as numbers only: considered of total, translated, type errors, Outcome, time, before (the `d-` logs) and after. Class names are never written. The score floors of the committed samples are stated before and after.
     - Tests: none new; the numbers are informational.
     - _Requirements: 27.5, 27.8_

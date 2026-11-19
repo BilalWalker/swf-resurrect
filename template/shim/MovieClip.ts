@@ -44,6 +44,19 @@ export class MovieClip extends Sprite {
     if (this.goto(frame, scene)) this.isPlaying = false;
   }
 
+  /**
+   * Goes to the next frame and stops, at once, so the frame's classes and children exist before the next line of the
+   * caller (Ruffle 
+ext_frame, movie_clip.rs line 840: only when the current frame is below the frame count). A clip
+   * of several scenes moves within the scene only (the frame past a scene end is a warned no-op, as gotoAndStop).
+   */
+  nextFrame(): void {
+    if (this.frame < this.totalFrames) this.gotoAndStop(this.currentFrame + 1);
+  }
+  /** Frames available: every frame of a local file (Ruffle rames_loaded is cur_preload_frame - 1, equal to the frame count once preloaded). */
+  get framesLoaded(): number {
+    return this.totalFrames;
+  }
   /** Scene-relative (`frame - firstFrame + 1` of the scene that holds the frame); one scene at frame 1 gives the frame. */
   get currentFrame(): number {
     return sceneRelativeFrame(this.scenes(), this.frame);

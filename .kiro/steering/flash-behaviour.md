@@ -351,3 +351,19 @@ recursive override walk and the planned replacement of `a.b.Cls`). Nothing was r
   - `interpolate(a, b, f)` = `(b.x - (b.x - a.x) * f, b.y - (b.y - a.y) * f)`, so `f = 1` gives `a` and `f = 0` gives `b`.
   - `polar(len, angle)` = `(len * cos(angle), len * sin(angle))`.
   - `offset`, `copyFrom`, `setTo` assign in place.
+
+## Classes created by name (robustness task 31.2, design D-E2)
+- **`getDefinitionByName` finds any class whose ABC has run, by its qualified name.** Read in Ruffle at `4a8d396`:
+  `core/src/avm2/globals/flash/utils.rs` `get_definition_by_name` (fetched from raw.githubusercontent.com in task 31.1, read
+  for evidence, not kept) looks the string up in the caller's application domain (`get_defined_value_handling_vector`);
+  `core/src/display_object/movie_clip.rs` `run_abc_and_symbol_tags` (lines 4324 to 4440, from the frame run at line 1453 and
+  from goto at line 1760) runs a frame's DoABC and SymbolClass tags the first time the frame runs, so `nextFrame()` makes
+  the classes of frame 2 resolvable before the caller's next line. Not measured against Flash or a running Ruffle.
+- **What we do.** Translate reaches a class whose qualified name (`pkg.Name` or `pkg::Name`) equals a string literal, or a
+  `+` concatenation of literals, in a reached class (`src/translate/classNameLiterals.ts`); a name built at run time or read
+  from data is not followed and the class stays not considered. `classes.ts` registers every emitted class that is not
+  omitted when an emitted class calls `getDefinitionByName`. Ours, not Ruffle's, in one point: the registry is filled
+  before the Player is constructed, so a lookup before the frame that links the class succeeds where Ruffle throws `#1065`
+  (task 31.3 tests the preloader pattern).
+- **`nextFrame()` goes to the next frame and stops; `framesLoaded` is the frame count (task 31.3).** Read in Ruffle at `4a8d396`: `movie_clip.rs` `next_frame` (line 840: only when the current frame is below the frame count, goto with stop) and `frames_loaded` (line 3355: `cur_preload_frame - 1`, the frame count once preloaded; a local file is). Ours: `framesLoaded` always equals `totalFrames`; a clip of several scenes moves within its scene. The goto runs at once, so the main class of the next frame can be looked up on the next line. Not measured against Flash. Code: `template/shim/MovieClip.ts`.
+- **Lookup by name is not gated by frame (Open_Item, task 31.3).** Ruffle runs a frame's SymbolClass pairs when the frame first runs, so a lookup on frame 1 of a class linked in frame 2 throws `#1065`; ours succeeds because `registerDefinitions` runs before the Player is constructed. Scene_JSON does not hold the frame of a SymbolClass pair, so gating would need a Convert and format change for a case no known file hits (the preloaders look up after `nextFrame()`). Kept; recorded in design D-E2. Known difference tested in `test/unit/preloaderPattern.test.ts`.
