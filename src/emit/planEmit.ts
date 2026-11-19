@@ -68,9 +68,10 @@ function linkedClassNames(scene: SceneJson): Set<string> {
   return names;
 }
 
-/** True when a code line (not a `//` comment line) of the class calls `getDefinitionByName(` (D-E2). */
+/** True when a code line (not in a `//` comment line or a block comment) of the class calls `getDefinitionByName(` (D-E2). */
 export function callsDefinitionLookup(text: string): boolean {
-  for (const line of text.split('\n')) {
+  const code = text.replace(/\/\*[\s\S]*?(\*\/|$)/g, ' ');
+  for (const line of code.split('\n')) {
     const t = line.trimStart();
     if (!t.startsWith('//') && t.includes('getDefinitionByName(')) return true;
   }

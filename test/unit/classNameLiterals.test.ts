@@ -34,6 +34,8 @@ describe('class registry for getDefinitionByName (D-E2)', () => {
   it('sees a call on a code line, not in a comment line', () => {
     expect(callsDefinitionLookup('  const c = getDefinitionByName("Main");')).toBe(true);
     expect(callsDefinitionLookup('    // AS3: c = getDefinitionByName("Main");')).toBe(false);
+    expect(callsDefinitionLookup('/* old: getDefinitionByName("Main")\n   still comment */ const x = 1;')).toBe(false);
+    expect(callsDefinitionLookup('/* note */ const c = getDefinitionByName("Main");')).toBe(true);
   });
 
   it('registers every emitted class when one class looks a name up, and only the linked ones otherwise', () => {

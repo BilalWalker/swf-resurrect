@@ -3,7 +3,8 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { EXIT_CODES, exitCodeFor } from "../../src/outcome/exitCode";
 import { COUNTED_GAP_KINDS, NAMED_LIMIT_KINDS, summariseGaps } from "../../src/outcome/gaps";
-import { decideOutcome, type OutcomeCode, type RunRecord } from "../../src/outcome/outcome";
+import { decideOutcome, notConsideredOf, type OutcomeCode, type RunRecord } from "../../src/outcome/outcome";
+import { wrapperStatement } from "../../src/outcome/reasons";
 import { parseOutcome, serialiseOutcome, scrubRecord, OutcomeFileError, writeOutcomeFile } from "../../src/outcome/outcomeFile";
 import { classifyError } from "../../src/outcome/classifyError";
 import type { PipelineStages } from "../../src/pipeline/pipeline";
@@ -88,12 +89,20 @@ describe("outcome properties", () => {
         expect(o.reason).toContain(String(n.translatedClasses));
         expect(o.reason).toContain(String(n.candidateClasses));
         const r = rec.recovery;
-        // D-E1: a wrapper statement, a recovery prefix or a considered clause can push the sentence past 200
-        // characters; the code part and the type-error part are then cut (in that order) and stay in the numbers.
+        // D-E1: when the gap part is cut, the sentence keeps the untranslated-code part and the type-error part
+        // unless recovery prefix + wrapper statement (no size) + counts + code part + error part exceeds 200.
         const recovered = !!(r && r.attempted && r.skipped === null && !r.fallback);
-        const plain = !recovered && !rec.embeddedSwfs && !(n.totalClasses !== null && n.totalClasses > n.consideredClasses);
-        if (plain) {
-          expect(o.reason).toContain(String(n.typeErrors));
+        const notConsidered = n.notConsideredClasses ?? notConsideredOf(n.consideredClasses ?? n.candidateClasses, n.totalClasses ?? null) ?? 0;
+        const wrapperGap = rec.gaps.find((g) => g.kind === "embedded-swf" && g.count > 0);
+        const unreduced =
+          (recovered ? `obfuscated: names renamed, ${r!.recoveredClasses} of ${r!.candidateClasses} classes recovered; ` : "") +
+          (wrapperGap ? wrapperStatement({ count: rec.embeddedSwfs?.count ?? wrapperGap.count, totalBytes: null }) : "") +
+          `${n.translatedClasses} of ${n.candidateClasses} classes translated` +
+          (notConsidered > 0 && n.totalClasses != null ? ` (${n.consideredClasses ?? n.candidateClasses} of ${n.totalClasses} classes considered)` : "") +
+          (n.untranslatedCodeClasses > 0 ? ` (${n.untranslatedCodeClasses} with untranslated code)` : "") +
+          `, ${n.typeErrors} type errors`;
+        if (unreduced.length <= 200) {
+          expect(o.reason).toContain(`, ${n.typeErrors} type errors`);
           if (n.untranslatedCodeClasses > 0) expect(o.reason).toContain(`(${n.untranslatedCodeClasses} with untranslated code)`);
         }
         if (n.untranslatedCodeClasses === 0) expect(o.reason).not.toContain("untranslated code");
