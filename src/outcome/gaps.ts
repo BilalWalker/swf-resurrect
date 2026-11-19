@@ -14,6 +14,7 @@ export const COUNTED_GAP_KINDS: readonly GapKind[] = [
   "dropped-placement",
   "flash-api-gap",
   "embedded-swf",
+  "classes-not-considered",
 ];
 
 /** Named_Limits only: never counted as a Gap. */
@@ -30,6 +31,8 @@ export interface GapExtras {
   droppedPlacements?: number;
   /** One gap entry: count is the number of embedded SWFs, examples are generic (id, signature, size). */
   embeddedSwfs?: { count: number; examples: string[] };
+  /** Classes of the file that no candidate covers (D-E1); one gap entry with that count. */
+  notConsideredClasses?: number;
 }
 
 const counted = new Set<string>(COUNTED_GAP_KINDS);
@@ -68,6 +71,7 @@ export function summariseGaps(entries: readonly GapEntry[], extras: GapExtras = 
     }
   }
   add("dropped-placement", extras.droppedPlacements ?? 0);
+  add("classes-not-considered", extras.notConsideredClasses ?? 0);
   const emb = extras.embeddedSwfs;
   if (emb && emb.count > 0) {
     add("embedded-swf", emb.count);

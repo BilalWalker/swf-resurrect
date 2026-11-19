@@ -87,10 +87,16 @@ describe("outcome properties", () => {
         const n = rec.numbers!;
         expect(o.reason).toContain(String(n.translatedClasses));
         expect(o.reason).toContain(String(n.candidateClasses));
-        expect(o.reason).toContain(String(n.typeErrors));
-        if (n.untranslatedCodeClasses > 0) expect(o.reason).toContain(`(${n.untranslatedCodeClasses} with untranslated code)`);
-        else expect(o.reason).not.toContain("untranslated code");
         const r = rec.recovery;
+        // D-E1: a wrapper statement, a recovery prefix or a considered clause can push the sentence past 200
+        // characters; the code part and the type-error part are then cut (in that order) and stay in the numbers.
+        const recovered = !!(r && r.attempted && r.skipped === null && !r.fallback);
+        const plain = !recovered && !rec.embeddedSwfs && !(n.totalClasses !== null && n.totalClasses > n.consideredClasses);
+        if (plain) {
+          expect(o.reason).toContain(String(n.typeErrors));
+          if (n.untranslatedCodeClasses > 0) expect(o.reason).toContain(`(${n.untranslatedCodeClasses} with untranslated code)`);
+        }
+        if (n.untranslatedCodeClasses === 0) expect(o.reason).not.toContain("untranslated code");
         if (r && r.attempted && r.skipped === null && !r.fallback) {
           expect(o.reason.startsWith("obfuscated: names renamed")).toBe(true);
         }
@@ -326,4 +332,26 @@ describe("outcome properties", () => {
       fcConfig,
     );
   });
-});
+
+  // Feature: robustness, Property 29: the sentence states the considered and total counts of the numbers and never presents a partial candidate set as the whole file
+  // **Validates: Requirements 27.1, 27.3**
+  it("Property 29: the sentence states considered of total and never presents a partial set as the whole file", () => {
+    fc.assert(
+      fc.property(genRunRecord({ project: true }), (rec: RunRecord) => {
+        const n = rec.numbers;
+        if (n === null || rec.failure !== null) return;
+        const o = decideOutcome(rec);
+        const partial = n.totalClasses !== null && n.totalClasses > n.consideredClasses;
+        const clause = `${n.consideredClasses} of ${n.totalClasses} classes considered`;
+        if (partial) {
+          expect(o.outcome).toBe("converted-with-gaps");
+          expect(o.reason).toContain(clause);
+          expect(o.reason.length).toBeLessThanOrEqual(200);
+          expect(o.reason.match(/classes considered/g)?.length).toBe(1);
+        } else {
+          expect(o.reason).not.toContain("classes considered");
+        }
+      }),
+      fcConfig,
+    );
+  });});

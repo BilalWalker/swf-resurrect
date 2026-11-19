@@ -93,3 +93,20 @@ describe("Outcome_File", () => {
     expect(parseOutcome(text).facts?.source).toEqual({ header: ["bad header in"], ffdec: ["kept line"] });
   });
 });
+
+describe("class totals in the Outcome_File (D-E1)", () => {
+  const nums = {
+    candidateClasses: 10, translatedClasses: 4, cleanClasses: 4, looseClasses: 0, untranslatedCodeClasses: 0, unparsedClasses: 0,
+    unsupportedClasses: 0, omittedClasses: 6, typeErrors: 0, droppedPlacements: 0, namedLimits: 0, stubDependentClasses: 0,
+    consideredClasses: 10, totalClasses: 172, notConsideredClasses: 162,
+  };
+  it("round-trips the three fields", () => {
+    const rec = record({ numbers: nums });
+    expect(parseOutcome(serialiseOutcome(rec)).numbers).toEqual(nums);
+  });
+  it("reads a file without them as one that holds no total", () => {
+    const { consideredClasses: _c, totalClasses: _t, notConsideredClasses: _n, ...old } = nums;
+    const parsed = parseOutcome(JSON.stringify({ ...record({ numbers: null }), numbers: old }));
+    expect(parsed.numbers).toMatchObject({ consideredClasses: 10, totalClasses: null, notConsideredClasses: null });
+  });
+});

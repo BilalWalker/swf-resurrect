@@ -22,7 +22,7 @@ import { obfuscationVerdict } from '../recover/detect';
 import { classNameOfScript, hasSourceSignal, obfuscationRecoveredEntry, renamedIdentifiers, unrecoverableEntries } from '../recover/record';
 import { classifyError } from '../outcome/classifyError';
 import { summariseGaps } from '../outcome/gaps';
-import { decideOutcome } from '../outcome/outcome';
+import { decideOutcome, notConsideredOf } from '../outcome/outcome';
 import type { ClassifiedFailure, Facts, Outcome, OutcomeLimits, OutcomeNumbers, OutcomeRecord, ReasonCode, RecoveryRecord, StageRecord } from '../outcome/outcome';
 import { writeOutcomeFile } from '../outcome/outcomeFile';
 import { reasonSentence } from '../outcome/reasons';
@@ -61,7 +61,7 @@ export type { VerifyRequest, VerifySummary };
  * clean + loose + untranslatedCode + unparsed + (omitted candidates) = candidates; omittedClasses also counts an omitted linked class
  * that is no candidate; translatedClasses = clean + loose + untranslatedCode.
  */
-export function numbersOf(report: TranslationReport, droppedPlacements: number, stubDependentClasses = 0): OutcomeNumbers {
+export function numbersOf(report: TranslationReport, droppedPlacements: number, stubDependentClasses = 0, totalClasses: number | null = null): OutcomeNumbers {
   const unparsed = report.classes.filter((c) => !c.omitted && c.parseFailed === true);
   const kept = report.classes.filter((c) => !c.omitted && c.parseFailed !== true);
   const untranslatedCode = kept.filter((c) => c.status === 'unsupported' && !c.loose);
@@ -80,6 +80,9 @@ export function numbersOf(report: TranslationReport, droppedPlacements: number, 
     droppedPlacements,
     namedLimits: 0,
     stubDependentClasses,
+    consideredClasses: report.classes.length,
+    totalClasses,
+    notConsideredClasses: notConsideredOf(report.classes.length, totalClasses),
   };
 }
 /** A refusal found by the Facts stage; no FFDec process has started. */
@@ -729,13 +732,14 @@ export async function runPipeline(args: PipelineArgs, stages: PipelineStages, io
     .map((p) => ({ kind: p.kind, example: p.message }));
   const gaps = ranToGate ? summariseGaps([...unsupported, ...flashGapEntries], {
         typeErrors: numbersOf(finalReport, 0).typeErrors,
+        notConsideredClasses: numbersOf(finalReport, 0, 0, facts?.abcClassCount ?? null).notConsideredClasses ?? 0,
         droppedPlacements: artifact?.stats.placementsDropped ?? 0,
         embeddedSwfs: { count: embeddedList.length, examples: embeddedList.slice(0, 5).map(embeddedSwfExample) },
       }) : [];
   const embeddedSummary = summariseEmbeddedSwfs(embeddedList);
   const registered = new Set((finalReport?.classes ?? []).filter((c) => !c.omitted).map((c) => c.className));
   const stubDependents = countStubDependents((translated?.classes ?? []).filter((c) => registered.has(c.className)));
-  const numbers = ranToGate ? numbersOf(finalReport, artifact?.stats.placementsDropped ?? 0, stubDependents) : null;
+  const numbers = ranToGate ? numbersOf(finalReport, artifact?.stats.placementsDropped ?? 0, stubDependents, facts?.abcClassCount ?? null) : null;
   // Recovery counts come from the Translation_Report numbers: translated classes of the recovered copy (0 after a fallback).
   if (recovery !== null && numbers !== null) {
     recovery.candidateClasses = numbers.candidateClasses;

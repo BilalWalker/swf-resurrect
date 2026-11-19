@@ -77,7 +77,18 @@ Notes:
 - `stubDependentClasses` (robustness task 16.2) is the number of registered classes whose Shim import line names a `stub` class of the Flash_API_Table (`Sound`, `URLLoader`, ...): their type check depends on a stub, and the game sees neutral values from it. It overlaps the class counts above. A pure scan of the translated imports; it does not say the stub was called (the Fidelity_Report lists the stubs the Replay observed).
 - `facts.abcClassCount` is the number of exported `.as` files. It can differ by one from the class count of
   `swf_summary` (seen on `redball4`; Open_Item O14).
-- The default run limit is 300 s. The web server passes its own run limit (default 300 s, `SWF_RESURRECT_TIMEOUT_S`)
+- Classes considered (robustness Requirement 27, D-E1). `numbers.consideredClasses` is the candidate count (the
+  closure of the classes that symbols and imports name; equal to `candidateClasses`). `numbers.totalClasses` is
+  `facts.abcClassCount`, or `null` when Facts has none. `numbers.notConsideredClasses` is `totalClasses -
+  consideredClasses`, clamped at 0 (a candidate with no `.as` file is not in the total), or `null` when the total
+  is `null`. A file with `notConsideredClasses > 0` is `converted-with-gaps`, never `converted`, and has one gap of
+  kind `classes-not-considered` whose `count` is that number. The `reason` of a project outcome then says
+  `<T> of <N> classes translated (<N> of <M> classes considered)` (M is `totalClasses`); it adds no clause when
+  N equals M, when the total is `null` or when it is 0 (a timeline-only file stays `converted`). A refusal or a
+  failure has no such clause. Over 200 characters the sentence drops, in this order: the gap part, the wrapper
+  size, the `(K with untranslated code)` part, the type-error part, the wrapper statement. The recovery prefix, the
+  translated count and the `of <M> classes considered` clause are never cut. An Outcome_File written before this
+  field existed has no such numbers and is read as a file that holds no total.- The default run limit is 300 s. The web server passes its own run limit (default 300 s, `SWF_RESURRECT_TIMEOUT_S`)
   to the engine as `--run-limit` and keeps its own kill 30 s above it (300 s + 30 s = 330 s) as a backstop, so the
   engine stops itself and reports `refused time-limit` first. This describes the web server as of branch `wip/ui`
   (commit `eaaf776`: `web/server/options.ts`, `web/server/jobs.ts`), which is merged separately; `web/` on a
@@ -146,11 +157,14 @@ writer's output.
   "numbers": {
     "candidateClasses": 6,
     "cleanClasses": 6,
+    "consideredClasses": 6,
     "droppedPlacements": 0,
     "looseClasses": 0,
     "namedLimits": 0,
+    "notConsideredClasses": 0,
     "omittedClasses": 0,
     "stubDependentClasses": 0,
+    "totalClasses": 6,
     "translatedClasses": 6,
     "typeErrors": 0,
     "unparsedClasses": 0,
@@ -203,7 +217,7 @@ writer's output.
 ```json
 {
   "facts": {
-    "abcClassCount": 6,
+    "abcClassCount": 8,
     "compression": "zlib",
     "declaredFrames": 1,
     "declaredLength": 90112,
@@ -223,6 +237,11 @@ writer's output.
   },
   "formatVersion": 1,
   "gaps": [
+    {
+      "count": 2,
+      "examples": [],
+      "kind": "classes-not-considered"
+    },
     {
       "count": 2,
       "examples": [
@@ -255,11 +274,14 @@ writer's output.
   "numbers": {
     "candidateClasses": 6,
     "cleanClasses": 3,
+    "consideredClasses": 6,
     "droppedPlacements": 0,
     "looseClasses": 1,
     "namedLimits": 1,
+    "notConsideredClasses": 2,
     "omittedClasses": 1,
     "stubDependentClasses": 1,
+    "totalClasses": 8,
     "translatedClasses": 5,
     "typeErrors": 2,
     "unparsedClasses": 0,
@@ -273,7 +295,7 @@ writer's output.
     "sourceSignals": null
   },
   "outcome": "converted-with-gaps",
-  "reason": "5 of 6 classes translated (1 with untranslated code), 2 type errors; most gaps: type-error (2), untranslated-class (1)",
+  "reason": "5 of 6 classes translated (6 of 8 classes considered) (1 with untranslated code), 2 type errors; most gaps: type-error (2), untranslated-class (1)",
   "reasonCode": null,
   "recovery": null,
   "referenceId": null,

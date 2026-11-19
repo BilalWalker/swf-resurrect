@@ -46,3 +46,14 @@ describe("docs/outcome.md", () => {
     expect(doc).toContain("`numbers` is `null` for a refusal before Translate");
   });
 });
+
+describe("docs/outcome.md: classes considered", () => {
+  it("names the clause, the gap kind, the numbers fields and the drop order", () => {
+    expect(doc).toContain("classes-not-considered");
+    expect(doc).toContain("of <M> classes considered");
+    expect(doc).toContain("`numbers.consideredClasses`");
+    expect(doc).toContain("`numbers.totalClasses`");
+    expect(doc).toContain("`numbers.notConsideredClasses`");
+    expect(doc).toContain("the gap part, the wrapper");
+  });
+});

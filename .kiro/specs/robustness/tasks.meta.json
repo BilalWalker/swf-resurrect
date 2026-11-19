@@ -998,6 +998,11 @@
         "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794994536844
+      },
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995581599
       }
     ],
     "25. Convert: several class names for one character id": [
@@ -1012,6 +1017,95 @@
         "executionId": "67102006-d346-4653-8584-e9cd4bcd6169",
         "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
         "timestamp": 1794987710036
+      }
+    ],
+    "30.1 The numbers": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995574468
+      },
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995598313
+      }
+    ],
+    "30.2 The sentence and the gap kind": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995574835
+      }
+    ],
+    "30.3 Property test for the clause": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995575134
+      }
+    ],
+    "31.1 Measure and decide": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995575452
+      }
+    ],
+    "31.2 Implement the chosen rule": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995575716
+      }
+    ],
+    "31.3 The preloader pattern runs": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995576005
+      }
+    ],
+    "31.4 Numbers per local file, before and after": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995576411
+      }
+    ],
+    "32.1 Measure where the time goes": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995576728
+      }
+    ],
+    "32.2 Make Unpack cheaper, or re-weigh the stage limits": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995577468
+      }
+    ],
+    "33.1 Group and record": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995578525
+      }
+    ],
+    "33.2 Fix the general small groups; list the rest": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995579300
+      }
+    ],
+    "34. Checkpoint 5: Block E done, final": [
+      {
+        "executionId": "a4e7e3fd-034b-4390-8174-ced8a66f3abb",
+        "chatSessionId": "sess_613a3daa-32a8-4740-a72f-c6c7a95302aa",
+        "timestamp": 1794995579854
       }
     ]
   }

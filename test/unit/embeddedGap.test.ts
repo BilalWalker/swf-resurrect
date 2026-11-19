@@ -15,7 +15,7 @@ import { TAG, binaryDataTag, buildSwf, embeddedSwfBytes, tag } from '../support/
 
 const numbers: OutcomeNumbers = {
   candidateClasses: 5, translatedClasses: 5, cleanClasses: 5, looseClasses: 0, untranslatedCodeClasses: 0, unparsedClasses: 0,
-  unsupportedClasses: 0, omittedClasses: 0, typeErrors: 0, droppedPlacements: 0, namedLimits: 0, stubDependentClasses: 0,
+  unsupportedClasses: 0, omittedClasses: 0, typeErrors: 0, droppedPlacements: 0, namedLimits: 0, stubDependentClasses: 0, consideredClasses: 5, totalClasses: 5, notConsideredClasses: 0,
 };
 const limits = { maxSizeMiB: 20, runLimitS: 300, stageLimitS: 60, stageWeights: {} };
 const summary = { count: 1, totalBytes: 7349081, largestBytes: 7349081 };

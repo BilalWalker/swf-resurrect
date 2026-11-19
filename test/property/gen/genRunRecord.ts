@@ -133,6 +133,7 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
       limits: limitsArb,
       recovery: fc.option(recoveryArb, { nil: null }),
       embedded: embeddedArb,
+      extraClasses: fc.option(fc.oneof(fc.constant(0), fc.integer({ min: 1, max: 5000 })), { nil: null }),
     })
     .map((r) => {
       const { candidates, translatedFrac, zeroTranslated, dropped } = r.counts;
@@ -155,6 +156,9 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
         droppedPlacements: dropped,
         namedLimits: 0,
         stubDependentClasses: 0,
+        consideredClasses: candidates,
+        totalClasses: r.extraClasses === null ? null : candidates + r.extraClasses,
+        notConsideredClasses: r.extraClasses === null ? null : r.extraClasses,
       };
       return {
         facts: r.facts,
@@ -164,6 +168,7 @@ export function genRunRecord(opts: RunRecordOptions = {}): fc.Arbitrary<RunRecor
         gaps: summariseGaps(r.entries, {
           typeErrors,
           droppedPlacements: dropped,
+          notConsideredClasses: r.extraClasses ?? 0,
           ...(r.embedded ? { embeddedSwfs: { count: r.embedded.count, examples: [`id 1: CWS v10, ${r.embedded.totalBytes} bytes`] } } : {}),
         }),
         limits: r.limits,

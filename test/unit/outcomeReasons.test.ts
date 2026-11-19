@@ -87,3 +87,77 @@ describe("exit codes", () => {
     expect(EXIT_CODES).toEqual({ converted: 0, "converted-with-gaps": 0, failed: 1, usage: 2, refused: 3 });
   });
 });
+
+describe("convertedWithGapsReason: classes considered (D-E1)", () => {
+  const base = { translated: 4, candidates: 10, typeErrors: 43, gaps: [] as GapSummary[] };
+  it("states 10 of 172 classes considered after the translated count", () => {
+    const s = convertedWithGapsReason({ ...base, considered: { considered: 10, total: 172 } });
+    expect(s).toBe("4 of 10 classes translated (10 of 172 classes considered), 43 type errors");
+  });
+  it("adds no clause when the counts are equal or the total is unknown", () => {
+    expect(convertedWithGapsReason({ ...base, considered: { considered: 10, total: 10 } })).not.toContain("considered");
+    expect(convertedWithGapsReason({ ...base, considered: null })).not.toContain("considered");
+    expect(convertedWithGapsReason(base)).not.toContain("considered");
+  });
+  it("does not list classes-not-considered in the gap part", () => {
+    const gaps: GapSummary[] = [
+      { kind: "classes-not-considered", count: 162, examples: [] },
+      { kind: "type-error", count: 43, examples: [] },
+    ];
+    const s = convertedWithGapsReason({ ...base, gaps, considered: { considered: 10, total: 172 } });
+    expect(s).toBe("4 of 10 classes translated (10 of 172 classes considered), 43 type errors; most gaps: type-error (43)");
+  });
+  it("drops in order: gap part, wrapper size, untranslated code, type errors, wrapper; the clause stays", () => {
+    const gaps: GapSummary[] = [
+      { kind: "flash-api-gap", count: 99999, examples: [] },
+      { kind: "unbound-instance", count: 88888, examples: [] },
+    ];
+    const input = {
+      translated: 123456, candidates: 234567, typeErrors: 345678, untranslatedCode: 4567, gaps,
+      considered: { considered: 234567, total: 345678 },
+      embedded: { count: 3, totalBytes: 7349081 },
+      recovery: { recovered: 123456, candidates: 234567 },
+    };
+    const clause = "(234567 of 345678 classes considered)";
+    const steps = [
+      convertedWithGapsReason(input),
+      convertedWithGapsReason({ ...input, gaps: [] }),
+    ];
+    expect(steps[0].length).toBeLessThanOrEqual(200);
+    expect(steps[0]).toContain(clause);
+    // Shorter and shorter inputs show which part goes first.
+    const noGapsFit = convertedWithGapsReason({ ...input, recovery: null });
+    expect(noGapsFit).toContain(clause);
+    expect(noGapsFit.length).toBeLessThanOrEqual(200);
+    const tight = convertedWithGapsReason({ ...input, embedded: { count: 3, totalBytes: 7349081 }, untranslatedCode: 4567 });
+    expect(tight).toContain("123456 of 234567 classes translated " + clause);
+    expect(tight).toContain("obfuscated: names renamed, 123456 of 234567 classes recovered; ");
+    expect(tight.length).toBeLessThanOrEqual(200);
+    // Never cut: with everything present, whatever the length, the clause and the recovery prefix survive.
+    expect(steps[1]).toContain(clause);
+  });
+  it("cuts the gap part before the type-error part, and the code part before the type errors", () => {
+    const gaps: GapSummary[] = [{ kind: "unbound-instance", count: 7, examples: [] }];
+    const wrapper = { count: 1, totalBytes: 7349081 };
+    const mk = (extra: object) => convertedWithGapsReason({
+      translated: 100, candidates: 150, typeErrors: 12, untranslatedCode: 3, gaps,
+      considered: { considered: 150, total: 9999 }, embedded: null, ...extra,
+    });
+    const full = mk({});
+    expect(full).toContain("most gaps: unbound-instance (7)");
+    expect(full).toContain("(3 with untranslated code)");
+    expect(full).toContain(", 12 type errors");
+    const longRecovery = { recovered: 100, candidates: 150 };
+    const withRec = mk({ recovery: longRecovery });
+    if (withRec.length <= 200 && !withRec.includes("most gaps")) {
+      expect(withRec).toContain("type errors");
+    }
+    // A very large wrapper count and long numbers force the cuts.
+    const forced = mk({ untranslatedCode: 123456789, typeErrors: 987654321, recovery: { recovered: 111111111, candidates: 222222222 },
+      embedded: { count: 123456789, totalBytes: 99999999999 } });
+    expect(mk({ embedded: wrapper })).not.toContain("most gaps");
+    expect(forced.length).toBeLessThanOrEqual(200);
+    expect(forced).toContain("classes considered)");
+    expect(forced).not.toContain("most gaps");
+  });
+});

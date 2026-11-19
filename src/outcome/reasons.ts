@@ -78,6 +78,8 @@ export function reasonSentence(code: ReasonCode, params: ReasonParams = {}): str
 export interface GapsSentenceInput {
   translated: number;
   candidates: number;
+  /** Present when the file holds more classes than the candidates (D-E1); states `<N> of <M> classes considered`. */
+  considered?: { considered: number; total: number } | null;
   typeErrors: number;
   /** Registered classes kept with untranslated code; named in the sentence when > 0. */
   untranslatedCode?: number;
@@ -100,11 +102,18 @@ export function topGaps(gaps: GapSummary[], n = 2): GapSummary[] {
     .sort((a, b) => b.count - a.count || (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0))
     .slice(0, n);
 }
+/** `<N> of <M> classes considered`; the numbers are the Outcome numbers, never a different count. */
+export function consideredClause(c: { considered: number; total: number }): string {
+  return `${c.considered} of ${c.total} classes considered`;
+}
 
 /**
- * `<N> of <M> classes translated, <E> type errors; most gaps: <kind> (<n>), <kind> (<n>)`.
+ * `<T> of <N> classes translated (<N> of <M> classes considered) (<K> with untranslated code), <E> type errors; most gaps: <kind> (<n>), ...`.
+ * The clause is present only when the file holds more classes than the candidates (D-E1).
  * A recovered run is prefixed `obfuscated: names renamed, N of M classes recovered; `.
- * Over 200 characters the gap part is dropped first (Requirement 16.4).
+ * Over 200 characters, in this order (D-E1): the gap part, the wrapper size, the untranslated-code part,
+ * the type-error part, the wrapper statement. The recovery prefix, the translated count and the considered
+ * clause are never cut.
  */
 export function convertedWithGapsReason(input: GapsSentenceInput): string {
   const recovery = input.recovery
@@ -112,19 +121,26 @@ export function convertedWithGapsReason(input: GapsSentenceInput): string {
     : "";
   const untranslated = input.untranslatedCode ?? 0;
   const withCode = untranslated > 0 ? ` (${untranslated} with untranslated code)` : "";
-  const base = `${input.translated} of ${input.candidates} classes translated${withCode}, ${input.typeErrors} type errors`;
-  // The wrapper gap is already said by the wrapper statement.
-  const top = topGaps(input.gaps.filter((g) => g.kind !== "embedded-swf"));
+  const clause = input.considered && input.considered.considered < input.considered.total ? ` (${consideredClause(input.considered)})` : "";
+  const counts = `${input.translated} of ${input.candidates} classes translated${clause}`;
+  const errors = `, ${input.typeErrors} type errors`;
+  // The wrapper gap and the not-considered gap are already said by their own statements.
+  const top = topGaps(input.gaps.filter((g) => g.kind !== "embedded-swf" && g.kind !== "classes-not-considered"));
   const gapPart = top.length > 0 ? `; most gaps: ${top.map((g) => `${g.kind} (${g.count})`).join(", ")}` : "";
-  // Longest first. The gap part goes first, then the wrapper size, then the whole wrapper statement
-  // (it stays in `gaps` and `embeddedSwfs`); the class counts and the recovery prefix are never cut.
-  const wrappers = input.embedded
-    ? [wrapperStatement(input.embedded), wrapperStatement({ count: input.embedded.count, totalBytes: null }), ""]
-    : [""];
-  for (const w of wrappers) {
-    const head = recovery + w + base;
-    if (head + gapPart !== head && (head + gapPart).length <= MAX_REASON_LENGTH) return head + gapPart;
-    if (head.length <= MAX_REASON_LENGTH) return head;
+  const full = wrapperStatement;
+  const wrapper = input.embedded ?? null;
+  const steps: Array<{ w: string; code: string; err: string; gaps: string }> = [];
+  const w1 = wrapper ? full(wrapper) : "";
+  const w2 = wrapper ? full({ count: wrapper.count, totalBytes: null }) : "";
+  steps.push({ w: w1, code: withCode, err: errors, gaps: gapPart });
+  steps.push({ w: w1, code: withCode, err: errors, gaps: "" });
+  if (wrapper) steps.push({ w: w2, code: withCode, err: errors, gaps: "" });
+  steps.push({ w: w2, code: "", err: errors, gaps: "" });
+  steps.push({ w: w2, code: "", err: "", gaps: "" });
+  steps.push({ w: "", code: "", err: "", gaps: "" });
+  for (const s of steps) {
+    const text = recovery + s.w + counts + s.code + s.err + s.gaps;
+    if (text.length <= MAX_REASON_LENGTH) return text;
   }
-  return truncateReason(recovery + base);
+  return truncateReason(recovery + counts);
 }

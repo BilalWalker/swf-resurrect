@@ -67,6 +67,14 @@ export function parseOutcome(text: string): OutcomeRecord {
     throw new OutcomeFileError("outcome file lacks gaps or stages");
   }
   // `numbers: null` (refusal before Translate), `obfuscated: null` and `recovery: null` are valid.
+  // An Outcome_File from before D-E1 has no class totals: read it as one that holds no total.
+  const nums = rec.numbers;
+  if (typeof nums === "object" && nums !== null && !Array.isArray(nums)) {
+    const n = nums as Record<string, unknown>;
+    if (n.consideredClasses === undefined) n.consideredClasses = n.candidateClasses;
+    if (n.totalClasses === undefined) n.totalClasses = null;
+    if (n.notConsideredClasses === undefined) n.notConsideredClasses = null;
+  }
   return rec as unknown as OutcomeRecord;
 }
 

@@ -26,7 +26,8 @@ export type GapKind =
   | "type-error"
   | "dropped-placement"
   | "flash-api-gap"
-  | "embedded-swf";
+  | "embedded-swf"
+  | "classes-not-considered";
 
 /**
  * Embedded SWFs found by the Facts stage (D-D3b). Present in the Outcome_File only when count > 0; a file
@@ -96,6 +97,17 @@ export interface OutcomeNumbers {
   namedLimits: number;
   /** Registered classes whose Shim imports name a Flash_API_Table stub (robustness Requirement 17.9). Overlaps the other class counts. */
   stubDependentClasses: number;
+  /** Candidate classes (the emit closure). Equal to candidateClasses (D-E1). */
+  consideredClasses: number;
+  /** Classes the ABC holds (facts.abcClassCount); null when Facts has none. */
+  totalClasses: number | null;
+  /** totalClasses - consideredClasses, clamped at 0; null when totalClasses is null (D-E1). */
+  notConsideredClasses: number | null;
+}
+
+/** D-E1: the classes of the file that no candidate covers. Null when the total is unknown; never negative. */
+export function notConsideredOf(considered: number, total: number | null): number | null {
+  return total === null ? null : Math.max(0, total - considered);
 }
 
 export interface GapSummary {
@@ -208,8 +220,9 @@ export function decideOutcome(record: RunRecord): Outcome {
       exitCode: exitCodeFor("refused"),
     };
   }
+  const notConsidered = n.notConsideredClasses ?? notConsideredOf(n.consideredClasses ?? n.candidateClasses, n.totalClasses ?? null) ?? 0;
   const hasGap =
-    n.typeErrors > 0 || n.droppedPlacements > 0 || record.gaps.some((g) => g.count > 0);
+    n.typeErrors > 0 || n.droppedPlacements > 0 || notConsidered > 0 || record.gaps.some((g) => g.count > 0);
   if (hasGap) {
     const rec = record.recovery;
     const wrapperGap = record.gaps.find((g) => g.kind === "embedded-swf" && g.count > 0);
@@ -218,6 +231,7 @@ export function decideOutcome(record: RunRecord): Outcome {
       embedded: wrapperGap ? { count: emb?.count ?? wrapperGap.count, totalBytes: emb?.totalBytes ?? null } : null,
       translated: n.translatedClasses,
       candidates: n.candidateClasses,
+      considered: notConsidered > 0 && n.totalClasses != null ? { considered: n.consideredClasses ?? n.candidateClasses, total: n.totalClasses } : null,
       typeErrors: n.typeErrors,
       untranslatedCode: n.untranslatedCodeClasses,
       gaps: record.gaps,
