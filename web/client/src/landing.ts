@@ -190,6 +190,14 @@ function graspingHand(el: HTMLElement): GraspingHand {
   };
 }
 
+/** What a conversion gives you, in the words the result screen itself uses. */
+const FEATURES: ReadonlyArray<readonly [string, string]> = [
+  ['A real project, not a player', 'TypeScript source with Vite and PixiJS that you can read, change and build. Take it home as a zip.'],
+  ['Measured, not promised', 'Every result carries a fidelity report: a pixel match over sampled frames and a trace score from a replay.'],
+  ['Old and new, side by side', 'The original plays in Ruffle next to the converted build. Click both and compare.'],
+  ['Honest about the dead', 'What could not be converted is listed as staying in the grave, not hidden.'],
+];
+
 export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promise<void> {
   main.replaceChildren(h('p', { class: 'loading' }, 'Lighting the lanterns...'));
   let setup: SetupStatus;
@@ -411,6 +419,12 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
         h('p', {}, 'Samples with documented provenance. Pick a stone to convert it. Glowing stones have risen before and open at once.'),
       ),
       samples.length === 0 ? h('p', { class: 'yard-empty' }, 'The yard is empty: no samples/*/test.swf on this server.') : stones,
+    ),
+    h(
+      'section',
+      { class: 'features', id: 'features', 'aria-labelledby': 'features-title' },
+      h('div', { class: 'section-head' }, h('h2', { id: 'features-title' }, 'What Rises'), h('p', {}, 'What you get back from every conversion.')),
+      h('ul', { class: 'feature-list' }, ...FEATURES.map(([t, d]) => h('li', {}, h('h3', {}, t), h('p', {}, d)))),
     ),
     h(
       'section',
