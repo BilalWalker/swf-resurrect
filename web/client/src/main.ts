@@ -71,6 +71,30 @@ function decorate(): void {
   });
 }
 
+/** A section the header asked for while another view was showing: scrolled to once the landing is drawn. */
+let pendingSection: string | null = null;
+
+function scrollToSection(id: string): void {
+  const el = document.getElementById(id);
+  if (el === null) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  el.querySelector<HTMLElement>('h2')?.setAttribute('tabindex', '-1');
+  el.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
+}
+
+// Header links to landing sections: scroll there, going back to the landing first when a job is open.
+document.querySelector('.top-nav')?.addEventListener('click', (e) => {
+  const a = (e.target as Element).closest<HTMLAnchorElement>('a[data-goto]');
+  if (a === null) return;
+  e.preventDefault();
+  const id = a.dataset.goto ?? '';
+  if (document.getElementById(id) !== null) scrollToSection(id);
+  else {
+    pendingSection = id;
+    window.location.hash = '#/';
+  }
+});
+
 export function openJob(id: string): void {
   window.location.hash = `#/job/${id}`;
 }
@@ -85,7 +109,10 @@ function route(): void {
     cleanup = renderJob(main, m[1], { openJob, renderResult });
   } else {
     document.title = 'SWF Resurrect';
-    void renderLanding(main, { openJob });
+    void renderLanding(main, { openJob }).then(() => {
+      if (pendingSection !== null) scrollToSection(pendingSection);
+      pendingSection = null;
+    });
   }
 }
 

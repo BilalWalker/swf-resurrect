@@ -411,7 +411,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
     ),
     h(
       'section',
-      { class: 'yard', 'aria-labelledby': 'yard-title' },
+      { class: 'yard', id: 'examples', 'aria-labelledby': 'yard-title' },
       h(
         'div',
         { class: 'yard-head' },
