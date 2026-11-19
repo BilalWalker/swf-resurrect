@@ -7,7 +7,7 @@ import { EKG, moonGauge } from './art';
 import { h, pct, svg } from './dom';
 import { renderGrimoire } from './grimoire';
 import { reasonText } from './labels';
-import { stageAspect } from './outcomeText';
+import { resultHeadline, stageAspect } from './outcomeText';
 import { gapPanel } from './outcomeView';
 import { playerPair } from './players';
 
@@ -245,6 +245,7 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
   }
 
   const gaps = gapPanel(job);
+  const head = resultHeadline(job.name, job.outcome);
   container.replaceChildren(
     h(
       'section',
@@ -255,14 +256,8 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
         h(
           'div',
           { class: 'alive-text' },
-          h('h2', { id: 'alive-title', class: 'alive-title', tabindex: '-1' }, gaps === null ? 'It lives.' : 'It lives, with gaps.'),
-          h(
-            'p',
-            { class: 'alive-sub' },
-            gaps === null
-              ? `${job.name} is now a TypeScript + Vite + PixiJS project.`
-              : `${job.name} is now a TypeScript + Vite + PixiJS project, with parts missing.`,
-          ),
+          h('h2', { id: 'alive-title', class: `alive-title is-${head.tone}`, tabindex: '-1' }, head.title),
+          h('p', { class: 'alive-sub' }, head.sub),
         ),
         svg(EKG),
         h(

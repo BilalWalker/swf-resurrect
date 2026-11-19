@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OutcomeNumbers } from '../../web/shared/api';
-import { classLine, fewTranslated, gapLines, originalPlayable, refusalHint, stageAspect } from '../../web/client/src/outcomeText';
+import { classLine, fewTranslated, gapLines, originalPlayable, refusalHint, resultHeadline, stageAspect } from '../../web/client/src/outcomeText';
 
 const numbers = (translated: number, candidates: number): OutcomeNumbers => ({
   candidateClasses: candidates,
@@ -61,5 +61,17 @@ describe('outcome words', () => {
     expect(originalPlayable(o('damaged'))).toBe(false);
     expect(stageAspect(null, o(null))).toBe('550 / 400');
     expect(stageAspect({ width: 640, height: 480 }, null)).toBe('640 / 480');
+  });
+
+  it('says "It lives" only when at least half the classes were translated', () => {
+    const o = (outcome: 'converted' | 'converted-with-gaps', n: OutcomeNumbers | null) => ({
+      outcome, reasonCode: null, reason: '', numbers: n, gaps: [], facts: null, obfuscation: null, referenceId: null, runLimitS: null,
+    });
+    expect(resultHeadline('a.swf', o('converted', numbers(4, 4))).title).toBe('It lives.');
+    expect(resultHeadline('a.swf', o('converted-with-gaps', numbers(3, 6))).title).toBe('It lives, with gaps.');
+    expect(resultHeadline('a.swf', o('converted-with-gaps', null)).title).toBe('It lives, with gaps.');
+    const few = resultHeadline('a.swf', o('converted-with-gaps', numbers(2, 6)));
+    expect(few).toMatchObject({ title: 'Partly raised.', tone: 'partial' });
+    expect(few.title + few.sub).not.toMatch(/lives/i);
   });
 });

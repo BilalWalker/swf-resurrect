@@ -26,6 +26,13 @@
   animation: wake 1.6s ease-out both;
 }
 
+/* Below half the classes translated: no glow and no waking animation. */
+.alive-title.is-partial {
+  color: var(--bone);
+  text-shadow: none;
+  animation: none;
+}
+
 .alive-title:focus {
   outline: none;
 }

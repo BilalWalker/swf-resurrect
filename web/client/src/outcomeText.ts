@@ -68,3 +68,17 @@ export function stageAspect(fromResult: { width: number; height: number } | null
   const s = fromResult ?? o?.facts?.stage ?? null;
   return s === null || s.width <= 0 || s.height <= 0 ? '550 / 400' : `${s.width} / ${s.height}`;
 }
+
+/**
+ * The headline of a run that wrote a project. "It lives" only when at least half the classes were
+ * translated; below that the project will probably not run, and the headline says so soberly.
+ */
+export function resultHeadline(name: string, o: JobOutcome | null): { title: string; sub: string; tone: 'alive' | 'partial' } {
+  if (o?.outcome === 'converted-with-gaps' && fewTranslated(o.numbers)) {
+    return { title: 'Partly raised.', sub: `${name} was only partly converted; the project will probably not run.`, tone: 'partial' };
+  }
+  if (o?.outcome === 'converted-with-gaps') {
+    return { title: 'It lives, with gaps.', sub: `${name} is now a TypeScript + Vite + PixiJS project, with parts missing.`, tone: 'alive' };
+  }
+  return { title: 'It lives.', sub: `${name} is now a TypeScript + Vite + PixiJS project.`, tone: 'alive' };
+}

@@ -139,6 +139,7 @@ describe('result page per Outcome (Chromium)', () => {
     expect(panel).toContain('1 class was not translated');
     expect(panel).toContain('obfuscated: names renamed');
     expect(panel).not.toContain('will probably not run');
+    expect(await page.textContent('.alive-title')).toBe('It lives, with gaps.');
     await page.close();
   });
 
@@ -148,6 +149,7 @@ describe('result page per Outcome (Chromium)', () => {
       'converted-with-gaps-few',
     );
     expect(await few.textContent('.gap-panel')).toContain('will probably not run');
+    expect(await few.textContent('.alive-title')).toBe('Partly raised.');
     await few.close();
     const none = await open(job(id(4), { outcome: outcome({ outcome: 'converted-with-gaps', numbers: null, facts: null, gaps: [{ kind: 'type-error', count: 1, examples: [] }] }) }), 'converted-with-gaps-null');
     const text = (await none.textContent('.gap-panel')) ?? '';
