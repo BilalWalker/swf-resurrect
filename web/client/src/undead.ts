@@ -1,6 +1,5 @@
-// A resurrection on the far hill, now and then: a violet glow rises behind the chapel, a few small
-// silhouettes climb out of the graves in front of it, shamble a little way and sink back, and the glow
-// fades. Then the scene is still again for a while. Decorative only; nothing here reads or changes
+// A resurrection on the far hill, now and then: a few small silhouettes climb out of the graves by the
+// chapel, shamble a little way and sink back. Then the hill is still again for a while. Decorative only; nothing here reads or changes
 // application state.
 
 /** Frames in art/zombie-sheet.png: 0 to 5 climb out of the ground, 6 to 11 are one walk cycle. Faces right. */
@@ -19,7 +18,7 @@ interface Ridge {
   points: ReadonlyArray<readonly [number, number]>;
   /** Figure height as a percentage of the picture height: further ridges carry smaller figures. */
   size: number;
-  /** The stretch of the ridge (fractions by x) lit by the glow, where the dead may come up. */
+  /** The stretch of the ridge (fractions by x) where the dead may come up. */
   span: readonly [number, number];
 }
 
@@ -50,9 +49,8 @@ function ridgeAt(r: Ridge, t: number): [number, number] {
   return [x, ay + ((by - ay) * (x - ax)) / (bx - ax) + SINK];
 }
 
-/** Quiet time between two resurrections, and how long the glow burns before the first figure comes up. */
+/** Quiet time between two resurrections. */
 const QUIET_MS: readonly [number, number] = [11000, 20000];
-const GLOW_LEAD_MS = 1600;
 
 interface Walker {
   el: HTMLElement;
@@ -82,12 +80,9 @@ function show(w: Walker, frame: number): void {
 /** Starts the resurrections inside `scene` (the element that has the backdrop's box). Returns a stop function. */
 export function raiseTheDead(scene: HTMLElement): () => void {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => undefined;
-  // The glow sits first in the scene, so the figures stand in front of it, black against the light.
-  const glow = document.createElement('span');
-  glow.className = 'resurrection';
-  scene.prepend(glow);
   const walkers: Walker[] = [];
-  let lit = false;
+  /** A resurrection is under way: figures are still to come up or still above ground. */
+  let rising = false;
   /** Figures still to come up in this resurrection, and when the next one does. */
   let toRaise = 0;
   let nextSpawn = performance.now() + rand(2500, 5000);
@@ -98,7 +93,7 @@ export function raiseTheDead(scene: HTMLElement): () => void {
     const ridge = RIDGES[Math.floor(Math.random() * RIDGES.length)];
     const [lo, hi] = ridge.span;
     const t = rand(lo, hi);
-    // A short shamble inside the lit stretch, toward whichever end leaves more room.
+    // A short shamble inside the stretch, toward whichever end leaves more room.
     const dir = t - lo < hi - t ? 1 : -1;
     const target = Math.min(hi, Math.max(lo, t + dir * rand(0.1, 0.22) * (hi - lo) * 2.5));
     const el = document.createElement('span');
@@ -117,20 +112,17 @@ export function raiseTheDead(scene: HTMLElement): () => void {
   const step = (now: number): void => {
     const dt = Math.min(0.1, (now - last) / 1000); // a tab that was hidden resumes without a jump
     last = now;
-    if (!lit && now >= nextSpawn) {
-      // the glow comes up first; the dead follow once it burns
-      lit = true;
-      glow.classList.add('is-lit');
+    if (!rising && now >= nextSpawn) {
+      rising = true;
       toRaise = Math.random() < 0.6 ? 2 : Math.random() < 0.5 ? 1 : 3;
-      nextSpawn = now + GLOW_LEAD_MS;
-    } else if (lit && toRaise > 0 && now >= nextSpawn) {
+    }
+    if (rising && toRaise > 0 && now >= nextSpawn) {
       spawn(now);
       toRaise--;
       nextSpawn = now + rand(900, 2600);
-    } else if (lit && toRaise === 0 && walkers.length === 0) {
-      // the last one is back in the ground: the glow dies down and the hill is still for a while
-      lit = false;
-      glow.classList.remove('is-lit');
+    } else if (rising && toRaise === 0 && walkers.length === 0) {
+      // the last one is back in the ground: the hill is still for a while
+      rising = false;
       nextSpawn = now + rand(...QUIET_MS);
     }
     for (let i = walkers.length - 1; i >= 0; i--) {
@@ -174,7 +166,6 @@ export function raiseTheDead(scene: HTMLElement): () => void {
 
   return () => {
     cancelAnimationFrame(handle);
-    glow.remove();
     for (const w of walkers) w.el.remove();
     walkers.length = 0;
   };
