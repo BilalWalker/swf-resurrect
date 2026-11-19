@@ -319,7 +319,7 @@
   width: var(--sw);
   padding: 0;
   border: 0;
-  background: url('/art/gravestones-sheet.webp') no-repeat;
+  background: none no-repeat;
   color: #16130f;
   font: inherit;
   text-align: center;
@@ -435,60 +435,54 @@
   color: var(--spectral-soft);
 }
 
+/* The four gravestones, one painted image each (art/stone-*.webp, trimmed to the stone). The face inset is
+   the blank panel of each, measured on the image; --face-w is its width, for sizing the name. */
+.stone-v1,
+.stone-v2,
+.stone-v3,
+.stone-v4 {
+  background-position: center;
+  background-size: 100% 100%;
+}
+
 .stone-v1 {
-  aspect-ratio: 416 / 525;
-  background-size: 522.115% auto;
-  background-position: 0.74% 69.849%;
-  --face-w: calc(var(--sw) * 0.58);
+  aspect-ratio: 1038 / 1392;
+  background-image: url('/art/stone-round.webp');
+  --face-w: calc(var(--sw) * 0.55);
 }
 .stone-v1 .stone-face {
-  inset: 29% 18% 23% 24%;
+  inset: 16% 22% 23% 23%;
 }
 
 .stone-v2 {
-  aspect-ratio: 413 / 617;
-  background-size: 525.908% auto;
-  background-position: 25.185% 43.925%;
+  aspect-ratio: 917 / 1360;
+  background-image: url('/art/stone-cross.webp');
   --face-w: calc(var(--sw) * 0.62);
 }
 .stone-v2 .stone-face {
-  inset: 66% 19% 16.5% 19%;
+  inset: 22% 17% 59% 18%;
 }
 .stone-v2 .here-lies {
   display: none;
 }
 
 .stone-v3 {
-  aspect-ratio: 424 / 591;
-  background-size: 512.264% auto;
-  background-position: 49.828% 54.887%;
-  --face-w: calc(var(--sw) * 0.52);
+  aspect-ratio: 979 / 1374;
+  background-image: url('/art/stone-gothic.webp');
+  --face-w: calc(var(--sw) * 0.5);
 }
 .stone-v3 .stone-face {
-  inset: 43% 23% 16% 25%;
+  inset: 24% 25% 20% 25%;
 }
 
 .stone-v4 {
-  aspect-ratio: 376 / 523;
-  background-size: 577.66% auto;
-  background-position: 72.884% 70.149%;
-  --face-w: calc(var(--sw) * 0.58);
+  --sw: 232px;
+  aspect-ratio: 1038 / 1007;
+  background-image: url('/art/stone-wide.webp');
+  --face-w: calc(var(--sw) * 0.61);
 }
 .stone-v4 .stone-face {
-  inset: 36% 21% 19% 21%;
-}
-
-.stone-v5 {
-  aspect-ratio: 462 / 385;
-  background-size: 470.13% auto;
-  background-position: 99.298% 82.301%;
-  --face-w: calc(var(--sw) * 0.69);
-}
-.stone-v5 .stone-face {
-  inset: 31% 15% 25% 16%;
-}
-.stone-v5 .here-lies {
-  display: none;
+  inset: 19% 20% 21% 20%;
 }
 
 .yard-empty {
@@ -769,4 +763,19 @@
 .drop-col.is-staged .drop-hint,
 .drop-col.is-staged .drop-status {
   text-shadow: 0 1px 6px #000, 0 0 12px #000;
+}
+
+/* The painted faces are dark grey: the lettering is pale stone, cut in (dark above, faint light below). */
+.stone .here-lies {
+  color: #a9a397;
+}
+.stone .stone-name {
+  color: #e2ddd1;
+  text-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.75),
+    0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 8px rgba(0, 0, 0, 0.5);
+}
+.stone .stone-meta {
+  color: #b9b3a6;
 }

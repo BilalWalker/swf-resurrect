@@ -31,12 +31,13 @@ function setupNotice(setup: SetupStatus): HTMLElement | null {
 }
 
 /**
- * Which of the five painted gravestones (1 to 5 in the sheet) sample `index` gets. Shape 2, the cross, has a
- * low plaque that holds a single line only, so a name that breaks into several parts gets the wide slab instead.
+ * Which of the four painted gravestones sample `index` gets: 1 round arch, 2 cross, 3 gothic point, 4 wide
+ * arch (art/stone-*.webp). The cross's face is a low horizontal plaque that holds a single line only, so a
+ * name that breaks into several parts gets the wide arch instead.
  */
 function stoneShape(index: number, nameParts: number): number {
-  const shape = [1, 3, 5, 2, 4][index % 5];
-  return shape === 2 && nameParts > 1 ? 5 : shape;
+  const shape = [1, 3, 4, 2][index % 4];
+  return shape === 2 && nameParts > 1 ? 4 : shape;
 }
 
 /** art/sarc-anim.webp: 14 frames of the lid opening (0 closed, 13 fully open), 7 per row. */
