@@ -249,6 +249,58 @@ body.is-dragging .fog {
   filter: blur(6px) brightness(1.9);
 }
 
+/* A ghost hugging its doll, cut from the user's painting: now and then it drifts across the sky from right
+   to left, swaying, half see-through and cooled to the moonlight. Most of each cycle it is away. */
+.ghost {
+  position: absolute;
+  top: 13vh;
+  left: 100%;
+  width: 64px;
+  aspect-ratio: 160 / 306;
+  background: url('/art/ghost.webp') center / contain no-repeat;
+  filter: saturate(0.5) brightness(1.1) drop-shadow(0 0 10px rgba(170, 210, 255, 0.35));
+  opacity: 0;
+  animation:
+    haunt 84s ease-in-out 9s infinite,
+    sway 5.5s ease-in-out infinite alternate;
+}
+@keyframes haunt {
+  0%,
+  58% {
+    translate: 0 0;
+    opacity: 0;
+  }
+  63% {
+    translate: -18vw -3vh;
+    opacity: 0.6;
+  }
+  72% {
+    translate: -42vw 3vh;
+    opacity: 0.5;
+  }
+  81% {
+    translate: -66vw -4vh;
+    opacity: 0.6;
+  }
+  90% {
+    translate: -90vw 1vh;
+    opacity: 0.45;
+  }
+  95%,
+  100% {
+    translate: calc(-100vw - 90px) -2vh;
+    opacity: 0;
+  }
+}
+@keyframes sway {
+  from {
+    rotate: -6deg;
+  }
+  to {
+    rotate: 5deg;
+  }
+}
+
 /* A bat: three painted poses side by side in art/bat-sheet.webp (wings spread, up, down), stepped through
    as spread, up, spread, down for a flap; dimmed to the night so it reads as a far-off shape. */
 .bat {
@@ -497,7 +549,8 @@ main:focus {
     transition: none !important;
     scroll-behavior: auto !important;
   }
-  .bat {
+  .bat,
+  .ghost {
     display: none;
   }
 }

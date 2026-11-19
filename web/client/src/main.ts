@@ -39,6 +39,11 @@ function decorate(): void {
     raiseTheDead(scene);
     sky.append(svg(HORIZON));
     // Bats crossing the sky: a painted sprite (art/bat-sheet.webp) flapped and flown by CSS.
+    // and now and then a ghost drifting through (art/ghost.webp), flown by CSS
+    const ghost = document.createElement('span');
+    ghost.className = 'ghost';
+    ghost.setAttribute('aria-hidden', 'true');
+    sky.append(ghost);
     for (const c of ['bat', 'bat bat-2', 'bat bat-3']) {
       const bat = document.createElement('span');
       bat.className = c;
