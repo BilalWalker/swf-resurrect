@@ -29,14 +29,6 @@ export const HORIZON = `
   </g>
 </svg>`;
 
-/** A bat, flapped by CSS (the wings are separate groups). */
-export const BAT = `
-<svg class="bat" viewBox="0 0 64 28" aria-hidden="true" focusable="false">
-  <g class="wing wing-l"><path d="M32 14 C 26 6 16 4 4 8 C 10 10 12 14 10 18 C 16 15 20 17 22 20 C 24 16 28 15 32 16 Z"/></g>
-  <g class="wing wing-r"><path d="M32 14 C 38 6 48 4 60 8 C 54 10 52 14 54 18 C 48 15 44 17 42 20 C 40 16 36 15 32 16 Z"/></g>
-  <path d="M29 12 l1 -4 l2 3 l2 -3 l1 4 c1 3 0 7 -3 8 c-3 -1 -4 -5 -3 -8 z"/>
-</svg>`;
-
 /** The open grave of the drop zone. `.lid` slides aside while a file is dragged over it. */
 export const GRAVE = `
 <svg class="grave" viewBox="0 0 360 190" aria-hidden="true" focusable="false">

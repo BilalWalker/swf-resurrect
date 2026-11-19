@@ -249,41 +249,47 @@ body.is-dragging .fog {
   filter: blur(6px) brightness(1.9);
 }
 
+/* A bat: three painted poses side by side in art/bat-sheet.webp (wings spread, up, down), stepped through
+   as spread, up, spread, down for a flap; dimmed to the night so it reads as a far-off shape. */
 .bat {
   position: absolute;
-  width: 34px;
-  fill: #04060a;
+  width: 46px;
+  aspect-ratio: 120 / 79;
   top: 18vh;
-  left: -60px;
-  animation: fly 46s linear infinite;
-  animation-delay: 6s;
+  left: -70px;
+  background: url('/art/bat-sheet.webp') 0 0 / 300% 100% no-repeat;
+  filter: brightness(0.5) contrast(1.1);
+  animation:
+    fly 46s linear 6s infinite,
+    flap 0.44s steps(1, end) infinite;
 }
 
 .bat.bat-2 {
-  width: 24px;
+  width: 34px;
   top: 26vh;
-  animation-duration: 61s;
-  animation-delay: 21s;
+  animation-duration: 61s, 0.38s;
+  animation-delay: 21s, -0.1s;
 }
 
-.bat .wing {
-  transform-box: fill-box;
-  animation: flap 0.36s ease-in-out infinite alternate;
-}
-
-.bat .wing-l {
-  transform-origin: 100% 60%;
-}
-.bat .wing-r {
-  transform-origin: 0% 60%;
+.bat.bat-3 {
+  width: 28px;
+  top: 11vh;
+  animation-duration: 73s, 0.34s;
+  animation-delay: 38s, -0.2s;
 }
 
 @keyframes flap {
-  from {
-    transform: scaleY(1);
+  0% {
+    background-position: 0 0;
   }
-  to {
-    transform: scaleY(0.35);
+  25% {
+    background-position: 50% 0;
+  }
+  50% {
+    background-position: 0 0;
+  }
+  75% {
+    background-position: 100% 0;
   }
 }
 

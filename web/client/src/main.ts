@@ -1,5 +1,5 @@
 // Client entry: draws the sky, routes between the graveyard (#/) and a job (#/job/<id>).
-import { BAT, CRESCENT, HORIZON } from './art';
+import { CRESCENT, HORIZON } from './art';
 import { svg } from './dom';
 import { renderJob } from './job';
 import { renderLanding } from './landing';
@@ -37,10 +37,14 @@ function decorate(): void {
     }
     sky.prepend(scene);
     raiseTheDead(scene);
-    sky.append(svg(HORIZON), svg(BAT));
-    const bat2 = svg(BAT);
-    bat2.classList.add('bat-2');
-    sky.append(bat2);
+    sky.append(svg(HORIZON));
+    // Bats crossing the sky: a painted sprite (art/bat-sheet.webp) flapped and flown by CSS.
+    for (const c of ['bat', 'bat bat-2', 'bat bat-3']) {
+      const bat = document.createElement('span');
+      bat.className = c;
+      bat.setAttribute('aria-hidden', 'true');
+      sky.append(bat);
+    }
   }
   document.getElementById('wordmark')?.prepend(svg(CRESCENT));
 
