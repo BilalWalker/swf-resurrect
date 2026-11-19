@@ -18,6 +18,7 @@ export const STATUS_TEXT: Record<StageStatus, string> = {
   ok: 'done',
   warn: 'done, with type errors',
   failed: 'failed',
+  refused: 'refused here',
   skipped: 'not reached',
 };
 

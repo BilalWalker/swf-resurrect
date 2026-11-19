@@ -154,6 +154,14 @@ describe('job state machine', () => {
     expect(s.stages.find((x) => x.key === 'build')?.status).toBe('skipped');
     expect(currentStage(s)).toBeNull();
     expect(abort(s, 'x')).toBe(s);
+    // The stage where it was refused is neutral, never `failed`.
+    expect(s.stages.find((x) => x.key === 'unpack')?.status).toBe('refused');
+    expect(s.stages.some((x) => x.status === 'failed')).toBe(false);
+  });
+
+  it('marks the running stage as refused when no error line came first', () => {
+    const s = pipelineExited(feed(start(initialState()), ['[unpack] ok']), 3, undefined, read('refused', { reasonCode: 'time-limit' }));
+    expect(statuses(s)).toBe('unpack:ok convert:refused translate:skipped emit:skipped typecheck:skipped verify:skipped build:skipped');
   });
 
   it('keeps a converted-with-gaps outcome through the build', () => {

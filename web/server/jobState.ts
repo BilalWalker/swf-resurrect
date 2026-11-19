@@ -4,7 +4,8 @@ import type { JobOutcome, OutcomeRead } from './outcome';
 import { ALL_STAGES, isPipelineStage } from './stageLines';
 import type { Facts, ParsedLine, StageKey } from './stageLines';
 
-export type StageStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed' | 'skipped';
+/** `refused`: the stage where the engine declined the input; not a failure, so never shown red. */
+export type StageStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed' | 'refused' | 'skipped';
 /**
  * `refused`: the engine declined the input (exit 3, Outcome `refused`); it is not an error of the
  * server. `succeeded` covers both project outcomes (`converted`, `converted-with-gaps`).
@@ -162,7 +163,10 @@ export function pipelineExited(state: JobState, exitCode: number | null, reason?
     return withStage(skipRest(withOutcome, 'build'), 'build', { status: 'running' });
   }
   if (exitCode === EXIT_REFUSED && outcome?.outcome === 'refused') {
-    return skipRest({ ...withOutcome, status: 'refused', error: null }, null);
+    // The stage an error line marked failed, else the one running, is where the engine refused.
+    const at = withOutcome.stages.find((s) => s.status === 'failed') ?? withOutcome.stages.find((s) => s.status === 'running');
+    const marked = at === undefined ? withOutcome : withStage(withOutcome, at.key, { status: 'refused' });
+    return skipRest({ ...marked, status: 'refused', error: null }, null);
   }
   if (state.status === 'failed') {
     // The engine's own sentence replaces the raw line it printed before ending.

@@ -188,13 +188,16 @@ describe('result page per Outcome (Chromium)', () => {
     const page = await open(
       job(id(7), {
         status: 'refused',
-        stages: stages(['failed']),
+        stages: stages(['refused']),
         artifacts: { app: false, report: false, project: false, sourceFiles: 0 },
         outcome: outcome({ outcome: 'refused', reasonCode: 'not-swf', reason: 'the file is not a SWF', numbers: null, facts: null }),
       }),
       'refused-not-swf',
     );
     expect(await page.textContent('.outcome-hint')).toContain('.swf');
+    // The refused stage is neutral: no red "failed" anywhere in the ritual.
+    expect(await page.locator('.rite[data-status="refused"] .rite-status').textContent()).toBe('refused here');
+    expect(await page.locator('.rite[data-status="failed"]').count()).toBe(0);
     expect(await page.locator('iframe').count()).toBe(0);
     await page.close();
   });

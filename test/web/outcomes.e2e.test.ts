@@ -77,6 +77,7 @@ describe.skipIf(skipReason !== null)('web jobs per Outcome', () => {
     expect(j.error).toBeNull();
     expect(j.outcome).toMatchObject({ outcome: 'refused', reasonCode: 'actionscript-1-2', numbers: null });
     expect(j.outcome?.reason).toBe('the file uses ActionScript 1 or 2, which is not supported');
+    expect(j.stages.some((s) => s.status === 'failed')).toBe(false);
     expect(j.artifacts).toMatchObject({ app: false, project: false });
     expect((await get(`/api/jobs/${j.id}/project.zip`)).status).toBe(404);
     expect((await get(`/api/jobs/${j.id}/swf`)).status).toBe(200);

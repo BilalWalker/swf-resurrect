@@ -279,6 +279,13 @@
 .rite[data-status='failed'] .rite-name {
   color: var(--ember);
 }
+/* Where the engine refused the file: neutral, not the red of a failure. */
+.rite[data-status='refused'] .rite-status {
+  color: var(--mist);
+}
+.rite[data-status='refused'] .rite-name {
+  color: var(--bone);
+}
 .rite[data-status='skipped'] .rite-name,
 .rite[data-status='pending'] .rite-name {
   color: #c4c9cf;

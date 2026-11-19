@@ -89,6 +89,8 @@ describe.skipIf(!requested)('real result pages', () => {
   it('refused: a generated ActionScript 1/2 file', { timeout: 120_000 }, async () => {
     const j = await settle(server.jobs.submitUpload(Buffer.from(buildSwf({ tags: [tag(TAG.DoAction, [0])] })), 'as2-game.swf', true));
     expect(j.status).toBe('refused');
+    expect(j.stages.some((s) => s.status === 'failed')).toBe(false);
+    expect(j.stages.some((s) => s.status === 'refused')).toBe(true);
     expect(await shoot(j, 'refused')).toContain('This tool converts ActionScript 3 files');
   });
 
