@@ -665,11 +665,40 @@ main:focus {
   }
 }
 
-/* One of the far-off dead (undead.ts): a frame of the silhouette sheet, standing on a ridge of the backdrop. */
+/* The resurrection glow (undead.ts): violet light rising from the ground behind the chapel while the dead
+   come up in front of it. It swells in, breathes while it burns, and dies down again. */
+.scene > .resurrection {
+  left: 15%;
+  top: 25%;
+  width: 30%;
+  aspect-ratio: 1.8;
+  background:
+    radial-gradient(ellipse 50% 42% at 50% 62%, rgba(178, 102, 255, 0.8), rgba(140, 70, 230, 0.38) 45%, transparent 72%),
+    radial-gradient(ellipse 30% 22% at 46% 70%, rgba(214, 160, 255, 0.5), transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 2.4s ease-in-out;
+}
+.scene > .resurrection.is-lit {
+  opacity: 1;
+  animation: resurrect-breathe 2.2s ease-in-out infinite alternate;
+}
+@keyframes resurrect-breathe {
+  from {
+    scale: 0.94;
+    filter: brightness(0.85);
+  }
+  to {
+    scale: 1.04;
+    filter: brightness(1.15);
+  }
+}
+
+/* One of the risen (undead.ts): a frame of the silhouette sheet, standing on a ridge of the backdrop. */
 .scene > .undead {
   aspect-ratio: 100 / 146;
   border-radius: 0;
   background: url('/art/zombie-sheet.png') 0 0 / 1200% 100% no-repeat;
-  /* black like the ridges, with a faint spectral rim so the figure reads against the night sky */
-  filter: brightness(0) drop-shadow(0 0 2px rgba(150, 255, 200, 0.5));
+  /* black like the ridges, edged with the violet light behind them */
+  filter: brightness(0) drop-shadow(0 0 2px rgba(196, 140, 255, 0.65));
 }

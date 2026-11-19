@@ -1,5 +1,6 @@
-// The far-off dead: small silhouettes that climb out of a grave on one of the backdrop's ridges, shamble
-// along it and sink back into the ground somewhere else. Decorative only; nothing here reads or changes
+// A resurrection on the far hill, now and then: a violet glow rises behind the chapel, a few small
+// silhouettes climb out of the graves in front of it, shamble a little way and sink back, and the glow
+// fades. Then the scene is still again for a while. Decorative only; nothing here reads or changes
 // application state.
 
 /** Frames in art/zombie-sheet.png: 0 to 5 climb out of the ground, 6 to 11 are one walk cycle. Faces right. */
@@ -18,23 +19,20 @@ interface Ridge {
   points: ReadonlyArray<readonly [number, number]>;
   /** Figure height as a percentage of the picture height: further ridges carry smaller figures. */
   size: number;
+  /** The stretch of the ridge (fractions by x) lit by the glow, where the dead may come up. */
+  span: readonly [number, number];
 }
 
+/**
+ * Only the chapel hill: the ridge right of the chapel lies behind the page heading at common desktop widths
+ * (measured at 1600 px: heading x 242-777, ridge x 376-632), so figures there were hidden or looked lost.
+ */
 const RIDGES: Ridge[] = [
-  {
-    // the left ridge, from below the chapel down to the valley
-    points: [[24, 29.2], [28, 30.0], [30, 31.3], [32, 32.6], [34, 32.7], [36, 33.9], [40, 35.1], [42, 35.5], [44, 36.7], [46, 37.6], [48, 38.4], [52, 38.6], [54, 39.4], [58, 41.2], [60, 41.4], [62, 42.8]],
-    size: 5.8,
-  },
-  {
-    // the right ridge, from the valley up to the tree
-    points: [[70, 39.7], [72, 39.6], [76, 38.4], [78, 35.6], [80, 35.6], [82, 34.8], [84, 33.2], [86, 32.4], [88, 31.9], [90, 31.6], [92, 31.1], [94, 31.0], [96, 32.2]],
-    size: 5.6,
-  },
   {
     // the chapel hill, further away
     points: [[5, 32.5], [7, 32.0], [9, 30.9], [11, 30.0], [13, 29.3], [15, 28.2]],
     size: 4.4,
+    span: [0.2, 0.95],
   },
 ];
 
@@ -52,7 +50,9 @@ function ridgeAt(r: Ridge, t: number): [number, number] {
   return [x, ay + ((by - ay) * (x - ax)) / (bx - ax) + SINK];
 }
 
-const MAX_AT_ONCE = 3;
+/** Quiet time between two resurrections, and how long the glow burns before the first figure comes up. */
+const QUIET_MS: readonly [number, number] = [11000, 20000];
+const GLOW_LEAD_MS = 1600;
 
 interface Walker {
   el: HTMLElement;
@@ -79,20 +79,28 @@ function show(w: Walker, frame: number): void {
   w.el.style.backgroundPositionX = `${(frame / (FRAMES - 1)) * 100}%`;
 }
 
-/** Starts the wandering dead inside `scene` (the element that has the backdrop's box). Returns a stop function. */
+/** Starts the resurrections inside `scene` (the element that has the backdrop's box). Returns a stop function. */
 export function raiseTheDead(scene: HTMLElement): () => void {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => undefined;
+  // The glow sits first in the scene, so the figures stand in front of it, black against the light.
+  const glow = document.createElement('span');
+  glow.className = 'resurrection';
+  scene.prepend(glow);
   const walkers: Walker[] = [];
-  let nextSpawn = performance.now() + rand(1500, 4000);
+  let lit = false;
+  /** Figures still to come up in this resurrection, and when the next one does. */
+  let toRaise = 0;
+  let nextSpawn = performance.now() + rand(2500, 5000);
   let last = performance.now();
   let handle = 0;
 
   const spawn = (now: number): void => {
     const ridge = RIDGES[Math.floor(Math.random() * RIDGES.length)];
-    const t = rand(0.08, 0.92);
-    // Walk at least a fifth of the ridge, toward whichever end leaves room.
-    const dir = t < 0.3 ? 1 : t > 0.7 ? -1 : Math.random() < 0.5 ? 1 : -1;
-    const target = Math.min(0.96, Math.max(0.04, t + dir * rand(0.22, 0.5)));
+    const [lo, hi] = ridge.span;
+    const t = rand(lo, hi);
+    // A short shamble inside the lit stretch, toward whichever end leaves more room.
+    const dir = t - lo < hi - t ? 1 : -1;
+    const target = Math.min(hi, Math.max(lo, t + dir * rand(0.1, 0.22) * (hi - lo) * 2.5));
     const el = document.createElement('span');
     el.className = 'undead';
     el.style.height = `${ridge.size * rand(0.88, 1.12)}%`;
@@ -109,9 +117,21 @@ export function raiseTheDead(scene: HTMLElement): () => void {
   const step = (now: number): void => {
     const dt = Math.min(0.1, (now - last) / 1000); // a tab that was hidden resumes without a jump
     last = now;
-    if (now >= nextSpawn) {
-      if (walkers.length < MAX_AT_ONCE) spawn(now);
-      nextSpawn = now + rand(5000, 11000);
+    if (!lit && now >= nextSpawn) {
+      // the glow comes up first; the dead follow once it burns
+      lit = true;
+      glow.classList.add('is-lit');
+      toRaise = Math.random() < 0.6 ? 2 : Math.random() < 0.5 ? 1 : 3;
+      nextSpawn = now + GLOW_LEAD_MS;
+    } else if (lit && toRaise > 0 && now >= nextSpawn) {
+      spawn(now);
+      toRaise--;
+      nextSpawn = now + rand(900, 2600);
+    } else if (lit && toRaise === 0 && walkers.length === 0) {
+      // the last one is back in the ground: the glow dies down and the hill is still for a while
+      lit = false;
+      glow.classList.remove('is-lit');
+      nextSpawn = now + rand(...QUIET_MS);
     }
     for (let i = walkers.length - 1; i >= 0; i--) {
       const w = walkers[i];
@@ -154,6 +174,7 @@ export function raiseTheDead(scene: HTMLElement): () => void {
 
   return () => {
     cancelAnimationFrame(handle);
+    glow.remove();
     for (const w of walkers) w.el.remove();
     walkers.length = 0;
   };
