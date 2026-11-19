@@ -10,6 +10,8 @@ export interface PipelineCommand {
   outDir: string;
   workDir: string;
   ffdecJar: string;
+  /** The engine's run limit (`--run-limit`), whole seconds; the server's own kill is only a backstop above it. */
+  runLimitS: number;
 }
 
 /** node --import tsx src/pipeline/cli.ts ...: one Node process, no tsx wrapper process. */
@@ -27,6 +29,8 @@ export function pipelineArgs(c: PipelineCommand): string[] {
     c.workDir,
     '--ffdec',
     c.ffdecJar,
+    '--run-limit',
+    String(c.runLimitS),
   ];
 }
 

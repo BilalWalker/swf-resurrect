@@ -28,7 +28,7 @@ Environment:
 | `PORT` / `--port` | `5180` | Port. |
 | `HOST` / `--host` | `127.0.0.1` | Bind address. Only local by default. |
 | `SWF_RESURRECT_FFDEC` | `tools/ffdec/ffdec-cli.jar` | FFDec jar. If it or Java is missing the page says so and no conversion starts; cached results still open. |
-| `SWF_RESURRECT_TIMEOUT_S` | `180` | Per-job pipeline timeout; the whole process tree is killed. |
+| `SWF_RESURRECT_TIMEOUT_S` | `300` | Per-job run limit, passed to the pipeline as `--run-limit`: the engine stops itself and the job ends refused with reason `time-limit`. The server kills the process tree only 30 s later, as a backstop. 300 equals the engine's own default. |
 | `SWF_RESURRECT_KEEP_HOURS` | `72` | Finished jobs are deleted this long after they ended. `0`: no age limit. |
 | `SWF_RESURRECT_KEEP_MB` | `2048` | Most disk space all job directories may use; oldest jobs go first. `0`: no limit. |
 | `SWF_RESURRECT_KEEP_JOBS` | `100` | Most job directories kept; oldest go first. `0`: no limit. |

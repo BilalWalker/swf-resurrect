@@ -96,6 +96,22 @@ describe.skipIf(skipReason !== null)('web jobs per Outcome', () => {
     expect(text.outcome?.reasonCode).toBe('not-swf');
   });
 
+  it('refused time-limit: the engine sentence, not a server kill', { timeout: 120_000 }, async () => {
+    const dir = resolve(REPO_ROOT, '.work', `test-web-limit-${process.pid}`);
+    await mkdir(dir, { recursive: true });
+    const tight = await startServer(testServerOptions({ timeoutMs: 1000, ffdecJar: jar }), { runsDir: dir });
+    try {
+      const { id } = await tight.jobs.submitSample('tweendemo', true);
+      const j = await tight.jobs.whenSettled(id);
+      expect(j?.status, JSON.stringify(j?.error)).toBe('refused');
+      expect(j?.outcome).toMatchObject({ outcome: 'refused', reasonCode: 'time-limit', runLimitS: 1 });
+      expect(j?.outcome?.reason).toMatch(/time limit|limit/);
+    } finally {
+      await tight.close();
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('failed: Java gone after start-up gives internal-error with a reference id', { timeout: 120_000 }, async () => {
     // The setup check already found Java; the pipeline child inherits this PATH and cannot start FFDec.
     const saved = process.env.PATH;

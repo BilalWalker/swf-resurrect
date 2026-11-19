@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseServerOptions } from '../../web/server/options';
+import { BACKSTOP_MARGIN_S, backstopMs, parseServerOptions } from '../../web/server/options';
+import { pipelineArgs } from '../../web/server/processTree';
 
 const root = join('/', 'repo');
 
@@ -12,7 +13,7 @@ describe('parseServerOptions', () => {
         port: 5180,
         host: '127.0.0.1',
         dev: false,
-        timeoutMs: 180_000,
+        timeoutMs: 300_000,
         ffdecJar: join(root, 'tools', 'ffdec', 'ffdec-cli.jar'),
         retention: { maxAgeMs: 72 * 3600_000, maxTotalBytes: 2048 * 1024 * 1024, maxJobs: 100, orphanGraceMs: 3600_000 },
         sweepIntervalMs: 600_000,
@@ -84,5 +85,14 @@ describe('parseServerOptions', () => {
     ] as const) {
       expect(parseServerOptions(argv, env, root).ok).toBe(false);
     }
+  });
+
+  it('passes the run limit to the pipeline and kills only after the backstop margin', () => {
+    const r = parseServerOptions([], { SWF_RESURRECT_TIMEOUT_S: '240' }, root);
+    if (!r.ok) throw new Error(r.message);
+    const args = pipelineArgs({ repoRoot: root, swfPath: 'a.swf', outDir: 'o', workDir: 'w', ffdecJar: 'f.jar', runLimitS: r.options.timeoutMs / 1000 });
+    expect(args.slice(args.indexOf('--run-limit'), args.indexOf('--run-limit') + 2)).toEqual(['--run-limit', '240']);
+    expect(backstopMs(r.options.timeoutMs)).toBe(240_000 + BACKSTOP_MARGIN_S * 1000);
+    expect(BACKSTOP_MARGIN_S).toBeGreaterThan(0);
   });
 });

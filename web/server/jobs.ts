@@ -13,6 +13,7 @@ import { join, relative, sep } from 'node:path';
 import type { ChildProcess } from 'node:child_process';
 import type { JobSummary, LogLine, SampleInfo, SetupStatus, SourceFile } from '../shared/api';
 import { abort, applyLine, buildFinished, initialState, pipelineExited, start } from './jobState';
+import { backstopMs } from './options';
 import { readOutcomeFile } from './outcome';
 import type { JobState } from './jobState';
 import { javaAvailable, killTree, spawnPipeline } from './processTree';
@@ -30,6 +31,7 @@ export interface JobManagerOptions {
   repoRoot: string;
   runsDir: string;
   ffdecJar: string;
+  /** The run limit given to the pipeline (`--run-limit`); the server's own kill comes later (backstopMs). */
   timeoutMs: number;
   /** Most jobs waiting at once; further submissions are refused. */
   maxQueued?: number;
@@ -507,12 +509,15 @@ export class JobManager {
     const workDir = join(job.dir, 'work');
     const exit = await new Promise<{ code: number | null; reason?: string }>((resolveExit) => {
       let reason: string | undefined;
-      const child = spawnPipeline({ repoRoot: this.opts.repoRoot, swfPath: job.swfPath, outDir, workDir, ffdecJar: this.opts.ffdecJar });
+      const runLimitS = Math.max(1, Math.round(this.opts.timeoutMs / 1000));
+      const child = spawnPipeline({ repoRoot: this.opts.repoRoot, swfPath: job.swfPath, outDir, workDir, ffdecJar: this.opts.ffdecJar, runLimitS });
       job.child = child;
+      // Backstop only: the engine stops at runLimitS and reports `refused time-limit` itself.
+      const killAfterMs = backstopMs(runLimitS * 1000);
       const timer = setTimeout(() => {
-        reason = `timed out after ${this.opts.timeoutMs / 1000} s; the pipeline was stopped`;
+        reason = `the conversion did not stop at its ${runLimitS} s limit and was ended by the server after ${killAfterMs / 1000} s`;
         killTree(child);
-      }, this.opts.timeoutMs);
+      }, killAfterMs);
       const pending = { stdout: '', stderr: '' };
       const onData = (stream: 'stdout' | 'stderr') => (chunk: Buffer) => {
         const { lines, rest } = splitLines(pending[stream], chunk.toString('utf8'));

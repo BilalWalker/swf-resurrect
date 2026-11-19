@@ -8,7 +8,10 @@ export interface ServerOptions {
   port: number;
   host: string;
   dev: boolean;
-  /** Per-job pipeline timeout. */
+  /**
+   * Per-job run limit. Passed to the pipeline as `--run-limit`, so the engine stops itself and
+   * reports `refused time-limit`; the server kills the process only BACKSTOP_MARGIN_S later.
+   */
   timeoutMs: number;
   ffdecJar: string;
   /** When old job directories are deleted. */
@@ -28,7 +31,23 @@ export interface ServerOptions {
 export type ParsedOptions = { ok: true; options: ServerOptions } | { ok: false; message: string };
 
 export const DEFAULT_PORT = 5180;
-export const DEFAULT_TIMEOUT_S = 180;
+/**
+ * Equal to the engine's default run limit (src/pipeline/limits.ts), so the CLI and the web app
+ * give the same verdict on the same file. A 9 MB game takes about 130 s without Verify on the
+ * development machine; Verify adds to that, and the old 180 s left too little room.
+ */
+export const DEFAULT_TIMEOUT_S = 300;
+/**
+ * Seconds the server waits past the run limit before it kills the process tree itself. The engine
+ * checks its limit with a timer that a long synchronous stage can delay, then stops FFDec and the
+ * browser and writes outcome.json; 30 s covers that and Node's start-up before the run clock starts.
+ */
+export const BACKSTOP_MARGIN_S = 30;
+
+/** When the server kills a job that the engine did not stop at its own run limit. */
+export function backstopMs(runLimitMs: number): number {
+  return runLimitMs + BACKSTOP_MARGIN_S * 1000;
+}
 export const DEFAULT_SWEEP_MINUTES = 10;
 export const DEFAULT_RATE_LIMIT: RateLimit = { burst: 3, perHour: 10 };
 export const USAGE =
