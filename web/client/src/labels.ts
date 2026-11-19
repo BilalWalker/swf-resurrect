@@ -46,5 +46,5 @@ export function reasonText(code: string): string {
  */
 export function uploadLimits(maxMb: number, timeoutSeconds: number): string {
   const limit = timeoutSeconds >= 120 && timeoutSeconds % 60 === 0 ? `${timeoutSeconds / 60} min` : `${timeoutSeconds} s`;
-  return `ActionScript 3 .swf only, up to ${maxMb} MB. Most files take under a minute; large games a few minutes (limit ${limit}).`;
+  return `ActionScript 3 .swf, up to ${maxMb} MB. Usually under a minute, at most ${limit}.`;
 }
