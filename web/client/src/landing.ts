@@ -179,6 +179,26 @@ function graspingHand(el: HTMLElement): GraspingHand {
   };
 }
 
+/**
+ * What each bundled sample is, in plain words for the hover plaque: the folder names come from the upstream
+ * test suites and mean little to a visitor. Written from each sample's PROVENANCE.md (what the SWF contains
+ * and its expected behaviour). A sample missing here simply shows no line.
+ */
+const SAMPLE_NOTES: Readonly<Record<string, string>> = {
+  '3_joystick': 'A joystick ball you drag with the mouse',
+  'acid-color-2': 'A still picture of coloured shapes',
+  click_block: 'Click anywhere and it reports where',
+  clickgoto: 'Two buttons that swap frames when clicked',
+  entity_game: 'Entity Asteroids, a small game',
+  gradients: 'Two linear colour gradients',
+  mask_reapply: 'Two shapes cut out by masks',
+  radial: 'A radial colour gradient',
+  slider_component: 'A Flash slider you drag',
+  spacer: 'Spacer, a small game',
+  static_text: 'Text set in an embedded font',
+  tweendemo: 'A shape gliding and growing, plus two buttons',
+};
+
 /** What a conversion gives you, in the words the result screen itself uses. */
 const FEATURES: ReadonlyArray<readonly [string, string]> = [
   ['A real project, not a player', 'TypeScript source with Vite and PixiJS that you can read, change and build. Take it home as a zip.'],
@@ -328,6 +348,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
   for (const [i, s] of samples.entries()) {
     const credit = [s.author, s.licence].filter((x) => x !== null).join(' · ');
     const risen = s.cachedJobId !== null;
+    const note = SAMPLE_NOTES[s.name] ?? null;
     // The name may break after "_" or "-"; its size follows its longest part so it fits the stone's face.
     const parts = s.name.split(/(?<=[_-])/);
     const longest = Math.max(...parts.map((p) => p.length));
@@ -336,7 +357,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       {
         type: 'button',
         class: `stone stone-v${stoneShape(i, parts.length)}${risen ? ' is-risen' : ''}`,
-        'aria-label': `Convert sample ${s.name}, ${formatBytes(s.bytes)}${credit !== '' ? `, ${credit}` : ''}${risen ? ', result ready' : ''}`,
+        'aria-label': `Convert sample ${s.name}${note !== null ? `: ${note}` : ''}, ${formatBytes(s.bytes)}${credit !== '' ? `, ${credit}` : ''}${risen ? ', result ready' : ''}`,
       },
       h(
         'span',
@@ -348,6 +369,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       h(
         'span',
         { class: 'stone-plaque', 'aria-hidden': 'true' },
+        note !== null ? h('span', { class: 'stone-note' }, note) : null,
         risen ? h('span', { class: 'stone-risen' }, 'Risen before: opens at once') : null,
         credit !== '' ? h('span', { class: 'stone-credit' }, credit) : null,
       ),
