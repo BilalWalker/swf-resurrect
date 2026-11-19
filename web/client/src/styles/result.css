@@ -594,3 +594,73 @@ tbody tr:last-child td {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---- Outcome: gaps, refused, failed ---- */
+.gap-panel {
+  margin: 0 0 24px;
+  padding: 14px 18px;
+  border: 1px solid var(--night-4);
+  border-left: 3px solid #e8c56a;
+  border-radius: 8px;
+  background: rgba(16, 22, 31, 0.9);
+}
+
+.gap-panel h3 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+}
+
+.gap-panel.is-few {
+  border-left-color: var(--ember);
+}
+
+.gap-warning {
+  color: #ffd9d2;
+  font-weight: 600;
+}
+
+.gap-list {
+  margin: 8px 0 0;
+  padding-left: 1.2em;
+}
+
+.gap-list li + li {
+  margin-top: 2px;
+}
+
+.gap-classes {
+  font-weight: 600;
+}
+
+.outcome {
+  margin-bottom: 20px;
+}
+
+.outcome.is-refused,
+.outcome.is-failed {
+  border-color: rgba(255, 154, 138, 0.45);
+}
+
+.outcome-reason {
+  font-size: clamp(1.5rem, 4vw, 2.3rem);
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+
+.outcome-reason::first-letter {
+  text-transform: uppercase;
+}
+
+.outcome-hint {
+  font-size: 1.05rem;
+  margin: 0 0 18px;
+}
+
+.outcome-sentence::first-letter {
+  text-transform: uppercase;
+}
+
+.outcome-ref code {
+  color: var(--bone);
+  font-size: 1.05em;
+}

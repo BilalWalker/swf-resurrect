@@ -7,6 +7,7 @@ import { EKG, moonGauge } from './art';
 import { h, pct, svg } from './dom';
 import { renderGrimoire } from './grimoire';
 import { reasonText } from './labels';
+import { gapPanel } from './outcomeView';
 
 function gauge(title: string, measures: string, score: ScoreSummary | null, missing: string): HTMLElement {
   const value = score?.value ?? null;
@@ -317,6 +318,7 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
     return;
   }
 
+  const gaps = gapPanel(job);
   container.replaceChildren(
     h(
       'section',
@@ -327,8 +329,14 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
         h(
           'div',
           { class: 'alive-text' },
-          h('h2', { id: 'alive-title', class: 'alive-title', tabindex: '-1' }, 'It lives.'),
-          h('p', { class: 'alive-sub' }, `${job.name} is now a TypeScript + Vite + PixiJS project.`),
+          h('h2', { id: 'alive-title', class: 'alive-title', tabindex: '-1' }, gaps === null ? 'It lives.' : 'It lives, with gaps.'),
+          h(
+            'p',
+            { class: 'alive-sub' },
+            gaps === null
+              ? `${job.name} is now a TypeScript + Vite + PixiJS project.`
+              : `${job.name} is now a TypeScript + Vite + PixiJS project, with parts missing.`,
+          ),
         ),
         svg(EKG),
         h(
@@ -341,6 +349,7 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
           h('a', { class: 'btn', href: '#/' }, 'Raise another'),
         ),
       ),
+      gaps,
       h(
         'div',
         { class: 'vitals', role: 'group', 'aria-label': 'Soul match and counts' },

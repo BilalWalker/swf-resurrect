@@ -3,7 +3,7 @@
 import type { JobSummary, LogLine, ResetEvent } from '../../shared/api';
 import { api, ApiFailure, jobUrl } from './api';
 import { announce, fill, h } from './dom';
-import { RITES } from './labels';
+import { failedView, refusedView } from './outcomeView';
 import { Ritual } from './ritual';
 
 export interface JobDeps {
@@ -29,6 +29,7 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
   let timer: number | null = null;
   let job: JobSummary | null = null;
   let resultShown = false;
+  let failureAnnounced = false;
 
   const title = h('h1', { class: 'job-title' }, '...');
   const meta = h('p', { class: 'job-meta' });
@@ -101,30 +102,17 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
   };
 
   const renderFailure = (j: JobSummary): void => {
-    if (j.status !== 'failed' || j.error === null) {
+    // Shown once the job has really ended: an error line can arrive before the outcome is read.
+    if (j.status !== 'failed' || j.finishedAt === null) {
       failure.hidden = true;
       return;
     }
-    const e = j.error;
     failure.hidden = false;
-    failure.className = 'failure panel';
+    failure.className = 'failure';
     fill(
       failure,
-      h('p', { class: 'eyebrow is-ember' }, 'The ritual failed'),
-      h('h2', {}, `It would not rise: ${RITES[e.stage].rite} `, h('code', {}, `(${e.stage})`), ' failed.'),
-      e.reportedStage !== null && e.reportedStage !== e.stage
-        ? h('p', { class: 'muted' }, 'The pipeline reported the stage as ', h('code', {}, e.reportedStage), '.')
-        : null,
-      h('pre', { class: 'failure-message' }, e.message),
-      h(
-        'div',
-        { class: 'actions' },
-        h('button', { class: 'btn btn-primary', type: 'button', onclick: rerun }, 'Try the ritual again'),
-        h('a', { class: 'btn', href: '#/' }, 'Back to the graveyard'),
-      ),
-      j.results !== null
-        ? h('p', { class: 'muted' }, 'Reports written before the failure are listed below.')
-        : null,
+      failedView(j, { rerun }),
+      j.results !== null ? h('p', { class: 'muted' }, 'Reports written before the failure are listed below.') : null,
     );
     if (j.results !== null && !resultShown) {
       resultShown = true;
@@ -168,7 +156,7 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
     } else queue.hidden = true;
 
     // Settled once the server has finished the job (a failure line can arrive before the process ends).
-    const final = (j.status === 'succeeded' || j.status === 'failed') && j.finishedAt !== null;
+    const final = (j.status === 'succeeded' || j.status === 'refused' || j.status === 'failed') && j.finishedAt !== null;
     if (final) {
       es?.close();
       es = null;
@@ -184,8 +172,15 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
       deps.renderResult(result, j, { rerun });
       if (was !== undefined && was !== 'succeeded') announce(`It lives. ${j.name} was converted.`);
     }
-    if (j.status === 'failed' && was !== undefined && was !== 'failed' && j.error !== null) {
-      announce(`The ritual failed at ${RITES[j.error.stage].rite} (${j.error.stage}): ${j.error.message}`);
+    if (j.status === 'refused' && j.finishedAt !== null && !resultShown) {
+      resultShown = true;
+      head.classList.add('is-compact');
+      result.replaceChildren(refusedView(j, { rerun }));
+      if (was !== undefined && was !== 'refused') announce(`Not converted: ${j.outcome?.reason ?? 'the file was refused'}.`);
+    }
+    if (j.status === 'failed' && j.finishedAt !== null && !failureAnnounced && was !== undefined) {
+      failureAnnounced = true;
+      announce(`Something went wrong on our side${j.outcome?.referenceId ? `, reference ${j.outcome.referenceId}` : ''}.`);
     }
   };
 
