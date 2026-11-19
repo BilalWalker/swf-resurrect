@@ -409,13 +409,15 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       ),
       setup.uploadsEnabled ? h('div', {}, zone, input, status) : h('div', {}, uploadsOff(), status),
     ),
+    // a skull on a glowing line between the hero and the yard
+    h('div', { class: 'divider', 'aria-hidden': 'true' }, h('span', { class: 'divider-skull' })),
     h(
       'section',
       { class: 'yard', id: 'examples', 'aria-labelledby': 'yard-title' },
       h(
         'div',
         { class: 'yard-head' },
-        h('h2', { id: 'yard-title' }, 'Or wake one of the resident dead'),
+        h('h2', { id: 'yard-title' }, 'Or Wake One of the Resident Dead'),
         h('p', {}, 'Samples with documented provenance. Pick a stone to convert it. Glowing stones have risen before and open at once.'),
       ),
       samples.length === 0 ? h('p', { class: 'yard-empty' }, 'The yard is empty: no samples/*/test.swf on this server.') : stones,

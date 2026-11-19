@@ -226,8 +226,69 @@
 }
 
 .yard-head h2 {
-  font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+  font-size: clamp(1.6rem, 3.1vw, 2.35rem);
   margin: 0;
+}
+
+/* Section headings carry a thin ornament on each side: a fading line ending in a small diamond. */
+.yard-head h2,
+.section-head h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+}
+.yard-head h2::before,
+.yard-head h2::after,
+.section-head h2::before,
+.section-head h2::after {
+  content: '';
+  flex: none;
+  width: clamp(28px, 6vw, 80px);
+  height: 7px;
+  background:
+    linear-gradient(45deg, transparent 40%, var(--spectral-deep) 40% 60%, transparent 60%) right center / 7px 7px no-repeat,
+    linear-gradient(90deg, transparent, var(--spectral-deep)) left center / calc(100% - 9px) 1px no-repeat;
+}
+.yard-head h2::after,
+.section-head h2::after {
+  transform: scaleX(-1);
+}
+
+/* ---- The divider between hero and yard: a skull (cut from the user's ghoul painting) on a line of light. ---- */
+.divider {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 56px;
+  margin: 0 auto 18px;
+  max-width: 900px;
+}
+.divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--spectral-deep) 30%, var(--spectral) 50%, var(--spectral-deep) 70%, transparent);
+  box-shadow: 0 0 10px rgba(126, 242, 184, 0.35);
+}
+.divider-skull {
+  position: relative;
+  width: 62px;
+  aspect-ratio: 140 / 112;
+  background: url('/art/skull.webp') center / contain no-repeat;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 55%, transparent 100%);
+  filter: drop-shadow(0 0 8px rgba(126, 242, 184, 0.4));
+}
+.divider-skull::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  background: radial-gradient(circle, rgba(126, 242, 184, 0.25), transparent 65%);
 }
 
 .yard-head p {
