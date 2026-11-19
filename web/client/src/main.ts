@@ -20,6 +20,21 @@ function decorate(): void {
       el.className = c;
       scene.append(el);
     }
+    // Candle light flickering in the painted jack-o'-lanterns and the lantern: [class, x %, y %, width %],
+    // measured on the backdrop. Each gets its own pace so they never pulse together.
+    const flames: Array<[string, number, number, number]> = [
+      ['pumpkin-glow', 7.3, 46.2, 4], ['pumpkin-glow', 7.6, 52.1, 5.5], ['pumpkin-glow', 7.8, 59.5, 7],
+      ['pumpkin-glow', 92.7, 46.2, 4], ['pumpkin-glow', 92.7, 52.1, 5.5], ['pumpkin-glow', 92.7, 59.5, 7],
+      ['pumpkin-glow', 26.1, 30.5, 2.6], ['pumpkin-glow', 32.1, 33.5, 2.6], ['pumpkin-glow', 40.5, 36.2, 2.6],
+      ['pumpkin-glow', 78.2, 37.8, 2.6], ['pumpkin-glow', 86.9, 33.7, 2.6],
+      ['lantern-glow', 91.0, 25.7, 2.4],
+    ];
+    for (const [c, x, y, w] of flames) {
+      const el = document.createElement('span');
+      el.className = c;
+      el.style.cssText = `left:${x}%;top:${y}%;width:${w}%;animation-duration:${(2.6 + Math.random() * 2.4).toFixed(2)}s;animation-delay:-${(Math.random() * 4).toFixed(2)}s`;
+      scene.append(el);
+    }
     sky.prepend(scene);
     raiseTheDead(scene);
     sky.append(svg(HORIZON), svg(BAT));

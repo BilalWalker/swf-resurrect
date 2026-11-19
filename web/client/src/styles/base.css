@@ -665,6 +665,45 @@ main:focus {
   }
 }
 
+/* Candle light in the painted jack-o'-lanterns and the green lantern (main.ts places them and sets each
+   one's pace): a warm glow laid over the painting that breathes and gutters unevenly. */
+.scene > .pumpkin-glow,
+.scene > .lantern-glow {
+  aspect-ratio: 1;
+  mix-blend-mode: screen;
+  animation: flame 4s ease-in-out infinite;
+}
+.scene > .pumpkin-glow {
+  background: radial-gradient(circle, rgba(255, 168, 70, 0.55) 0 18%, rgba(255, 120, 30, 0.22) 42%, transparent 70%);
+}
+.scene > .lantern-glow {
+  background: radial-gradient(circle, rgba(150, 255, 160, 0.6) 0 16%, rgba(90, 230, 120, 0.22) 42%, transparent 70%);
+}
+@keyframes flame {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  18% {
+    opacity: 1;
+  }
+  31% {
+    opacity: 0.55;
+  }
+  37% {
+    opacity: 0.9;
+  }
+  58% {
+    opacity: 0.65;
+  }
+  64% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 0.45;
+  }
+}
+
 /* One of the risen (undead.ts): a frame of the silhouette sheet, standing on a ridge of the backdrop. */
 .scene > .undead {
   aspect-ratio: 100 / 146;
