@@ -86,14 +86,16 @@ describe.skipIf(skipReason !== null)('web jobs per Outcome', () => {
     expect(left).not.toContain('package.json');
   });
 
-  it('refused damaged and not-swf', { timeout: 120_000 }, async () => {
+  it('refused damaged and not-swf: the bytes are not served to Ruffle', { timeout: 120_000 }, async () => {
     const damaged = await upload(cut(buildSwf({ tags: [tag(TAG.FileAttributes, [8, 0, 0, 0])] }), 12), 'cut.swf');
     expect(damaged.status).toBe('refused');
     expect(damaged.outcome?.reasonCode).toBe('damaged');
+    expect((await get(`/api/jobs/${damaged.id}/swf`)).status).toBe(404);
     // The HTTP route refuses non-SWF bytes with 415; the manager is called directly to reach the engine.
     const text = await upload(new TextEncoder().encode('this is a plain text file, not a movie'), 'text.swf');
     expect(text.status).toBe('refused');
     expect(text.outcome?.reasonCode).toBe('not-swf');
+    expect((await get(`/api/jobs/${text.id}/swf`)).status).toBe(404);
   });
 
   it('refused time-limit: the engine sentence, not a server kill', { timeout: 120_000 }, async () => {

@@ -252,6 +252,9 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
     }
 
     if (rest === 'swf') {
+      // Only a readable SWF goes to the Ruffle panel; bytes the engine found not a SWF or damaged stay on the server.
+      const code = job.state.outcome?.reasonCode;
+      if (code === 'not-swf' || code === 'damaged') return sendError(res, 404, 'This file cannot be played.');
       return sendFile(req, res, dirs.swf, { cors: true, type: 'application/x-shockwave-flash' });
     }
 

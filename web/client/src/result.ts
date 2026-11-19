@@ -1,5 +1,5 @@
-// The result: "It lives." Scores as moon gauges (the number always printed), the ghost
-// (original in Ruffle) beside the risen (converted project), then the autopsy (fidelity report),
+// The result: "It lives." Scores as moon gauges (the number always printed), the original (in
+// Ruffle) beside the converted project, then the autopsy (fidelity report),
 // what stayed in the grave (unsupported features and classes) and the grimoire (source).
 import type { JobSummary, ResultSummary, ScoreSummary } from '../../shared/api';
 import { jobUrl } from './api';
@@ -7,7 +7,9 @@ import { EKG, moonGauge } from './art';
 import { h, pct, svg } from './dom';
 import { renderGrimoire } from './grimoire';
 import { reasonText } from './labels';
+import { stageAspect } from './outcomeText';
 import { gapPanel } from './outcomeView';
+import { playerPair } from './players';
 
 function gauge(title: string, measures: string, score: ScoreSummary | null, missing: string): HTMLElement {
   const value = score?.value ?? null;
@@ -64,82 +66,6 @@ function graveTile(r: ResultSummary, show: () => void): HTMLElement {
       n === null ? 'No unsupported-features list was written.' : `unsupported feature${n === 1 ? '' : 's'} listed. `,
       n !== null ? h('button', { type: 'button', class: 'linkish', onclick: show }, 'See the list') : null,
     ),
-  );
-}
-
-function aspect(r: ResultSummary): string {
-  return r.stage === null ? '550 / 400' : `${r.stage.width} / ${r.stage.height}`;
-}
-
-function seance(job: JobSummary, r: ResultSummary): HTMLElement {
-  const ghostFrame = (): HTMLIFrameElement =>
-    h('iframe', {
-      src: jobUrl.ruffle(job.id),
-      title: `Original ${job.name}, played by Ruffle`,
-      sandbox: 'allow-scripts',
-      referrerpolicy: 'no-referrer',
-      loading: 'lazy',
-    });
-  const risenFrame = (): HTMLIFrameElement =>
-    h('iframe', {
-      src: jobUrl.app(job.id),
-      title: `Converted ${job.name}, the built TypeScript project`,
-      sandbox: 'allow-scripts',
-      referrerpolicy: 'no-referrer',
-      loading: 'lazy',
-    });
-  const build = job.stages.find((s) => s.key === 'build');
-  const ghostBox = h('div', { class: 'screen', style: `aspect-ratio: ${aspect(r)}` }, ghostFrame());
-  const risenBox = h(
-    'div',
-    { class: 'screen', style: `aspect-ratio: ${aspect(r)}` },
-    job.artifacts.app
-      ? risenFrame()
-      : h(
-          'p',
-          { class: 'screen-empty' },
-          'The body would not rise: the preview build failed',
-          build?.detail ? `: ${build.detail}` : '.',
-          ' The project zip is still complete.',
-        ),
-  );
-  const restart = (): void => {
-    ghostBox.replaceChildren(ghostFrame());
-    if (job.artifacts.app) risenBox.replaceChildren(risenFrame());
-  };
-  return h(
-    'section',
-    { class: 'seance', 'aria-labelledby': 'seance-title' },
-    h(
-      'div',
-      { class: 'seance-head' },
-      h('h3', { id: 'seance-title' }, 'Side by side'),
-      h(
-        'div',
-        { class: 'actions' },
-        h('button', { type: 'button', class: 'btn btn-small', onclick: restart }, 'Restart both'),
-        job.artifacts.app
-          ? h('a', { class: 'btn btn-small', href: jobUrl.app(job.id), target: '_blank', rel: 'noopener noreferrer' }, 'Open the risen in a new tab')
-          : null,
-      ),
-    ),
-    h(
-      'div',
-      { class: 'pair' },
-      h(
-        'figure',
-        { class: 'side is-ghost' },
-        h('figcaption', {}, h('span', { class: 'side-name' }, 'The ghost'), h('span', { class: 'side-sub' }, 'the original SWF, emulated by Ruffle')),
-        ghostBox,
-      ),
-      h(
-        'figure',
-        { class: 'side is-risen' },
-        h('figcaption', {}, h('span', { class: 'side-name' }, 'The risen'), h('span', { class: 'side-sub' }, 'the converted TypeScript + PixiJS project')),
-        risenBox,
-      ),
-    ),
-    h('p', { class: 'muted small' }, 'Both run sandboxed: no access to this page, your cookies or other sites. Browsers keep sound off until you click a frame.'),
   );
 }
 
@@ -358,7 +284,7 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
         classesTile(r),
         graveTile(r, () => t.select('grave')),
       ),
-      seance(job, r),
+      playerPair(job, stageAspect(r.stage, job.outcome)),
       t.el,
     ),
   );

@@ -2,7 +2,7 @@
 // middleware, the client source as it is). The job API and its event stream are answered by the
 // test, so no pipeline runs; `numbers: null` and `facts: null` cases are included. Screenshots go to
 // .work/ui-states/ for review.
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Page } from 'playwright';
@@ -90,9 +90,15 @@ async function open(j: JobSummary, shot: string): Promise<Page> {
     r.fulfill({ status: 200, contentType: 'text/event-stream', body: `event: reset\ndata: ${JSON.stringify({ job: j, log: [] })}\n\n` }),
   );
   await page.route(`**/api/jobs/${j.id}/app/**`, (r) => r.fulfill({ contentType: 'text/html', body: '<!doctype html><body style="background:#123">converted</body>' }));
-  await page.route(`**/api/jobs/${j.id}/swf`, (r) => r.fulfill({ status: 404, body: '' }));
+  // A real sample plays in the Ruffle panel (CORS: the Ruffle frame is an opaque origin).
+  const swf = await readFile(join(REPO_ROOT, 'samples', 'clickgoto', 'test.swf'));
+  await page.route(`**/api/jobs/${j.id}/swf`, (r) =>
+    r.fulfill({ body: swf, contentType: 'application/x-shockwave-flash', headers: { 'Access-Control-Allow-Origin': '*' } }),
+  );
   await page.goto(`${server.url}/#/job/${j.id}`);
   await page.waitForSelector('.result-slot > *, .failure:not([hidden])', { timeout: 30_000 });
+  // Give Ruffle a moment to draw the first frame before the screenshot.
+  if ((await page.locator('.is-original').count()) > 0) await page.waitForTimeout(3000);
   await page.screenshot({ path: join(SHOTS, `${shot}.png`), fullPage: true });
   return page;
 }
@@ -103,6 +109,8 @@ describe('result page per Outcome (Chromium)', () => {
     expect(await page.textContent('.alive-title')).toBe('It lives.');
     expect(await page.locator('.gap-panel').count()).toBe(0);
     expect(await page.locator('a[download]').count()).toBe(1);
+    expect(await page.locator('.is-original .side-name').textContent()).toBe('Original (Flash, played by Ruffle)');
+    expect(await page.locator('.is-converted .side-name').textContent()).toBe('Converted (TypeScript + PixiJS)');
     await page.close();
   });
 
@@ -159,6 +167,25 @@ describe('result page per Outcome (Chromium)', () => {
     expect(await page.textContent('.outcome-hint')).toContain('This tool converts ActionScript 3 files');
     expect(await page.locator('a[download]').count()).toBe(0);
     expect(await page.locator('iframe[src*="/app/"]').count()).toBe(0);
+    // The Ruffle panel is the only player, and says it is the original.
+    expect(await page.locator('.is-original .side-name').textContent()).toBe('Original (Flash, played by Ruffle)');
+    expect(await page.locator('iframe[src*="ruffle-frame.html"]').count()).toBe(1);
+    expect(await page.locator('.is-converted').count()).toBe(0);
+    await page.close();
+  });
+
+  it('refused not-swf: no player at all', { timeout: 60_000 }, async () => {
+    const page = await open(
+      job(id(7), {
+        status: 'refused',
+        stages: stages(['failed']),
+        artifacts: { app: false, report: false, project: false, sourceFiles: 0 },
+        outcome: outcome({ outcome: 'refused', reasonCode: 'not-swf', reason: 'the file is not a SWF', numbers: null, facts: null }),
+      }),
+      'refused-not-swf',
+    );
+    expect(await page.textContent('.outcome-hint')).toContain('.swf');
+    expect(await page.locator('iframe').count()).toBe(0);
     await page.close();
   });
 
@@ -177,6 +204,7 @@ describe('result page per Outcome (Chromium)', () => {
     expect(text).toContain('Something went wrong on our side');
     expect(text).toContain('3fa9c01e');
     expect(await page.locator('.failure pre').count()).toBe(0);
+    expect(await page.locator('.failure .is-original .side-name').textContent()).toBe('Original (Flash, played by Ruffle)');
     expect(await page.locator('a[download]').count()).toBe(0);
     await page.close();
   });

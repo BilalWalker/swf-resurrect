@@ -2,7 +2,13 @@
 // converted-with-gaps run, and the refused and failed states.
 import type { JobSummary } from '../../shared/api';
 import { h } from './dom';
-import { classLine, fewTranslated, gapLines, refusalHint } from './outcomeText';
+import { classLine, fewTranslated, gapLines, originalPlayable, refusalHint, stageAspect } from './outcomeText';
+import { originalOnly } from './players';
+
+/** The original in Ruffle when the engine found it a readable SWF; null otherwise. */
+function original(job: JobSummary): HTMLElement | null {
+  return originalPlayable(job.outcome) ? originalOnly(job, stageAspect(job.results?.stage ?? null, job.outcome)) : null;
+}
 
 /**
  * The gaps of a converted-with-gaps run, in plain words. Null for any other outcome. Says plainly
@@ -51,6 +57,7 @@ export function refusedView(job: JobSummary, deps: { rerun(): void }): HTMLEleme
       o?.reasonCode === 'time-limit' ? h('button', { class: 'btn', type: 'button', onclick: deps.rerun }, 'Try again') : null,
       h('a', { class: 'btn btn-primary', href: '#/' }, 'Choose another file'),
     ),
+    original(job),
   );
 }
 
@@ -75,5 +82,6 @@ export function failedView(job: JobSummary, deps: { rerun(): void }): HTMLElemen
       h('button', { class: 'btn btn-primary', type: 'button', onclick: deps.rerun }, 'Try again'),
       h('a', { class: 'btn', href: '#/' }, 'Back to the graveyard'),
     ),
+    original(job),
   );
 }
