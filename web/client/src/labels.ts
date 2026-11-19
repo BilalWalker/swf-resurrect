@@ -39,3 +39,12 @@ const REASONS: Record<string, string> = {
 export function reasonText(code: string): string {
   return REASONS[code] ?? 'See the fidelity report for details.';
 }
+
+/**
+ * What a file must be and how long it takes, from the server's own limits. Small samples convert in
+ * 10 to 30 s here; a 9 MB game took about 130 s without Verify on the development machine.
+ */
+export function uploadLimits(maxMb: number, timeoutSeconds: number): string {
+  const limit = timeoutSeconds >= 120 && timeoutSeconds % 60 === 0 ? `${timeoutSeconds / 60} min` : `${timeoutSeconds} s`;
+  return `ActionScript 3 .swf only, up to ${maxMb} MB. Most files take under a minute; large games a few minutes (limit ${limit}).`;
+}

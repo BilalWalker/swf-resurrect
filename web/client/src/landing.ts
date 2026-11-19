@@ -2,7 +2,7 @@
 import type { SampleInfo, SetupStatus } from '../../shared/api';
 import { api, ApiFailure } from './api';
 import { formatBytes, h, svg } from './dom';
-import { RITES } from './labels';
+import { RITES, uploadLimits } from './labels';
 
 export interface LandingDeps {
   openJob(id: string): void;
@@ -241,7 +241,8 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
     h(
       'p',
       { class: 'drop-hint', id: 'drop-hint' },
-      `Drop a file, or press Enter to choose one. ActionScript 3 only, up to ${maxMb} MB.`,
+      'Drop a file, or press Enter to choose one. ',
+      h('span', { class: 'drop-limits' }, uploadLimits(maxMb, setup.timeoutSeconds)),
     ),
   );
 
