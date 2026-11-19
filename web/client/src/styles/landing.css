@@ -423,7 +423,7 @@
   --face-w: calc(var(--sw) * 0.62);
 }
 .stone-v2 .stone-face {
-  inset: 22% 17% 59% 18%;
+  inset: 26% 19% 59% 20%;
 }
 .stone-v2 .here-lies {
   display: none;
