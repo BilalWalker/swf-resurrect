@@ -80,6 +80,18 @@ describe('buildClassesTs', () => {
   });
 });
 
+describe('planEmit with a D5 fallback class', () => {
+  it('leaves a parseFailed class out of the registry (its file exports nothing, TS2306) and keeps its file', () => {
+    const files = planEmit(
+      input({ translated: translated.map((c) => (c.className === 'LeftButton' ? { ...c, parseFailed: true as const } : c)) }),
+      [],
+    );
+    const classes = files.find((f) => f.path === 'src/classes.ts')?.content ?? '';
+    expect(classes).not.toContain('LeftButton');
+    expect(classes).toContain('"RightButton"');
+    expect(files.some((f) => f.path === 'src/LeftButton.ts')).toBe(true);
+  });
+});
 describe('planEmit with translated classes', () => {
   it('writes every translated class and registers the linked ones', () => {
     const files = planEmit(input(), []);

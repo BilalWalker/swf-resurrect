@@ -45,6 +45,7 @@ npm run typecheck           # tsc --noEmit
 npm run typecheck:template  # tsc --noEmit -p tsconfig.template.json
 npm test -- --run           # scripts/runTests.ts: main vitest run, then launchChromium.e2e alone
 npm run gen:shim-members    # regenerate src/translate/shimMembers.generated.ts from template/shim/ (stubs/ included)
+npm run report:type-errors -- <out dir>...   # group the type errors of translation-report.json files by root cause (counts per directory; writes .work/type-error-groups.json)
 npm run gen:api-stubs       # write template/shim/stubs/<Class>.ts from the `stub` entries of src/translate/flashApiTable.ts; run gen:shim-members after it
 npm run test:local-files    # on request only: runs test/e2e/localFiles.e2e.test.ts on .work/judge-test/*.swf (about 90 s for redball4); writes .work/robustness-local/summary.md; the default suite skips it and never reads .work/judge-test/
 npm run fetch:static-text   # fetch the static_text sample into .work/ (never committed)

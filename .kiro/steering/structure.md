@@ -23,7 +23,7 @@ src/emit/         Writes the Vite+Pixi project from template/ plus translated cl
 src/verify/       core/ (pure: pixel diff, trace compare, residual register, report) and edge/
                   (FFDec Reference_Frames, Chromium render, replay, verifyStage)
 src/samples/      Fetched-sample core (static_text)
-scripts/          runTests.ts (`npm test`), gen-shim-members.ts, fetch-static-text.ts
+scripts/          runTests.ts (`npm test`), gen-shim-members.ts, fetch-static-text.ts, group-type-errors.ts
 src/outcome/      Outcome types and decideOutcome, exit-code table, reason sentences and scrub, gap kinds,
                   Outcome_File writer and parser (outcomeFile.ts; fs is injected, no node:* import)
 src/facts/        Facts stage: reads the SWF header and tag counts before any FFDec call (readFacts, swfBody)

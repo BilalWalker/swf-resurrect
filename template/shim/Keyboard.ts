@@ -7,4 +7,5 @@ export class Keyboard {
   static readonly ENTER = 13;
   static readonly ESCAPE = 27;
   static readonly SPACE = 32;
+  static readonly TAB = 9;
 }

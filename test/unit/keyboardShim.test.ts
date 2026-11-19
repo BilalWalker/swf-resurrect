@@ -46,3 +46,9 @@ describe('KeyboardEvent and Keyboard (design D3)', () => {
     expect(out).toContain('KeyboardEvent.KEY_DOWN');
   });
 });
+describe('Event and Keyboard constants of the type-error groups (robustness task 33.2)', () => {
+  it('has the string values of flash.events.Event and the Tab key code', () => {
+    expect([Event.COMPLETE, Event.SOUND_COMPLETE, Event.ACTIVATE, Event.DEACTIVATE]).toEqual(['complete', 'soundComplete', 'activate', 'deactivate']);
+    expect(Keyboard.TAB).toBe(9);
+  });
+});

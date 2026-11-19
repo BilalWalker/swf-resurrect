@@ -33,6 +33,7 @@ const CORE_FILES = [
   "template/runtime/timers.ts", // as3-coverage 25.2
   "template/runtime/affine.ts", // as3-coverage 26.2
   "template/runtime/overlap.ts", // as3-coverage 26.3
+  "src/translate/typeErrorGroups.ts", // robustness 33.1
   "src/outcome/outcome.ts", // robustness 1.1
   "src/outcome/exitCode.ts", // robustness 1.1
   "src/outcome/reasons.ts", // robustness 1.1

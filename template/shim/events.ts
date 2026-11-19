@@ -17,6 +17,10 @@ export class Event {
   static readonly REMOVED = 'removed';
   static readonly REMOVED_FROM_STAGE = 'removedFromStage';
   static readonly RENDER = 'render';
+  static readonly COMPLETE = 'complete';
+  static readonly SOUND_COMPLETE = 'soundComplete';
+  static readonly ACTIVATE = 'activate';
+  static readonly DEACTIVATE = 'deactivate';
   target: EventDispatcher | null = null;
   currentTarget: EventDispatcher | null = null;
   bubbles: boolean;

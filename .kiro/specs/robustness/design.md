@@ -486,6 +486,44 @@ Error order and the kill path. The two calls start together and both get what is
 
 Before and after, pipeline runs (`npm run pipeline`, no `--verify`, same machine, load before in brackets). Committed samples: Unpack 3.3 to 7.0 s before and 1.9 to 4.2 s after, and every file of the output except `outcome.json` has the same SHA-256 before and after (clickgoto 88 files, tweendemo 88, radial 81, gradients 81, acid-color-2 84, mask_reapply 83, click_block 88; the rest in the commit body). Local files (Unpack s, load before in brackets). `canabalt.swf`: before 10.9 (93%) and 6.3 (11%), after 3.8 (12%) and 3.8 (7%); 249 output files, none differs. `earntodie.swf`, before (allowance 120 s): 103.0 (9%), then the run ended `converted-with-gaps` in 159.3 s; 117.2 (7%), then the run ended `refused time-limit` in Convert (60.0 s) after 181.8 s. After (allowance 180 s): 93.2 (57%), `converted-with-gaps` in 145.2 s, 721 output files, none differs from the 159.3 s run; then, with the machine at 34 percent from other work, 169.5 (34%, `refused time-limit` in Convert after 238.3 s), 137.1 (34%, `converted-with-gaps`, 223.0 s) and 133.7 (34%, `refused time-limit` in Convert after 200.1 s). So the saving in the pipeline is smaller than in the isolated calls: about 10 s on the quiet pair (103.0 to 93.2 s), and under load Unpack stays at 130 to 170 s, which the old 120 s allowance would have refused and the new 180 s allowance accepts, with 10 to 50 s to spare in the worst series. The limit that then fails is Convert: it took 16 to 21 s on an idle machine and more than its 60 s allowance in three runs under that load. That is not changed here; it is an Open_Item for the owner (Convert weight, or the cost of Convert on a large file), recorded in the commit body.
 
+### Block E: type-error causes (D-E4, Requirement 27.11 to 27.13)
+
+D-E4. Owner's item 3. The tool is `npm run report:type-errors -- <out dir>...` (`scripts/group-type-errors.ts`, I/O only) over the pure `groupTypeErrors` and `typeErrorKey` of `src/translate/typeErrorGroups.ts`. A key is built from the TypeScript code and the quoted names: `TS2304 name <X>` (also TS2552 and TS2663), `TS2339 <OwnerType>.<member>` (also TS2551), `TS2345 to <Type> (<reason>)` and `TS2322` likewise (reason: `private member <p>`, `missing members` or `other`), `TS2306 file is not a module`, and for any other message the code plus the first line with each quoted name replaced by `'#'`. Groups are sorted by total, then by key in code-unit order. Class errors and `otherErrors` of the report are both counted.
+
+Measured (task 33.1) on fresh outputs of the three largest local files under the default limits, no `--verify`, at HEAD f27bd67 (reach rule (b) of D-E2; the 31.4 outputs predate the Unpack change and were not reused, the runs took 23, 30 and 156 s): file A 169 of 172 classes considered and 199 type errors, file B 263 of 266 and 334, file C 101 of 536 and 50 (3 in classes, 47 in `otherErrors`); 583 errors in 104 groups. The ten largest groups, with the count per file (A, B, C), before the fixes of 33.2:
+
+| # | Group | Total | A | B | C | Disposition |
+|---|---|---|---|---|---|---|
+| 1 | `TS2345` argument to a framework base class `<Entity>`: a private member `_<field>` of the base that the subclass also declares | 100 | 0 | 100 | 0 | Open_Item 1 |
+| 2 | `TS2306` a class file is not a module (`src/classes.ts` imports the D5 fallback file of an obfuscated class) | 50 | 0 | 0 | 50 | fixed |
+| 3 | `TS2304` name `BitmapData` | 47 | 26 | 21 | 0 | Open_Item 2 |
+| 4 | `TS2304` name `Bitmap` | 41 | 36 | 5 | 0 | Open_Item 2 |
+| 5 | `TS7015` an `Array` indexed by a string | 39 | 0 | 39 | 0 | Open_Item 3 |
+| 6 | `TS2304` name `Matrix` | 14 | 7 | 7 | 0 | Open_Item 2 |
+| 7 | `TS2304` name `ColorTransform` | 13 | 3 | 10 | 0 | Open_Item 2 |
+| 8 | `TS2304` name `TextFormat` | 12 | 10 | 2 | 0 | Open_Item 4 |
+| 9 | `TS2339` `Event.SOUND_COMPLETE` | 11 | 2 | 9 | 0 | fixed |
+| 10 | `TS2339` `TextField.defaultTextFormat` | 10 | 10 | 0 | 0 | Open_Item 4 |
+
+Next in size, not in the ten: `Graphics.drawRect` 8 and `Graphics.beginBitmapFill` 2 (Open_Item 5); the `TextField` members `embedFonts`, `multiline`, `wordWrap`, `gridFitType`, `antiAliasType` and `appendText`, 41 in all (Open_Item 4); the `Stage` members `align`, `stageWidth`, `stageHeight`, `displayState`, `quality`, `fullScreenWidth`, `fullScreenHeight`, `showDefaultContextMenu` and `loaderInfo`, 14 in all (Open_Item 6); the members of a `BitmapData` subclass of one file, about 40 (with Open_Item 2); `Event.ACTIVATE` 2, `Event.DEACTIVATE` 2, `Event.COMPLETE` 1 and `Keyboard.TAB` 2 (fixed).
+
+Fixed (task 33.2), each general and small, each with a test:
+
+1. A D5 fallback file (the translated text did not parse) is comments only and exports nothing, but `classes.ts` imported it when its class was linked: `TS2306`, 50 errors in file C. `planEmitDetailed` now leaves a `parseFailed` class that is not overridden out of the registry, as an omitted class is. Its symbol runs as a plain MovieClip, which `classes.ts` already states for a symbol without an entry. 3 lines in `src/emit/planEmit.ts`; test in `test/unit/emitTranslated.test.ts`. No committed sample has such a class. File C now reads 3 type errors, and its gap list leads with `untranslated-code` (48) instead of the 50 type errors, which is the truer reading: those classes are comments.
+2. `Event.COMPLETE`, `Event.SOUND_COMPLETE`, `Event.ACTIVATE`, `Event.DEACTIVATE` and `Keyboard.TAB`: constants with the values of the `flash.events.Event` and `flash.ui.Keyboard` documentation (`"complete"`, `"soundComplete"`, `"activate"`, `"deactivate"`, 9). The Shim dispatches none of the four events, so a listener stays silent, the neutral value. 18 errors in files A and B. `template/shim/events.ts` and `Keyboard.ts`; test in `test/unit/keyboardShim.test.ts`; line in `template/shim/ADDED_APIS.md`; evidence label `neither` in `flash-behaviour.md`. The generated member table does not change.
+
+Type errors per file, before and after: file A 199 to 192, file B 334 to 323, file C 50 to 3 (583 to 518). The classes considered and translated are the same in all three.
+
+Open_Items of Block E item 3:
+
+1. A private member with the same name in a base class and its subclass (100 errors, one file). AS3 gives each class its own private namespace; TypeScript rejects a subclass that declares a `private` member named like one of its base. A general fix renames or widens one of the two, touches every reference and needs a rule for the choice: more than 40 lines and a design decision, not done.
+2. `BitmapData`, `Bitmap`, `Matrix` and `ColorTransform` (115 errors in the four names, plus the members of a `BitmapData` subclass). They are policy gaps of the Flash_API_Table on purpose (BitmapData manipulation is out of scope, and a neutral Matrix or ColorTransform would be silently wrong). Not changed: it is the owner's scope decision.
+3. An `Array` used with string keys (39 errors, one file). AS3 `Array` accepts `a["k"]`; the rewrite would have to know the receiver's type or change it to a map: a design question like the `Dictionary` rule (D10), not done.
+4. `TextFormat` and the `TextField` members around it (`defaultTextFormat`, `embedFonts`, `multiline`, `wordWrap`, `gridFitType`, `antiAliasType`, `appendText`; about 63 errors). `TextFormat` is in neither the Shim nor the Flash_API_Table, and the members change layout, which the runtime does not model (text-metrics limit): needs a decision on which become stubs.
+5. `Graphics.drawRect` and `beginBitmapFill`: `drawRect` is a drawing command and needs its path in `graphicsPlan` and a pixel check, not a stub.
+6. `Stage` members (14 errors): each is player behaviour (size, alignment, display state), not a neutral constant.
+7. A bare `root` in a static context (6 errors, one framework class): one game, not chased.
+
 ## Data Models
 
 ```ts

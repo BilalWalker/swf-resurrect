@@ -168,7 +168,9 @@ export function planEmitDetailed(
   }
   // Every emitted class is registered for getDefinitionByName when some class looks one up (D-E2), as Ruffle finds any loaded class by name.
   const lookup = input.translated.some((c) => (c.cutSites?.length ?? 0) > 0) || names.some((n) => callsDefinitionLookup(sources.get(n) as string));
-  files.set(CLASSES_PATH, buildClassesTs(input.scene, names, omitted, chosen, lookup));
+  // A D5 fallback file is comments only and exports nothing: the registry must not import it (TS2306). Its symbol runs as a plain MovieClip.
+  const noExport = input.translated.filter((c) => c.parseFailed === true && !overridden.has(c.className)).map((c) => c.className);
+  files.set(CLASSES_PATH, buildClassesTs(input.scene, names, noExport.length === 0 ? omitted : new Set([...omitted, ...noExport]), chosen, lookup));
 
   return {
     files: [...files.keys()].sort(byCodeUnit).map((path) => ({ path, content: files.get(path) as string })),
