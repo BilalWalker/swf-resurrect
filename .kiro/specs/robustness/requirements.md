@@ -78,7 +78,7 @@ Further facts from the code that shape the requirements:
 - **Candidate_Class**: A class that Translate attempts to turn into TypeScript: a class linked to a symbol, the document class, a class named by a string literal in a Candidate_Class (Requirement 27.5), or a class in the emit closure of any of these.
 - **Gap**: A Candidate_Class that is untranslated, omitted or unsupported, a type error of the Emitted_Project, or a placement that Convert drops (Requirement 4.2).
 - **Run_Limits**: The configurable limits of a run: maximum input size, wall-clock time per run, and a base wall-clock time per stage that is multiplied by a Stage_Weight (Requirement 6).
-- **Stage_Weight**: The integer by which the base stage limit is multiplied for one stage: recover 2, unpack 2, convert 1, translate 1, emit 1, gate 1, verify 3.
+- **Stage_Weight**: The integer by which the base stage limit is multiplied for one stage: recover 2, unpack 3, convert 1, translate 1, emit 1, gate 1, verify 3.
 - **ABC_Name_Scan**: The cheap check that reads the string and multiname tables of the ABC constant pool of the input, without FFDec and without decompiling, and counts names that are not legal AS3 identifiers (Requirement 14).
 - **Hostile_Fixture**: A small generated SWF or byte string, built by a test, that triggers one refusal or failure path.
 - **Obfuscation_Signal**: One of the following in a SWF: an identifier that is not a legal AS3 identifier (such as one that contains `§`), or a `§§push` or `§§pop` token in the decompiled source (Requirement 14).
@@ -193,7 +193,7 @@ Further facts from the code that shape the requirements:
 #### Acceptance Criteria
 
 1. THE Pipeline_CLI SHALL accept the options `--max-size <MiB>`, `--run-limit <seconds>` and `--stage-limit <seconds>`, and the environment variables `SWF_RESURRECT_MAX_SIZE_MIB`, `SWF_RESURRECT_RUN_LIMIT_S` and `SWF_RESURRECT_STAGE_LIMIT_S`; an option SHALL win over a variable, and a variable over the default.
-2. THE defaults SHALL be 20 MiB for the input size, 300 seconds for one run, and a base of 60 seconds for one stage multiplied by the Stage_Weight of the stage (recover 2, unpack 2, convert 1, translate 1, emit 1, gate 1, verify 3), and the design SHALL state why each is chosen.
+2. THE defaults SHALL be 20 MiB for the input size, 300 seconds for one run, and a base of 60 seconds for one stage multiplied by the Stage_Weight of the stage (recover 2, unpack 3, convert 1, translate 1, emit 1, gate 1, verify 3), and the design SHALL state why each is chosen.
 3. THE default size limit SHALL equal the 20 MiB upload limit of `web/server/upload.ts`; THE web server (`web/server/options.ts`, `web/server/jobs.ts`) is not owned by this spec, and `docs/outcome.md` SHALL state that the web side passes its run limit (default 300 s) to the engine as `--run-limit` and keeps its own kill 30 s above it as a backstop, as of branch `wip/ui` (merged separately).
 4. WHEN the input file is larger than the size limit, THE Pipeline_CLI SHALL end the run as `refused` with `too-large` before any FFDec process starts.
 5. WHEN a stage (recover, unpack, convert, translate, emit, gate or verify) runs longer than the base stage limit multiplied by its Stage_Weight, or the run longer than the run limit, THE Pipeline_CLI SHALL stop the stage, SHALL end the run as `refused` with `time-limit`, and the `reason` SHALL name the stage and the limit that applied.

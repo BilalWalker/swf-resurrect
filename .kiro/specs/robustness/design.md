@@ -218,7 +218,7 @@ interface OutcomeRecord {
 | Item | Design |
 |---|---|
 | Resolver | `resolveLimits({ options, env })`: option beats variable beats default; a value that is not a positive integer is a usage error (exit 2). Defaults: 20 MiB, 300 s run, 60 s stage base. The size default equals `web/server/upload.ts` |
-| Weights | recover 2, unpack 2, convert 1, translate 1, emit 1, gate 1, verify 3 (Requirement 6.2 plus the recover stage, A1) |
+| Weights | recover 2, unpack 3, convert 1, translate 1, emit 1, gate 1, verify 3 (Requirement 6.2 plus the recover stage, A1) |
 | Clock | `interface Clock { now(): number; setTimeout(fn, ms): Handle; clearTimeout(h): void }`; the real one wraps `performance.now` and `setTimeout`; tests pass a fake |
 | `runStage` | Starts the stage, records the start time, races it with an allowance timer, checks the run deadline before starting, records `{name, result, durationMs}` |
 | Registry | `spawnFfdec` and the Chromium launcher call `registry.track(child)`; `killAll()` calls `killTree` for every tracked pid still alive. The Replay child (`replay.ts`) is tracked the same way. Recovery steps use `spawnFfdec` and so are tracked |
@@ -774,7 +774,7 @@ All decided. Rows U1 and U2 are changed by the owner's decisions; the others are
 
 | # | Question | Decision |
 |---|---|---|
-| U1 | Default limits | 20 MiB, 300 s run, 60 s base stage with weights recover 2, unpack 2, convert 1, translate 1, emit 1, gate 1, verify 3. The target is `redball4` ending `converted-with-gaps` under the defaults with time to spare; the stage times are reported at Checkpoint 2. The web server's 180 s kill was the web owner's to align (superseded: the web side passes --run-limit and keeps its own kill 30 s above it, Task 28); `docs/outcome.md` says so. The earlier finding that the defaults refuse `redball4` (old F1, old A2) is withdrawn |
+| U1 | Default limits | 20 MiB, 300 s run, 60 s base stage with weights recover 2, unpack 2 (superseded: unpack weight is 3, Task 32), convert 1, translate 1, emit 1, gate 1, verify 3. The target is `redball4` ending `converted-with-gaps` under the defaults with time to spare; the stage times are reported at Checkpoint 2. The web server's 180 s kill was the web owner's to align (superseded: the web side passes --run-limit and keeps its own kill 30 s above it, Task 28); `docs/outcome.md` says so. The earlier finding that the defaults refuse `redball4` (old F1, old A2) is withdrawn |
 | U2 | `converted-with-gaps` exit code and the refusal threshold | Exit 0 for both project outcomes; refusal only for 0 translated of more than 0 candidates (Requirements 4.11, 7.6) |
 | U3 | Where stubs live | Ship all in `template/shim/stubs/`; Emit does not filter (Requirement 17.2) |
 | U4 | FFDec non-zero exit at Unpack | `refused` `damaged`; FFDec text in `ffdec-<Reference_Id>.log` only; our own errors stay `failed` (Requirement 5.12, 5.13; D-A2) |
@@ -815,7 +815,7 @@ Labels: `read` (read in Ruffle at `4a8d396` in this design), `measured` (run on 
 
 | # | Amendment | Status |
 |---|---|---|
-| A1 | The stage limit is a base multiplied by a weight per stage. The requirements list unpack 2, verify 3 and others 1; this design adds the stage `recover` with weight 2 (D-B6). Requirements 6.2 and 6.10 still say the recovery steps count inside the stage limit of unpack and need the change | Approved, partly applied (6.2 weights); recover weight pending |
+| A1 | The stage limit is a base multiplied by a weight per stage. The requirements listed unpack 2 (superseded: unpack weight is 3, Task 32), verify 3 and others 1; this design adds the stage `recover` with weight 2 (D-B6). Requirements 6.2 and 6.10 still say the recovery steps count inside the stage limit of unpack and need the change | Approved, partly applied (6.2 weights); recover weight pending |
 | A2 | (Withdrawn.) The old A2 said `redball4` is refused `time-limit` under the defaults. The owner's limits make the target `converted-with-gaps` (Requirement 6.16) | Rejected, replaced by U1 |
 | A3 | The hit region is the current state child plus the hit shapes (Requirements 20.7, 20.8, 20.16) | Approved, applied |
 | A4 | The Player and Shim gain `mouseOver`, `mouseOut`, `rollOver`, `rollOut` (Requirement 20.10) | Approved, applied |
