@@ -93,6 +93,48 @@ function animateSarcophagus(zone: HTMLElement): void {
 }
 
 /**
+ * Where the backdrop paints its sarcophagus, as fractions of the picture (left, top, width, height): our
+ * sprite's closed frame, stretched to this box, covers the painted one, so the mud and skulls around it
+ * stay and the lid can still open. Found by compositing the sprite over the backdrop.
+ */
+const PAINTED_SARC = [0.497, 0.1722, 0.3846, 0.4081] as const;
+/** Below this width the backdrop is cropped too much to line up with; the drop zone stays in the layout. */
+const STAGE_MIN = '(min-width: 900px)';
+
+/**
+ * Keeps the drop zone's column standing on the painted sarcophagus: places it over `.scene` (the element
+ * with the backdrop's box) whenever the window changes size. Stops once the column leaves the page.
+ */
+function stageOnBackdrop(col: HTMLElement): void {
+  const wide = window.matchMedia(STAGE_MIN);
+  const place = (): void => {
+    if (!col.isConnected) {
+      window.removeEventListener('resize', place);
+      wide.removeEventListener('change', place);
+      return;
+    }
+    const scene = document.querySelector<HTMLElement>('.scene');
+    const hero = col.parentElement;
+    const sarc = col.querySelector<HTMLElement>('.sarc');
+    if (!wide.matches || scene === null || hero === null || sarc === null) {
+      col.classList.remove('is-staged');
+      col.style.cssText = '';
+      if (sarc !== null) sarc.style.height = '';
+      return;
+    }
+    const s = scene.getBoundingClientRect();
+    const h = hero.getBoundingClientRect();
+    const [x, y, w, ht] = PAINTED_SARC;
+    col.classList.add('is-staged');
+    col.style.cssText = `left:${s.left + s.width * x - h.left}px;top:${s.top + s.height * y - h.top}px;width:${s.width * w}px`;
+    sarc.style.height = `${s.height * ht}px`;
+  };
+  window.addEventListener('resize', place);
+  wide.addEventListener('change', place);
+  place();
+}
+
+/**
  * Now and then raises the hand beside a random stone for a few seconds, so the yard is never quite still.
  * Stops by itself once the stones leave the page. Does nothing when the visitor asked for reduced motion.
  */
@@ -407,7 +449,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
         actions,
         h('p', { class: 'epitaph-line' }, 'Flash Player reached its end of life on 31 December 2020. Its files did not have to.'),
       ),
-      setup.uploadsEnabled ? h('div', {}, zone, input, status) : h('div', {}, uploadsOff(), status),
+      setup.uploadsEnabled ? h('div', { class: 'drop-col' }, zone, input, status) : h('div', {}, uploadsOff(), status),
     ),
     // a skull on a glowing line between the hero and the yard
     h('div', { class: 'divider', 'aria-hidden': 'true' }, h('span', { class: 'divider-skull' })),
@@ -439,4 +481,6 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       ),
     ),
   );
+  const dropCol = main.querySelector<HTMLElement>('.drop-col');
+  if (dropCol !== null) stageOnBackdrop(dropCol);
 }

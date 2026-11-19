@@ -745,3 +745,28 @@
   mix-blend-mode: screen;
   pointer-events: none;
 }
+
+/* ---- The drop zone standing on the backdrop's painted sarcophagus (landing.ts stageOnBackdrop places
+   the column over the painted box; the sprite is stretched to that box so it covers it exactly). ---- */
+.hero {
+  position: relative;
+}
+.drop-col.is-staged {
+  position: absolute;
+  z-index: 1;
+}
+.drop-col.is-staged .sarc {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+  /* dimmed and greened a little to the painting's light; the painting already has its own shadow */
+  filter: brightness(0.88) saturate(1.1);
+}
+.drop-col.is-staged .dropzone.is-over .sarc {
+  filter: brightness(0.95) saturate(1.1) drop-shadow(0 0 22px rgba(126, 242, 184, 0.55));
+}
+.drop-col.is-staged .drop-title,
+.drop-col.is-staged .drop-hint,
+.drop-col.is-staged .drop-status {
+  text-shadow: 0 1px 6px #000, 0 0 12px #000;
+}
