@@ -34,6 +34,8 @@ const GAP_WORDS: Record<GapKind, [string, string]> = {
   'type-error': ['type error in the TypeScript', 'type errors in the TypeScript'],
   'dropped-placement': ['timeline placement was dropped', 'timeline placements were dropped'],
   'flash-api-gap': ['Flash API call has no equivalent yet', 'Flash API calls have no equivalent yet'],
+  'classes-not-considered': ['class of the file was not considered', 'classes of the file were not considered'],
+  'embedded-swf': ['embedded SWF inside the file was not converted', 'embedded SWFs inside the file were not converted'],
 };
 
 /** "3 classes were not translated": one line per gap kind with a count above 0. */
@@ -45,6 +47,19 @@ export function gapLines(gaps: JobOutcome['gaps']): Array<{ kind: string; text: 
       const text = words === undefined ? `${g.count} × ${g.kind}` : `${g.count} ${g.count === 1 ? words[0] : words[1]}`;
       return { kind: g.kind, text };
     });
+}
+
+/**
+ * The file is a loader around another SWF (an `embedded-swf` gap, docs/outcome.md "Wrapper files"):
+ * the real movie is inside and was not converted, only the wrapper was. Null when there is none.
+ */
+export function wrapperLine(o: Pick<JobOutcome, 'embeddedSwfs' | 'gaps'>): string | null {
+  const e = o.embeddedSwfs;
+  const count = e?.count ?? o.gaps.find((g) => g.kind === 'embedded-swf')?.count ?? 0;
+  if (count <= 0) return null;
+  const size = e === null || e === undefined ? '' : `, ${(e.totalBytes / (1024 * 1024)).toFixed(1)} MiB`;
+  const what = count === 1 ? 'another SWF' : `${count} other SWFs`;
+  return `This file is a wrapper around ${what} (${count} embedded${size}), and ${count === 1 ? 'that SWF was' : 'those were'} not converted. The project holds only the wrapper, not the game inside it.`;
 }
 
 /** "N of M classes translated", or null when the engine has no numbers or no candidate classes. */

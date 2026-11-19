@@ -17,6 +17,7 @@ function read(outcome: JobOutcome['outcome'], over: Partial<JobOutcome> = {}): O
       obfuscation: null,
       referenceId: null,
       runLimitS: 300,
+      embeddedSwfs: null,
       ...over,
     },
   };

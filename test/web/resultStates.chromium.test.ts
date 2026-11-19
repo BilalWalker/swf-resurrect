@@ -57,7 +57,7 @@ const numbers = (translated: number, candidates: number, typeErrors: number): No
 });
 
 function outcome(o: Partial<JobOutcome> & Pick<JobOutcome, 'outcome'>): JobOutcome {
-  return { reasonCode: null, reason: '', numbers: null, gaps: [], facts: null, obfuscation: null, referenceId: null, runLimitS: 300, ...o };
+  return { reasonCode: null, reason: '', numbers: null, gaps: [], facts: null, obfuscation: null, referenceId: null, runLimitS: 300, embeddedSwfs: null, ...o };
 }
 
 function job(id: string, over: Partial<JobSummary>): JobSummary {
@@ -165,6 +165,31 @@ describe('result page per Outcome (Chromium)', () => {
     expect(text).not.toContain('classes translated');
     expect(await none.locator('.tile', { hasText: 'Classes translated' }).locator('.tile-value').textContent()).toBe('none reported');
     await none.close();
+  });
+
+  it('converted-with-gaps for a wrapper: says the SWF inside was not converted', { timeout: 60_000 }, async () => {
+    const page = await open(
+      job(id(8), {
+        outcome: outcome({
+          outcome: 'converted-with-gaps',
+          reason: 'the file is a wrapper around another SWF that was not converted (1 embedded, 7.0 MiB); 3 of 3 classes translated',
+          numbers: { ...numbers(3, 3, 0), totalClasses: 5, notConsideredClasses: 2 },
+          gaps: [
+            { kind: 'embedded-swf', count: 1, examples: ['id 46: CWS v10, 7349081 bytes'] },
+            { kind: 'classes-not-considered', count: 2, examples: [] },
+          ],
+          embeddedSwfs: { count: 1, totalBytes: 7349081, largestBytes: 7349081 },
+        }),
+      }),
+      'converted-with-gaps-wrapper',
+    );
+    const panel = (await page.textContent('.gap-panel')) ?? '';
+    expect(await page.textContent('.gap-wrapper')).toContain('This file is a wrapper around another SWF (1 embedded, 7.0 MiB)');
+    expect(panel).toContain('1 embedded SWF inside the file was not converted');
+    expect(panel).toContain('3 of 5 classes of the file were considered');
+    // Said once: the classes-not-considered gap is folded into the considered line.
+    expect(panel).not.toContain('classes of the file were not considered');
+    await page.close();
   });
 
   it('refused: the reason large, what to try, no download and no converted player', { timeout: 60_000 }, async () => {

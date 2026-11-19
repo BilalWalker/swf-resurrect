@@ -2,7 +2,7 @@
 // converted-with-gaps run, and the refused and failed states.
 import type { JobSummary } from '../../shared/api';
 import { h } from './dom';
-import { classLine, consideredLine, fewTranslated, gapLines, originalPlayable, refusalHint, stageAspect } from './outcomeText';
+import { classLine, consideredLine, fewTranslated, wrapperLine, gapLines, originalPlayable, refusalHint, stageAspect } from './outcomeText';
 import { originalOnly } from './players';
 
 /** The original in Ruffle when the engine found it a readable SWF; null otherwise. */
@@ -20,12 +20,16 @@ export function gapPanel(job: JobSummary): HTMLElement | null {
   const n = o.numbers;
   const classes = classLine(n);
   const considered = consideredLine(n);
+  const wrapper = wrapperLine(o);
+  // The considered line already says what the classes-not-considered gap counts.
   const lines = gapLines(o.gaps);
+  const listed = considered === null ? lines : lines.filter((l) => l.kind !== 'classes-not-considered');
   const few = fewTranslated(n);
   return h(
     'section',
     { class: `gap-panel${few ? ' is-few' : ''}`, 'aria-labelledby': 'gaps-title' },
     h('h3', { id: 'gaps-title' }, 'Converted with gaps'),
+    wrapper !== null ? h('p', { class: 'gap-warning gap-wrapper' }, wrapper) : null,
     few
       ? h('p', { class: 'gap-warning' }, 'Few of its classes were translated, so the converted project will probably not run as the original did.')
       : h('p', { class: 'muted' }, 'A project was written, but parts of the original are missing or need fixing by hand.'),
@@ -37,7 +41,7 @@ export function gapPanel(job: JobSummary): HTMLElement | null {
       n !== null && n.typeErrors > 0 && !o.gaps.some((g) => g.kind === 'type-error')
         ? h('li', {}, `${n.typeErrors} type error${n.typeErrors === 1 ? '' : 's'} in the TypeScript`)
         : null,
-      ...lines.map((l) => h('li', { 'data-kind': l.kind }, l.text)),
+      ...listed.map((l) => h('li', { 'data-kind': l.kind }, l.text)),
       o.obfuscation?.recovered === true ? h('li', { class: 'gap-obfuscated' }, 'obfuscated: names renamed') : null,
     ),
   );

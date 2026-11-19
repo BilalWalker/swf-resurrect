@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OutcomeNumbers } from '../../web/shared/api';
-import { classLine, consideredLine, fewTranslated, gapLines, originalPlayable, refusalHint, resultHeadline, stageAspect } from '../../web/client/src/outcomeText';
+import { classLine, consideredLine, fewTranslated, wrapperLine, gapLines, originalPlayable, refusalHint, resultHeadline, stageAspect } from '../../web/client/src/outcomeText';
 
 const numbers = (translated: number, candidates: number): OutcomeNumbers => ({
   candidateClasses: candidates,
@@ -56,7 +56,7 @@ describe('outcome words', () => {
 
   it('plays the original unless the engine found it not a SWF or damaged', () => {
     const o = (reasonCode: 'not-swf' | 'damaged' | 'time-limit' | null) => ({
-      outcome: 'refused' as const, reasonCode, reason: '', numbers: null, gaps: [], facts: null, obfuscation: null, referenceId: null, runLimitS: null,
+      outcome: 'refused' as const, reasonCode, reason: '', numbers: null, gaps: [], facts: null, obfuscation: null, referenceId: null, runLimitS: null, embeddedSwfs: null,
     });
     expect(originalPlayable(null)).toBe(true);
     expect(originalPlayable(o('time-limit'))).toBe(true);
@@ -68,7 +68,7 @@ describe('outcome words', () => {
 
   it('says "It lives" only when at least half the classes were translated', () => {
     const o = (outcome: 'converted' | 'converted-with-gaps', n: OutcomeNumbers | null) => ({
-      outcome, reasonCode: null, reason: '', numbers: n, gaps: [], facts: null, obfuscation: null, referenceId: null, runLimitS: null,
+      outcome, reasonCode: null, reason: '', numbers: n, gaps: [], facts: null, obfuscation: null, referenceId: null, runLimitS: null, embeddedSwfs: null,
     });
     expect(resultHeadline('a.swf', o('converted', numbers(4, 4))).title).toBe('It lives.');
     expect(resultHeadline('a.swf', o('converted-with-gaps', numbers(3, 6))).title).toBe('It lives, with gaps.');
@@ -87,5 +87,20 @@ describe('outcome words', () => {
     // An Outcome_File written before the fields existed has none of them.
     expect(consideredLine({})).toBeNull();
     expect(consideredLine(null)).toBeNull();
+  });
+
+  it('labels the two new gap kinds and says plainly when the file is a wrapper', () => {
+    expect(
+      gapLines([
+        { kind: 'classes-not-considered', count: 3, examples: [] },
+        { kind: 'embedded-swf', count: 1, examples: ['id 46: CWS v10, 7349081 bytes'] },
+      ]).map((l) => l.text),
+    ).toEqual(['3 classes of the file were not considered', '1 embedded SWF inside the file was not converted']);
+    expect(wrapperLine({ embeddedSwfs: { count: 1, totalBytes: 7349081, largestBytes: 7349081 }, gaps: [] })).toBe(
+      'This file is a wrapper around another SWF (1 embedded, 7.0 MiB), and that SWF was not converted. The project holds only the wrapper, not the game inside it.',
+    );
+    // The gap alone (no embeddedSwfs field) still says it, without a size.
+    expect(wrapperLine({ embeddedSwfs: null, gaps: [{ kind: 'embedded-swf', count: 2, examples: [] }] })).toContain('wrapper around 2 other SWFs (2 embedded)');
+    expect(wrapperLine({ embeddedSwfs: null, gaps: [] })).toBeNull();
   });
 });

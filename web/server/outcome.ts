@@ -3,9 +3,9 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { OUTCOME_FILE_NAME, parseOutcome } from '../../src/outcome/outcomeFile';
-import type { Facts, GapSummary, OutcomeCode, OutcomeNumbers, OutcomeRecord, ReasonCode } from '../../src/outcome/outcome';
+import type { EmbeddedSwfSummary, Facts, GapSummary, OutcomeCode, OutcomeNumbers, OutcomeRecord, ReasonCode } from '../../src/outcome/outcome';
 
-export type { Facts as OutcomeFacts, GapKind, GapSummary, OutcomeCode, OutcomeNumbers, ReasonCode } from '../../src/outcome/outcome';
+export type { EmbeddedSwfSummary, Facts as OutcomeFacts, GapKind, GapSummary, OutcomeCode, OutcomeNumbers, ReasonCode } from '../../src/outcome/outcome';
 
 /** What the client gets of an Outcome_File. `numbers` and `facts` can be null; never assume them. */
 export interface JobOutcome {
@@ -22,6 +22,8 @@ export interface JobOutcome {
   referenceId: string | null;
   /** The run limit that applied, in seconds; null when the file does not say. */
   runLimitS: number | null;
+  /** The file wraps other SWFs (DefineBinaryData) that were not converted; null when it holds none. */
+  embeddedSwfs: EmbeddedSwfSummary | null;
 }
 
 export interface ObfuscationSummary {
@@ -58,6 +60,7 @@ export function toJobOutcome(r: OutcomeRecord): JobOutcome {
     obfuscation,
     referenceId: r.referenceId ?? null,
     runLimitS: typeof r.limits?.runLimitS === 'number' ? r.limits.runLimitS : null,
+    embeddedSwfs: r.embeddedSwfs ?? null,
   };
 }
 
