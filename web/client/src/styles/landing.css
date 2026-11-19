@@ -579,3 +579,64 @@
     opacity: 1;
   }
 }
+
+/* ---- Sections below the yard (How It Works, Features): a centred head and a grid of small cards. ---- */
+.how,
+.features {
+  padding-top: clamp(48px, 8vh, 90px);
+  scroll-margin-top: 16px;
+}
+.section-head {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-bottom: 26px;
+  text-align: center;
+}
+.section-head h2 {
+  font-size: clamp(1.45rem, 2.8vw, 1.95rem);
+  margin: 0;
+}
+.section-head p {
+  margin: 0;
+  color: var(--mist);
+}
+
+.rites-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rites-list li {
+  position: relative;
+  padding: 16px 16px 14px 56px;
+  border: 1px solid var(--night-4);
+  border-radius: 12px;
+  background: rgba(8, 12, 18, 0.82);
+}
+.rites-list h3 {
+  margin: 0 0 4px;
+  font-size: 1.08rem;
+}
+.rites-list p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--mist);
+}
+.rite-n {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--spectral-deep);
+  border-radius: 50%;
+  font: 600 0.85rem/1 var(--font-mono);
+  color: var(--spectral);
+  box-shadow: 0 0 12px rgba(126, 242, 184, 0.18);
+}

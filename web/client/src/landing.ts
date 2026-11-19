@@ -2,6 +2,7 @@
 import type { SampleInfo, SetupStatus } from '../../shared/api';
 import { api, ApiFailure } from './api';
 import { formatBytes, h, svg } from './dom';
+import { RITES } from './labels';
 
 export interface LandingDeps {
   openJob(id: string): void;
@@ -410,6 +411,16 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
         h('p', {}, 'Samples with documented provenance. Pick a stone to convert it. Glowing stones have risen before and open at once.'),
       ),
       samples.length === 0 ? h('p', { class: 'yard-empty' }, 'The yard is empty: no samples/*/test.swf on this server.') : stones,
+    ),
+    h(
+      'section',
+      { class: 'how', id: 'how', 'aria-labelledby': 'how-title' },
+      h('div', { class: 'section-head' }, h('h2', { id: 'how-title' }, 'How It Works'), h('p', {}, 'Seven rites, run in order on this server. Raise a file and watch each one happen.')),
+      h(
+        'ol',
+        { class: 'rites-list' },
+        ...Object.values(RITES).map((r, i) => h('li', {}, h('span', { class: 'rite-n', 'aria-hidden': 'true' }, String(i + 1)), h('h3', {}, r.rite), h('p', {}, r.what))),
+      ),
     ),
   );
 }
