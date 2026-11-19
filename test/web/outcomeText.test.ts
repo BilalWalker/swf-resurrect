@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { OutcomeNumbers } from '../../web/shared/api';
-import { classLine, fewTranslated, gapLines, originalPlayable, refusalHint, resultHeadline, stageAspect } from '../../web/client/src/outcomeText';
+import { classLine, consideredLine, fewTranslated, gapLines, originalPlayable, refusalHint, resultHeadline, stageAspect } from '../../web/client/src/outcomeText';
 
 const numbers = (translated: number, candidates: number): OutcomeNumbers => ({
   candidateClasses: candidates,
@@ -15,6 +15,9 @@ const numbers = (translated: number, candidates: number): OutcomeNumbers => ({
   droppedPlacements: 0,
   namedLimits: 0,
   stubDependentClasses: 0,
+  consideredClasses: candidates,
+  totalClasses: candidates,
+  notConsideredClasses: 0,
 });
 
 describe('outcome words', () => {
@@ -73,5 +76,16 @@ describe('outcome words', () => {
     const few = resultHeadline('a.swf', o('converted-with-gaps', numbers(2, 6)));
     expect(few).toMatchObject({ title: 'Partly raised.', tone: 'partial' });
     expect(few.title + few.sub).not.toMatch(/lives/i);
+  });
+
+  it('says how many classes of the file were considered, only when fewer than all', () => {
+    expect(consideredLine({ consideredClasses: 169, totalClasses: 172 })).toBe('169 of 172 classes of the file were considered');
+    expect(consideredLine({ consideredClasses: 4, totalClasses: 4 })).toBeNull();
+    expect(consideredLine({ consideredClasses: 4, totalClasses: null })).toBeNull();
+    expect(consideredLine({ consideredClasses: 0, totalClasses: 0 })).toBeNull();
+    expect(consideredLine(numbers(4, 4))).toBeNull();
+    // An Outcome_File written before the fields existed has none of them.
+    expect(consideredLine({})).toBeNull();
+    expect(consideredLine(null)).toBeNull();
   });
 });

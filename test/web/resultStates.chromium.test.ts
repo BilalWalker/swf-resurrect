@@ -51,6 +51,9 @@ const numbers = (translated: number, candidates: number, typeErrors: number): No
   droppedPlacements: 0,
   namedLimits: 0,
   stubDependentClasses: 0,
+  consideredClasses: candidates,
+  totalClasses: candidates,
+  notConsideredClasses: 0,
 });
 
 function outcome(o: Partial<JobOutcome> & Pick<JobOutcome, 'outcome'>): JobOutcome {
@@ -122,8 +125,8 @@ describe('result page per Outcome (Chromium)', () => {
       job(id(2), {
         outcome: outcome({
           outcome: 'converted-with-gaps',
-          reason: '5 of 6 classes translated, 2 type errors',
-          numbers: numbers(5, 6, 2),
+          reason: '5 of 6 classes translated (6 of 8 classes considered), 2 type errors',
+          numbers: { ...numbers(5, 6, 2), totalClasses: 8, notConsideredClasses: 2 },
           gaps: [
             { kind: 'type-error', count: 2, examples: [] },
             { kind: 'untranslated-class', count: 1, examples: [] },
@@ -135,6 +138,7 @@ describe('result page per Outcome (Chromium)', () => {
     );
     const panel = (await page.textContent('.gap-panel')) ?? '';
     expect(panel).toContain('5 of 6 classes translated');
+    expect(panel).toContain('6 of 8 classes of the file were considered');
     expect(panel).toContain('2 type errors in the TypeScript');
     expect(panel).toContain('1 class was not translated');
     expect(panel).toContain('obfuscated: names renamed');

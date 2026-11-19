@@ -53,6 +53,19 @@ export function classLine(n: OutcomeNumbers | null): string | null {
   return `${n.translatedClasses} of ${n.candidateClasses} class${n.candidateClasses === 1 ? '' : 'es'} translated`;
 }
 
+/**
+ * "169 of 172 classes of the file were considered": the candidates (the classes that symbols and
+ * imports reach) against every class of the file (docs/outcome.md, Classes considered). Null when all
+ * were considered, when the file holds no total, or for an Outcome_File written before the fields
+ * existed (they are then absent).
+ */
+export function consideredLine(n: Partial<Pick<OutcomeNumbers, 'consideredClasses' | 'totalClasses'>> | null): string | null {
+  const total = n?.totalClasses;
+  const considered = n?.consideredClasses;
+  if (typeof total !== 'number' || typeof considered !== 'number' || total <= 0 || considered >= total) return null;
+  return `${considered} of ${total} classes of the file were considered`;
+}
+
 /** True when fewer than half of the candidate classes were translated: say the project will probably not run. */
 export function fewTranslated(n: OutcomeNumbers | null): boolean {
   return n !== null && n.candidateClasses > 0 && n.translatedClasses * 2 < n.candidateClasses;

@@ -2,7 +2,7 @@
 // converted-with-gaps run, and the refused and failed states.
 import type { JobSummary } from '../../shared/api';
 import { h } from './dom';
-import { classLine, fewTranslated, gapLines, originalPlayable, refusalHint, stageAspect } from './outcomeText';
+import { classLine, consideredLine, fewTranslated, gapLines, originalPlayable, refusalHint, stageAspect } from './outcomeText';
 import { originalOnly } from './players';
 
 /** The original in Ruffle when the engine found it a readable SWF; null otherwise. */
@@ -19,6 +19,7 @@ export function gapPanel(job: JobSummary): HTMLElement | null {
   if (o === null || o.outcome !== 'converted-with-gaps') return null;
   const n = o.numbers;
   const classes = classLine(n);
+  const considered = consideredLine(n);
   const lines = gapLines(o.gaps);
   const few = fewTranslated(n);
   return h(
@@ -32,6 +33,7 @@ export function gapPanel(job: JobSummary): HTMLElement | null {
       'ul',
       { class: 'gap-list' },
       classes !== null ? h('li', { class: 'gap-classes' }, classes) : null,
+      considered !== null ? h('li', { class: 'gap-considered' }, considered) : null,
       n !== null && n.typeErrors > 0 && !o.gaps.some((g) => g.kind === 'type-error')
         ? h('li', {}, `${n.typeErrors} type error${n.typeErrors === 1 ? '' : 's'} in the TypeScript`)
         : null,
