@@ -56,12 +56,14 @@ function animateSarcophagus(zone: HTMLElement): void {
   let frame = 0;
   let hover = false;
   let timer = 0;
-  const show = (): void => {
-    el.style.backgroundPosition = `${((frame % SARC_COLS) / (SARC_COLS - 1)) * 100}% ${Math.floor(frame / SARC_COLS) * 100}%`;
-  };
   // Open all the way or closed, nothing between: a half-open frame freezes the vines in mid-snap.
   const target = (): number =>
     hover || zone.classList.contains('is-busy') || zone.classList.contains('is-over') ? SARC_FRAMES - 1 : 0;
+  const show = (): void => {
+    el.style.backgroundPosition = `${((frame % SARC_COLS) / (SARC_COLS - 1)) * 100}% ${Math.floor(frame / SARC_COLS) * 100}%`;
+    // closed and at rest: when it stands on the painted sarcophagus, the painting itself shows (landing.css)
+    el.classList.toggle('is-stirring', frame !== 0 || target() !== 0);
+  };
   const step = (): void => {
     const t = target();
     if (frame === t) {
@@ -73,6 +75,7 @@ function animateSarcophagus(zone: HTMLElement): void {
     show();
   };
   const sync = (): void => {
+    show();
     if (timer === 0 && frame !== target()) timer = window.setInterval(step, SARC_FRAME_MS);
   };
   for (const [on, off] of [

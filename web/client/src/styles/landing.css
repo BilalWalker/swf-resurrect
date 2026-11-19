@@ -779,3 +779,16 @@
 .stone .stone-meta {
   color: #b9b3a6;
 }
+
+/* Standing on the painting, the sprite (softer: cut from a 720p clip) only shows while it moves or is open;
+   at rest the sharper painted sarcophagus, its skulls and its own green smoke are what you see. The sprite's
+   dirt base fades out so the painted ground and skull stay visible while it is open. */
+.drop-col.is-staged .sarc {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  -webkit-mask-image: linear-gradient(180deg, #000 86%, transparent 96%);
+  mask-image: linear-gradient(180deg, #000 86%, transparent 96%);
+}
+.drop-col.is-staged .sarc.is-stirring {
+  opacity: 1;
+}
