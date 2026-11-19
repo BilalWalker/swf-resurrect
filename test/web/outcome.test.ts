@@ -41,8 +41,11 @@ describe('Outcome_File view', () => {
     const gaps = parseOutcomeText(ex['converted-with-gaps']);
     const failed = parseOutcomeText(ex.failed);
     if (!gaps.ok || !failed.ok) throw new Error('example did not parse');
-    expect(gaps.outcome.gaps.map((g) => [g.kind, g.count])).toEqual([['type-error', 2], ['untranslated-class', 1]]);
-    expect(gaps.outcome.numbers?.translatedClasses).toBe(5);
+    // Pass-through: the gaps and numbers are the documented record's own, whatever the engine lists there.
+    const source = JSON.parse(ex['converted-with-gaps']) as { gaps: unknown; numbers: unknown };
+    expect(gaps.outcome.gaps).toEqual(source.gaps);
+    expect(gaps.outcome.numbers).toEqual(source.numbers);
+    expect(gaps.outcome.gaps.some((g) => g.kind === 'type-error' && g.count === 2)).toBe(true);
     expect(failed.outcome.referenceId).toBe('3fa9c01e');
   });
 
