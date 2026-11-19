@@ -12,6 +12,8 @@ export interface PipelineCommand {
   ffdecJar: string;
   /** The engine's run limit (`--run-limit`), whole seconds; the server's own kill is only a backstop above it. */
   runLimitS: number;
+  /** A sample's reference folder, for a sample whose SWF does not sit next to it (fetched samples). */
+  referenceDir?: string;
 }
 
 /** node --import tsx src/pipeline/cli.ts ...: one Node process, no tsx wrapper process. */
@@ -31,6 +33,7 @@ export function pipelineArgs(c: PipelineCommand): string[] {
     c.ffdecJar,
     '--run-limit',
     String(c.runLimitS),
+    ...(c.referenceDir === undefined ? [] : ['--reference-dir', c.referenceDir]),
   ];
 }
 

@@ -159,7 +159,9 @@ function parseProvenance(text: string): { author: string | null; licence: string
     const m = text.match(new RegExp(`^\\|\\s*${name}\\s*\\|\\s*(.*?)\\s*\\|\\s*$`, 'mi'));
     return m === null ? null : m[1];
   };
-  return { author: field('Author'), licence: field('Licen[cs]e') };
+  // The credit shows the name only: "Zabuzard (GitHub user; ...)" becomes "Zabuzard".
+  const author = field('Author')?.replace(/\s*\(.*\)\s*$/, '') ?? null;
+  return { author: author === '' ? null : author, licence: field('Licen[cs]e') };
 }
 
 export class JobManager {
@@ -183,6 +185,17 @@ export class JobManager {
 
   get samplesDir(): string {
     return join(this.opts.repoRoot, 'samples');
+  }
+
+  /**
+   * The SWF of a sample: samples/<name>/test.swf, or for a sample that may not be committed (its
+   * licence differs, e.g. spacer) the fetched copy in .work/samples/<name>/test.swf. Null when neither exists.
+   */
+  private sampleSwf(name: string): string | null {
+    for (const p of [join(this.samplesDir, name, 'test.swf'), join(this.opts.repoRoot, '.work', 'samples', name, 'test.swf')]) {
+      if (existsSync(p)) return p;
+    }
+    return null;
   }
 
   /** Loads finished jobs from earlier server runs so their links and the cache keep working. */
@@ -247,7 +260,7 @@ export class JobManager {
     if (this.sampleHashes !== null) return this.sampleHashes;
     const map = new Map<string, string>();
     for (const s of await this.sampleNames()) {
-      map.set(cacheKey(await readFile(join(this.samplesDir, s, 'test.swf'))), s);
+      map.set(cacheKey(await readFile(this.sampleSwf(s) ?? '')), s);
     }
     this.sampleHashes = map;
     return map;
@@ -262,7 +275,7 @@ export class JobManager {
     }
     const out: string[] = [];
     for (const n of names.sort()) {
-      if (/^[a-z0-9][a-z0-9_-]*$/i.test(n) && existsSync(join(this.samplesDir, n, 'test.swf'))) out.push(n);
+      if (/^[a-z0-9][a-z0-9_-]*$/i.test(n) && this.sampleSwf(n) !== null) out.push(n);
     }
     return out;
   }
@@ -272,7 +285,7 @@ export class JobManager {
     const byName = new Map([...hashes].map(([h, n]) => [n, h]));
     const out: SampleInfo[] = [];
     for (const name of await this.sampleNames()) {
-      const swf = join(this.samplesDir, name, 'test.swf');
+      const swf = this.sampleSwf(name) ?? '';
       let prov: { author: string | null; licence: string | null } = { author: null, licence: null };
       try {
         prov = parseProvenance(await readFile(join(this.samplesDir, name, 'PROVENANCE.md'), 'utf8'));
@@ -300,7 +313,7 @@ export class JobManager {
 
   async submitSample(name: string, rerun: boolean, client = LOCAL_CLIENT): Promise<{ id: string; cached: boolean }> {
     if (!(await this.sampleNames()).includes(name)) throw new SubmitError(404, `No sample named ${name}`);
-    const swfPath = join(this.samplesDir, name, 'test.swf');
+    const swfPath = this.sampleSwf(name) ?? '';
     const bytes = await readFile(swfPath);
     return this.submit({ name: `${name}.swf`, source: 'sample', sample: name, sha256: cacheKey(bytes), swfPath, bytes: null }, rerun, client);
   }
@@ -510,7 +523,19 @@ export class JobManager {
     const exit = await new Promise<{ code: number | null; reason?: string }>((resolveExit) => {
       let reason: string | undefined;
       const runLimitS = Math.max(1, Math.round(this.opts.timeoutMs / 1000));
-      const child = spawnPipeline({ repoRoot: this.opts.repoRoot, swfPath: job.swfPath, outDir, workDir, ffdecJar: this.opts.ffdecJar, runLimitS });
+      // A fetched sample's SWF is not next to its reference folder: name the folder.
+      const ref = job.sample === null ? null : join(this.samplesDir, job.sample, 'reference');
+      const besideRef = ref !== null && job.swfPath === join(this.samplesDir, job.sample ?? '', 'test.swf');
+      const referenceDir = ref !== null && !besideRef && existsSync(ref) ? ref : undefined;
+      const child = spawnPipeline({
+        repoRoot: this.opts.repoRoot,
+        swfPath: job.swfPath,
+        outDir,
+        workDir,
+        ffdecJar: this.opts.ffdecJar,
+        runLimitS,
+        ...(referenceDir === undefined ? {} : { referenceDir }),
+      });
       job.child = child;
       // Backstop only: the engine stops at runLimitS and reports `refused time-limit` itself.
       const killAfterMs = backstopMs(runLimitS * 1000);
