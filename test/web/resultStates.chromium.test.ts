@@ -26,11 +26,12 @@ beforeAll(async () => {
   await mkdir(SHOTS, { recursive: true });
 }, 120_000);
 
+// Stopping Chromium and the dev server's Vite takes more than the default 10 s when the suite is busy.
 afterAll(async () => {
   await chrome?.stop();
   await server?.close();
   await rm(runsDir, { recursive: true, force: true });
-});
+}, 60_000);
 
 const STAGES = ['unpack', 'convert', 'translate', 'emit', 'typecheck', 'verify', 'build'] as const;
 function stages(status: StageState['status'][]): StageState[] {
