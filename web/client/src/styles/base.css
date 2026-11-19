@@ -788,3 +788,11 @@ main:focus {
     opacity: 0.45;
   }
 }
+
+/* Narrow windows crop the backdrop so its painted sarcophagus lands behind the heading, while the drop zone
+   shows its own still below: darken the top of the sky there so the painting recedes behind the text. */
+@media (max-width: 899px) {
+  .sky::after {
+    background: linear-gradient(180deg, rgba(5, 7, 11, 0.55) 0%, rgba(5, 7, 11, 0.78) 35%, rgba(5, 7, 11, 0.6) 70%, rgba(5, 7, 11, 0.3) 100%);
+  }
+}
