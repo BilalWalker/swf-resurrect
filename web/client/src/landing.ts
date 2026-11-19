@@ -1,7 +1,7 @@
 // Landing view: what the tool does, the sarcophagus (file drop) and the tombstones (samples).
 import type { SampleInfo, SetupStatus } from '../../shared/api';
 import { api, ApiFailure } from './api';
-import { formatBytes, h } from './dom';
+import { formatBytes, h, svg } from './dom';
 
 export interface LandingDeps {
   openJob(id: string): void;
@@ -218,8 +218,8 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       class: 'dropzone',
       'aria-describedby': 'drop-hint',
     },
-    h('span', { class: 'sarc', 'aria-hidden': 'true' }),
-    h('p', { class: 'drop-title' }, 'Lay a .swf to rest here', h('br'), h('span', {}, '...and raise it')),
+    h('span', { class: 'sarc', 'aria-hidden': 'true' }, h('span', { class: 'sarc-smoke' }), h('span', { class: 'sarc-smoke sarc-smoke-2' })),
+    h('p', { class: 'drop-title' }, 'Lay a .swf to rest here ', h('span', {}, '...and raise it')),
     h(
       'p',
       { class: 'drop-hint', id: 'drop-hint' },
@@ -296,6 +296,37 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
     void submit(files[0]);
   });
 
+  // The two calls to action under the pitch: the same file picker as the sarcophagus, and a jump to the samples.
+  const icon = (d: string): SVGElement => svg(`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`);
+  const actions = h(
+    'div',
+    { class: 'hero-actions' },
+    setup.uploadsEnabled
+      ? h(
+          'button',
+          { type: 'button', class: 'btn btn-primary btn-big', onclick: () => { if (!busy) input.click(); } },
+          icon('M12 3 6.5 8.5l1.4 1.4L11 6.8V16h2V6.8l3.1 3.1 1.4-1.4L12 3ZM4 18v2h16v-2H4Z'),
+          'Resurrect a .SWF',
+        )
+      : null,
+    samples.length > 0
+      ? h(
+          'button',
+          {
+            type: 'button',
+            class: 'btn btn-big',
+            onclick: () => {
+              const first = main.querySelector<HTMLElement>('.stone');
+              first?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              first?.focus({ preventScroll: true });
+            },
+          },
+          icon('M8 5v14l11-7L8 5Z'),
+          'See a Sample',
+        )
+      : null,
+  );
+
   const stones = h('ul', { class: 'stones' });
   const hands: GraspingHand[] = [];
   for (const [i, s] of samples.entries()) {
@@ -357,13 +388,14 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       h(
         'div',
         {},
-        h('p', { class: 'eyebrow' }, 'ActionScript 3 to TypeScript'),
-        h('h1', { id: 'hero-title' }, 'Raise dead Flash ', h('em', {}, 'as code'), '.'),
+        h('p', { class: 'eyebrow' }, 'ActionScript 3 ', h('span', { 'aria-hidden': 'true' }, '→'), h('span', { class: 'sr-only' }, 'to'), ' TypeScript'),
+        h('h1', { id: 'hero-title' }, 'Raise Dead Flash ', h('em', {}, 'as Code')),
         h(
           'p',
           { class: 'pitch' },
           'Give it a Flash .swf (ActionScript 3). Get back a readable TypeScript + Vite + PixiJS project, and a fidelity report that measures how closely it matches the original.',
         ),
+        actions,
         h('p', { class: 'epitaph-line' }, 'Flash Player reached its end of life on 31 December 2020. Its files did not have to.'),
       ),
       setup.uploadsEnabled ? h('div', {}, zone, input, status) : h('div', {}, uploadsOff(), status),
