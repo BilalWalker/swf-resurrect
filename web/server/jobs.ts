@@ -13,6 +13,7 @@ import { join, relative, sep } from 'node:path';
 import type { ChildProcess } from 'node:child_process';
 import type { JobSummary, LogLine, SampleInfo, SetupStatus, SourceFile } from '../shared/api';
 import { abort, applyLine, buildFinished, initialState, pipelineExited, start } from './jobState';
+import { readOutcomeFile } from './outcome';
 import type { JobState } from './jobState';
 import { javaAvailable, killTree, spawnPipeline } from './processTree';
 import type { TakeResult } from './rateLimit';
@@ -197,7 +198,8 @@ export class JobManager {
         sha256: p.sha256,
         swfPath: p.swfPath,
         dir: join(this.opts.runsDir, name),
-        state: p.state,
+        // Jobs persisted before the Outcome_File existed have no `outcome`.
+        state: { ...p.state, outcome: p.state.outcome ?? null },
         log: p.log,
         createdAt: new Date(p.createdAt),
         startedAt: p.startedAt === null ? null : new Date(p.startedAt),
@@ -426,6 +428,7 @@ export class JobManager {
       stages: job.state.stages,
       warnings: job.state.warnings,
       error: job.state.error,
+      outcome: job.state.outcome,
       verifyNotes: job.state.verifyNotes,
       createdAt: job.createdAt.toISOString(),
       startedAt: job.startedAt?.toISOString() ?? null,
@@ -530,7 +533,7 @@ export class JobManager {
         resolveExit({ code, ...(reason === undefined ? {} : { reason }) });
       });
     });
-    const exited = pipelineExited(job.state, exit.code, exit.reason);
+    const exited = pipelineExited(job.state, exit.code, exit.reason, await readOutcomeFile(outDir));
     if (exited.status !== 'running') {
       await this.finish(job, exited);
       return;

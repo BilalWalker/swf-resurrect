@@ -1,10 +1,21 @@
 // JSON shapes of the web API, shared by server and client (types only).
 import type { JobError, JobStatus, JobWarning, StageState } from '../server/jobState';
+import type { JobOutcome } from '../server/outcome';
 import type { ResultSummary } from '../server/results';
 
 export type { ClassCounts, ClassRow, ResultSummary, ScoreSummary, UnsupportedRow } from '../server/results';
 export type { JobError, JobStatus, JobWarning, StageState, StageStatus } from '../server/jobState';
 export type { StageKey } from '../server/stageLines';
+export type {
+  GapKind,
+  GapSummary,
+  JobOutcome,
+  ObfuscationSummary,
+  OutcomeCode,
+  OutcomeFacts,
+  OutcomeNumbers,
+  ReasonCode,
+} from '../server/outcome';
 
 export interface JobSummary {
   id: string;
@@ -19,6 +30,8 @@ export interface JobSummary {
   stages: StageState[];
   warnings: JobWarning[];
   error: JobError | null;
+  /** The engine's Outcome_File, once the pipeline has ended and the file was read. */
+  outcome: JobOutcome | null;
   verifyNotes: string[];
   createdAt: string;
   startedAt: string | null;
@@ -65,6 +78,7 @@ export interface SetupStatus {
   /** Plain-language problems, empty when ready. */
   problems: string[];
   maxUploadBytes: number;
+  /** The run limit each conversion gets, in seconds. */
   timeoutSeconds: number;
   /** False on a gallery-only host (SWF_RESURRECT_UPLOADS=off): the drop zone is hidden. */
   uploadsEnabled: boolean;

@@ -1,10 +1,15 @@
 // Job state machine: folds parsed pipeline lines and process events into what the UI shows.
 // Pure: every function returns a new state and never reads a clock or the file system.
+import type { JobOutcome, OutcomeRead } from './outcome';
 import { ALL_STAGES, isPipelineStage } from './stageLines';
 import type { Facts, ParsedLine, StageKey } from './stageLines';
 
 export type StageStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed' | 'skipped';
-export type JobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+/**
+ * `refused`: the engine declined the input (exit 3, Outcome `refused`); it is not an error of the
+ * server. `succeeded` covers both project outcomes (`converted`, `converted-with-gaps`).
+ */
+export type JobStatus = 'queued' | 'running' | 'succeeded' | 'refused' | 'failed';
 
 export interface StageState {
   key: StageKey;
@@ -33,6 +38,8 @@ export interface JobState {
   warnings: JobWarning[];
   error: JobError | null;
   verifyNotes: string[];
+  /** The Outcome_File read after the pipeline ended; null before that, or when there was none. */
+  outcome: JobOutcome | null;
 }
 
 export function initialState(): JobState {
@@ -42,6 +49,7 @@ export function initialState(): JobState {
     warnings: [],
     error: null,
     verifyNotes: [],
+    outcome: null,
   };
 }
 
@@ -123,22 +131,47 @@ export function applyLine(state: JobState, line: ParsedLine): JobState {
   }
 }
 
+/** Exit codes of the pipeline CLI (docs/outcome.md). */
+const EXIT_PROJECT = 0;
+const EXIT_REFUSED = 3;
+
 /**
- * The pipeline process ended. `reason` describes an abnormal end (timeout, spawn failure) and is
- * used when the CLI printed no error line of its own. On success the `build` stage starts.
+ * The pipeline process ended. `reason` describes an end the server caused (its own time limit,
+ * spawn failure, shutdown); it wins over everything else. Otherwise the Outcome_File decides:
+ * exit 0 with a project outcome starts the `build` stage, exit 3 with `refused` ends the job as
+ * refused, and anything else is failed. A missing or unreadable file after exit 0 or 3 is failed
+ * with the reader's plain sentence. Lines such as `error [unpack]: ...` printed before the end
+ * only mark the stage; they do not decide the status once an Outcome_File was read.
  */
-export function pipelineExited(state: JobState, exitCode: number | null, reason?: string): JobState {
-  if (state.status === 'failed') return state;
-  if (state.status !== 'running') return state;
-  if (exitCode === 0 && reason === undefined) {
-    let next = state;
-    for (const s of next.stages) {
-      if (s.key === 'build') continue;
-      if (s.status === 'running' || s.status === 'pending') next = withStage(next, s.key, { status: 'skipped' });
+export function pipelineExited(state: JobState, exitCode: number | null, reason?: string, read?: OutcomeRead): JobState {
+  if (state.status !== 'running' && state.status !== 'failed') return state;
+  if (state.status === 'failed' && state.outcome !== null) return state;
+  const outcome = read?.ok === true ? read.outcome : null;
+  const withOutcome: JobState = { ...state, outcome };
+  if (reason !== undefined) return state.status === 'failed' ? withOutcome : fail(withOutcome, null, reason);
+  const skipRest = (s: JobState, keep: StageKey | null): JobState => {
+    let next = s;
+    for (const st of next.stages) {
+      if (st.key === keep) continue;
+      if (st.status === 'running' || st.status === 'pending') next = withStage(next, st.key, { status: 'skipped' });
     }
-    return withStage(next, 'build', { status: 'running' });
+    return next;
+  };
+  if (exitCode === EXIT_PROJECT && (outcome?.outcome === 'converted' || outcome?.outcome === 'converted-with-gaps')) {
+    if (state.status === 'failed') return withOutcome;
+    return withStage(skipRest(withOutcome, 'build'), 'build', { status: 'running' });
   }
-  return fail(state, null, reason ?? `the pipeline exited with code ${exitCode ?? 'unknown'}`);
+  if (exitCode === EXIT_REFUSED && outcome?.outcome === 'refused') {
+    return skipRest({ ...withOutcome, status: 'refused', error: null }, null);
+  }
+  if (state.status === 'failed') {
+    // The engine's own sentence replaces the raw line it printed before ending.
+    if (outcome?.outcome !== 'failed' || withOutcome.error === null) return withOutcome;
+    return { ...withOutcome, error: { ...withOutcome.error, message: outcome.reason } };
+  }
+  if ((exitCode === EXIT_PROJECT || exitCode === EXIT_REFUSED) && read?.ok === false) return fail(withOutcome, null, read.message);
+  if (outcome?.outcome === 'failed') return fail(withOutcome, null, outcome.reason);
+  return fail(withOutcome, null, `the pipeline exited with code ${exitCode ?? 'unknown'}`);
 }
 
 /** The preview build ended. A build failure keeps the pipeline result; only the preview is missing. */
@@ -150,7 +183,7 @@ export function buildFinished(state: JobState, error: string | null): JobState {
 
 /** A queued or running job that will not finish normally (server stopping, timeout before start). */
 export function abort(state: JobState, message: string): JobState {
-  if (state.status === 'succeeded' || state.status === 'failed') return state;
+  if (state.status === 'succeeded' || state.status === 'refused' || state.status === 'failed') return state;
   if (state.status === 'queued') state = start(state);
   return fail(state, null, message);
 }

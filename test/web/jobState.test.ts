@@ -2,6 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { abort, applyLine, buildFinished, currentStage, initialState, pipelineExited, start } from '../../web/server/jobState';
 import type { JobState } from '../../web/server/jobState';
 import { parseLine } from '../../web/server/stageLines';
+import type { JobOutcome, OutcomeRead } from '../../web/server/outcome';
+
+function read(outcome: JobOutcome['outcome'], over: Partial<JobOutcome> = {}): OutcomeRead {
+  return {
+    ok: true,
+    outcome: {
+      outcome,
+      reasonCode: null,
+      reason: 'a sentence',
+      numbers: null,
+      gaps: [],
+      facts: null,
+      obfuscation: null,
+      referenceId: null,
+      runLimitS: 300,
+      ...over,
+    },
+  };
+}
+const CONVERTED = read('converted');
 
 function feed(state: JobState, lines: string[]): JobState {
   return lines.reduce((s, l) => applyLine(s, parseLine(l)), state);
@@ -48,7 +68,7 @@ describe('job state machine', () => {
       facts: { overallMatch: 100, traceScore: 100 },
       detail: 'overall match 100.00%, trace score 100.00%',
     });
-    s = pipelineExited(s, 0);
+    s = pipelineExited(s, 0, undefined, CONVERTED);
     expect(currentStage(s)).toBe('build');
     expect(s.status).toBe('running');
     s = buildFinished(s, null);
@@ -57,7 +77,7 @@ describe('job state machine', () => {
   });
 
   it('marks verify skipped when the run had no verify line', () => {
-    const s = pipelineExited(feed(start(initialState()), SUCCESS.slice(0, 5)), 0);
+    const s = pipelineExited(feed(start(initialState()), SUCCESS.slice(0, 5)), 0, undefined, CONVERTED);
     expect(s.stages[5].status).toBe('skipped');
     expect(currentStage(s)).toBe('build');
   });
@@ -112,16 +132,63 @@ describe('job state machine', () => {
   });
 
   it('keeps the pipeline result when only the preview build fails', () => {
-    const s = buildFinished(pipelineExited(feed(start(initialState()), SUCCESS), 0), 'vite failed');
+    const s = buildFinished(pipelineExited(feed(start(initialState()), SUCCESS), 0, undefined, CONVERTED), 'vite failed');
     expect(s.status).toBe('succeeded');
     expect(s.stages[6]).toMatchObject({ status: 'failed', detail: 'vite failed' });
   });
 
   it('aborts queued and running jobs, but not finished ones', () => {
     expect(abort(initialState(), 'server stopped')).toMatchObject({ status: 'failed', error: { stage: 'unpack' } });
-    const done = buildFinished(pipelineExited(feed(start(initialState()), SUCCESS), 0), null);
+    const done = buildFinished(pipelineExited(feed(start(initialState()), SUCCESS), 0, undefined, CONVERTED), null);
     expect(abort(done, 'x')).toBe(done);
-    const building = pipelineExited(feed(start(initialState()), SUCCESS), 0);
+    const building = pipelineExited(feed(start(initialState()), SUCCESS), 0, undefined, CONVERTED);
     expect(abort(building, 'stopped').error?.stage).toBe('build');
+  });
+
+  it('ends a refused run as refused, not failed, even after an error line', () => {
+    const refused = read('refused', { reasonCode: 'damaged', reason: 'the file could not be read' });
+    const s = pipelineExited(feed(start(initialState()), ['error [unpack]: the file could not be read']), 3, undefined, refused);
+    expect(s.status).toBe('refused');
+    expect(s.error).toBeNull();
+    expect(s.outcome).toMatchObject({ outcome: 'refused', reasonCode: 'damaged' });
+    expect(s.stages.find((x) => x.key === 'build')?.status).toBe('skipped');
+    expect(currentStage(s)).toBeNull();
+    expect(abort(s, 'x')).toBe(s);
+  });
+
+  it('keeps a converted-with-gaps outcome through the build', () => {
+    const gaps = read('converted-with-gaps', { numbers: null });
+    const s = buildFinished(pipelineExited(feed(start(initialState()), SUCCESS), 0, undefined, gaps), null);
+    expect(s.status).toBe('succeeded');
+    expect(s.outcome?.outcome).toBe('converted-with-gaps');
+  });
+
+  it('fails with the engine sentence and reference id when the run failed', () => {
+    const failed = read('failed', { reasonCode: 'internal-error', reason: 'an internal error stopped the run (reference 3fa9c01e)', referenceId: '3fa9c01e' });
+    const s = pipelineExited(feed(start(initialState()), ['[unpack] ok', 'error [pipeline]: internal error, reference 3fa9c01e']), 1, undefined, failed);
+    expect(s.status).toBe('failed');
+    expect(s.error?.message).toBe('an internal error stopped the run (reference 3fa9c01e)');
+    expect(s.outcome?.referenceId).toBe('3fa9c01e');
+  });
+
+  it('fails with a plain sentence when exit 0 or 3 left no readable outcome file', () => {
+    const missing: OutcomeRead = { ok: false, message: 'the converter ended without writing its result record' };
+    for (const code of [0, 3]) {
+      const s = pipelineExited(start(initialState()), code, undefined, missing);
+      expect(s.status).toBe('failed');
+      expect(s.error?.message).toBe('the converter ended without writing its result record');
+      expect(s.outcome).toBeNull();
+    }
+  });
+
+  it('fails when the exit code and the outcome disagree', () => {
+    expect(pipelineExited(start(initialState()), 0, undefined, read('refused')).status).toBe('failed');
+    expect(pipelineExited(start(initialState()), 3, undefined, CONVERTED).status).toBe('failed');
+  });
+
+  it('lets the server kill win over the outcome file', () => {
+    const s = pipelineExited(start(initialState()), null, 'ended by the server', CONVERTED);
+    expect(s.status).toBe('failed');
+    expect(s.error?.message).toBe('ended by the server');
   });
 });

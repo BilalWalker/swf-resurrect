@@ -50,7 +50,9 @@ export async function prewarm(jobs: JobManager, o: { rerun: boolean; write(line:
         ? null
         : summary.error !== null
           ? `${summary.error.stage}: ${summary.error.message}`
-          : `ended as ${summary.status}`;
+          : summary.outcome !== null
+            ? `${summary.outcome.reasonCode ?? summary.outcome.outcome}: ${summary.outcome.reason}`
+            : `ended as ${summary.status}`;
     o.write(`[${sample}] ${summary.status}${problem === null ? '' : ` (${problem})`}`);
     results.push({ sample, id: created.id, cached: created.cached, status: summary.status, problem });
   }
