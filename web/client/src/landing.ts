@@ -114,12 +114,13 @@ const HAND_FRAMES = 30;
 const HAND_COLS = 10;
 const HAND_HOLD_FROM = 11;
 const HAND_HOLD_TO = 17;
-/** Rising and sinking are quick; while held, the frames at full height pass slowly, so the fingers flex, not twitch. */
+/**
+ * One pace for every frame, hovered or not: the clip's own rhythm. Hovering used to rush the rise and then
+ * slow the frames at full height, and that change of pace read as lag.
+ */
 const HAND_MOVE_MS = 80;
-/** On hover the hand must answer at once: skip the first frames (soil only just cracking) and come up fast. */
+/** On hover the hand must answer at once: skip the first frames, where the soil is only just cracking. */
 const HAND_HOVER_FROM = 5;
-const HAND_HOVER_MS = 42;
-const HAND_HOLD_MS = 260;
 
 interface GraspingHand {
   /** Come up and stay, clawing, until released. */
@@ -155,7 +156,7 @@ function graspingHand(el: HTMLElement): GraspingHand {
       if (frame >= HAND_FRAMES) frame = 0;
     }
     show();
-    if (frame !== 0) timer = window.setTimeout(tick, holding ? HAND_HOLD_MS : held ? HAND_HOVER_MS : HAND_MOVE_MS);
+    if (frame !== 0) timer = window.setTimeout(tick, HAND_MOVE_MS);
   };
   const start = (): void => {
     if (timer === 0) timer = window.setTimeout(tick, HAND_MOVE_MS);
@@ -173,7 +174,7 @@ function graspingHand(el: HTMLElement): GraspingHand {
         show();
       }
       window.clearTimeout(timer);
-      timer = window.setTimeout(tick, HAND_HOVER_MS);
+      timer = window.setTimeout(tick, HAND_MOVE_MS);
     },
     release: () => {
       held = false;
