@@ -110,73 +110,36 @@
   cursor: progress;
 }
 
-/* 14 frames of the lid opening, cut from a generated clip and packed 7 x 2 in art/sarc-anim.webp.
-   landing.ts moves between frames by state. */
+/* The sarcophagus: on wide windows the drop zone lies over the one painted in the backdrop (see below);
+   otherwise a still crop of that painting (art/sarc-still.webp) stands in the layout. A green glow over it
+   answers hover and focus, and breathes while a file is held over it or uploads. */
 .sarc {
   position: relative;
-  width: min(100%, 620px);
-  aspect-ratio: 560 / 313;
-  background: url('/art/sarc-anim.webp') 0 0 / 700% 200% no-repeat;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.6));
-  transition: filter 0.4s ease;
+  width: min(100%, 560px);
+  aspect-ratio: 620 / 330;
+  background: url('/art/sarc-still.webp') center / 100% 100% no-repeat;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 72%, transparent 100%);
 }
 .sarc::before {
   content: '';
   position: absolute;
-  inset: 0 -4% -8%;
+  inset: 8% 4% 6%;
   z-index: -1;
   border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 55%, rgba(126, 242, 184, 0.45), rgba(60, 200, 130, 0.12) 45%, transparent 70%);
-  opacity: 0.55;
-  transition: opacity 0.5s ease;
+  background: radial-gradient(ellipse at 50% 55%, rgba(126, 242, 184, 0.5), rgba(60, 200, 130, 0.14) 45%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 .dropzone:hover .sarc::before,
 .dropzone:focus-visible .sarc::before {
-  opacity: 0.8;
+  opacity: 0.6;
 }
 .dropzone.is-over .sarc::before,
 .dropzone.is-busy .sarc::before {
   opacity: 1;
   animation: breathe 1.8s ease-in-out infinite alternate;
-}
-.dropzone.is-over .sarc {
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 22px rgba(126, 242, 184, 0.55));
-}
-
-/* green smoke curling up off the lid */
-.sarc-smoke {
-  position: absolute;
-  left: 34%;
-  top: 4%;
-  width: 30%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(140, 255, 190, 0.5), rgba(80, 220, 150, 0.15) 45%, transparent 70%);
-  filter: blur(10px);
-  opacity: 0;
-  pointer-events: none;
-  animation: smoke-rise 6.5s ease-out infinite;
-}
-.sarc-smoke-2 {
-  left: 50%;
-  width: 24%;
-  animation-delay: -3.2s;
-  animation-duration: 7.4s;
-}
-@keyframes smoke-rise {
-  0% {
-    translate: 0 10%;
-    scale: 0.55;
-    opacity: 0;
-  }
-  25% {
-    opacity: 0.75;
-  }
-  100% {
-    translate: -12% -95%;
-    scale: 1.5;
-    opacity: 0;
-  }
 }
 
 @keyframes breathe {
@@ -741,7 +704,7 @@
 }
 
 /* ---- The drop zone standing on the backdrop's painted sarcophagus (landing.ts stageOnBackdrop places
-   the column over the painted box; the sprite is stretched to that box so it covers it exactly). ---- */
+   the column over the painted box). ---- */
 .hero {
   position: relative;
 }
@@ -753,11 +716,13 @@
   width: 100%;
   max-width: none;
   aspect-ratio: auto;
-  /* dimmed and greened a little to the painting's light; the painting already has its own shadow */
-  filter: brightness(0.88) saturate(1.1);
+  /* the painting shows through; only the glow is drawn, in front of it */
+  background: none;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
-.drop-col.is-staged .dropzone.is-over .sarc {
-  filter: brightness(0.95) saturate(1.1) drop-shadow(0 0 22px rgba(126, 242, 184, 0.55));
+.drop-col.is-staged .sarc::before {
+  z-index: 0;
 }
 .drop-col.is-staged .drop-title,
 .drop-col.is-staged .drop-hint,
@@ -778,17 +743,4 @@
 }
 .stone .stone-meta {
   color: #b9b3a6;
-}
-
-/* Standing on the painting, the sprite (softer: cut from a 720p clip) only shows while it moves or is open;
-   at rest the sharper painted sarcophagus, its skulls and its own green smoke are what you see. The sprite's
-   dirt base fades out so the painted ground and skull stay visible while it is open. */
-.drop-col.is-staged .sarc {
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  -webkit-mask-image: linear-gradient(180deg, #000 86%, transparent 96%);
-  mask-image: linear-gradient(180deg, #000 86%, transparent 96%);
-}
-.drop-col.is-staged .sarc.is-stirring {
-  opacity: 1;
 }

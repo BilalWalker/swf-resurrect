@@ -40,66 +40,9 @@ function stoneShape(index: number, nameParts: number): number {
   return shape === 2 && nameParts > 1 ? 4 : shape;
 }
 
-/** art/sarc-anim.webp: 14 frames of the lid opening (0 closed, 13 fully open), 7 per row. */
-const SARC_FRAMES = 14;
-const SARC_COLS = 7;
-const SARC_FRAME_MS = 55;
-
 /**
- * Plays the sarcophagus in the drop zone toward the frame its state asks for, forwards or backwards:
- * closed at rest; fully open on hover or focus, while a file is held over it, and while uploading.
- */
-function animateSarcophagus(zone: HTMLElement): void {
-  const el = zone.querySelector<HTMLElement>('.sarc');
-  if (el === null) return;
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let frame = 0;
-  let hover = false;
-  let timer = 0;
-  // Open all the way or closed, nothing between: a half-open frame freezes the vines in mid-snap.
-  const target = (): number =>
-    hover || zone.classList.contains('is-busy') || zone.classList.contains('is-over') ? SARC_FRAMES - 1 : 0;
-  const show = (): void => {
-    el.style.backgroundPosition = `${((frame % SARC_COLS) / (SARC_COLS - 1)) * 100}% ${Math.floor(frame / SARC_COLS) * 100}%`;
-    // closed and at rest: when it stands on the painted sarcophagus, the painting itself shows (landing.css)
-    el.classList.toggle('is-stirring', frame !== 0 || target() !== 0);
-  };
-  const step = (): void => {
-    const t = target();
-    if (frame === t) {
-      window.clearInterval(timer);
-      timer = 0;
-      return;
-    }
-    frame = still ? t : frame + Math.sign(t - frame);
-    show();
-  };
-  const sync = (): void => {
-    show();
-    if (timer === 0 && frame !== target()) timer = window.setInterval(step, SARC_FRAME_MS);
-  };
-  for (const [on, off] of [
-    ['mouseenter', 'mouseleave'],
-    ['focus', 'blur'],
-  ]) {
-    zone.addEventListener(on, () => {
-      hover = true;
-      sync();
-    });
-    zone.addEventListener(off, () => {
-      hover = zone.matches(':hover') || zone.matches(':focus-visible');
-      sync();
-    });
-  }
-  // is-over and is-busy are set elsewhere in this file; follow them without touching that code
-  new MutationObserver(sync).observe(zone, { attributes: true, attributeFilter: ['class'] });
-  show();
-}
-
-/**
- * Where the backdrop paints its sarcophagus, as fractions of the picture (left, top, width, height): our
- * sprite's closed frame, stretched to this box, covers the painted one, so the mud and skulls around it
- * stay and the lid can still open. Found by compositing the sprite over the backdrop.
+ * Where the backdrop paints its sarcophagus, as fractions of the picture (left, top, width, height): the drop
+ * zone is laid over this box, so the painted sarcophagus itself is what takes the file.
  */
 const PAINTED_SARC = [0.497, 0.1722, 0.3846, 0.4081] as const;
 /** Below this width the backdrop is cropped too much to line up with; the drop zone stays in the layout. */
@@ -273,7 +216,7 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       class: 'dropzone',
       'aria-describedby': 'drop-hint',
     },
-    h('span', { class: 'sarc', 'aria-hidden': 'true' }, h('span', { class: 'sarc-smoke' }), h('span', { class: 'sarc-smoke sarc-smoke-2' })),
+    h('span', { class: 'sarc', 'aria-hidden': 'true' }),
     h('p', { class: 'drop-title' }, 'Lay a .swf to rest here ', h('span', {}, '...and raise it')),
     h(
       'p',
@@ -281,8 +224,6 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       `Drop a file, or press Enter to choose one. ActionScript 3 only, up to ${maxMb} MB.`,
     ),
   );
-
-  animateSarcophagus(zone);
 
   let busy = false;
   const setBusy = (b: boolean): void => {
