@@ -16,7 +16,9 @@
 .vitals > .tile,
 .screen,
 .details,
-.ritual-panel {
+.ritual-panel,
+.gap-panel,
+.outcome {
   position: relative;
   border: 1px solid var(--gold-line);
   border-radius: 4px;
@@ -29,7 +31,9 @@
 .vitals > .tile::after,
 .screen::after,
 .details::after,
-.ritual-panel::after {
+.ritual-panel::after,
+.gap-panel::after,
+.outcome::after {
   content: '';
   position: absolute;
   inset: -2px;
@@ -376,4 +380,20 @@
     bottom: -10px;
     width: 110px;
   }
+}
+
+/* ---- The other result states in the same frame ----
+   The gap panel keeps its amber (or ember, for few classes) stripe inside the gold line; the refused
+   and failed panels keep their ember edge as the line's colour. */
+.gap-panel {
+  border-left: 3px solid #e8c56a;
+  background: rgba(7, 10, 15, 0.92);
+}
+.gap-panel.is-few {
+  border-left-color: var(--ember);
+}
+.outcome.is-refused,
+.outcome.is-failed {
+  border-color: rgba(255, 154, 138, 0.55);
+  background: rgba(7, 10, 15, 0.92);
 }
