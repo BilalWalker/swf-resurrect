@@ -1,4 +1,4 @@
-/* The job page and the resurrection ritual: one candle per stage, lit as the pipeline reports. */
+/* The job page and the resurrection ritual: one row per stage, marked as the pipeline reports. */
 .job-head {
   padding: clamp(8px, 3vh, 28px) 0 18px;
 }
@@ -79,155 +79,6 @@
   padding: 10px 0 14px;
 }
 
-/* The line joining the candles; it glows once the stage above has passed. */
-.rite::before {
-  content: '';
-  position: absolute;
-  left: 21px;
-  top: 64px;
-  bottom: -10px;
-  width: 2px;
-  background: var(--night-4);
-  transition: background 0.6s ease, box-shadow 0.6s ease;
-}
-
-.rite:last-child::before {
-  display: none;
-}
-
-.rite[data-status='ok']::before,
-.rite[data-status='warn']::before {
-  background: var(--spectral-deep);
-  box-shadow: 0 0 8px var(--spectral-glow);
-}
-
-.rite-candle {
-  display: block;
-  width: 44px;
-}
-
-.candle {
-  display: block;
-  width: 40px;
-  height: 72px;
-  overflow: visible;
-}
-
-.candle .wax {
-  fill: var(--wax);
-  opacity: 0.55;
-  transition: opacity 0.6s ease;
-}
-.candle .drip {
-  fill: #f2eee2;
-  opacity: 0.5;
-}
-.candle .wick {
-  stroke: #1d1a16;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-.candle .flame,
-.candle .halo,
-.candle .smoke {
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-.candle .flame-outer {
-  fill: var(--spectral);
-}
-.candle .flame-inner {
-  fill: #f2fff8;
-}
-.candle .halo {
-  fill: var(--spectral);
-  filter: blur(6px);
-}
-.candle .smoke {
-  stroke: var(--mist-dim);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-}
-.candle .flame {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-}
-
-.rite[data-status='running'] .candle .flame,
-.rite[data-status='ok'] .candle .flame,
-.rite[data-status='warn'] .candle .flame {
-  opacity: 1;
-  animation: flicker 2.6s ease-in-out infinite;
-  animation-delay: calc(var(--i, 0) * -0.37s);
-}
-
-.rite[data-status='running'] .candle .halo {
-  opacity: 0.55;
-  animation: pulse 1.4s ease-in-out infinite alternate;
-}
-
-.rite[data-status='ok'] .candle .halo,
-.rite[data-status='warn'] .candle .halo {
-  opacity: 0.3;
-}
-
-.rite[data-status='ok'] .candle .wax,
-.rite[data-status='warn'] .candle .wax,
-.rite[data-status='running'] .candle .wax {
-  opacity: 0.9;
-}
-
-/* A type-error stage burns, but amber-tinged: done with problems. */
-.rite[data-status='warn'] .candle .flame-outer {
-  fill: #d9e98a;
-}
-
-.rite[data-status='failed'] .candle .smoke {
-  opacity: 1;
-  stroke: var(--ember);
-  animation: rise 3s ease-out infinite;
-}
-
-.rite[data-status='skipped'] .candle .wax,
-.rite[data-status='pending'] .candle .wax {
-  opacity: 0.35;
-}
-
-@keyframes flicker {
-  0%,
-  100% {
-    transform: scale(1, 1) rotate(0deg);
-  }
-  20% {
-    transform: scale(0.94, 1.06) rotate(-2deg);
-  }
-  45% {
-    transform: scale(1.04, 0.95) rotate(1.5deg);
-  }
-  70% {
-    transform: scale(0.97, 1.03) rotate(-1deg);
-  }
-}
-
-@keyframes pulse {
-  from {
-    opacity: 0.3;
-  }
-  to {
-    opacity: 0.7;
-  }
-}
-
-@keyframes rise {
-  from {
-    stroke-dasharray: 0 40;
-  }
-  to {
-    stroke-dasharray: 40 0;
-    opacity: 0.2;
-  }
-}
-
 .rite-title {
   margin: 6px 0 2px;
   font-size: 1.2rem;
@@ -291,53 +142,12 @@
   color: #c4c9cf;
 }
 
-/* The wisp: a small light that drifts to the stage in progress. */
-.wisp {
-  position: absolute;
-  left: 8px;
-  top: 0;
-  width: 28px;
-  height: 28px;
-  margin-top: 4px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(242, 255, 248, 0.95) 0 12%, rgba(126, 242, 184, 0.55) 30%, rgba(126, 242, 184, 0) 70%);
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    transform 0.9s cubic-bezier(0.4, 0.1, 0.2, 1),
-    opacity 0.5s ease;
-  z-index: 2;
-  filter: blur(0.5px);
-  mix-blend-mode: screen;
-}
-
-.wisp.is-on {
-  opacity: 1;
-  animation: hover-wisp 3s ease-in-out infinite;
-}
-
-@keyframes hover-wisp {
-  0%,
-  100% {
-    margin-left: 0;
-  }
-  50% {
-    margin-left: 6px;
-  }
-}
-
 /* Finished: the ritual record stays, more compact, below the result. */
 .ritual-panel.is-done .rite {
   padding: 4px 0 8px;
 }
 .ritual-panel.is-done .rite-what {
   display: none;
-}
-.ritual-panel.is-done .candle {
-  height: 48px;
-}
-.ritual-panel.is-done .rite::before {
-  top: 46px;
 }
 
 .omens {

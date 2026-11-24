@@ -62,20 +62,6 @@ export const GRAVE = `
   <path class="soil" d="M20 160 q 8 -6 16 0 M48 140 q 8 -6 16 0 M304 146 q 8 -6 16 0 M326 166 q 8 -6 16 0" fill="none"/>
 </svg>`;
 
-/** One ritual candle. CSS lights, flickers or snuffs it from the step's data-status. */
-export const CANDLE = `
-<svg class="candle" viewBox="0 0 40 72" aria-hidden="true" focusable="false">
-  <circle class="halo" cx="20" cy="16" r="16"/>
-  <g class="flame">
-    <path class="flame-outer" d="M20 4 C 26 12 28 18 24 24 C 22 27 18 27 16 24 C 12 18 14 12 20 4 Z"/>
-    <path class="flame-inner" d="M20 13 C 23 17 23 21 21 23 C 20 24 19 24 18 23 C 17 21 17 17 20 13 Z"/>
-  </g>
-  <path class="smoke" d="M20 22 C 16 16 24 12 20 6 C 17 2 22 -2 20 -6" fill="none"/>
-  <path class="wick" d="M20 22 V 30" fill="none"/>
-  <path class="wax" d="M11 30 H 29 V 68 H 11 Z"/>
-  <path class="drip" d="M11 30 H 29 V 36 C 27 36 27 42 25 42 C 23 42 24 35 21 35 C 18 35 18 39 16 39 C 14 39 14 34 11 34 Z"/>
-</svg>`;
-
 /** A heartbeat trace drawn once when the result appears. */
 export const EKG = `
 <svg class="ekg" viewBox="0 0 600 60" preserveAspectRatio="none" aria-hidden="true" focusable="false">

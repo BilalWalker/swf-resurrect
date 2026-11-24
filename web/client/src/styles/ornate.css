@@ -141,15 +141,12 @@
 
 /* ---- Ritual: a line icon per stage, a mark beside the state, the moon-phase row ---- */
 .rite {
-  grid-template-columns: 44px 36px minmax(0, 1fr) auto;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   align-items: center;
   border-bottom: 1px solid var(--gold-dim);
 }
 .rite:last-child {
   border-bottom: 0;
-}
-.rite-candle {
-  align-self: start;
 }
 .rite-icon {
   width: 32px;
@@ -237,11 +234,11 @@
 
 @media (max-width: 600px) {
   .rite {
-    grid-template-columns: 36px 28px minmax(0, 1fr);
+    grid-template-columns: 28px minmax(0, 1fr);
   }
   /* The state moves under the stage name. */
   .rite-status {
-    grid-column: 3;
+    grid-column: 2;
     margin-top: 0;
   }
   .rite-icon {

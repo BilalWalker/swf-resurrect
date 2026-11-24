@@ -1,11 +1,9 @@
-// The resurrection ritual: one candle per pipeline stage, lit in order as the CLI reports each
-// stage. The ritual name is decoration; the real stage name, status and the CLI's own numbers
+// The resurrection ritual: one row per pipeline stage, with its line icon, marked in order as the
+// CLI reports each stage. The ritual name is decoration; the real stage name, status and the CLI's own numbers
 // are always shown next to it.
 import type { JobSummary, StageKey, StageState } from '../../shared/api';
-import { CANDLE } from './art';
-import { announce, h, svg } from './dom';
+import { announce, h } from './dom';
 import { RITES, STAGE_ICONS, STATUS_TEXT } from './labels';
-
 
 interface RiteNodes {
   li: HTMLLIElement;
@@ -17,7 +15,6 @@ interface RiteNodes {
 export class Ritual {
   readonly el: HTMLElement;
   private readonly list: HTMLOListElement;
-  private readonly wisp: HTMLElement;
   /** One moon per stage, lit as each stage completes: the mockup's moon-phase row. */
   readonly moons: HTMLElement;
   private readonly nodes = new Map<StageKey, RiteNodes>();
@@ -25,9 +22,8 @@ export class Ritual {
 
   constructor() {
     this.list = h('ol', { class: 'rites' });
-    this.wisp = h('span', { class: 'wisp', 'aria-hidden': 'true' });
     this.moons = h('span', { class: 'moon-row', 'aria-hidden': 'true' });
-    this.el = h('div', { class: 'ritual' }, this.wisp, this.list);
+    this.el = h('div', { class: 'ritual' }, this.list);
   }
 
   update(job: JobSummary): void {
@@ -39,15 +35,6 @@ export class Ritual {
       }
       this.apply(n, s);
     });
-    const running = job.stages.find((s) => s.status === 'running');
-    const li = running === undefined ? undefined : this.nodes.get(running.key)?.li;
-    if (li !== undefined) {
-      // The wisp drifts down the candle line to the stage in progress.
-      this.wisp.style.transform = `translateY(${li.offsetTop}px)`;
-      this.wisp.classList.add('is-on');
-    } else {
-      this.wisp.classList.remove('is-on');
-    }
     this.el.dataset.status = job.status;
     if (this.moons.childElementCount !== job.stages.length) {
       this.moons.replaceChildren(...job.stages.map((_, i) => h('i', { style: `--i:${i}` })));
@@ -65,7 +52,6 @@ export class Ritual {
     const li = h(
       'li',
       { class: 'rite', 'data-status': 'pending', style: `--i:${index}` },
-      h('span', { class: 'rite-candle' }, svg(CANDLE)),
       h('img', {
         class: 'rite-icon',
         src: `/art/icon-${STAGE_ICONS[key]}.webp`,
