@@ -22,3 +22,14 @@ as a separate process, which in turn runs FFDec as a separate process.
 The container image (`Dockerfile`) installs the unmodified FFDec release
 in its own directory, `/opt/ffdec/`, with its licence beside it; see
 `THIRD_PARTY.md` in the repository root.
+
+## Images of the result page (brief 3)
+
+The painted icons, tiles, ornaments and props in `web/client/public/art/`
+whose names start with `icon-`, `tile-`, `orn-` or `prop-` were generated
+with ChatGPT image generation by the project owner, 2026-11-24. The
+source PNGs (1254 x 1254, kept outside the repository in `.work/art-src/`)
+are turned into these WebP files by `web/scripts/build-art.py`: trimmed to
+the object's bounds and scaled to icons 96 px, tiles 192 px, ornaments
+256 px (the divider 512 px wide) and props 320 px, each file under 60 KB,
+402 KB in total.
