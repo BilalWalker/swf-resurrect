@@ -397,3 +397,41 @@
   border-color: rgba(255, 154, 138, 0.55);
   background: rgba(7, 10, 15, 0.92);
 }
+
+/* ---- Landing and gallery in the same look ----
+   The feature and How It Works cards get the gold line and corners; each rite card shows its stage's
+   line icon beside the number, as in the ritual. */
+.feature-list li,
+.rites-list li {
+  position: relative;
+  border: 1px solid var(--gold-line);
+  border-radius: 4px;
+  background: rgba(7, 10, 15, 0.9);
+  --corner: 30px;
+}
+.feature-list li {
+  border-top: 2px solid var(--spectral-deep);
+}
+.feature-list li::after,
+.rites-list li::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  background:
+    url('/art/orn-corner-tl.webp') left top / var(--corner) var(--corner) no-repeat,
+    url('/art/orn-corner-tr.webp') right top / var(--corner) var(--corner) no-repeat,
+    url('/art/orn-corner-bl.webp') left bottom / var(--corner) var(--corner) no-repeat,
+    url('/art/orn-corner-br.webp') right bottom / var(--corner) var(--corner) no-repeat;
+}
+.rites-list li {
+  padding-left: 96px;
+}
+.rite-card-icon {
+  position: absolute;
+  left: 54px;
+  top: 15px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}

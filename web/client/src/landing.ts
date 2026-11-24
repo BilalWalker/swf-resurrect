@@ -2,7 +2,7 @@
 import type { SampleInfo, SetupStatus } from '../../shared/api';
 import { api, ApiFailure } from './api';
 import { formatBytes, h, svg } from './dom';
-import { RITES, uploadLimits } from './labels';
+import { RITES, STAGE_ICONS, STAGE_ORDER, uploadLimits } from './labels';
 
 export interface LandingDeps {
   openJob(id: string): void;
@@ -445,7 +445,16 @@ export async function renderLanding(main: HTMLElement, deps: LandingDeps): Promi
       h(
         'ol',
         { class: 'rites-list' },
-        ...Object.values(RITES).map((r, i) => h('li', {}, h('span', { class: 'rite-n', 'aria-hidden': 'true' }, String(i + 1)), h('h3', {}, r.rite), h('p', {}, r.what))),
+        ...STAGE_ORDER.map((key, i) =>
+          h(
+            'li',
+            {},
+            h('span', { class: 'rite-n', 'aria-hidden': 'true' }, String(i + 1)),
+            h('img', { class: 'rite-card-icon', src: `/art/icon-${STAGE_ICONS[key]}.webp`, alt: '', width: '28', height: '28', loading: 'lazy', decoding: 'async', 'aria-hidden': 'true' }),
+            h('h3', {}, RITES[key].rite),
+            h('p', {}, RITES[key].what),
+          ),
+        ),
       ),
     ),
   );

@@ -12,6 +12,9 @@ export const RITES: Record<StageKey, { rite: string; what: string }> = {
   build: { rite: 'Raise', what: 'This server builds the project for the preview.' },
 };
 
+/** The stages in run order, as the ritual and the How It Works list show them. */
+export const STAGE_ORDER: readonly StageKey[] = ['unpack', 'convert', 'translate', 'emit', 'typecheck', 'verify', 'build'];
+
 /** The line icon of each stage (brief 3 mockup); decorative, the stage name is always written. */
 export const STAGE_ICONS: Record<StageKey, string> = {
   unpack: 'coffin',
