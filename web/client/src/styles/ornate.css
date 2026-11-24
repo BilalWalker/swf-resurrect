@@ -435,3 +435,10 @@
   height: 28px;
   object-fit: contain;
 }
+
+/* The gallery's hover plaque under a stone: the same gold edge as the panels. */
+.stone-plaque {
+  border-color: var(--gold-line);
+  border-radius: 4px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+}
