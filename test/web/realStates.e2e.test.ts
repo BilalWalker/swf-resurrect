@@ -41,11 +41,18 @@ async function settle(created: Promise<{ id: string }>): Promise<JobSummary> {
   return j;
 }
 
+/** Saves the page at desktop width (<name>.png) and at phone width (<name>-375.png). */
 async function shoot(j: JobSummary, name: string): Promise<string> {
-  const page = await chrome.browser.newPage({ viewport: { width: 1200, height: 900 } });
+  const text = await shootAt(`${server.url}/#/job/${j.id}`, name, 1200);
+  await shootAt(`${server.url}/#/job/${j.id}`, `${name}-375`, 375);
+  return text;
+}
+
+async function shootAt(url: string, name: string, width: number): Promise<string> {
+  const page = await chrome.browser.newPage({ viewport: { width, height: 900 } });
   try {
-    await page.goto(`${server.url}/#/job/${j.id}`);
-    await page.waitForSelector('.result-slot > *, .failure:not([hidden])', { timeout: 30_000 });
+    await page.goto(url);
+    await page.waitForSelector('.result-slot > *, .failure:not([hidden]), .stones', { state: 'attached', timeout: 30_000 });
     // The fidelity report is the main proof: wait until its frame has text and every image loaded.
     if ((await page.locator('.report-frame').count()) > 0) {
       await page.locator('.report-frame').scrollIntoViewIfNeeded();
@@ -61,7 +68,7 @@ async function shoot(j: JobSummary, name: string): Promise<string> {
     // (measured: 100 % white pixels, while the frame held the report). So the viewport is made as tall
     // as the page and the page is captured as it is.
     const height = await page.evaluate(() => document.documentElement.scrollHeight);
-    await page.setViewportSize({ width: 1200, height });
+    await page.setViewportSize({ width, height });
     await page.evaluate(() => window.scrollTo(0, 0));
     // Ruffle and the converted build draw a few frames first.
     await page.waitForTimeout(4000);
@@ -73,6 +80,11 @@ async function shoot(j: JobSummary, name: string): Promise<string> {
 }
 
 describe.skipIf(!requested)('real result pages', () => {
+  it('landing and gallery', { timeout: 120_000 }, async () => {
+    expect(await shootAt(`${server.url}/`, 'landing', 1200)).toContain('How It Works');
+    await shootAt(`${server.url}/`, 'landing-375', 375);
+  });
+
   it('converted: gradients', { timeout: 240_000 }, async () => {
     const j = await settle(server.jobs.submitSample('gradients', true));
     expect(j.outcome?.outcome).toBe('converted');
