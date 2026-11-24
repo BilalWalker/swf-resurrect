@@ -1,6 +1,7 @@
 // The painted props are decoration only (brief 3): empty alt, aria-hidden, lazy, explicit sizes,
 // hidden below 900 px, never over a text or a control, and the page never scrolls sideways. Checked on
-// a mocked converted result page at the widths where each kind shows. Dev server; no job runs.
+// a mocked converted result page at the widths where each kind shows, and above 1500 px the outer
+// 180 px on each side stay free for the side pillars. Dev server; no job runs.
 import { readFile } from 'node:fs/promises';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -108,7 +109,7 @@ describe('painted props (Chromium)', () => {
     await rm(runsDir, { recursive: true, force: true });
   }, 60_000);
 
-  for (const width of [375, 899, 900, 1280, 1400, 1600]) {
+  for (const width of [375, 899, 900, 1280, 1400, 1500, 1560, 1600, 1920]) {
     it(`at ${width} px: decorative, never over text or controls, no sideways scroll`, { timeout: 60_000 }, async () => {
       const { props, texts, scrollX } = await layout(width);
       expect(scrollX).toBe(0);
@@ -117,7 +118,14 @@ describe('painted props (Chromium)', () => {
       const shown = props.filter((p) => p.w > 0 && p.h > 0);
       if (width < 900) expect(shown).toEqual([]);
       if (width >= 900) expect(shown.length).toBeGreaterThanOrEqual(2);
-      if (width >= 1400) expect(shown.length).toBe(props.length);
+      // The margin props show from 1400 px; above 1500 px only where they fit outside the pillar band.
+      if ((width >= 1400 && width <= 1500) || width >= 1584) expect(shown.length).toBe(props.length);
+      if (width > 1500 && width < 1584) expect(shown.length).toBe(2);
+      // Room for the side pillars: above 1500 px the outer 180 px on each side hold no prop.
+      if (width > 1500) {
+        const inBand = shown.filter((p) => p.x < 180 || p.x + p.w > width - 180).map((p) => p.name);
+        expect(inBand).toEqual([]);
+      }
       const hits = shown.flatMap((p) => texts.filter((t) => overlaps(p, t)).map((t) => `${p.name} over "${t.what}"`));
       expect(hits).toEqual([]);
     });

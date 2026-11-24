@@ -365,6 +365,7 @@
 @media (min-width: 1400px) {
   .prop.is-gutter {
     display: block;
+    width: var(--w);
   }
   .prop.is-gutter.is-left {
     right: calc(100% + 14px);
@@ -374,27 +375,43 @@
   }
   .prop-candles {
     top: 0;
-    width: 96px;
+    --w: 96px;
   }
   .prop-lantern {
     top: -40px;
-    width: 64px;
+    --w: 64px;
   }
   .prop-potion {
     bottom: 0;
-    width: 104px;
+    --w: 104px;
   }
   .prop-skull-candles {
     bottom: 0;
-    width: 104px;
+    --w: 104px;
   }
   .prop-pumpkin {
     bottom: -10px;
-    width: 110px;
+    --w: 110px;
   }
   .prop-pumpkin-candles {
     bottom: -10px;
-    width: 110px;
+    --w: 110px;
+  }
+}
+
+/* Room for the side pillars that will come: on screens wider than 1500 px the outer 180 px on each side
+   stay free of props. A margin prop shrinks to the room left between the page column (1100 px of
+   content) and that band, less its 14 px gap and 8 px for a scrollbar, and is not shown while that room
+   is under 48 px (up to 1583 px). */
+@media (min-width: 1501px) {
+  .prop.is-gutter {
+    display: none;
+  }
+}
+@media (min-width: 1584px) {
+  .prop.is-gutter {
+    display: block;
+    width: min(var(--w), calc((100vw - 1100px) / 2 - 180px - 14px - 8px));
   }
 }
 
