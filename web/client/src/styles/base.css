@@ -573,6 +573,26 @@ main:focus {
   display: none;
 }
 
+/* Below the first screen the page does not fall to flat black: a darker, calmer continuation of the
+   backdrop (its own fog over the ground, art/backdrop-deep.webp, mirrored so it repeats without a
+   seam) runs down the whole page behind everything. It fades in where the painted sky fades out. */
+body {
+  position: relative;
+}
+body::before {
+  content: '';
+  position: absolute;
+  top: calc(max(100vh, 760px) * 0.45);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url('/art/backdrop-deep.webp') center top / max(100%, 1200px) auto repeat-y;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 40vh);
+  mask-image: linear-gradient(180deg, transparent 0, #000 40vh);
+}
+
 /* ---- Life on the backdrop. `.scene` covers exactly the box the backdrop image is painted in (cover, top
    centre, picture 1672 x 941), so each light below is placed in picture percentages and stays on its spot. ---- */
 .scene {

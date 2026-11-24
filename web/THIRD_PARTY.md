@@ -37,3 +37,5 @@ are turned into these WebP files by `web/scripts/build-art.py`: trimmed to
 the object's bounds and scaled to icons 96 px, tiles 192 px, ornaments
 256 px (the divider 512 px wide) and props 320 px, each file under 60 KB,
 421 KB in total, with the four mirrored frame corners `orn-corner-tl|tr|bl|br` (128 px).
+`backdrop-deep.webp` (8.4 KB), the page's background below the first screen, is derived by the same
+script from the owner's `backdrop.webp`: its lower band of fog, darkened and mirrored into a tile.

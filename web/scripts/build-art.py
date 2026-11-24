@@ -17,7 +17,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "web" / "client" / "public" / "art"
@@ -35,6 +35,9 @@ WIDE = {"divider": 512}
 ALPHA_FLOOR = 12
 # The four mirrored frame corners: 128 px serves a 64 CSS px corner at 2x.
 CORNER_BOX = 128
+# The page continuation below the first screen (deep_tile): its width and how dark it is kept.
+DEEP_WIDTH = 1200
+DEEP_LIGHT = 0.62
 FILE_BUDGET = 60 * 1024
 TOTAL_BUDGET = 900 * 1024
 
@@ -51,6 +54,20 @@ def fit(im: Image.Image, box: int) -> Image.Image:
         return im
     size = (max(1, round(im.width * scale)), max(1, round(im.height * scale)))
     return im.resize(size, Image.Resampling.LANCZOS)
+
+
+def deep_tile(backdrop: Path) -> Image.Image:
+    """The page below the first screen: the backdrop's own lower band (fog over the ground, no moon or
+    chapel), darkened and softened, stacked on its mirror image so it repeats down the page without a
+    seam. Derived from the shipped backdrop.webp, so it needs no source file."""
+    im = Image.open(backdrop).convert("RGB")
+    band = im.crop((0, round(im.height * 0.66), im.width, round(im.height * 0.97)))
+    band = band.resize((DEEP_WIDTH, round(band.height * DEEP_WIDTH / band.width)), Image.Resampling.LANCZOS)
+    band = band.filter(ImageFilter.GaussianBlur(1.2)).point(lambda v: round(v * DEEP_LIGHT))
+    tile = Image.new("RGB", (band.width, band.height * 2))
+    tile.paste(band, (0, 0))
+    tile.paste(band.transpose(Image.Transpose.FLIP_TOP_BOTTOM), (0, band.height))
+    return tile
 
 
 def main() -> int:
@@ -86,6 +103,13 @@ def main() -> int:
                     if csize > FILE_BUDGET:
                         over.append(cout.name)
                     print(f"{cout.relative_to(REPO).as_posix()}  {c.width}x{c.height}  {csize / 1024:.1f} KB")
+    deep = OUT / "backdrop-deep.webp"
+    deep_tile(OUT / "backdrop.webp").save(deep, "WEBP", quality=68, method=6)
+    dsize = deep.stat().st_size
+    total += dsize
+    if dsize > FILE_BUDGET:
+        over.append(deep.name)
+    print(f"{deep.relative_to(REPO).as_posix()}  {dsize / 1024:.1f} KB")
     print(f"total {total / 1024:.0f} KB")
     if over or total > TOTAL_BUDGET:
         print(f"over budget: {', '.join(over) or f'total above {TOTAL_BUDGET // 1024} KB'}", file=sys.stderr)
