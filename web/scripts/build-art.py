@@ -33,6 +33,8 @@ GROUPS: dict[str, tuple[str, int, int]] = {
 # The divider is a long thin line: its box is its width.
 WIDE = {"divider": 512}
 ALPHA_FLOOR = 12
+# The four mirrored frame corners: 128 px serves a 64 CSS px corner at 2x.
+CORNER_BOX = 128
 FILE_BUDGET = 60 * 1024
 TOTAL_BUDGET = 900 * 1024
 
@@ -67,6 +69,23 @@ def main() -> int:
             if size > FILE_BUDGET:
                 over.append(out.name)
             print(f"{out.relative_to(REPO).as_posix()}  {im.width}x{im.height}  {size / 1024:.1f} KB")
+            if png.stem == "corner":
+                # The frame needs all four corners; CSS cannot mirror one background layer, so the
+                # other three are written pre-mirrored at the size the frames use (up to 64 CSS px).
+                small = fit(trim(Image.open(png).convert("RGBA")), CORNER_BOX)
+                for suffix, flips in (("tl", ()), ("tr", ("x",)), ("bl", ("y",)), ("br", ("x", "y"))):
+                    c = small
+                    if "x" in flips:
+                        c = c.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+                    if "y" in flips:
+                        c = c.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+                    cout = OUT / f"orn-corner-{suffix}.webp"
+                    c.save(cout, "WEBP", quality=quality, method=6, alpha_quality=90)
+                    csize = cout.stat().st_size
+                    total += csize
+                    if csize > FILE_BUDGET:
+                        over.append(cout.name)
+                    print(f"{cout.relative_to(REPO).as_posix()}  {c.width}x{c.height}  {csize / 1024:.1f} KB")
     print(f"total {total / 1024:.0f} KB")
     if over or total > TOTAL_BUDGET:
         print(f"over budget: {', '.join(over) or f'total above {TOTAL_BUDGET // 1024} KB'}", file=sys.stderr)

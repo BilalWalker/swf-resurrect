@@ -36,4 +36,4 @@ source PNGs (1254 x 1254, kept outside the repository in `.work/art-src/`)
 are turned into these WebP files by `web/scripts/build-art.py`: trimmed to
 the object's bounds and scaled to icons 96 px, tiles 192 px, ornaments
 256 px (the divider 512 px wide) and props 320 px, each file under 60 KB,
-402 KB in total.
+421 KB in total, with the four mirrored frame corners `orn-corner-tl|tr|bl|br` (128 px).
