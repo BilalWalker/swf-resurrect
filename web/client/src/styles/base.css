@@ -395,6 +395,22 @@ main,
   }
 }
 
+/* Phone width: the header fits 375 px. The GitHub button keeps its icon; its words stay for screen
+   readers. The room kept for the painted lantern is not needed here. */
+@media (max-width: 520px) {
+  .top {
+    padding-right: var(--gutter);
+  }
+  .gh-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
 main {
   max-width: var(--max);
   margin: 0 auto;
