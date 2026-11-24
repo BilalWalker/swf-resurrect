@@ -742,7 +742,11 @@
     0 0 8px rgba(0, 0, 0, 0.5);
 }
 .stone .stone-meta {
-  color: #b9b3a6;
+  color: #d8d2c4;
+  /* The painted stone face is mid-grey: the size sits on a dark chip so it reaches AA (4.5:1). */
+  background: rgba(10, 10, 12, 0.72);
+  padding: 0 4px;
+  border-radius: 3px;
 }
 
 /* the plain description at the top of a stone's hover plaque */
