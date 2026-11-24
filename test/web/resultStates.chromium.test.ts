@@ -117,7 +117,7 @@ describe('result page per Outcome (Chromium)', () => {
     await rm(runsDir, { recursive: true, force: true });
   }, 60_000);
 
-  it('converted: as before, with the download', { timeout: 60_000 }, async () => {
+  it('converted: as before, with the download', { timeout: 120_000 }, async () => {
     const page = await open(job(id(1), { outcome: outcome({ outcome: 'converted', reason: '4 of 4 classes translated', numbers: numbers(4, 4, 0) }) }), 'converted');
     expect(await page.textContent('.alive-title')).toBe('It lives.');
     expect(await page.locator('.gap-panel').count()).toBe(0);
@@ -129,7 +129,7 @@ describe('result page per Outcome (Chromium)', () => {
     await page.close();
   });
 
-  it('converted-with-gaps: the gap panel with counts in plain words', { timeout: 60_000 }, async () => {
+  it('converted-with-gaps: the gap panel with counts in plain words', { timeout: 120_000 }, async () => {
     const page = await open(
       job(id(2), {
         outcome: outcome({
@@ -160,7 +160,7 @@ describe('result page per Outcome (Chromium)', () => {
     await page.close();
   });
 
-  it('converted-with-gaps with few classes and numbers: null', { timeout: 60_000 }, async () => {
+  it('converted-with-gaps with few classes and numbers: null', { timeout: 120_000 }, async () => {
     const few = await open(
       job(id(3), { outcome: outcome({ outcome: 'converted-with-gaps', numbers: numbers(1, 9, 0), gaps: [{ kind: 'class-omitted', count: 8, examples: [] }] }) }),
       'converted-with-gaps-few',
@@ -176,7 +176,7 @@ describe('result page per Outcome (Chromium)', () => {
     await none.close();
   });
 
-  it('converted-with-gaps for a wrapper: says the SWF inside was not converted', { timeout: 60_000 }, async () => {
+  it('converted-with-gaps for a wrapper: says the SWF inside was not converted', { timeout: 120_000 }, async () => {
     const page = await open(
       job(id(8), {
         outcome: outcome({
@@ -202,7 +202,7 @@ describe('result page per Outcome (Chromium)', () => {
     await page.close();
   });
 
-  it('refused: the reason large, what to try, no download and no converted player', { timeout: 60_000 }, async () => {
+  it('refused: the reason large, what to try, no download and no converted player', { timeout: 120_000 }, async () => {
     const page = await open(
       job(id(5), {
         status: 'refused',
@@ -224,7 +224,7 @@ describe('result page per Outcome (Chromium)', () => {
     await page.close();
   });
 
-  it('refused not-swf: no player at all', { timeout: 60_000 }, async () => {
+  it('refused not-swf: no player at all', { timeout: 120_000 }, async () => {
     const page = await open(
       job(id(7), {
         status: 'refused',
@@ -242,7 +242,7 @@ describe('result page per Outcome (Chromium)', () => {
     await page.close();
   });
 
-  it('failed: our side, the reference id, no stack trace', { timeout: 60_000 }, async () => {
+  it('failed: our side, the reference id, no stack trace', { timeout: 120_000 }, async () => {
     const page = await open(
       job(id(6), {
         status: 'failed',

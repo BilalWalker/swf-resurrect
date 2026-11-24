@@ -56,6 +56,9 @@ async function layout(width: number): Promise<{ props: Array<Box & { name: strin
       r.fulfill({ status: 200, contentType: 'text/event-stream', body: `event: reset\ndata: ${JSON.stringify({ job: JOB, log: [] })}\n\n` }),
     );
     await page.route(`**/api/jobs/${ID}/app/**`, (r) => r.fulfill({ contentType: 'text/html', body: '<!doctype html><body>converted</body>' }));
+    // The props are what is measured: the Ruffle frame is a blank page here, so six pages do not each
+    // compile the 14 MB player under a loaded suite. Its iframe box still counts as a control.
+    await page.route('**/ruffle-frame.html*', (r) => r.fulfill({ contentType: 'text/html', body: '<!doctype html><body></body>' }));
     await page.route(`**/api/jobs/${ID}/swf`, (r) => r.fulfill({ body: swf, contentType: 'application/x-shockwave-flash', headers: { 'Access-Control-Allow-Origin': '*' } }));
     await page.goto(`${server.url}/#/job/${ID}`);
     await page.waitForSelector('.result-slot > *');
