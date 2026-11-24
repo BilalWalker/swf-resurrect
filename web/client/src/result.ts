@@ -219,6 +219,8 @@ function grave(r: ResultSummary): HTMLElement {
 interface TabDef {
   id: string;
   label: string;
+  /** The gold line icon beside the label (decorative). */
+  icon: 'magnifier' | 'grave-cross' | 'grimoire';
   render(panel: HTMLElement): void;
 }
 
@@ -242,7 +244,12 @@ function tabs(defs: TabDef[], prefix: string): { el: HTMLElement; select(id: str
     });
   };
   defs.forEach((d, i) => {
-    const b = h('button', { type: 'button', role: 'tab', id: `${prefix}-tab-${d.id}`, 'aria-controls': `${prefix}-panel-${d.id}` }, d.label);
+    const b = h(
+      'button',
+      { type: 'button', role: 'tab', id: `${prefix}-tab-${d.id}`, 'aria-controls': `${prefix}-panel-${d.id}` },
+      h('img', { class: 'tab-icon', src: `/art/icon-${d.icon}.webp`, alt: '', width: '22', height: '22', decoding: 'async', 'aria-hidden': 'true' }),
+      d.label,
+    );
     b.addEventListener('click', () => select(d.id));
     b.addEventListener('keydown', (e) => {
       const k = e.key;
@@ -270,9 +277,9 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
   const r: ResultSummary = job.results ?? { stage: null, overallMatch: null, traceScore: null, classCounts: null, classes: [], unsupported: null };
   const alive = job.status === 'succeeded';
   const defs: TabDef[] = [];
-  if (alive || job.artifacts.report) defs.push({ id: 'autopsy', label: 'Autopsy (fidelity report)', render: (p) => p.replaceChildren(autopsy(job)) });
-  defs.push({ id: 'grave', label: 'What stayed in the grave', render: (p) => p.replaceChildren(grave(r)) });
-  if (alive && job.artifacts.sourceFiles > 0) defs.push({ id: 'grimoire', label: 'Grimoire (source)', render: (p) => renderGrimoire(p, job.id, r.classes) });
+  if (alive || job.artifacts.report) defs.push({ id: 'autopsy', label: 'Autopsy (fidelity report)', icon: 'magnifier', render: (p) => p.replaceChildren(autopsy(job)) });
+  defs.push({ id: 'grave', label: 'What stayed in the grave', icon: 'grave-cross', render: (p) => p.replaceChildren(grave(r)) });
+  if (alive && job.artifacts.sourceFiles > 0) defs.push({ id: 'grimoire', label: 'Grimoire (source)', icon: 'grimoire', render: (p) => renderGrimoire(p, job.id, r.classes) });
   const t = tabs(defs, `r-${job.id.slice(0, 6)}`);
 
   if (!alive) {
