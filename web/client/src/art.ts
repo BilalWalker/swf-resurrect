@@ -105,3 +105,49 @@ export function moonGauge(fraction: number | null): string {
     <circle class="moon-ring" cx="${c}" cy="${c}" r="${r}" fill="none"/>
   </svg>`;
 }
+
+/** The seven phases of the moon row beside "The ritual", left to right. */
+export const MOON_PHASES = ['waxing-crescent', 'first-quarter', 'waxing-gibbous', 'full', 'waning-gibbous', 'last-quarter', 'waning-crescent'] as const;
+export type MoonPhase = (typeof MOON_PHASES)[number];
+
+/** How much of the disc is lit (0 to 1); a thin crescent is about a fifth. */
+const LIT: Record<MoonPhase, number> = {
+  'waxing-crescent': 0.2,
+  'first-quarter': 0.5,
+  'waxing-gibbous': 0.8,
+  full: 1,
+  'waning-gibbous': 0.8,
+  'last-quarter': 0.5,
+  'waning-crescent': 0.2,
+};
+
+/**
+ * The lit part of a moon of radius r centred at (c, c) as an SVG path: the outer half-circle on the
+ * lit side plus the terminator, a half-ellipse of horizontal radius k = r * |1 - 2 * lit|, bulging
+ * toward the lit side for a crescent and away from it for a gibbous moon (a straight line at a
+ * quarter). Waxing moons are lit on the right, waning ones on the left. Pure, so it can be tested.
+ */
+export function moonLitPath(phase: MoonPhase, c: number, r: number): string {
+  const lit = LIT[phase];
+  const fmt = (n: number): string => String(Math.round(n * 100) / 100);
+  if (lit >= 1) return `M${fmt(c - r)},${fmt(c)}A${fmt(r)},${fmt(r)} 0 1 1 ${fmt(c + r)},${fmt(c)}A${fmt(r)},${fmt(r)} 0 1 1 ${fmt(c - r)},${fmt(c)}Z`;
+  const right = phase.startsWith('waxing') || phase === 'first-quarter';
+  const k = r * Math.abs(1 - 2 * lit);
+  const top = `${fmt(c)},${fmt(c - r)}`;
+  const bottom = `${fmt(c)},${fmt(c + r)}`;
+  // The outer edge, top to bottom, on the lit side (clockwise on the right, counter-clockwise on the left).
+  const outer = `A${fmt(r)},${fmt(r)} 0 0 ${right ? 1 : 0} ${bottom}`;
+  // The terminator, bottom back to top. A crescent's bulges toward the lit side, a gibbous moon's away.
+  const towardLit = lit < 0.5;
+  const throughRight = right === towardLit;
+  const terminator = `A${fmt(k)},${fmt(r)} 0 0 ${throughRight ? 0 : 1} ${top}`;
+  return `M${top}${outer}${terminator}Z`;
+}
+
+/** One moon of the row: a dark disc with a faint gold ring, its lit part on top. Decorative. */
+export function moonSvg(phase: MoonPhase): string {
+  const size = phase === 'full' ? 30 : 24;
+  const c = size / 2;
+  const r = c - 0.75;
+  return `<svg class="moon-phase is-${phase}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" focusable="false"><circle class="moon-disc" cx="${c}" cy="${c}" r="${r}"/><path class="moon-lit" d="${moonLitPath(phase, c, r - 0.5)}"/></svg>`;
+}

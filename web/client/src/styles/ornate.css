@@ -195,63 +195,57 @@
   border-radius: 6px;
 }
 
-/* Seven moons, one per stage, drawn in CSS: the phases of a month as in the mockup, waxing crescent,
-   first quarter, waxing gibbous, full, waning gibbous, last quarter, waning crescent. The lit part is
-   the moon's colour; an inset shadow from one side is the dark part. A moon stays faint until its
-   stage has passed, then it glows; the running stage's moon is half lit, a failed one is ember and
-   the one where the engine refused is grey. */
+/* Seven moons, one per stage, as inline SVG (art.ts moonSvg): the phases of a month, waxing crescent
+   to full to waning crescent. Each is a very dark disc with a 1 px pale-gold ring at 35 %, so the unlit
+   part reads as moon; the lit part is a true phase in pale cream. The full moon is larger and glows;
+   no blur on the others. A stage not reached yet shows its phase dimmer; a failed stage's moon is
+   ember, the one where the engine refused is grey. */
 .ritual-head {
   align-items: center;
 }
+.ritual-head h2 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
 .moon-row {
-  --moon: 16px;
   display: inline-flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
   margin-right: auto;
   margin-left: 18px;
 }
-.moon-row i {
-  --lit: #efeadb;
-  --shade: #0d1219;
-  --phase: 0px;
+.moon-phase {
   display: block;
-  width: var(--moon);
-  height: var(--moon);
-  border-radius: 50%;
-  background: var(--lit);
-  box-shadow: inset var(--phase) 0 0 0 var(--shade);
-  opacity: 0.28;
-  filter: grayscale(1);
+  flex: 0 0 auto;
+}
+.moon-disc {
+  fill: #0a0e14;
+  stroke: rgba(226, 196, 121, 0.35);
+  stroke-width: 1;
+}
+.moon-lit {
+  fill: #f1ead6;
   transition: opacity 0.4s ease;
 }
-/* Waxing: the dark part on the left (positive offset); waning: on the right. */
-.moon-row i:nth-child(1) { --phase: calc(var(--moon) * 0.72); }
-.moon-row i:nth-child(2) { --phase: calc(var(--moon) * 0.5); }
-.moon-row i:nth-child(3) { --phase: calc(var(--moon) * 0.22); }
-.moon-row i:nth-child(4) { --phase: 0px; }
-.moon-row i:nth-child(5) { --phase: calc(var(--moon) * -0.22); }
-.moon-row i:nth-child(6) { --phase: calc(var(--moon) * -0.5); }
-.moon-row i:nth-child(7) { --phase: calc(var(--moon) * -0.72); }
-
-.moon-row i[data-status='ok'],
-.moon-row i[data-status='warn'] {
-  opacity: 1;
-  filter: drop-shadow(0 0 5px rgba(185, 248, 215, 0.55));
+.moon-phase.is-full {
+  filter: drop-shadow(0 0 6px rgba(241, 234, 214, 0.45));
 }
-.moon-row i[data-status='running'] {
-  opacity: 0.75;
+.moon-phase[data-status='pending'] .moon-lit,
+.moon-phase[data-status='skipped'] .moon-lit {
+  opacity: 0.32;
+}
+.moon-phase[data-status='pending'].is-full,
+.moon-phase[data-status='skipped'].is-full {
   filter: none;
 }
-.moon-row i[data-status='failed'] {
-  --lit: var(--ember);
-  opacity: 1;
-  filter: none;
+.moon-phase[data-status='running'] .moon-lit {
+  opacity: 0.7;
 }
-.moon-row i[data-status='refused'] {
-  --lit: var(--mist);
-  opacity: 0.8;
-  filter: none;
+.moon-phase[data-status='failed'] .moon-lit {
+  fill: var(--ember);
+}
+.moon-phase[data-status='refused'] .moon-lit {
+  fill: var(--mist);
 }
 
 @media (max-width: 600px) {
@@ -268,9 +262,16 @@
     height: 26px;
   }
   .moon-row {
-    --moon: 11px;
-    gap: 6px;
+    gap: 5px;
     margin-left: 10px;
+  }
+  .moon-phase {
+    width: 16px;
+    height: 16px;
+  }
+  .moon-phase.is-full {
+    width: 20px;
+    height: 20px;
   }
 }
 

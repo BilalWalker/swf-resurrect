@@ -2,7 +2,8 @@
 // CLI reports each stage. The ritual name is decoration; the real stage name, status and the CLI's own numbers
 // are always shown next to it.
 import type { JobSummary, StageKey, StageState } from '../../shared/api';
-import { announce, h } from './dom';
+import { MOON_PHASES, moonSvg } from './art';
+import { announce, h, svg } from './dom';
 import { RITES, STAGE_ICONS, STATUS_TEXT } from './labels';
 
 interface RiteNodes {
@@ -37,11 +38,11 @@ export class Ritual {
     });
     this.el.dataset.status = job.status;
     if (this.moons.childElementCount !== job.stages.length) {
-      this.moons.replaceChildren(...job.stages.map((_, i) => h('i', { style: `--i:${i}` })));
+      this.moons.replaceChildren(...job.stages.map((_, i) => svg(moonSvg(MOON_PHASES[i % MOON_PHASES.length]))));
     }
     job.stages.forEach((s, i) => {
       const moon = this.moons.children[i];
-      if (moon instanceof HTMLElement) moon.dataset.status = s.status;
+      if (moon instanceof SVGElement) moon.dataset.status = s.status;
     });
     this.first = false;
   }
