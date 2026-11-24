@@ -2,9 +2,18 @@
 // CLI reports each stage. The ritual name is decoration; the real stage name, status and the CLI's own numbers
 // are always shown next to it.
 import type { JobSummary, StageKey, StageState } from '../../shared/api';
-import { MOON_PHASES, moonSvg } from './art';
-import { announce, h, svg } from './dom';
+import { MOON_PHASES, type MoonPhase } from './art';
+import { announce, h } from './dom';
 import { RITES, STAGE_ICONS, STATUS_TEXT } from './labels';
+
+/**
+ * One moon of the row: the owner's painted phase (art/moon-<phase>.webp, cut from one sheet with its
+ * green ring by web/scripts/build-art.py), 24 px, the full moon 28 px. Decorative.
+ */
+export function moonImg(phase: MoonPhase): HTMLImageElement {
+  const size = String(phase === 'full' ? 28 : 24);
+  return h('img', { class: `moon-phase is-${phase}`, src: `/art/moon-${phase}.webp`, alt: '', width: size, height: size, decoding: 'async', 'aria-hidden': 'true' });
+}
 
 interface RiteNodes {
   li: HTMLLIElement;
@@ -38,11 +47,11 @@ export class Ritual {
     });
     this.el.dataset.status = job.status;
     if (this.moons.childElementCount !== job.stages.length) {
-      this.moons.replaceChildren(...job.stages.map((_, i) => svg(moonSvg(MOON_PHASES[i % MOON_PHASES.length]))));
+      this.moons.replaceChildren(...job.stages.map((_, i) => moonImg(MOON_PHASES[i % MOON_PHASES.length])));
     }
     job.stages.forEach((s, i) => {
       const moon = this.moons.children[i];
-      if (moon instanceof SVGElement) moon.dataset.status = s.status;
+      if (moon instanceof HTMLElement) moon.dataset.status = s.status;
     });
     this.first = false;
   }

@@ -49,7 +49,9 @@ shared canvas, darkens them to 60 %, adds a thin dark band at the top of the
 middle and the base to hide the joins, and writes them 340 px wide (2x of
 the 170 CSS px drawn): 18.1, 9.4 and 20.4 KB. All art is now 478 KB.
 
-`moon-disc.webp` (64 px, 2.2 KB), the surface of the moons beside "The ritual", is
-a crater-only patch of the owner's painted `tiles/moon` (clear of its rim and of
-the cloud wisps over its lower half), masked to a circle by the same script. All
-art is now 480 KB.
+The seven moons beside "The ritual" (`moon-<phase>.webp`, 56 px, 1.7 to
+2.2 KB each) were generated with ChatGPT image generation by the project
+owner, 2026-11-24, as one sheet (`.work/art-src/ornaments/moons.png`).
+`web/scripts/build-art.py` cuts each phase out and masks it to a circle that
+keeps the moon and its green ring and drops the ragged fringe of the outer
+glow. All art is now 491 KB.

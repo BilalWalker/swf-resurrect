@@ -5,7 +5,7 @@ One-off tool, run by hand when the sources change (they are not committed):
     python web/scripts/build-art.py [source-dir]
 
 Needs Python 3 with Pillow (with WebP support); it is not a dependency of the web app. The source
-directory defaults to .work/art-src/ and holds tiles/, icons/, ornaments/ and props/ (1254 x 1254
+directory defaults to .work/art-src/ and holds tiles/, icons/, ornaments/, props/ and pillar/ (1254 x 1254
 PNGs with real transparency, the divider 2172 x 724). Each image is trimmed to the bounds of its
 visible pixels (alpha above ALPHA_FLOOR, so a faint halo at the canvas edge does not hold the
 bounds open), scaled to fit its group's box, and written as web/client/public/art/<group>-<name>.webp.
@@ -17,7 +17,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "web" / "client" / "public" / "art"
@@ -48,9 +48,17 @@ PILLAR_WIDTH = 340
 PILLAR_LIGHT = 0.6
 # Height, on the 940 px canvas, of the dark band at the top of the middle and the base (the joins).
 PILLAR_BAND = 14
-# The moon-phase row's surface (moon_disc): a crater patch of tiles/moon.png, and its size.
-MOON_DISC = (655, 415, 150)
-MOON_DISC_SIZE = 64
+# The moon-phase row (moon_icons): ornaments/moons.png holds the seven phases in a row, in order.
+# Each is cut from its x range (rows MOON_ROWS), masked to a circle around the moon and its green
+# ring, MOON_RING px past the moon's opaque edge (the glow beyond has a ragged green fringe), and
+# written MOON_SIZE px square.
+MOON_PHASES = ("waxing-crescent", "first-quarter", "waxing-gibbous", "full", "waning-gibbous", "last-quarter", "waning-crescent")
+MOON_X = ((47, 322), (342, 616), (642, 921), (940, 1232), (1254, 1528), (1553, 1829), (1851, 2128))
+MOON_ROWS = (219, 511)
+MOON_RING = 12
+MOON_SIZE = 56
+# Sources handled by their own step, not by the group loop.
+OWN_STEP = {("ornaments", "moons")}
 FILE_BUDGET = 60 * 1024
 TOTAL_BUDGET = 1100 * 1024
 
@@ -114,17 +122,28 @@ def pillar_pieces(src: Path) -> dict[str, Image.Image]:
     return out
 
 
-def moon_disc(tile: Path) -> Image.Image:
-    """The surface of the moon-phase row's moons: a crater-only patch of the painted moon (centre and
-    radius on the 1254 px tile, inside the disc, clear of its rim and of the cloud wisps over its
-    lower half, which cluttered the moons at 22 px), masked to a circle, MOON_DISC_SIZE px."""
-    im = Image.open(tile).convert("RGBA")
-    cx, cy, r = MOON_DISC
-    disc = im.crop((cx - r, cy - r, cx + r, cy + r)).resize((MOON_DISC_SIZE * 4, MOON_DISC_SIZE * 4), Image.Resampling.LANCZOS)
-    mask = Image.new("L", disc.size, 0)
-    ImageDraw.Draw(mask).ellipse((0, 0, disc.width - 1, disc.height - 1), fill=255)
-    disc.putalpha(mask)
-    return disc.resize((MOON_DISC_SIZE, MOON_DISC_SIZE), Image.Resampling.LANCZOS)
+def moon_icons(sheet: Path) -> dict[str, Image.Image]:
+    """The seven moons of the phase row, cut from the owner's sheet. The moon's opaque disc (alpha
+    above 240) gives each one's centre and radius; the circle kept reaches MOON_RING px past it, which
+    holds the green ring and cuts the outer glow's ragged fringe. The mask is drawn at 4x and softened
+    so its edge is about 1 px at MOON_SIZE."""
+    im = Image.open(sheet).convert("RGBA")
+    top, bottom = MOON_ROWS
+    out: dict[str, Image.Image] = {}
+    for phase, (left, right) in zip(MOON_PHASES, MOON_X):
+        cell = im.crop((left, top, right, bottom))
+        box = cell.getchannel("A").point(lambda a: 255 if a > 240 else 0).getbbox() or (0, 0, cell.width, cell.height)
+        cx, cy = left + (box[0] + box[2]) / 2, top + (box[1] + box[3]) / 2
+        r = max(box[2] - box[0], box[3] - box[1]) / 2 + MOON_RING
+        big = MOON_SIZE * 4
+        disc = im.crop((round(cx - r), round(cy - r), round(cx + r), round(cy + r))).resize((big, big), Image.Resampling.LANCZOS)
+        mask = Image.new("L", (big, big), 0)
+        ImageDraw.Draw(mask).ellipse((2, 2, big - 3, big - 3), fill=255)
+        mask = mask.filter(ImageFilter.GaussianBlur(2))
+        r_, g_, b_, a_ = disc.split()
+        disc.putalpha(ImageChops.multiply(a_, mask))
+        out[phase] = disc.resize((MOON_SIZE, MOON_SIZE), Image.Resampling.LANCZOS)
+    return out
 
 
 def main() -> int:
@@ -134,6 +153,8 @@ def main() -> int:
     over: list[str] = []
     for folder, (prefix, box, quality) in GROUPS.items():
         for png in sorted((src / folder).glob("*.png")):
+            if (folder, png.stem) in OWN_STEP:
+                continue
             im = Image.open(png).convert("RGBA")
             im = fit(trim(im), WIDE.get(png.stem, box))
             out = OUT / f"{prefix}-{png.stem}.webp"
@@ -169,14 +190,15 @@ def main() -> int:
             if size > FILE_BUDGET:
                 over.append(out.name)
             print(f"{out.relative_to(REPO).as_posix()}  {im.width}x{im.height}  {size / 1024:.1f} KB")
-    if (src / "tiles" / "moon.png").is_file():
-        disc = OUT / "moon-disc.webp"
-        moon_disc(src / "tiles" / "moon.png").save(disc, "WEBP", quality=82, method=6, alpha_quality=90)
-        msize = disc.stat().st_size
-        total += msize
-        if msize > FILE_BUDGET:
-            over.append(disc.name)
-        print(f"{disc.relative_to(REPO).as_posix()}  {MOON_DISC_SIZE}x{MOON_DISC_SIZE}  {msize / 1024:.1f} KB")
+    if (src / "ornaments" / "moons.png").is_file():
+        for phase, im in moon_icons(src / "ornaments" / "moons.png").items():
+            out = OUT / f"moon-{phase}.webp"
+            im.save(out, "WEBP", quality=82, method=6, alpha_quality=90)
+            size = out.stat().st_size
+            total += size
+            if size > FILE_BUDGET:
+                over.append(out.name)
+            print(f"{out.relative_to(REPO).as_posix()}  {MOON_SIZE}x{MOON_SIZE}  {size / 1024:.1f} KB")
     deep = OUT / "backdrop-deep.webp"
     deep_tile(OUT / "backdrop.webp").save(deep, "WEBP", quality=68, method=6)
     dsize = deep.stat().st_size
