@@ -1,24 +1,37 @@
-// The result: "It lives." Scores as moon gauges (the number always printed), the original (in
+// The result: "It lives." Four stat tiles with a painted icon (the number always printed), the original (in
 // Ruffle) beside the converted project, then the autopsy (fidelity report),
 // what stayed in the grave (unsupported features and classes) and the grimoire (source).
 import type { JobOutcome, JobSummary, ResultSummary, ScoreSummary } from '../../shared/api';
 import { jobUrl } from './api';
-import { EKG, moonGauge } from './art';
+import { EKG } from './art';
 import { h, pct, svg } from './dom';
+
+/** The painted icon of a stat tile (brief 3): decoration only, the title says what the tile is. */
+function tileIcon(name: 'moon' | 'eye' | 'books' | 'tombstone', dim = false): HTMLImageElement {
+  return h('img', {
+    class: `tile-icon${dim ? ' is-dim' : ''}`,
+    src: `/art/tile-${name}.webp`,
+    alt: '',
+    width: '64',
+    height: '64',
+    decoding: 'async',
+    'aria-hidden': 'true',
+  });
+}
 import { renderGrimoire } from './grimoire';
 import { reasonText } from './labels';
 import { resultHeadline, stageAspect } from './outcomeText';
 import { gapPanel } from './outcomeView';
 import { playerPair } from './players';
 
-function gauge(title: string, measures: string, score: ScoreSummary | null, missing: string): HTMLElement {
+function gauge(title: string, measures: string, score: ScoreSummary | null, missing: string, icon: 'moon' | 'eye'): HTMLElement {
   const value = score?.value ?? null;
   const reasons = score === null ? [] : score.reasons;
   const text = value === null ? 'not compared' : pct(value);
   return h(
     'figure',
     { class: `gauge${value === null ? ' is-none' : ''}`, 'aria-label': `${title}: ${text}` },
-    svg(moonGauge(value === null ? null : value / 100)),
+    tileIcon(icon, value === null),
     h(
       'figcaption',
       {},
@@ -46,6 +59,7 @@ function classesTile(r: ResultSummary, o: JobOutcome | null): HTMLElement {
     return h(
       'div',
       { class: 'tile' },
+      tileIcon('books'),
       h('span', { class: 'tile-title' }, 'Classes translated'),
       h('span', { class: 'tile-value' }, `${n.translatedClasses} of ${n.candidateClasses}`),
       h(
@@ -61,6 +75,7 @@ function classesTile(r: ResultSummary, o: JobOutcome | null): HTMLElement {
   return h(
     'div',
     { class: 'tile' },
+    tileIcon('books', c === null),
     h('span', { class: 'tile-title' }, 'Classes translated'),
     h('span', { class: 'tile-value' }, c === null ? 'none reported' : String(c.total)),
     c === null
@@ -80,6 +95,7 @@ function graveTile(r: ResultSummary, show: () => void): HTMLElement {
   return h(
     'div',
     { class: 'tile' },
+    tileIcon('tombstone', n === null),
     h('span', { class: 'tile-title' }, 'Stayed in the grave'),
     h('span', { class: 'tile-value' }, n === null ? 'not listed' : String(n)),
     h(
@@ -296,8 +312,8 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
       h(
         'div',
         { class: 'vitals', role: 'group', 'aria-label': 'Soul match and counts' },
-        gauge('Overall match', 'Mean pixel match over sampled frames', r.overallMatch, 'No fidelity report was written.'),
-        gauge('Trace score', 'Trace lines matched in a replay', r.traceScore, 'No fidelity report was written.'),
+        gauge('Overall match', 'Mean pixel match over sampled frames', r.overallMatch, 'No fidelity report was written.', 'moon'),
+        gauge('Trace score', 'Trace lines matched in a replay', r.traceScore, 'No fidelity report was written.', 'eye'),
         classesTile(r, job.outcome),
         graveTile(r, () => t.select('grave')),
       ),

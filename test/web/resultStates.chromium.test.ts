@@ -12,6 +12,7 @@ import { REPO_ROOT, startServer } from '../../web/server/main';
 import type { RunningServer } from '../../web/server/main';
 import { launchChromium, type LaunchedChromium } from '../support/launchChromium';
 import { testServerOptions } from './helpers';
+import { lowContrastTexts } from './textContrast';
 
 const SHOTS = join(REPO_ROOT, '.work', 'ui-states');
 
@@ -104,6 +105,10 @@ async function open(j: JobSummary, shot: string): Promise<Page> {
   // Give Ruffle a moment to draw the first frame before the screenshot.
   if ((await page.locator('.is-original').count()) > 0) await page.waitForTimeout(3000);
   await page.screenshot({ path: join(SHOTS, `${shot}.png`), fullPage: true });
+  // Every text reaches WCAG AA against what is really behind it (the waking headline has settled).
+  await page.waitForTimeout(1800);
+  expect(await lowContrastTexts(page), `${shot}: texts below AA`).toEqual([]);
+  await page.setViewportSize({ width: 1200, height: 900 });
   return page;
 }
 

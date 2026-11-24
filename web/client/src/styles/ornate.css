@@ -87,3 +87,50 @@
     --corner: 22px;
   }
 }
+
+/* ---- Stat tiles: painted icon left, numbers right ---- */
+.vitals > .gauge,
+.vitals > .tile {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: center;
+  background: rgba(7, 10, 15, 0.92);
+}
+
+.vitals > .tile > :not(.tile-icon) {
+  grid-column: 2;
+}
+
+.tile-icon {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(126, 242, 184, 0.25));
+}
+
+.vitals > .tile > .tile-icon {
+  grid-column: 1;
+  grid-row: 1 / span 4;
+}
+
+/* No number to show: the icon steps back with it. */
+.tile-icon.is-dim {
+  filter: grayscale(0.85);
+  opacity: 0.45;
+}
+
+.vitals .gauge-value,
+.vitals .tile-value {
+  color: var(--bone);
+}
+
+/* ---- Contrast: text over the busy backdrop sits on a dark panel ----
+   Measured: the converted player's caption and the sandbox note fell to 2.3 to 3.7:1 where the
+   backdrop's green light shows through. The side-by-side section gets its own dark ground. */
+.seance {
+  padding: 12px 14px 10px;
+  border-radius: 6px;
+  background: rgba(5, 8, 12, 0.82);
+}
