@@ -45,7 +45,7 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
   const ritualPanel = h(
     'section',
     { class: 'panel ritual-panel', 'aria-labelledby': 'ritual-title' },
-    h('div', { class: 'ritual-head' }, h('h2', { id: 'ritual-title' }, 'The ritual'), connection),
+    h('div', { class: 'ritual-head' }, h('h2', { id: 'ritual-title' }, 'The ritual'), ritual.moons, connection),
     ritual.el,
     warnings,
     log,

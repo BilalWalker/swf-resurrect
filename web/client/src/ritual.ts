@@ -6,6 +6,17 @@ import { CANDLE } from './art';
 import { announce, h, svg } from './dom';
 import { RITES, STATUS_TEXT } from './labels';
 
+/** The line icon of each stage (brief 3 mockup); decorative, the stage name is always written. */
+const STAGE_ICONS: Record<StageKey, string> = {
+  unpack: 'coffin',
+  convert: 'bones',
+  translate: 'book',
+  emit: 'needle',
+  typecheck: 'heartbeat',
+  verify: 'crystal-ball',
+  build: 'hand',
+};
+
 interface RiteNodes {
   li: HTMLLIElement;
   status: HTMLElement;
@@ -17,12 +28,15 @@ export class Ritual {
   readonly el: HTMLElement;
   private readonly list: HTMLOListElement;
   private readonly wisp: HTMLElement;
+  /** One moon per stage, lit as each stage completes: the mockup's moon-phase row. */
+  readonly moons: HTMLElement;
   private readonly nodes = new Map<StageKey, RiteNodes>();
   private first = true;
 
   constructor() {
     this.list = h('ol', { class: 'rites' });
     this.wisp = h('span', { class: 'wisp', 'aria-hidden': 'true' });
+    this.moons = h('span', { class: 'moon-row', 'aria-hidden': 'true' });
     this.el = h('div', { class: 'ritual' }, this.wisp, this.list);
   }
 
@@ -45,6 +59,13 @@ export class Ritual {
       this.wisp.classList.remove('is-on');
     }
     this.el.dataset.status = job.status;
+    if (this.moons.childElementCount !== job.stages.length) {
+      this.moons.replaceChildren(...job.stages.map((_, i) => h('i', { style: `--i:${i}` })));
+    }
+    job.stages.forEach((s, i) => {
+      const moon = this.moons.children[i];
+      if (moon instanceof HTMLElement) moon.dataset.status = s.status;
+    });
     this.first = false;
   }
 
@@ -55,6 +76,15 @@ export class Ritual {
       'li',
       { class: 'rite', 'data-status': 'pending', style: `--i:${index}` },
       h('span', { class: 'rite-candle' }, svg(CANDLE)),
+      h('img', {
+        class: 'rite-icon',
+        src: `/art/icon-${STAGE_ICONS[key]}.webp`,
+        alt: '',
+        width: '32',
+        height: '32',
+        decoding: 'async',
+        'aria-hidden': 'true',
+      }),
       h(
         'div',
         { class: 'rite-body' },

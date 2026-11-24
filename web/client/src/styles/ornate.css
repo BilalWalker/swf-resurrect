@@ -134,3 +134,122 @@
   border-radius: 6px;
   background: rgba(5, 8, 12, 0.82);
 }
+
+/* ---- Ritual: a line icon per stage, a mark beside the state, the moon-phase row ---- */
+.rite {
+  grid-template-columns: 44px 36px minmax(0, 1fr) auto;
+  align-items: center;
+  border-bottom: 1px solid var(--gold-dim);
+}
+.rite:last-child {
+  border-bottom: 0;
+}
+.rite-candle {
+  align-self: start;
+}
+.rite-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  opacity: 0.45;
+  transition: opacity 0.4s ease;
+}
+.rite[data-status='running'] .rite-icon,
+.rite[data-status='ok'] .rite-icon,
+.rite[data-status='warn'] .rite-icon,
+.rite[data-status='failed'] .rite-icon,
+.rite[data-status='refused'] .rite-icon {
+  opacity: 1;
+}
+
+/* The mark is decoration beside the written state; empty alternative text keeps it from being read. */
+.rite-status::after {
+  display: inline-block;
+  width: 1.3em;
+  margin-left: 6px;
+  text-align: center;
+}
+.rite[data-status='ok'] .rite-status::after {
+  content: '\2713' / '';
+  color: var(--spectral);
+}
+.rite[data-status='warn'] .rite-status::after {
+  content: '\26A0' / '';
+  color: #e8c56a;
+}
+.rite[data-status='failed'] .rite-status::after {
+  content: '\2715' / '';
+  color: var(--ember);
+}
+.rite[data-status='refused'] .rite-status::after {
+  content: '\2014' / '';
+  color: var(--mist);
+}
+
+/* Done with type errors: the row itself is marked, as in the mockup. */
+.rite[data-status='warn'] {
+  background: rgba(232, 197, 106, 0.07);
+  outline: 1px solid rgba(232, 197, 106, 0.45);
+  outline-offset: -1px;
+  border-radius: 6px;
+}
+
+/* Seven moons, one per stage, drawn in CSS: dark until the stage has passed, then a waxing phase. */
+.ritual-head {
+  align-items: center;
+}
+.moon-row {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin-right: auto;
+  margin-left: 18px;
+}
+.moon-row i {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #121821;
+  box-shadow: inset 0 0 0 1px rgba(214, 184, 112, 0.35);
+}
+.moon-row i[data-status='ok'],
+.moon-row i[data-status='warn'] {
+  background: radial-gradient(circle at 35% 35%, #f4f1e4, #cfd8cf 60%, #9aa79f);
+  box-shadow: 0 0 8px rgba(185, 248, 215, 0.45);
+}
+.moon-row i[data-status='running'] {
+  background: #121821;
+  box-shadow:
+    inset -6px 0 0 0 #e9e4d2,
+    0 0 6px rgba(185, 248, 215, 0.35);
+}
+.moon-row i[data-status='failed'] {
+  box-shadow: inset 0 0 0 1px var(--ember);
+}
+.moon-row i[data-status='refused'] {
+  box-shadow: inset 0 0 0 1px var(--mist);
+}
+
+@media (max-width: 600px) {
+  .rite {
+    grid-template-columns: 36px 28px minmax(0, 1fr);
+  }
+  /* The state moves under the stage name. */
+  .rite-status {
+    grid-column: 3;
+    margin-top: 0;
+  }
+  .rite-icon {
+    width: 26px;
+    height: 26px;
+  }
+  .moon-row {
+    gap: 6px;
+    margin-left: 10px;
+  }
+  .moon-row i {
+    width: 10px;
+    height: 10px;
+  }
+}
