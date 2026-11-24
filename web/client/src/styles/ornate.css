@@ -442,3 +442,26 @@
   border-radius: 4px;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
 }
+
+/* ---- The two players line up ----
+   Their captions differ in length, so one wrapped to two lines and pushed its frame lower. The pair
+   shares its rows with both figures (subgrid): both captions take the taller one's height and both
+   frames start, and end, at the same line. One column at phone width keeps the stacked layout. */
+@media (min-width: 761px) {
+  .pair {
+    grid-template-rows: auto auto;
+    align-items: end;
+  }
+  .pair > .side {
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+  }
+  .pair > .side > figcaption {
+    align-self: end;
+  }
+  .pair > .side > .screen {
+    align-self: start;
+  }
+}
