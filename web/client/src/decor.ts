@@ -44,3 +44,36 @@ export function decorate(el: HTMLElement, part: 'vitals' | 'report' | 'ritual'):
     el.append(prop('pumpkin', 'is-gutter is-left'), prop('pumpkin-candles', 'is-gutter is-right'), prop('pentagram', 'is-inside'));
   }
 }
+
+/**
+ * The side pillars (index.html, CSS from 1500 px) start where the page's main proof starts: the
+ * report and tab block of a result ("Autopsy"); the ritual panel on a refused or failed run; the
+ * "What Rises" section on the landing (the gallery above it is a full-width dark band that would
+ * hide them). Their top follows that element as the page changes; with none of them on
+ * the page the pillars stay hidden. Call once.
+ */
+export function watchPillars(): void {
+  const pillars = document.querySelector<HTMLElement>('.pillars');
+  if (pillars === null) return;
+  let queued = false;
+  const place = (): void => {
+    queued = false;
+    const anchor = document.querySelector<HTMLElement>('.details, .ritual-panel, #features');
+    if (anchor === null) {
+      pillars.removeAttribute('data-placed');
+      return;
+    }
+    const top = Math.round(anchor.getBoundingClientRect().top + window.scrollY);
+    pillars.style.setProperty('--pillar-top', `${top}px`);
+    pillars.setAttribute('data-placed', '');
+  };
+  const queue = (): void => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(place);
+  };
+  new ResizeObserver(queue).observe(document.body);
+  new MutationObserver(queue).observe(document.body, { childList: true, subtree: true });
+  window.addEventListener('resize', queue);
+  queue();
+}

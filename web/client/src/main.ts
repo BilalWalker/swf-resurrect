@@ -1,5 +1,6 @@
 // Client entry: draws the sky, routes between the graveyard (#/) and a job (#/job/<id>).
 import { CRESCENT, HORIZON } from './art';
+import { watchPillars } from './decor';
 import { svg } from './dom';
 import { renderJob } from './job';
 import { renderLanding } from './landing';
@@ -108,6 +109,7 @@ function route(): void {
 }
 
 decorate();
+watchPillars();
 window.addEventListener('hashchange', () => {
   route();
   main.focus({ preventScroll: true });

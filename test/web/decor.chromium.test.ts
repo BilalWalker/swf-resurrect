@@ -1,7 +1,8 @@
 // The painted props are decoration only (brief 3): empty alt, aria-hidden, lazy, explicit sizes,
 // hidden below 900 px, never over a text or a control, and the page never scrolls sideways. Checked on
 // a mocked converted result page at the widths where each kind shows. From 1500 px the side pillars
-// stand in the outer 180 px, never over text or controls, and the side props stand on them. Dev server; no job runs.
+// stand in the outer 180 px from the report block down, never over text or controls; no prop stands
+// halfway up a pillar. Dev server; no job runs.
 import { readFile } from 'node:fs/promises';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -53,6 +54,7 @@ async function layout(width: number): Promise<{
   pillars: Array<Box & { hidden: string | null }>;
   texts: Array<Box & { what: string }>;
   scrollX: number;
+  details: number;
 }> {
   const page = await chrome.browser.newPage({ viewport: { width, height: 900 } });
   try {
@@ -91,7 +93,8 @@ async function layout(width: number): Promise<{
         if (r.width > 1 && r.height > 1) texts.push({ ...box(r), what: c.tagName + ' ' + (c.textContent || '').trim().slice(0, 30) });
       }
       const pillars = [...document.querySelectorAll('.pillar')].map((p) => ({ ...box(p.getBoundingClientRect()), hidden: p.closest('[aria-hidden]') ? p.closest('[aria-hidden]').getAttribute('aria-hidden') : null })).filter((p) => p.w > 0);
-      return { props, pillars, texts, scrollX: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+      const d = document.querySelector('.details');
+      return { props, pillars, texts, scrollX: document.documentElement.scrollWidth - document.documentElement.clientWidth, details: d ? d.getBoundingClientRect().top + scrollY : -1 };
     })()`);
   } finally {
     await page.close();
@@ -117,7 +120,7 @@ describe('painted props (Chromium)', () => {
 
   for (const width of [375, 899, 900, 1280, 1400, 1500, 1560, 1600, 1920]) {
     it(`at ${width} px: decorative, never over text or controls, no sideways scroll`, { timeout: 60_000 }, async () => {
-      const { props, pillars, texts, scrollX } = await layout(width);
+      const { props, pillars, texts, scrollX, details } = await layout(width);
       expect(scrollX).toBe(0);
       expect(props.length).toBeGreaterThan(0);
       for (const p of props) expect([p.alt, p.hidden, p.loading, p.sized]).toEqual(['', 'true', 'lazy', true]);
@@ -128,10 +131,10 @@ describe('painted props (Chromium)', () => {
       // the props stand on them (the pumpkins move onto the pillar bases).
       if (width >= 1400 && width < 1500) expect(shown.length).toBe(props.length);
       if (width >= 1500) {
-        const gutter = shown.filter((p) => p.name.includes('is-gutter'));
-        expect(gutter.map((p) => p.name).filter((n) => n.includes('pumpkin'))).toEqual([]);
-        const offPillar = gutter.filter((p) => !(p.x >= 0 && p.x + p.w <= 188) && !(p.x >= width - 188 && p.x + p.w <= width)).map((p) => p.name);
-        expect(offPillar).toEqual([]);
+        // No prop halfway up a pillar: only the pumpkins on the pillar bases remain (part of the pillars).
+        expect(shown.filter((p) => p.name.includes('is-gutter')).map((p) => p.name)).toEqual([]);
+        // The pillars start where the report and tab block starts.
+        for (const pl of pillars) expect(Math.abs(pl.y - details)).toBeLessThanOrEqual(1);
       }
       expect(pillars.length).toBe(width >= 1500 ? 2 : 0);
       for (const pl of pillars) {

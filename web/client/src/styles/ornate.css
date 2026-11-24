@@ -400,18 +400,22 @@
   }
 }
 
-/* ---- Side pillars, from 1500 px: one each side in the outer 180 px strip, the full height of the
-   page: the top (gargoyle) once, the middle repeated, the base at the page bottom. The right one is the
+/* ---- Side pillars, from 1500 px: one each side in the outer 180 px strip, from the page's main proof
+   (decor.ts watchPillars sets --pillar-top: the report block, else the ritual, else the landing's
+   "What Rises") down to the page bottom: the top (gargoyle) once, the middle repeated, the base last. The right one is the
    left mirrored, so both gargoyles face inward. Decoration only; their images load only when shown.
    Sizes: 170 CSS px wide; the pieces are 340 px files (top 551, middle 456, base 530 px high). ---- */
 .pillars {
   display: none;
 }
 @media (min-width: 1500px) {
-  .pillars {
+  .pillars[data-placed] {
     display: block;
     position: absolute;
-    inset: 0;
+    top: var(--pillar-top);
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
@@ -460,22 +464,11 @@
   .pillar.is-right > .pillar-pumpkin {
     background-image: url('/art/prop-pumpkin-candles.webp');
   }
-  .prop-pumpkin,
-  .prop-pumpkin-candles {
-    display: none !important;
-  }
 
-  /* The side props stand on the pillars: centred on the pillar, 90 px from the page edge, in front of
-     it. The page column's content starts at (100vw - 1100px) / 2. */
+  /* With the pillars in the margins, the side props are not shown: standing halfway up a pillar they
+     looked out of place. Only the pumpkins remain, on the pillar bases at the page bottom. */
   .prop.is-gutter {
-    display: block;
-    width: var(--w);
-  }
-  .prop.is-gutter.is-left {
-    right: calc(100% + (100vw - 1100px) / 2 - 90px - var(--w) / 2);
-  }
-  .prop.is-gutter.is-right {
-    left: calc(100% + (100vw - 1100px) / 2 - 90px - var(--w) / 2);
+    display: none;
   }
 }
 
