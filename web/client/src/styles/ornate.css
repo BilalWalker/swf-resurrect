@@ -300,3 +300,80 @@
     height: 18px;
   }
 }
+
+/* ---- Props: decoration only, never over text or controls ----
+   Inside a panel they sit in a corner whose space is reserved below; in the page margins they need a
+   margin as wide as they are, so those show from 1400 px. All are hidden below 900 px. */
+.prop {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+}
+.vitals {
+  position: relative;
+}
+
+@media (min-width: 900px) {
+  .prop.is-inside {
+    display: block;
+  }
+  /* Reserved corners: the ritual header ends before the pentagram, the tab row before the cobweb. */
+  .ritual-panel .ritual-head {
+    padding-right: 84px;
+  }
+  .details > .tabs {
+    padding-right: 96px;
+  }
+  .prop-pentagram {
+    top: 14px;
+    right: 18px;
+    width: 64px;
+    opacity: 0.75;
+  }
+  .prop-cobweb {
+    top: 0;
+    right: 0;
+    width: 84px;
+    opacity: 0.7;
+  }
+}
+
+@media (min-width: 1400px) {
+  .prop.is-gutter {
+    display: block;
+  }
+  .prop.is-gutter.is-left {
+    right: calc(100% + 14px);
+  }
+  .prop.is-gutter.is-right {
+    left: calc(100% + 14px);
+  }
+  .prop-candles {
+    top: 0;
+    width: 96px;
+  }
+  .prop-lantern {
+    top: -40px;
+    width: 64px;
+  }
+  .prop-potion {
+    bottom: 0;
+    width: 104px;
+  }
+  .prop-skull-candles {
+    bottom: 0;
+    width: 104px;
+  }
+  .prop-pumpkin {
+    bottom: -10px;
+    width: 110px;
+  }
+  .prop-pumpkin-candles {
+    bottom: -10px;
+    width: 110px;
+  }
+}

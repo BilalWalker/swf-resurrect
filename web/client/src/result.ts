@@ -21,6 +21,7 @@ function tileIcon(name: 'moon' | 'eye' | 'books' | 'tombstone', dim = false): HT
 import { renderGrimoire } from './grimoire';
 import { reasonText } from './labels';
 import { resultHeadline, stageAspect } from './outcomeText';
+import { decorate } from './decor';
 import { gapPanel } from './outcomeView';
 import { playerPair } from './players';
 
@@ -328,4 +329,7 @@ export function renderResult(container: HTMLElement, job: JobSummary, deps: { re
       t.el,
     ),
   );
+  const vitals = container.querySelector<HTMLElement>('.vitals');
+  if (vitals !== null) decorate(vitals, 'vitals');
+  decorate(t.el, 'report');
 }

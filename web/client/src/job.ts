@@ -3,6 +3,7 @@
 import type { JobSummary, LogLine, ResetEvent } from '../../shared/api';
 import { api, ApiFailure, jobUrl } from './api';
 import { announce, fill, h } from './dom';
+import { decorate } from './decor';
 import { failedView, refusedView } from './outcomeView';
 import { Ritual } from './ritual';
 
@@ -51,6 +52,7 @@ export function renderJob(main: HTMLElement, id: string, deps: JobDeps): () => v
     log,
   );
 
+  decorate(ritualPanel, 'ritual');
   const head = h('header', { class: 'job-head' }, h('p', { class: 'eyebrow' }, 'Resurrection'), title, meta);
   main.replaceChildren(
     head,
