@@ -102,6 +102,10 @@ export function stageAspect(fromResult: { width: number; height: number } | null
  * translated; below that the project will probably not run, and the headline says so soberly.
  */
 export function resultHeadline(name: string, o: JobOutcome | null): { title: string; sub: string; tone: 'alive' | 'partial' } {
+  // A wrapper's real game is inside it and was not converted: never "It lives".
+  if (o !== null && wrapperLine(o) !== null) {
+    return { title: 'Only the wrapper rose.', sub: `${name} wraps another SWF that was not converted; the project holds only the wrapper.`, tone: 'partial' };
+  }
   if (o?.outcome === 'converted-with-gaps' && fewTranslated(o.numbers)) {
     return { title: 'Partly raised.', sub: `${name} was only partly converted; the project will probably not run.`, tone: 'partial' };
   }

@@ -190,6 +190,7 @@ describe('result page per Outcome (Chromium)', () => {
     );
     const panel = (await page.textContent('.gap-panel')) ?? '';
     expect(await page.textContent('.gap-wrapper')).toContain('This file is a wrapper around another SWF (1 embedded, 7.0 MiB)');
+    expect(await page.textContent('.alive-title')).toBe('Only the wrapper rose.');
     expect(panel).toContain('1 embedded SWF inside the file was not converted');
     expect(panel).toContain('3 of 5 classes of the file were considered');
     // Said once: the classes-not-considered gap is folded into the considered line.

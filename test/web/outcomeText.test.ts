@@ -103,4 +103,14 @@ describe('outcome words', () => {
     expect(wrapperLine({ embeddedSwfs: null, gaps: [{ kind: 'embedded-swf', count: 2, examples: [] }] })).toContain('wrapper around 2 other SWFs (2 embedded)');
     expect(wrapperLine({ embeddedSwfs: null, gaps: [] })).toBeNull();
   });
+
+  it('gives a wrapper run a sober headline, never "It lives"', () => {
+    const base = { outcome: 'converted-with-gaps' as const, reasonCode: null, reason: '', numbers: numbers(3, 3), facts: null, obfuscation: null, referenceId: null, runLimitS: null };
+    const wrapped = resultHeadline('w.swf', { ...base, gaps: [{ kind: 'embedded-swf', count: 1, examples: [] }], embeddedSwfs: { count: 1, totalBytes: 7349081, largestBytes: 7349081 } });
+    expect(wrapped).toMatchObject({ title: 'Only the wrapper rose.', tone: 'partial' });
+    expect(wrapped.title + wrapped.sub).not.toMatch(/lives/i);
+    // The gap alone (no embeddedSwfs field) is enough.
+    expect(resultHeadline('w.swf', { ...base, gaps: [{ kind: 'embedded-swf', count: 1, examples: [] }], embeddedSwfs: null }).title).toBe('Only the wrapper rose.');
+    expect(resultHeadline('w.swf', { ...base, gaps: [], embeddedSwfs: null }).title).toBe('It lives, with gaps.');
+  });
 });
