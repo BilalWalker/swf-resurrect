@@ -48,3 +48,8 @@ project owner, 2026-11-24, from three 1024 x 1536 sources in
 shared canvas, darkens them to 60 %, adds a thin dark band at the top of the
 middle and the base to hide the joins, and writes them 340 px wide (2x of
 the 170 CSS px drawn): 18.1, 9.4 and 20.4 KB. All art is now 478 KB.
+
+`moon-disc.webp` (64 px, 2.2 KB), the surface of the moons beside "The ritual", is
+a crater-only patch of the owner's painted `tiles/moon` (clear of its rim and of
+the cloud wisps over its lower half), masked to a circle by the same script. All
+art is now 480 KB.

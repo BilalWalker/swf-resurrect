@@ -122,32 +122,61 @@ const LIT: Record<MoonPhase, number> = {
 };
 
 /**
- * The lit part of a moon of radius r centred at (c, c) as an SVG path: the outer half-circle on the
+ * A lit area as an SVG path, for a disc of radius r centred at (c, c): the outer half-circle on the
  * lit side plus the terminator, a half-ellipse of horizontal radius k = r * |1 - 2 * lit|, bulging
- * toward the lit side for a crescent and away from it for a gibbous moon (a straight line at a
- * quarter). Waxing moons are lit on the right, waning ones on the left. Pure, so it can be tested.
+ * toward the lit side when less than half is lit and away from it when more is (straight at a half).
  */
-export function moonLitPath(phase: MoonPhase, c: number, r: number): string {
-  const lit = LIT[phase];
+function phasePath(lit: number, right: boolean, c: number, r: number): string {
   const fmt = (n: number): string => String(Math.round(n * 100) / 100);
   if (lit >= 1) return `M${fmt(c - r)},${fmt(c)}A${fmt(r)},${fmt(r)} 0 1 1 ${fmt(c + r)},${fmt(c)}A${fmt(r)},${fmt(r)} 0 1 1 ${fmt(c - r)},${fmt(c)}Z`;
-  const right = phase.startsWith('waxing') || phase === 'first-quarter';
   const k = r * Math.abs(1 - 2 * lit);
   const top = `${fmt(c)},${fmt(c - r)}`;
   const bottom = `${fmt(c)},${fmt(c + r)}`;
   // The outer edge, top to bottom, on the lit side (clockwise on the right, counter-clockwise on the left).
   const outer = `A${fmt(r)},${fmt(r)} 0 0 ${right ? 1 : 0} ${bottom}`;
-  // The terminator, bottom back to top. A crescent's bulges toward the lit side, a gibbous moon's away.
-  const towardLit = lit < 0.5;
-  const throughRight = right === towardLit;
+  // The terminator, bottom back to top: toward the lit side under a half, away from it over a half.
+  const throughRight = right === lit < 0.5;
   const terminator = `A${fmt(k)},${fmt(r)} 0 0 ${throughRight ? 0 : 1} ${top}`;
   return `M${top}${outer}${terminator}Z`;
 }
 
-/** One moon of the row: a dark disc with a faint gold ring, its lit part on top. Decorative. */
+/** Waxing moons (and the first quarter) are lit on the right, waning ones on the left. */
+function litOnRight(phase: MoonPhase): boolean {
+  return phase.startsWith('waxing') || phase === 'first-quarter';
+}
+
+/** The lit part of a moon as an SVG path. Pure, so it can be tested. */
+export function moonLitPath(phase: MoonPhase, c: number, r: number): string {
+  return phasePath(LIT[phase], litOnRight(phase), c, r);
+}
+
+/**
+ * The unlit part of a moon: the lit shape of the opposite fraction on the other side. Null for the
+ * full moon. Pure, so it can be tested.
+ */
+export function moonShadowPath(phase: MoonPhase, c: number, r: number): string | null {
+  const lit = LIT[phase];
+  return lit >= 1 ? null : phasePath(1 - lit, !litOnRight(phase), c, r);
+}
+
+/**
+ * One moon of the row: the painted moon (art/moon-disc.webp) as its surface, the unlit part laid
+ * over it as a dark shadow (#070d12 at 88 %) with a soft terminator (0.5 px blur), clipped to the
+ * disc so the unlit side stays faintly visible like earthshine; a 1 px ring at 20 %. 22 px, the full
+ * moon 28 px. Decorative.
+ */
 export function moonSvg(phase: MoonPhase): string {
-  const size = phase === 'full' ? 30 : 24;
+  const size = phase === 'full' ? 28 : 22;
   const c = size / 2;
-  const r = c - 0.75;
-  return `<svg class="moon-phase is-${phase}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" focusable="false"><circle class="moon-disc" cx="${c}" cy="${c}" r="${r}"/><path class="moon-lit" d="${moonLitPath(phase, c, r - 0.5)}"/></svg>`;
+  const r = c - 0.5;
+  const id = `moon-${phase}`;
+  const shadow = moonShadowPath(phase, c, r);
+  return (
+    `<svg class="moon-phase is-${phase}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" focusable="false">` +
+    `<defs><clipPath id="${id}-disc"><circle cx="${c}" cy="${c}" r="${r}"/></clipPath>` +
+    `<filter id="${id}-soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="0.5"/></filter></defs>` +
+    `<image class="moon-surface" href="/art/moon-disc.webp" x="${c - r}" y="${c - r}" width="${2 * r}" height="${2 * r}" clip-path="url(#${id}-disc)"/>` +
+    (shadow === null ? '' : `<g clip-path="url(#${id}-disc)"><path class="moon-shadow" d="${shadow}" filter="url(#${id}-soft)"/></g>`) +
+    `<circle class="moon-ring" cx="${c}" cy="${c}" r="${r}"/></svg>`
+  );
 }

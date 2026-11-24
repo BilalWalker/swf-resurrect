@@ -1,7 +1,8 @@
 // The moon row's phases are true phases: the outer half-circle on the lit side and an elliptical
-// terminator, waxing lit on the right, waning on the left (art.ts moonLitPath).
+// terminator, waxing lit on the right, waning on the left; the unlit part is shaded over the painted
+// moon (art.ts moonLitPath, moonShadowPath, moonSvg).
 import { describe, expect, it } from 'vitest';
-import { MOON_PHASES, moonLitPath, moonSvg } from '../../web/client/src/art';
+import { MOON_PHASES, moonLitPath, moonShadowPath, moonSvg } from '../../web/client/src/art';
 
 describe('moon phases', () => {
   it('runs waxing crescent to full to waning crescent', () => {
@@ -25,11 +26,23 @@ describe('moon phases', () => {
     expect(moonLitPath('waning-crescent', 12, 10)).toBe('M12,2A10,10 0 0 0 12,22A6,10 0 0 1 12,2Z');
   });
 
-  it('draws the full moon larger, every moon as a dark disc with its lit part', () => {
-    expect(moonSvg('full')).toContain('width="30"');
-    expect(moonSvg('first-quarter')).toContain('width="24"');
+  it('shades the unlit part: the lit shape of the opposite fraction on the other side', () => {
+    expect(moonShadowPath('first-quarter', 12, 10)).toBe(moonLitPath('last-quarter', 12, 10));
+    expect(moonShadowPath('waxing-crescent', 12, 10)).toBe(moonLitPath('waning-gibbous', 12, 10));
+    expect(moonShadowPath('waning-gibbous', 12, 10)).toBe(moonLitPath('waxing-crescent', 12, 10));
+    expect(moonShadowPath('full', 12, 10)).toBeNull();
+  });
+
+  it('draws each moon on the painted surface, the full one larger and unshaded', () => {
+    expect(moonSvg('full')).toContain('width="28"');
+    expect(moonSvg('full')).not.toContain('moon-shadow');
+    expect(moonSvg('first-quarter')).toContain('width="22"');
     for (const p of MOON_PHASES) {
-      expect(moonSvg(p)).toMatch(/aria-hidden="true".*class="moon-disc".*class="moon-lit"/);
+      const m = moonSvg(p);
+      expect(m).toContain('aria-hidden="true"');
+      expect(m).toContain('href="/art/moon-disc.webp"');
+      expect(m).toContain('class="moon-ring"');
+      if (p !== 'full') expect(m).toMatch(/class="moon-shadow".*filter="url\(#moon-[a-z-]+-soft\)"/);
     }
   });
 });

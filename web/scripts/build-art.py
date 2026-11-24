@@ -17,7 +17,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "web" / "client" / "public" / "art"
@@ -48,6 +48,9 @@ PILLAR_WIDTH = 340
 PILLAR_LIGHT = 0.6
 # Height, on the 940 px canvas, of the dark band at the top of the middle and the base (the joins).
 PILLAR_BAND = 14
+# The moon-phase row's surface (moon_disc): a crater patch of tiles/moon.png, and its size.
+MOON_DISC = (655, 415, 150)
+MOON_DISC_SIZE = 64
 FILE_BUDGET = 60 * 1024
 TOTAL_BUDGET = 1100 * 1024
 
@@ -111,6 +114,19 @@ def pillar_pieces(src: Path) -> dict[str, Image.Image]:
     return out
 
 
+def moon_disc(tile: Path) -> Image.Image:
+    """The surface of the moon-phase row's moons: a crater-only patch of the painted moon (centre and
+    radius on the 1254 px tile, inside the disc, clear of its rim and of the cloud wisps over its
+    lower half, which cluttered the moons at 22 px), masked to a circle, MOON_DISC_SIZE px."""
+    im = Image.open(tile).convert("RGBA")
+    cx, cy, r = MOON_DISC
+    disc = im.crop((cx - r, cy - r, cx + r, cy + r)).resize((MOON_DISC_SIZE * 4, MOON_DISC_SIZE * 4), Image.Resampling.LANCZOS)
+    mask = Image.new("L", disc.size, 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, disc.width - 1, disc.height - 1), fill=255)
+    disc.putalpha(mask)
+    return disc.resize((MOON_DISC_SIZE, MOON_DISC_SIZE), Image.Resampling.LANCZOS)
+
+
 def main() -> int:
     src = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO / ".work" / "art-src"
     OUT.mkdir(parents=True, exist_ok=True)
@@ -153,6 +169,14 @@ def main() -> int:
             if size > FILE_BUDGET:
                 over.append(out.name)
             print(f"{out.relative_to(REPO).as_posix()}  {im.width}x{im.height}  {size / 1024:.1f} KB")
+    if (src / "tiles" / "moon.png").is_file():
+        disc = OUT / "moon-disc.webp"
+        moon_disc(src / "tiles" / "moon.png").save(disc, "WEBP", quality=82, method=6, alpha_quality=90)
+        msize = disc.stat().st_size
+        total += msize
+        if msize > FILE_BUDGET:
+            over.append(disc.name)
+        print(f"{disc.relative_to(REPO).as_posix()}  {MOON_DISC_SIZE}x{MOON_DISC_SIZE}  {msize / 1024:.1f} KB")
     deep = OUT / "backdrop-deep.webp"
     deep_tile(OUT / "backdrop.webp").save(deep, "WEBP", quality=68, method=6)
     dsize = deep.stat().st_size

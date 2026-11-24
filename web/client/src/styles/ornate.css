@@ -196,10 +196,10 @@
 }
 
 /* Seven moons, one per stage, as inline SVG (art.ts moonSvg): the phases of a month, waxing crescent
-   to full to waning crescent. Each is a very dark disc with a 1 px pale-gold ring at 35 %, so the unlit
-   part reads as moon; the lit part is a true phase in pale cream. The full moon is larger and glows;
-   no blur on the others. A stage not reached yet shows its phase dimmer; a failed stage's moon is
-   ember, the one where the engine refused is grey. */
+   to full to waning crescent. The surface is the painted moon; the unlit part is a dark shadow over it
+   (#070d12 at 88 %, a soft terminator), so the unlit side stays faintly visible. A 1 px ring at 20 %.
+   The full moon is larger with a soft green-white glow. The row sits at 90 % behind the heading. A
+   stage not reached yet shows its moon fainter; a failed stage's ring is ember, a refused one grey. */
 .ritual-head {
   align-items: center;
 }
@@ -213,39 +213,38 @@
   align-items: center;
   margin-right: auto;
   margin-left: 18px;
+  opacity: 0.9;
 }
 .moon-phase {
   display: block;
   flex: 0 0 auto;
-}
-.moon-disc {
-  fill: #0a0e14;
-  stroke: rgba(226, 196, 121, 0.35);
-  stroke-width: 1;
-}
-.moon-lit {
-  fill: #f1ead6;
   transition: opacity 0.4s ease;
 }
-.moon-phase.is-full {
-  filter: drop-shadow(0 0 6px rgba(241, 234, 214, 0.45));
+.moon-shadow {
+  fill: #070d12;
+  fill-opacity: 0.88;
 }
-.moon-phase[data-status='pending'] .moon-lit,
-.moon-phase[data-status='skipped'] .moon-lit {
-  opacity: 0.32;
+.moon-ring {
+  fill: none;
+  stroke: rgba(226, 196, 121, 0.2);
+  stroke-width: 1;
+}
+.moon-phase.is-full {
+  filter: drop-shadow(0 0 5px rgba(200, 255, 225, 0.45));
+}
+.moon-phase[data-status='pending'],
+.moon-phase[data-status='skipped'] {
+  opacity: 0.5;
 }
 .moon-phase[data-status='pending'].is-full,
 .moon-phase[data-status='skipped'].is-full {
   filter: none;
 }
-.moon-phase[data-status='running'] .moon-lit {
-  opacity: 0.7;
+.moon-phase[data-status='failed'] .moon-ring {
+  stroke: rgba(255, 154, 138, 0.7);
 }
-.moon-phase[data-status='failed'] .moon-lit {
-  fill: var(--ember);
-}
-.moon-phase[data-status='refused'] .moon-lit {
-  fill: var(--mist);
+.moon-phase[data-status='refused'] .moon-ring {
+  stroke: rgba(164, 173, 184, 0.6);
 }
 
 @media (max-width: 600px) {
@@ -266,12 +265,12 @@
     margin-left: 10px;
   }
   .moon-phase {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
   }
   .moon-phase.is-full {
-    width: 20px;
-    height: 20px;
+    width: 19px;
+    height: 19px;
   }
 }
 
