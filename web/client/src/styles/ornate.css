@@ -465,3 +465,9 @@
     align-self: start;
   }
 }
+
+/* Both captions read the same way: badge and name on the first line, what it is on the second
+   ("the uploaded file as it was, not the conversion" / "what this tool made of it"). */
+.side figcaption .side-sub {
+  flex-basis: 100%;
+}
