@@ -1,7 +1,7 @@
 // The painted props are decoration only (brief 3): empty alt, aria-hidden, lazy, explicit sizes,
 // hidden below 900 px, never over a text or a control, and the page never scrolls sideways. Checked on
-// a mocked converted result page at the widths where each kind shows, and above 1500 px the outer
-// 180 px on each side stay free for the side pillars. Dev server; no job runs.
+// a mocked converted result page at the widths where each kind shows. From 1500 px the side pillars
+// stand in the outer 180 px, never over text or controls, and the side props stand on them. Dev server; no job runs.
 import { readFile } from 'node:fs/promises';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -48,7 +48,12 @@ interface Box {
   h: number;
 }
 
-async function layout(width: number): Promise<{ props: Array<Box & { name: string; alt: string | null; hidden: string | null; loading: string | null; sized: boolean }>; texts: Array<Box & { what: string }>; scrollX: number }> {
+async function layout(width: number): Promise<{
+  props: Array<Box & { name: string; alt: string | null; hidden: string | null; loading: string | null; sized: boolean }>;
+  pillars: Array<Box & { hidden: string | null }>;
+  texts: Array<Box & { what: string }>;
+  scrollX: number;
+}> {
   const page = await chrome.browser.newPage({ viewport: { width, height: 900 } });
   try {
     const swf = await readFile(join(REPO_ROOT, 'samples', 'clickgoto', 'test.swf'));
@@ -85,7 +90,8 @@ async function layout(width: number): Promise<{ props: Array<Box & { name: strin
         const r = c.getBoundingClientRect();
         if (r.width > 1 && r.height > 1) texts.push({ ...box(r), what: c.tagName + ' ' + (c.textContent || '').trim().slice(0, 30) });
       }
-      return { props, texts, scrollX: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+      const pillars = [...document.querySelectorAll('.pillar')].map((p) => ({ ...box(p.getBoundingClientRect()), hidden: p.closest('[aria-hidden]') ? p.closest('[aria-hidden]').getAttribute('aria-hidden') : null })).filter((p) => p.w > 0);
+      return { props, pillars, texts, scrollX: document.documentElement.scrollWidth - document.documentElement.clientWidth };
     })()`);
   } finally {
     await page.close();
@@ -111,21 +117,29 @@ describe('painted props (Chromium)', () => {
 
   for (const width of [375, 899, 900, 1280, 1400, 1500, 1560, 1600, 1920]) {
     it(`at ${width} px: decorative, never over text or controls, no sideways scroll`, { timeout: 60_000 }, async () => {
-      const { props, texts, scrollX } = await layout(width);
+      const { props, pillars, texts, scrollX } = await layout(width);
       expect(scrollX).toBe(0);
       expect(props.length).toBeGreaterThan(0);
       for (const p of props) expect([p.alt, p.hidden, p.loading, p.sized]).toEqual(['', 'true', 'lazy', true]);
       const shown = props.filter((p) => p.w > 0 && p.h > 0);
       if (width < 900) expect(shown).toEqual([]);
       if (width >= 900) expect(shown.length).toBeGreaterThanOrEqual(2);
-      // The margin props show from 1400 px; above 1500 px only where they fit outside the pillar band.
-      if ((width >= 1400 && width <= 1500) || width >= 1584) expect(shown.length).toBe(props.length);
-      if (width > 1500 && width < 1584) expect(shown.length).toBe(2);
-      // Room for the side pillars: above 1500 px the outer 180 px on each side hold no prop.
-      if (width > 1500) {
-        const inBand = shown.filter((p) => p.x < 180 || p.x + p.w > width - 180).map((p) => p.name);
-        expect(inBand).toEqual([]);
+      // The margin props show from 1400 px. From 1500 px the side pillars stand in the outer 180 px and
+      // the props stand on them (the pumpkins move onto the pillar bases).
+      if (width >= 1400 && width < 1500) expect(shown.length).toBe(props.length);
+      if (width >= 1500) {
+        const gutter = shown.filter((p) => p.name.includes('is-gutter'));
+        expect(gutter.map((p) => p.name).filter((n) => n.includes('pumpkin'))).toEqual([]);
+        const offPillar = gutter.filter((p) => !(p.x >= 0 && p.x + p.w <= 188) && !(p.x >= width - 188 && p.x + p.w <= width)).map((p) => p.name);
+        expect(offPillar).toEqual([]);
       }
+      expect(pillars.length).toBe(width >= 1500 ? 2 : 0);
+      for (const pl of pillars) {
+        expect(pl.hidden).toBe('true');
+        expect(pl.x >= 0 && pl.x + pl.w <= 180 ? 'left' : pl.x >= width - 180 && pl.x + pl.w <= width ? 'right' : 'outside the strip').not.toBe('outside the strip');
+      }
+      const pillarHits = pillars.flatMap((pl) => texts.filter((t) => overlaps(pl, t)).map((t) => `pillar over "${t.what}"`));
+      expect(pillarHits).toEqual([]);
       const hits = shown.flatMap((p) => texts.filter((t) => overlaps(p, t)).map((t) => `${p.name} over "${t.what}"`));
       expect(hits).toEqual([]);
     });

@@ -399,19 +399,82 @@
   }
 }
 
-/* Room for the side pillars that will come: on screens wider than 1500 px the outer 180 px on each side
-   stay free of props. A margin prop shrinks to the room left between the page column (1100 px of
-   content) and that band, less its 14 px gap and 8 px for a scrollbar, and is not shown while that room
-   is under 48 px (up to 1583 px). */
-@media (min-width: 1501px) {
-  .prop.is-gutter {
-    display: none;
-  }
+/* ---- Side pillars, from 1500 px: one each side in the outer 180 px strip, the full height of the
+   page: the top (gargoyle) once, the middle repeated, the base at the page bottom. The right one is the
+   left mirrored, so both gargoyles face inward. Decoration only; their images load only when shown.
+   Sizes: 170 CSS px wide; the pieces are 340 px files (top 551, middle 456, base 530 px high). ---- */
+.pillars {
+  display: none;
 }
-@media (min-width: 1584px) {
+@media (min-width: 1500px) {
+  .pillars {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .pillar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 170px;
+  }
+  .pillar.is-left {
+    left: 5px;
+  }
+  .pillar.is-right {
+    right: 5px;
+    transform: scaleX(-1);
+  }
+  .pillar > i {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-size: 100% auto;
+  }
+  .pillar-top {
+    top: 0;
+    height: 275.5px;
+    background: url('/art/pillar-top.webp') center top no-repeat;
+  }
+  .pillar-middle {
+    top: 275px;
+    bottom: 264px;
+    background: url('/art/pillar-middle.webp') center top repeat-y;
+  }
+  .pillar-base {
+    bottom: 0;
+    height: 265px;
+    background: url('/art/pillar-base.webp') center bottom no-repeat;
+  }
+  /* The pumpkins stand on the base steps at the page bottom (the right one is mirrored with its pillar). */
+  .pillar > .pillar-pumpkin {
+    bottom: 26px;
+    height: 96px;
+    background: url('/art/prop-pumpkin.webp') center bottom / auto 100% no-repeat;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+  }
+  .pillar.is-right > .pillar-pumpkin {
+    background-image: url('/art/prop-pumpkin-candles.webp');
+  }
+  .prop-pumpkin,
+  .prop-pumpkin-candles {
+    display: none !important;
+  }
+
+  /* The side props stand on the pillars: centred on the pillar, 90 px from the page edge, in front of
+     it. The page column's content starts at (100vw - 1100px) / 2. */
   .prop.is-gutter {
     display: block;
-    width: min(var(--w), calc((100vw - 1100px) / 2 - 180px - 14px - 8px));
+    width: var(--w);
+  }
+  .prop.is-gutter.is-left {
+    right: calc(100% + (100vw - 1100px) / 2 - 90px - var(--w) / 2);
+  }
+  .prop.is-gutter.is-right {
+    left: calc(100% + (100vw - 1100px) / 2 - 90px - var(--w) / 2);
   }
 }
 
