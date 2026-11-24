@@ -4,18 +4,8 @@
 import type { JobSummary, StageKey, StageState } from '../../shared/api';
 import { CANDLE } from './art';
 import { announce, h, svg } from './dom';
-import { RITES, STATUS_TEXT } from './labels';
+import { RITES, STAGE_ICONS, STATUS_TEXT } from './labels';
 
-/** The line icon of each stage (brief 3 mockup); decorative, the stage name is always written. */
-const STAGE_ICONS: Record<StageKey, string> = {
-  unpack: 'coffin',
-  convert: 'bones',
-  translate: 'book',
-  emit: 'needle',
-  typecheck: 'heartbeat',
-  verify: 'crystal-ball',
-  build: 'hand',
-};
 
 interface RiteNodes {
   li: HTMLLIElement;

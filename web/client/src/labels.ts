@@ -12,6 +12,17 @@ export const RITES: Record<StageKey, { rite: string; what: string }> = {
   build: { rite: 'Raise', what: 'This server builds the project for the preview.' },
 };
 
+/** The line icon of each stage (brief 3 mockup); decorative, the stage name is always written. */
+export const STAGE_ICONS: Record<StageKey, string> = {
+  unpack: 'coffin',
+  convert: 'bones',
+  translate: 'book',
+  emit: 'needle',
+  typecheck: 'heartbeat',
+  verify: 'crystal-ball',
+  build: 'hand',
+};
+
 export const STATUS_TEXT: Record<StageStatus, string> = {
   pending: 'waiting',
   running: 'in progress',
