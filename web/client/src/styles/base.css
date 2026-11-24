@@ -422,6 +422,15 @@ main:focus {
   outline: none;
 }
 
+/* Nothing in the page column may make the page scroll sideways (a stone's hover plaque near the
+   screen edge did, by 15 px at 375 px). From 1400 px the column keeps its sides open: the painted
+   props stand in the page margins there, and the margins are wide enough for them. */
+@media (max-width: 1399px) {
+  main {
+    overflow-x: clip;
+  }
+}
+
 .foot {
   max-width: var(--max);
   margin: 0 auto;
