@@ -39,3 +39,12 @@ the object's bounds and scaled to icons 96 px, tiles 192 px, ornaments
 421 KB in total, with the four mirrored frame corners `orn-corner-tl|tr|bl|br` (128 px).
 `backdrop-deep.webp` (8.4 KB), the page's background below the first screen, is derived by the same
 script from the owner's `backdrop.webp`: its lower band of fog, darkened and mirrored into a tile.
+
+The side pillars (`pillar-top.webp` with the gargoyle, `pillar-middle.webp`,
+`pillar-base.webp`) were generated with ChatGPT image generation by the
+project owner, 2026-11-24, from three 1024 x 1536 sources in
+`.work/art-src/pillar/`. `web/scripts/build-art.py` scales the middle to
+82 % so its shaft matches the others, centres each piece on its shaft on a
+shared canvas, darkens them to 60 %, adds a thin dark band at the top of the
+middle and the base to hide the joins, and writes them 340 px wide (2x of
+the 170 CSS px drawn): 18.1, 9.4 and 20.4 KB. All art is now 478 KB.

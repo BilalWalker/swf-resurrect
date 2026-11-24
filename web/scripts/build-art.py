@@ -38,8 +38,18 @@ CORNER_BOX = 128
 # The page continuation below the first screen (deep_tile): its width and how dark it is kept.
 DEEP_WIDTH = 1200
 DEEP_LIGHT = 0.62
+# The side pillar (pillar_pieces): shaft x range at each joining edge, measured on the 1024 px sources;
+# the middle's scale; the shared canvas (the base, the widest piece, fits it centred on its shaft);
+# the shipped width (2x of the 170 CSS px the page draws) and how dark it is kept.
+PILLAR_SHAFT = {"top": (338, 655), "middle": (318, 705), "base": (337, 660)}
+PILLAR_MIDDLE_SCALE = 0.82
+PILLAR_CANVAS = 940
+PILLAR_WIDTH = 340
+PILLAR_LIGHT = 0.6
+# Height, on the 940 px canvas, of the dark band at the top of the middle and the base (the joins).
+PILLAR_BAND = 14
 FILE_BUDGET = 60 * 1024
-TOTAL_BUDGET = 900 * 1024
+TOTAL_BUDGET = 1100 * 1024
 
 
 def trim(im: Image.Image) -> Image.Image:
@@ -68,6 +78,37 @@ def deep_tile(backdrop: Path) -> Image.Image:
     tile.paste(band, (0, 0))
     tile.paste(band.transpose(Image.Transpose.FLIP_TOP_BOTTOM), (0, band.height))
     return tile
+
+
+def pillar_pieces(src: Path) -> dict[str, Image.Image]:
+    """The side pillar: top (with the gargoyle), middle (repeated down the page) and base. Each piece is
+    put on a canvas of one shared width centred on its own shaft, so stacked in CSS the shafts line up.
+    The middle's shaft is wider in the art (387 px against 317 and 323 at the joins), so it is scaled to
+    82 %. All three are darkened so the pillars sit behind the content; their green light stays."""
+    out: dict[str, Image.Image] = {}
+    for name in ("top", "middle", "base"):
+        im = Image.open(src / "pillar" / f"{name}.png").convert("RGBA")
+        lo, hi = PILLAR_SHAFT[name]
+        if name == "middle":
+            im = im.resize((round(im.width * PILLAR_MIDDLE_SCALE), round(im.height * PILLAR_MIDDLE_SCALE)), Image.Resampling.LANCZOS)
+            lo, hi = lo * PILLAR_MIDDLE_SCALE, hi * PILLAR_MIDDLE_SCALE
+        centre = (lo + hi) / 2
+        alpha = im.getchannel("A").point(lambda a: 255 if a > ALPHA_FLOOR else 0)
+        box = alpha.getbbox() or (0, 0, im.width, im.height)
+        canvas = Image.new("RGBA", (PILLAR_CANVAS, box[3] - box[1]), (0, 0, 0, 0))
+        canvas.paste(im.crop((0, box[1], im.width, box[3])), (round(PILLAR_CANVAS / 2 - centre), 0))
+        r, g, b, a = canvas.split()
+        dim = lambda v: round(v * PILLAR_LIGHT)
+        canvas = Image.merge("RGBA", (r.point(dim), g.point(dim), b.point(dim), a))
+        if name != "top":
+            # A thin dark stone band along the top edge covers the join with the piece above.
+            band = canvas.crop((0, 0, canvas.width, PILLAR_BAND))
+            br, bg, bb, ba = band.split()
+            shade = lambda v: round(v * 0.28)
+            canvas.paste(Image.merge("RGBA", (br.point(shade), bg.point(shade), bb.point(shade), ba)), (0, 0))
+        scale = PILLAR_WIDTH / PILLAR_CANVAS
+        out[name] = canvas.resize((PILLAR_WIDTH, round(canvas.height * scale)), Image.Resampling.LANCZOS)
+    return out
 
 
 def main() -> int:
@@ -103,6 +144,15 @@ def main() -> int:
                     if csize > FILE_BUDGET:
                         over.append(cout.name)
                     print(f"{cout.relative_to(REPO).as_posix()}  {c.width}x{c.height}  {csize / 1024:.1f} KB")
+    if (src / "pillar").is_dir():
+        for name, im in pillar_pieces(src).items():
+            out = OUT / f"pillar-{name}.webp"
+            im.save(out, "WEBP", quality=76, method=6, alpha_quality=88)
+            size = out.stat().st_size
+            total += size
+            if size > FILE_BUDGET:
+                over.append(out.name)
+            print(f"{out.relative_to(REPO).as_posix()}  {im.width}x{im.height}  {size / 1024:.1f} KB")
     deep = OUT / "backdrop-deep.webp"
     deep_tile(OUT / "backdrop.webp").save(deep, "WEBP", quality=68, method=6)
     dsize = deep.stat().st_size
