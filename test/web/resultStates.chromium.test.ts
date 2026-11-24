@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { JobOutcome, JobSummary, StageState } from '../../web/shared/api';
 import { REPO_ROOT, startServer } from '../../web/server/main';
 import type { RunningServer } from '../../web/server/main';
+import { holdPipelineSlot } from '../support/holdPipelineSlot';
 import { launchChromium, type LaunchedChromium } from '../support/launchChromium';
 import { testServerOptions } from './helpers';
 import { lowContrastTexts } from './textContrast';
@@ -20,19 +21,7 @@ let server: RunningServer;
 let runsDir: string;
 let chrome: LaunchedChromium;
 
-beforeAll(async () => {
-  runsDir = await mkdtemp(join(tmpdir(), 'web-states-'));
-  server = await startServer(testServerOptions({ dev: true }), { runsDir, log: () => undefined });
-  chrome = await launchChromium();
-  await mkdir(SHOTS, { recursive: true });
-}, 120_000);
-
 // Stopping Chromium and the dev server's Vite takes more than the default 10 s when the suite is busy.
-afterAll(async () => {
-  await chrome?.stop();
-  await server?.close();
-  await rm(runsDir, { recursive: true, force: true });
-}, 60_000);
 
 const STAGES = ['unpack', 'convert', 'translate', 'emit', 'typecheck', 'verify', 'build'] as const;
 function stages(status: StageState['status'][]): StageState[] {
@@ -113,6 +102,21 @@ async function open(j: JobSummary, shot: string): Promise<Page> {
 }
 
 describe('result page per Outcome (Chromium)', () => {
+  // Chromium in this process counts against the suite's pipeline slots, like the engine's browser tests.
+  holdPipelineSlot();
+  beforeAll(async () => {
+    runsDir = await mkdtemp(join(tmpdir(), 'web-states-'));
+    server = await startServer(testServerOptions({ dev: true }), { runsDir, log: () => undefined });
+    chrome = await launchChromium();
+    await mkdir(SHOTS, { recursive: true });
+  }, 120_000);
+
+  afterAll(async () => {
+    await chrome?.stop();
+    await server?.close();
+    await rm(runsDir, { recursive: true, force: true });
+  }, 60_000);
+
   it('converted: as before, with the download', { timeout: 60_000 }, async () => {
     const page = await open(job(id(1), { outcome: outcome({ outcome: 'converted', reason: '4 of 4 classes translated', numbers: numbers(4, 4, 0) }) }), 'converted');
     expect(await page.textContent('.alive-title')).toBe('It lives.');

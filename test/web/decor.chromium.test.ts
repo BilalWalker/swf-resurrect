@@ -9,24 +9,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { REPO_ROOT, startServer } from '../../web/server/main';
 import type { RunningServer } from '../../web/server/main';
 import type { JobSummary } from '../../web/shared/api';
+import { holdPipelineSlot } from '../support/holdPipelineSlot';
 import { launchChromium, type LaunchedChromium } from '../support/launchChromium';
 import { testServerOptions } from './helpers';
 
 let server: RunningServer;
 let chrome: LaunchedChromium;
 let runsDir: string;
-
-beforeAll(async () => {
-  runsDir = await mkdtemp(join(tmpdir(), 'web-decor-'));
-  server = await startServer(testServerOptions({ dev: true }), { runsDir, log: () => undefined });
-  chrome = await launchChromium();
-}, 120_000);
-
-afterAll(async () => {
-  await chrome?.stop();
-  await server?.close();
-  await rm(runsDir, { recursive: true, force: true });
-}, 60_000);
 
 const ID = 'de'.repeat(12);
 const STAGES = ['unpack', 'convert', 'translate', 'emit', 'typecheck', 'verify', 'build'] as const;
@@ -102,6 +91,20 @@ async function layout(width: number): Promise<{ props: Array<Box & { name: strin
 const overlaps = (a: Box, b: Box): boolean => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 describe('painted props (Chromium)', () => {
+  // Chromium in this process counts against the suite's pipeline slots, like the engine's browser tests.
+  holdPipelineSlot();
+  beforeAll(async () => {
+    runsDir = await mkdtemp(join(tmpdir(), 'web-decor-'));
+    server = await startServer(testServerOptions({ dev: true }), { runsDir, log: () => undefined });
+    chrome = await launchChromium();
+  }, 120_000);
+
+  afterAll(async () => {
+    await chrome?.stop();
+    await server?.close();
+    await rm(runsDir, { recursive: true, force: true });
+  }, 60_000);
+
   for (const width of [375, 899, 900, 1280, 1400, 1600]) {
     it(`at ${width} px: decorative, never over text or controls, no sideways scroll`, { timeout: 60_000 }, async () => {
       const { props, texts, scrollX } = await layout(width);

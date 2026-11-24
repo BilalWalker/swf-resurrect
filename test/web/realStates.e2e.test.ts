@@ -10,6 +10,7 @@ import type { JobSummary } from '../../web/shared/api';
 import { REPO_ROOT, startServer } from '../../web/server/main';
 import type { RunningServer } from '../../web/server/main';
 import { TAG, buildSwf, tag } from '../support/hostileSwf';
+import { holdPipelineSlot } from '../support/holdPipelineSlot';
 import { launchChromium, type LaunchedChromium } from '../support/launchChromium';
 import { testServerOptions } from './helpers';
 
@@ -19,20 +20,6 @@ const SHOTS = join(REPO_ROOT, '.work', 'ui-states', 'real');
 let server: RunningServer;
 let chrome: LaunchedChromium;
 let runsDir: string;
-
-beforeAll(async () => {
-  if (!requested) return;
-  runsDir = await mkdtemp(join(tmpdir(), 'web-real-'));
-  server = await startServer(testServerOptions({ dev: true }), { runsDir, log: () => undefined });
-  chrome = await launchChromium();
-  await mkdir(SHOTS, { recursive: true });
-}, 120_000);
-
-afterAll(async () => {
-  await chrome?.stop();
-  await server?.close();
-  if (runsDir !== undefined) await rm(runsDir, { recursive: true, force: true });
-}, 60_000);
 
 async function settle(created: Promise<{ id: string }>): Promise<JobSummary> {
   const { id } = await created;
@@ -80,6 +67,22 @@ async function shootAt(url: string, name: string, width: number): Promise<string
 }
 
 describe.skipIf(!requested)('real result pages', () => {
+  // Chromium in this process counts against the suite's pipeline slots, like the engine's browser tests.
+  holdPipelineSlot();
+  beforeAll(async () => {
+    if (!requested) return;
+    runsDir = await mkdtemp(join(tmpdir(), 'web-real-'));
+    server = await startServer(testServerOptions({ dev: true }), { runsDir, log: () => undefined });
+    chrome = await launchChromium();
+    await mkdir(SHOTS, { recursive: true });
+  }, 120_000);
+
+  afterAll(async () => {
+    await chrome?.stop();
+    await server?.close();
+    if (runsDir !== undefined) await rm(runsDir, { recursive: true, force: true });
+  }, 60_000);
+
   it('landing and gallery', { timeout: 120_000 }, async () => {
     expect(await shootAt(`${server.url}/`, 'landing', 1200)).toContain('How It Works');
     await shootAt(`${server.url}/`, 'landing-375', 375);
