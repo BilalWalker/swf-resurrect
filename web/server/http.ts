@@ -314,8 +314,12 @@ export function createHandler(ctx: HandlerContext, next: Next): (req: IncomingMe
   };
 }
 
-/** Production: the built client from web/dist, with index.html for unknown paths (hash routing). */
-export function staticClient(distDir: string): Next {
+/**
+ * Production: the built client from web/dist, with index.html for unknown paths (hash routing).
+ * `frameAncestors` are other origins allowed to frame the index page (SWF_RESURRECT_FRAME_ANCESTORS),
+ * added to its frame-ancestors directive after 'self'.
+ */
+export function staticClient(distDir: string, frameAncestors: readonly string[] = []): Next {
   const csp = [
     "default-src 'self'",
     "script-src 'self'",
@@ -325,7 +329,7 @@ export function staticClient(distDir: string): Next {
     "connect-src 'self'",
     "base-uri 'none'",
     "form-action 'none'",
-    "frame-ancestors 'self'",
+    ["frame-ancestors 'self'", ...frameAncestors].join(' '),
   ].join('; ');
   return (req, res) => {
     const rawPath = (req.url ?? '/').split('?')[0];

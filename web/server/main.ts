@@ -74,7 +74,7 @@ export async function startServer(
     closeVite = () => vite.close();
     next = vite.middlewares;
   } else {
-    next = staticClient(join(repoRoot, 'web', 'dist'));
+    next = staticClient(join(repoRoot, 'web', 'dist'), options.frameAncestors);
   }
   server.on('request', createHandler({ jobs, repoRoot, trustProxyHops: options.trustProxyHops }, next));
 

@@ -38,6 +38,7 @@ Environment:
 | `SWF_RESURRECT_RATE_BURST` | `3` | Conversions a client may start at once (bucket size). |
 | `SWF_RESURRECT_RATE_PER_HOUR` | `10` | Steady rate at which a client's bucket refills. |
 | `SWF_RESURRECT_UPLOADS` | `on` | `off`: gallery-only host. The landing page hides the drop zone and says uploads are disabled here; `POST /api/jobs` and re-runs of uploaded jobs answer `403` with that message. Samples still convert. |
+| `SWF_RESURRECT_FRAME_ANCESTORS` | unset | Other origins allowed to show the app in a frame, separated by spaces, each `https://host` (or `https://host:port`) with no path, query or wildcard; anything else stops the server at start. The index page's CSP becomes `frame-ancestors 'self' <origins>`; nothing else changes. Unset or empty: only the app's own origin. A Hugging Face Space page frames the app from `https://huggingface.co`. |
 | `TRUST_PROXY` | `0` | Number of reverse proxies in front of the server. `0`: the client is the socket's peer and `X-Forwarded-For` is ignored (it is written by the client too). `N`: the client is the `X-Forwarded-For` entry N places from the right, the one the outermost trusted proxy wrote; entries further left are ignored. |
 
 Retention (`web/server/retention.ts` decides, `JobManager.sweep` deletes)

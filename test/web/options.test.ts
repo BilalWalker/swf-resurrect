@@ -21,8 +21,31 @@ describe('parseServerOptions', () => {
         rateLimit: null,
         trustProxyHops: 0,
         uploadsEnabled: true,
+        frameAncestors: [],
       },
     });
+  });
+
+  it('reads SWF_RESURRECT_FRAME_ANCESTORS as a list of https origins', () => {
+    expect(parseServerOptions([], { SWF_RESURRECT_FRAME_ANCESTORS: '' }, root)).toMatchObject({ ok: true, options: { frameAncestors: [] } });
+    expect(
+      parseServerOptions([], { SWF_RESURRECT_FRAME_ANCESTORS: ' https://huggingface.co  https://example.org:8443 ' }, root),
+    ).toMatchObject({ ok: true, options: { frameAncestors: ['https://huggingface.co', 'https://example.org:8443'] } });
+    for (const bad of [
+      'http://huggingface.co',
+      'https://huggingface.co/',
+      'https://huggingface.co/spaces',
+      'https://huggingface.co?x=1',
+      'https://*.hf.space',
+      '*',
+      'huggingface.co',
+      "https://a.org;script-src 'unsafe-inline'",
+      'https://user@a.org',
+    ]) {
+      const r = parseServerOptions([], { SWF_RESURRECT_FRAME_ANCESTORS: `https://huggingface.co ${bad}` }, root);
+      expect(r.ok, bad).toBe(false);
+      if (!r.ok) expect(r.message).toMatch(/^SWF_RESURRECT_FRAME_ANCESTORS must be origins like https:\/\/example\.org/);
+    }
   });
 
   it('turns the rate limit on in production unless told otherwise', () => {

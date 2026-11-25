@@ -26,6 +26,11 @@ export interface ServerOptions {
   trustProxyHops: number;
   /** SWF_RESURRECT_UPLOADS=off: gallery only, uploads are refused with 403. */
   uploadsEnabled: boolean;
+  /**
+   * SWF_RESURRECT_FRAME_ANCESTORS: other origins allowed to show the app in a frame (a host's page
+   * that embeds it, such as a Hugging Face Space page). Empty: only the app's own origin.
+   */
+  frameAncestors: string[];
 }
 
 export type ParsedOptions = { ok: true; options: ServerOptions } | { ok: false; message: string };
@@ -58,6 +63,16 @@ function envCount(env: Readonly<Record<string, string | undefined>>, name: strin
   const v = env[name];
   if (v === undefined || v === '') return fallback;
   return /^\d{1,9}$/.test(v) ? Number(v) : null;
+}
+
+/** https://host or https://host:port, nothing more: no path, query, fragment, user or wildcard. */
+const FRAME_ORIGIN = /^https:\/\/[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*(:\d{1,5})?$/;
+
+/** A space-separated list of origins: none when unset or empty; the first bad one otherwise. */
+function parseFrameAncestors(v: string | undefined): { ok: true; origins: string[] } | { ok: false; bad: string } {
+  const origins = (v ?? '').split(/\s+/).filter((o) => o !== '');
+  const bad = origins.find((o) => !FRAME_ORIGIN.test(o));
+  return bad === undefined ? { ok: true, origins } : { ok: false, bad };
 }
 
 function parsePort(s: string): number | null {
@@ -129,6 +144,13 @@ export function parseServerOptions(
   if (up !== undefined && up !== '' && up !== 'on' && up !== 'off') {
     return { ok: false, message: `SWF_RESURRECT_UPLOADS must be on or off: ${up}` };
   }
+  const fa = parseFrameAncestors(env.SWF_RESURRECT_FRAME_ANCESTORS);
+  if (!fa.ok) {
+    return {
+      ok: false,
+      message: `SWF_RESURRECT_FRAME_ANCESTORS must be origins like https://example.org, separated by spaces (no path, query or wildcard): ${fa.bad}`,
+    };
+  }
   const jar = env.SWF_RESURRECT_FFDEC;
   return {
     ok: true,
@@ -149,6 +171,7 @@ export function parseServerOptions(
       rateLimit: rateOn ? { burst, perHour } : null,
       trustProxyHops: tp === undefined || tp === '' ? 0 : Number(tp),
       uploadsEnabled: up !== 'off',
+      frameAncestors: fa.origins,
     },
   };
 }
